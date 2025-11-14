@@ -18,12 +18,12 @@ export class CreateVendorDto {
   email: string;
 
   @ApiProperty({
-    description: 'Phone number of the vendor',
-    example: '+1234567890',
+    description: 'Phone number of the vendor (11 digits)',
+    example: '08012345678',
   })
   @IsString()
-  @Matches(/^[+]?[0-9\s-]{10,20}$/, {
-    message: 'Please provide a valid phone number',
+  @Matches(/^[0-9]{11}$/, {
+    message: 'Phone number must be 11 digits',
   })
   phoneNo: string;
 

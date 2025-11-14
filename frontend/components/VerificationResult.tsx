@@ -1,0 +1,92 @@
+'use client';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { FaCheckCircle, FaFileAlt } from 'react-icons/fa';
+
+interface VerificationResultProps {
+    contractorName: string;
+    registrationId: string;
+    rcbnNumber: string;
+    grade: string;
+    lga: string;
+    status: string;
+    validUntil: string;
+    category: string;
+}
+
+export default function VerificationResult({
+    contractorName,
+    registrationId,
+    rcbnNumber,
+    grade,
+    lga,
+    status,
+    validUntil,
+    category,
+}: VerificationResultProps) {
+    return (
+        <Card className="shadow-lg mt-6 bg-green-50 border-green-200">
+            <CardHeader>
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-green-200/80 border border-gray-100 rounded-full flex items-center justify-center">
+                        <FaCheckCircle className="text-white text-xl" color='047857' />
+                    </div>
+                    <div>
+                        <CardTitle className="text-xl text-theme-green">Certificate Verified</CardTitle>
+                        <CardDescription className="text-green-700">
+                            This contractor is registered with BPPPI
+                        </CardDescription>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <p className="text-xs text-gray-600 mb-1">Contractor Name</p>
+                        <p className="font-semibold text-gray-900">{contractorName}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-600 mb-1">Registration ID</p>
+                        <p className="font-semibold text-gray-900">{registrationId}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-600 mb-1">RC/BN Number</p>
+                        <p className="font-semibold text-gray-900">{rcbnNumber}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-600 mb-1">Grade</p>
+                        <p className="font-semibold text-gray-900">{grade}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-600 mb-1">LGA</p>
+                        <p className="font-semibold text-gray-900">{lga}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-600 mb-1">Status</p>
+                        <Badge className="bg-theme-green">
+                            <FaCheckCircle className="mr-1" />
+                            {status}
+                        </Badge>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-600 mb-1">Valid Until</p>
+                        <p className="font-semibold text-gray-900">{validUntil}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-600 mb-1">Category</p>
+                        <p className="font-semibold text-gray-900">{category}</p>
+                    </div>
+                </div>
+
+                <hr />
+
+                <Button variant="outline" className="w-full cursor-pointer active:scale-95 transition-transform duration-300">
+                    <FaFileAlt className="mr-2" />
+                    View Full Profile
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}

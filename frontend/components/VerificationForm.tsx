@@ -7,14 +7,53 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FaSearch } from 'react-icons/fa';
 import { FaQrcode } from 'react-icons/fa6';
+import { toast } from 'sonner';
+import VerificationResult from './VerificationResult';
+
+interface VerificationData {
+    contractorName: string;
+    registrationId: string;
+    rcbnNumber: string;
+    grade: string;
+    lga: string;
+    status: string;
+    validUntil: string;
+    category: string;
+}
 
 export default function VerificationForm() {
     const [registrationId, setRegistrationId] = useState('');
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [result, setResult] = useState<VerificationData | null>(null);
 
-    const handleVerify = (e: React.FormEvent) => {
+    const handleVerify = async (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: Implement verification logic
-        console.log('Verifying:', registrationId);
+        
+        if (!registrationId.trim()) {
+            toast.error('Please enter a registration ID');
+            return;
+        }
+
+        setIsVerifying(true);
+        
+        // Simulate API call
+        setTimeout(() => {
+            // Mock successful verification
+            const mockResult: VerificationData = {
+                contractorName: 'ABC Construction Ltd',
+                registrationId: registrationId,
+                rcbnNumber: 'RC1234567',
+                grade: 'Grade A',
+                lga: 'Owerri Municipal',
+                status: 'Approved',
+                validUntil: '31 December 2025',
+                category: 'Building Construction',
+            };
+            
+            setResult(mockResult);
+            setIsVerifying(false);
+            toast.success('Certificate verified successfully!');
+        }, 1500);
     };
 
     return (
@@ -47,10 +86,11 @@ export default function VerificationForm() {
 
                         <Button
                             type="submit"
-                            className="w-full h-12 bg-theme-green hover:bg-theme-green/90 cursor-pointer active:scale-95 transition-transform duration-300"
+                            disabled={isVerifying}
+                            className="w-full h-12 bg-theme-green hover:bg-theme-green/90 cursor-pointer active:scale-95 transition-transform duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <FaSearch className="mr-2" />
-                            Verify Certificate
+                            {isVerifying ? 'Verifying...' : 'Verify Certificate'}
                         </Button>
 
                         {/* Info Alert */}
@@ -66,6 +106,20 @@ export default function VerificationForm() {
                     </form>
                 </CardContent>
             </Card>
+
+            {/* Verification Result */}
+            {result && (
+                <VerificationResult
+                    contractorName={result.contractorName}
+                    registrationId={result.registrationId}
+                    rcbnNumber={result.rcbnNumber}
+                    grade={result.grade}
+                    lga={result.lga}
+                    status={result.status}
+                    validUntil={result.validUntil}
+                    category={result.category}
+                />
+            )}
 
             {/* Additional Information */}
             <div className="mt-8 text-center">

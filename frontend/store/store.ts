@@ -1,10 +1,9 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import appReducer from './slices/appSlice';
 
-// Placeholder reducer - replace with actual slices when needed
 const rootReducer = combineReducers({
-  // Add your slices here, e.g.:
-  // auth: authReducer,
-  // user: userReducer,
+  app: appReducer,
+  // Add more slices here as needed
 });
 
 export const makeStore = () => {

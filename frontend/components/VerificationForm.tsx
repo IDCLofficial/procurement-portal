@@ -134,8 +134,8 @@ export default function VerificationForm() {
         <div className="max-w-xl mx-auto">
             <Card className="shadow-lg">
                 <CardHeader>
-                    <CardTitle className="text-xl">Enter Registration Details</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="sm:text-xl text-base">Enter Registration Details</CardTitle>
+                    <CardDescription className='sm:text-base text-xs'>
                         Enter the registration ID found on the contractor&apos;s certificate
                     </CardDescription>
                 </CardHeader>
@@ -151,7 +151,7 @@ export default function VerificationForm() {
                                 placeholder="e.g., IMO-CONT-XXXX-XXXXXXXXXXXX"
                                 value={registrationId}
                                 onChange={handleInputChange}
-                                className={`h-12 ${validationError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                                className={`sm:h-14 h-12 ${validationError ? 'border-red-500 focus-visible:ring-red-500 sm:text-base text-xs' : ''}`}
                                 autoComplete="off"
                                 aria-invalid={!!validationError}
                                 aria-describedby="registrationId-error registrationId-help"

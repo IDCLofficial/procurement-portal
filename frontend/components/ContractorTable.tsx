@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FaCheckCircle, FaDownload, FaExclamationTriangle, FaSearch, FaSpinner } from 'react-icons/fa';
 import { FaCircleXmark } from 'react-icons/fa6';
+import { getGradeConfig, getSectorConfig, getStatusConfig } from '@/lib/constants';
 
 export interface Contractor {
     id: string;
@@ -43,40 +44,6 @@ export default function ContractorTable({
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedContractors = contractors.slice(startIndex, endIndex);
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'approved':
-                return 'bg-green-100 text-green-800 border-green-200';
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'suspended':
-                return 'bg-red-100 text-red-800 border-red-200';
-            default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    };
-
-    const getSectorColor = (sector: string) => {
-        switch (sector.toLowerCase()) {
-            case 'works':
-                return 'bg-blue-100 text-blue-800';
-            case 'supplies':
-                return 'bg-purple-100 text-purple-800';
-            case 'services':
-                return 'bg-orange-100 text-orange-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const getGradeBadge = (grade: string) => {
-        const gradeColors: Record<string, string> = {
-            'A': 'bg-theme-green text-white',
-            'B': 'bg-blue-600 text-white',
-            'C': 'bg-gray-600 text-white',
-        };
-        return gradeColors[grade] || 'bg-gray-500 text-white';
-    };
 
     return (
         <Card>
@@ -151,7 +118,6 @@ export default function ContractorTable({
                                         <TableHead className="w-12">S/N</TableHead>
                                         <TableHead>Contractor Name</TableHead>
                                         <TableHead>RC/BN Number</TableHead>
-                                        <TableHead>Registration ID</TableHead>
                                         <TableHead>Sector</TableHead>
                                         <TableHead>Grade</TableHead>
                                         <TableHead>LGA</TableHead>
@@ -166,25 +132,24 @@ export default function ContractorTable({
                                             <TableCell className="font-medium text-gray-600">{startIndex + index + 1}</TableCell>
                                             <TableCell className="font-medium">{contractor.name}</TableCell>
                                             <TableCell className="font-mono text-sm">{contractor.rcbnNumber}</TableCell>
-                                            <TableCell className="font-mono text-sm">{contractor.id}</TableCell>
                                             <TableCell>
-                                                <Badge className={`${getSectorColor(contractor.sector)} text-xs uppercase`}>
+                                                <Badge className={`${getSectorConfig(contractor.sector).badgeClass} text-xs uppercase`}>
                                                     {contractor.sector}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getGradeBadge(contractor.grade)} font-bold text-sm`}>
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getGradeConfig(contractor.grade).badgeClass} font-bold text-sm`}>
                                                     {contractor.grade}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-sm">{contractor.lga}</TableCell>
                                             <TableCell>
-                                                <Badge className={`${getStatusColor(contractor.status)} flex items-center gap-1 w-fit`}>
+                                                <Badge className={`${getStatusConfig(contractor.status).badgeClass} flex items-center gap-1 w-fit`}>
                                                     <FaCheckCircle className="text-xs" />
                                                     {contractor.status.charAt(0).toUpperCase() + contractor.status.slice(1)}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-sm">{contractor.expiryDate}</TableCell>
+                                            <TableCell className="text-sm">{new Date(contractor.expiryDate).toLocaleDateString()}</TableCell>
                                             <TableCell className="text-right">
                                                 <Link href={`/contractor/${contractor.id}`}>
                                                     <Button 

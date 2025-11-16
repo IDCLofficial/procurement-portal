@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FaCheckCircle, FaFileAlt } from 'react-icons/fa';
 import Link from 'next/link';
+import { getStatusConfig } from '@/lib/constants';
 
 interface VerificationResultProps {
     contractorName: string;
@@ -58,7 +59,7 @@ export default function VerificationResult({
                     </div>
                     <div>
                         <p className="text-xs text-gray-600 mb-1">Grade</p>
-                        <p className="font-semibold text-gray-900">{grade}</p>
+                        <p className={`font-semibold text-gray-900`}>{grade}</p>
                     </div>
                     <div>
                         <p className="text-xs text-gray-600 mb-1">LGA</p>
@@ -66,9 +67,9 @@ export default function VerificationResult({
                     </div>
                     <div>
                         <p className="text-xs text-gray-600 mb-1">Status</p>
-                        <Badge className="bg-theme-green">
+                        <Badge className={getStatusConfig(status).badgeClass}>
                             <FaCheckCircle className="mr-1" />
-                            {status}
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
                         </Badge>
                     </div>
                     <div>
@@ -76,7 +77,7 @@ export default function VerificationResult({
                         <p className="font-semibold text-gray-900">{validUntil}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-600 mb-1">Category</p>
+                        <p className="text-xs text-gray-600 mb-1">Sector</p>
                         <p className="font-semibold text-gray-900">{category}</p>
                     </div>
                 </div>

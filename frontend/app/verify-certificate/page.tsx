@@ -4,12 +4,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { FaSearch } from 'react-icons/fa';
 
-export default function VerifyCertificatePage({ params }: { params: { locale: string } }) {
-    const { locale } = params;
+export default function VerifyCertificatePage() {
     return (
         <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
             <Header
-                title={"Certificate Verification" + " " + locale}
+                title={"Certificate Verification"}
                 description="Verify contractor registration status"
                 hasBackButton
 

@@ -10,6 +10,7 @@ import VerificationModal from '@/components/VerificationModal';
 import { FaCheckCircle, FaDownload, FaGlobe, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { FaQrcode } from 'react-icons/fa6';
+import { getGradeConfig, getSectorConfig, getStatusConfig } from '@/lib/constants';
 
 interface ContractorDetailsProps {
     contractor: {
@@ -43,19 +44,6 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
     }, [searchParams]);
 
     const [showModal, setShowModal] = useState(isFromQR);
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'approved':
-                return 'bg-green-100 text-green-800 border-green-200';
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'suspended':
-                return 'bg-red-100 text-red-800 border-red-200';
-            default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    };
 
 
     const handleDownloadCertificate = () => {
@@ -93,7 +81,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                 <h1 className="text-2xl font-semibold text-gray-900">
                                     {contractor.name}
                                 </h1>
-                                <Badge className={getStatusColor(contractor.status)}>
+                                <Badge className={getStatusConfig(contractor.status).badgeClass}>
                                     <FaCheckCircle className="h-3 w-3" />
                                     <span className="capitalize">{contractor.status}</span>
                                 </Badge>
@@ -247,7 +235,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                     {contractor.approvedSectors.map((sector) => (
                                         <Badge 
                                             key={sector} 
-                                            className="bg-green-100 text-green-800 border-green-200"
+                                            className={getSectorConfig(sector).badgeClass}
                                         >
                                             {sector}
                                         </Badge>
@@ -261,7 +249,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                             <div>
                                 <p className="text-sm text-gray-600 mb-2">Grade</p>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-10 h-10 rounded-full bg-theme-green flex items-center justify-center text-white font-bold">
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-bold ${getGradeConfig(contractor.grade).badgeClass}`}>
                                         {contractor.grade}
                                     </div>
                                     <span className="text-base font-medium">Grade {contractor.grade}</span>
@@ -278,7 +266,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-600 mb-2">Current Status</p>
-                                <Badge className={getStatusColor(contractor.status)}>
+                                <Badge className={getStatusConfig(contractor.status).badgeClass}>
                                     <FaCheckCircle className="h-3 w-3" />
                                     <span className="capitalize">{contractor.status}</span>
                                 </Badge>

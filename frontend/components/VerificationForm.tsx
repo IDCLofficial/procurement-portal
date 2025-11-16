@@ -148,7 +148,7 @@ export default function VerificationForm() {
                             <Input
                                 id="registrationId"
                                 type="text"
-                                placeholder="e.g., IMO-CONT-2024-001"
+                                placeholder="e.g., IMO-CONT-XXXX-XXXXXXXXXXXX"
                                 value={registrationId}
                                 onChange={handleInputChange}
                                 className={`h-12 ${validationError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}

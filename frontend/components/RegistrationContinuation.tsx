@@ -11,6 +11,9 @@ import Step3Directors from '@/components/registration-steps/Step3Directors';
 import Step4BankDetails from '@/components/registration-steps/Step4BankDetails';
 import Step5Documents from '@/components/registration-steps/Step5Documents';
 import Step6CategoryGrade from '@/components/registration-steps/Step6CategoryGrade';
+import Step7PaymentSummary from '@/components/registration-steps/Step7PaymentSummary';
+import Step8ConfirmPayment from '@/components/registration-steps/Step8ConfirmPayment';
+import Step9Receipt from '@/components/registration-steps/Step9Receipt';
 import StepPlaceholder from '@/components/registration-steps/StepPlaceholder';
 import { FaTag } from 'react-icons/fa6';
 
@@ -148,6 +151,17 @@ export default function RegistrationContinuation() {
 
     const handleBankDetailsChange = (field: string, value: string) => {
         setBankDetails(prev => ({ ...prev, [field]: value }));
+    };
+
+    // Get registration fee based on selected grade
+    const getRegistrationFee = () => {
+        const fees: Record<string, number> = {
+            a: 150000,
+            b: 100000,
+            c: 70000,
+            d: 40000,
+        };
+        return fees[selectedGrade] || 0;
     };
 
     // Auto-fill helper for simulation mode
@@ -329,6 +343,44 @@ export default function RegistrationContinuation() {
                     />
                 );
             
+            case 7:
+                return (
+                    <Step7PaymentSummary
+                        companyName={formData.companyName}
+                        cacNumber={formData.cacNumber}
+                        selectedSectors={selectedSectors}
+                        selectedGrade={selectedGrade}
+                        registrationFee={getRegistrationFee()}
+                    />
+                );
+            
+            case 8:
+                return (
+                    <Step8ConfirmPayment
+                        companyName={formData.companyName}
+                        email={directors[0]?.email || ''}
+                        phone={directors[0]?.phone || ''}
+                        totalAmount={getRegistrationFee() + 5000 + 2500}
+                    />
+                );
+            
+            case 9:
+                return (
+                    <Step9Receipt
+                        transactionRef="TXN-1763132230729-YAR1NN5L9"
+                        dateTime={new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        paymentMethod="Paystack"
+                        companyName={formData.companyName}
+                        cacNumber={formData.cacNumber}
+                        contactPerson={directors[0]?.fullName || ''}
+                        email={directors[0]?.email || ''}
+                        registrationFee={getRegistrationFee()}
+                        processingFee={5000}
+                        certificateFee={2500}
+                        selectedGrade={selectedGrade}
+                    />
+                );
+            
             default:
                 return (
                     <StepPlaceholder 
@@ -462,6 +514,12 @@ export default function RegistrationContinuation() {
                                 ? 'Upload all required certificates and documents (PDF, PNG, or JPEG format)'
                                 : currentStep === 6
                                 ? 'Choose your sectors and classification grade'
+                                : currentStep === 7
+                                ? 'Review your registration details and fees'
+                                : currentStep === 8
+                                ? 'Please review and confirm your payment details'
+                                : currentStep === 9
+                                ? 'Your payment receipt and next steps'
                                 : `Complete step ${currentStep} of your registration`
                             }
                         </CardDescription>
@@ -496,7 +554,8 @@ export default function RegistrationContinuation() {
 
                         {renderStepContent()}
 
-                        {/* Navigation Buttons */}
+                        {/* Navigation Buttons - Hide on receipt page */}
+                        {currentStep !== 9 && (
                         <div className="flex justify-between mt-8 pt-6 border-t">
                             <Button
                                 variant="outline"
@@ -504,18 +563,25 @@ export default function RegistrationContinuation() {
                                 disabled={currentStep === 2}
                                 className="min-w-[100px]"
                             >
-                                Back
+                                {currentStep === 8 ? 'Back to Summary' : 'Back'}
                             </Button>
                             <Button
                                 onClick={handleContinue}
                                 className="bg-theme-green hover:bg-theme-green/90 min-w-[100px]"
                             >
-                                {currentStep === steps.length ? 'Complete' : 'Continue'}
+                                {currentStep === steps.length 
+                                    ? 'Complete' 
+                                    : currentStep === 8
+                                    ? 'Confirm & Pay Now'
+                                    : currentStep === 7 
+                                    ? 'Continue to Confirm' 
+                                    : 'Continue'}
                                 <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
                             </Button>
                         </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

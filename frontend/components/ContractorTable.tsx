@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,6 @@ export interface Contractor {
     id: string;
     name: string;
     rcbnNumber: string;
-    registrationId: string;
     sector: string;
     grade: string;
     lga: string;
@@ -166,7 +166,7 @@ export default function ContractorTable({
                                             <TableCell className="font-medium text-gray-600">{startIndex + index + 1}</TableCell>
                                             <TableCell className="font-medium">{contractor.name}</TableCell>
                                             <TableCell className="font-mono text-sm">{contractor.rcbnNumber}</TableCell>
-                                            <TableCell className="font-mono text-sm">{contractor.registrationId}</TableCell>
+                                            <TableCell className="font-mono text-sm">{contractor.id}</TableCell>
                                             <TableCell>
                                                 <Badge className={`${getSectorColor(contractor.sector)} text-xs uppercase`}>
                                                     {contractor.sector}
@@ -186,13 +186,15 @@ export default function ContractorTable({
                                             </TableCell>
                                             <TableCell className="text-sm">{contractor.expiryDate}</TableCell>
                                             <TableCell className="text-right">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="sm"
-                                                    className="cursor-pointer active:scale-95 transition-transform duration-300"
-                                                >
-                                                    View Details
-                                                </Button>
+                                                <Link href={`/contractor/${contractor.id}`}>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm"
+                                                        className="cursor-pointer active:scale-95 transition-transform duration-300"
+                                                    >
+                                                        View Details
+                                                    </Button>
+                                                </Link>
                                             </TableCell>
                                         </TableRow>
                                     ))}

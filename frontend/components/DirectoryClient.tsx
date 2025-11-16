@@ -39,7 +39,7 @@ export default function DirectoryClient({ initialContractors }: DirectoryClientP
                 (c) =>
                     c.name.toLowerCase().includes(queryLower) ||
                     c.rcbnNumber.toLowerCase().includes(queryLower) ||
-                    c.registrationId.toLowerCase().includes(queryLower)
+                    c.id.toLowerCase().includes(queryLower)
             );
         }
 
@@ -91,7 +91,7 @@ export default function DirectoryClient({ initialContractors }: DirectoryClientP
                 i + 1,
                 c.name,
                 c.rcbnNumber,
-                c.registrationId,
+                c.id,
                 c.sector,
                 c.grade,
                 c.lga,

@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FaSearch } from 'react-icons/fa';
 import { FaQrcode } from 'react-icons/fa6';
 import { toast } from 'sonner';
+import { getContractorById } from '@/lib/contractors';
 import VerificationResult from './VerificationResult';
 
 interface VerificationData {
@@ -30,11 +31,11 @@ export default function VerificationForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<VerificationData | null>(null);
 
-    // Validate registration ID format (e.g., IMO-CONT-2024-001)
+    // Validate registration ID format (e.g., IMO-CONT-AA9A-20FFB6510267)
     const validateFormat = (value: string): boolean => {
         if (!value.trim()) return false;
-        // Pattern: IMO-CONT-YYYY-XXX or similar format
-        const pattern = /^[A-Z]{2,4}-[A-Z]{2,4}-\d{4}-\d{3,4}$/i;
+        // Pattern: IMO-CONT-XXXX-XXXXXXXXXXXX (alphanumeric)
+        const pattern = /^[A-Z]{2,4}-[A-Z]{2,4}-[A-Z0-9]{4}-[A-Z0-9]{12}$/i;
         return pattern.test(value.trim());
     };
 
@@ -54,7 +55,7 @@ export default function VerificationForm() {
             return '';
         }
         if (!validateFormat(debouncedRegistrationId)) {
-            return 'Invalid format. Use: IMO-CONT-YYYY-XXX';
+            return 'Invalid format. Use: IMO-CONT-XXXX-XXXXXXXXXXXX';
         }
         return '';
     }, [debouncedRegistrationId]);
@@ -77,28 +78,55 @@ export default function VerificationForm() {
 
         setIsLoading(true);
         
-        // Simulate API call
+        // Simulate API call delay
         await new Promise((resolve) => setTimeout(resolve, 1500));
         
-        startTransition(() => {
-            // Mock successful verification
-            const mockResult: VerificationData = {
-                contractorName: 'ABC Construction Ltd',
-                registrationId: debouncedRegistrationId,
-                rcbnNumber: 'RC1234567',
-                grade: 'Grade A',
-                lga: 'Owerri Municipal',
-                status: 'Approved',
-                validUntil: '31 December 2025',
-                category: 'Building Construction',
+        startTransition(async () => {
+            // Fetch contractor by ID from mock data
+            const contractor = await getContractorById(debouncedRegistrationId.trim());
+            
+            if (!contractor) {
+                setIsLoading(false);
+                setResult(null);
+                toast.error('Certificate Not Found', {
+                    description: 'No contractor found with this registration ID',
+                    duration: 3000,
+                });
+                return;
+            }
+            
+            // Map contractor data to verification result
+            const verificationResult: VerificationData = {
+                contractorName: contractor.name,
+                registrationId: contractor.id,
+                rcbnNumber: contractor.rcbnNumber,
+                grade: `Grade ${contractor.grade}`,
+                lga: contractor.lga,
+                status: contractor.status.charAt(0).toUpperCase() + contractor.status.slice(1),
+                validUntil: contractor.expiryDate,
+                category: contractor.category,
             };
             
-            setResult(mockResult);
+            setResult(verificationResult);
             setIsLoading(false);
-            toast.success('Certificate Verified', {
-                description: `${mockResult.contractorName} - Registration confirmed`,
-                duration: 3000,
-            });
+            
+            // Show appropriate toast based on status
+            if (contractor.status === 'approved') {
+                toast.success('Certificate Verified', {
+                    description: `${contractor.name} - Registration confirmed`,
+                    duration: 3000,
+                });
+            } else if (contractor.status === 'pending') {
+                toast.warning('Pending Verification', {
+                    description: `${contractor.name} - Registration pending approval`,
+                    duration: 3000,
+                });
+            } else if (contractor.status === 'suspended') {
+                toast.error('Suspended Contractor', {
+                    description: `${contractor.name} - Registration suspended`,
+                    duration: 3000,
+                });
+            }
         });
     };
 
@@ -134,7 +162,7 @@ export default function VerificationForm() {
                                 </p>
                             ) : (
                                 <p id="registrationId-help" className="text-xs text-gray-500">
-                                    Supported format: <span className="font-mono">IMO-CONT-YYYY-XXX</span>
+                                    Supported format: <span className="font-mono">IMO-CONT-XXXX-XXXXXXXXXXXX</span>
                                 </p>
                             )}
                         </div>
@@ -169,7 +197,7 @@ export default function VerificationForm() {
                 {result && (
                     <VerificationResult
                         contractorName={result.contractorName}
-                        registrationId={result.registrationId}
+                        id={result.registrationId}
                         rcbnNumber={result.rcbnNumber}
                         grade={result.grade}
                         lga={result.lga}

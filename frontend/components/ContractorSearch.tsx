@@ -52,9 +52,9 @@ export default function ContractorSearch({ onSearch }: ContractorSearchProps) {
                 </div>
 
                 {/* Filter Dropdowns */}
-                <div className="flex gap-4">
+                <div className="flex gap-4 flex-wrap">
                     {/* Sector */}
-                    <div className="space-y-2 flex-1">
+                    <div className="space-y-2 flex-1 min-w-64">
                         <label className="text-sm font-medium text-gray-700">Sector</label>
                         <Select value={filters.sector} onValueChange={(value) => handleFilterChange('sector', value)}>
                             <SelectTrigger className="h-10 w-full">
@@ -70,7 +70,7 @@ export default function ContractorSearch({ onSearch }: ContractorSearchProps) {
                     </div>
 
                     {/* Grade */}
-                    <div className="space-y-2 flex-1">
+                    <div className="space-y-2 flex-1 min-w-64">
                         <label className="text-sm font-medium text-gray-700">Grade</label>
                         <Select value={filters.grade} onValueChange={(value) => handleFilterChange('grade', value)}>
                             <SelectTrigger className="h-10 w-full">
@@ -86,7 +86,7 @@ export default function ContractorSearch({ onSearch }: ContractorSearchProps) {
                     </div>
 
                     {/* LGA */}
-                    <div className="space-y-2 flex-1">
+                    <div className="space-y-2 flex-1 min-w-64">
                         <label className="text-sm font-medium text-gray-700">LGA</label>
                         <Select value={filters.lga} onValueChange={(value) => handleFilterChange('lga', value)}>
                             <SelectTrigger className="h-10 w-full">
@@ -103,7 +103,7 @@ export default function ContractorSearch({ onSearch }: ContractorSearchProps) {
                     </div>
 
                     {/* Status */}
-                    <div className="space-y-2 flex-1">
+                    <div className="space-y-2 flex-1 min-w-64">
                         <label className="text-sm font-medium text-gray-700">Status</label>
                         <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
                             <SelectTrigger className="h-10 w-full">

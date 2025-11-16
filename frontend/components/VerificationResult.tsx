@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FaCheckCircle, FaFileAlt } from 'react-icons/fa';
+import Link from 'next/link';
 
 interface VerificationResultProps {
     contractorName: string;
-    registrationId: string;
+    id: string;
     rcbnNumber: string;
     grade: string;
     lga: string;
@@ -18,7 +19,7 @@ interface VerificationResultProps {
 
 export default function VerificationResult({
     contractorName,
-    registrationId,
+    id,
     rcbnNumber,
     grade,
     lga,
@@ -49,7 +50,7 @@ export default function VerificationResult({
                     </div>
                     <div>
                         <p className="text-xs text-gray-600 mb-1">Registration ID</p>
-                        <p className="font-semibold text-gray-900">{registrationId}</p>
+                        <p className="font-semibold text-gray-900">{id}</p>
                     </div>
                     <div>
                         <p className="text-xs text-gray-600 mb-1">RC/BN Number</p>
@@ -82,10 +83,12 @@ export default function VerificationResult({
 
                 <hr />
 
-                <Button variant="outline" className="w-full cursor-pointer active:scale-95 transition-transform duration-300">
-                    <FaFileAlt className="mr-2" />
-                    View Full Profile
-                </Button>
+                <Link href={`/contractor/${id}`}>
+                    <Button variant="outline" className="w-full cursor-pointer active:scale-95 transition-transform duration-300">
+                        <FaFileAlt className="mr-2" />
+                        View Full Profile
+                    </Button>
+                </Link>
             </CardContent>
         </Card>
     );

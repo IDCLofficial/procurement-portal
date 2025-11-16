@@ -1,53 +1,19 @@
 import Header from '@/components/Header';
 import DirectoryClient from '@/components/DirectoryClient';
-import { Contractor } from '@/components/ContractorTable';
+import { getContractors } from '@/lib/contractors';
 import { FaQrcode } from 'react-icons/fa6';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 
-// Mock data
-const mockContractors: Contractor[] = [
-    {
-        id: '1',
-        name: 'ABC Construction Ltd',
-        rcbnNumber: 'RC1234567',
-        registrationId: 'IMO-CONT-2024-001',
-        sector: 'WORKS',
-        grade: 'A',
-        lga: 'Owerri Municipal',
-        status: 'approved',
-        expiryDate: '31 Dec 2025',
+export const metadata: Metadata = {
+    title: 'Public Contractor Directory - Imo State',
+    description: 'Search and verify approved contractors registered with the Imo State Bureau of Public Private Partnerships & Investments (BPPPI)',
+    openGraph: {
+        title: 'Public Contractor Directory',
+        description: 'Search and verify approved contractors in Imo State',
     },
-    {
-        id: '2',
-        name: 'XYZ Supplies Nigeria',
-        rcbnNumber: 'RC7654321',
-        registrationId: 'IMO-CONT-2024-002',
-        sector: 'SUPPLIES',
-        grade: 'B',
-        lga: 'Orlu',
-        status: 'approved',
-        expiryDate: '30 Nov 2025',
-    },
-    {
-        id: '3',
-        name: 'Prime Services International',
-        rcbnNumber: 'RC3456789',
-        registrationId: 'IMO-CONT-2024-003',
-        sector: 'SERVICES',
-        grade: 'A',
-        lga: 'Owerri North',
-        status: 'approved',
-        expiryDate: '15 Oct 2025',
-    },
-];
-
-// Fetch contractors data (Server Component)
-async function getContractors(): Promise<Contractor[]> {
-    // In production, this would be an API call
-    // For now, return mock data
-    return mockContractors;
-}
+};
 
 export default async function DirectoryPage() {
     // Fetch data on the server

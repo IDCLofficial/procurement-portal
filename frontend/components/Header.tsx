@@ -18,7 +18,7 @@ export default function Header({
 }) {
     return (
         <header className="sticky top-0 z-50 border-b bg-white shadow-lg shadow-black/5">
-            <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="container mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-5">
                 <div className="flex items-center gap-3">
                     {hasBackButton && (
                         <Link href="/">

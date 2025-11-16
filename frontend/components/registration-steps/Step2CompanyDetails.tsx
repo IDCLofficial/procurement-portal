@@ -2,85 +2,114 @@
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Step2CompanyDetailsProps {
     formData: {
         companyName: string;
-        rcNumber: string;
+        cacNumber: string;
         tinNumber: string;
         address: string;
-        city: string;
-        state: string;
+        lga: string;
+        website: string;
     };
     onInputChange: (field: string, value: string) => void;
+    onContinue?: () => void;
 }
+
+const imoLGAs = [
+    'Aboh Mbaise', 'Ahiazu Mbaise', 'Ehime Mbano', 'Ezinihitte', 'Ideato North',
+    'Ideato South', 'Ihitte/Uboma', 'Ikeduru', 'Isiala Mbano', 'Isu',
+    'Mbaitoli', 'Ngor Okpala', 'Njaba', 'Nkwerre', 'Nwangele',
+    'Obowo', 'Oguta', 'Ohaji/Egbema', 'Okigwe', 'Onuimo',
+    'Orlu', 'Orsu', 'Oru East', 'Oru West', 'Owerri Municipal',
+    'Owerri North', 'Owerri West'
+];
 
 export default function Step2CompanyDetails({ formData, onInputChange }: Step2CompanyDetailsProps) {
     return (
-        <div className="space-y-4">
+        <div className="space-y-5">
+            {/* Legal Company Name */}
             <div>
-                <Label htmlFor="companyName">Company Name</Label>
+                <Label htmlFor="companyName">Legal Company Name <span className="text-red-500">*</span></Label>
                 <Input
                     id="companyName"
-                    placeholder="ABC Construction Ltd"
+                    placeholder="ABC Construction Limited"
                     value={formData.companyName}
                     onChange={(e) => onInputChange('companyName', e.target.value)}
                     className="mt-1.5"
+                    required
                 />
             </div>
 
+            {/* CAC Number and TIN */}
             <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                    <Label htmlFor="rcNumber">RC/BN Number</Label>
+                    <Label htmlFor="cacNumber">CAC Number <span className="text-red-500">*</span></Label>
                     <Input
-                        id="rcNumber"
+                        id="cacNumber"
                         placeholder="RC1234567"
-                        value={formData.rcNumber}
-                        onChange={(e) => onInputChange('rcNumber', e.target.value)}
+                        value={formData.cacNumber}
+                        onChange={(e) => onInputChange('cacNumber', e.target.value)}
                         className="mt-1.5"
+                        required
                     />
                 </div>
                 <div>
-                    <Label htmlFor="tinNumber">TIN Number</Label>
+                    <Label htmlFor="tinNumber">TIN <span className="text-red-500">*</span></Label>
                     <Input
                         id="tinNumber"
                         placeholder="TIN-12345678"
                         value={formData.tinNumber}
                         onChange={(e) => onInputChange('tinNumber', e.target.value)}
                         className="mt-1.5"
+                        required
                     />
                 </div>
             </div>
 
+            {/* Business Address */}
             <div>
-                <Label htmlFor="address">Company Address</Label>
-                <Input
+                <Label htmlFor="address">Business Address <span className="text-red-500">*</span></Label>
+                <Textarea
                     id="address"
-                    placeholder="123 Main Street"
+                    placeholder="Street address, city"
                     value={formData.address}
                     onChange={(e) => onInputChange('address', e.target.value)}
-                    className="mt-1.5"
+                    className="mt-1.5 min-h-[80px]"
+                    required
                 />
             </div>
 
+            {/* LGA and Website */}
             <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                    <Label htmlFor="city">City/LGA</Label>
-                    <Input
-                        id="city"
-                        placeholder="Owerri"
-                        value={formData.city}
-                        onChange={(e) => onInputChange('city', e.target.value)}
-                        className="mt-1.5"
-                    />
+                    <Label htmlFor="lga">LGA <span className="text-red-500">*</span></Label>
+                    <Select
+                        value={formData.lga}
+                        onValueChange={(value) => onInputChange('lga', value)}
+                    >
+                        <SelectTrigger className="mt-1.5 w-full">
+                            <SelectValue placeholder="Select LGA" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {imoLGAs.map((lga) => (
+                                <SelectItem key={lga} value={lga}>
+                                    {lga}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
                 <div>
-                    <Label htmlFor="state">State</Label>
+                    <Label htmlFor="website">Website (Optional)</Label>
                     <Input
-                        id="state"
-                        placeholder="Imo State"
-                        value={formData.state}
-                        onChange={(e) => onInputChange('state', e.target.value)}
+                        id="website"
+                        type="url"
+                        placeholder="www.abcconstruction.com"
+                        value={formData.website}
+                        onChange={(e) => onInputChange('website', e.target.value)}
                         className="mt-1.5"
                     />
                 </div>

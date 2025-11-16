@@ -1,12 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import type { DocumentRequirement } from '@/types/registration';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FaUser, FaCheckCircle, FaBuilding, FaUsers, FaUniversity, FaFileAlt, FaMoneyBill, FaCreditCard, FaReceipt } from 'react-icons/fa';
 import { toast } from 'sonner';
 import Step2CompanyDetails from '@/components/registration-steps/Step2CompanyDetails';
+import Step3Directors from '@/components/registration-steps/Step3Directors';
+import Step4BankDetails from '@/components/registration-steps/Step4BankDetails';
+import Step5Documents from '@/components/registration-steps/Step5Documents';
+import Step6CategoryGrade from '@/components/registration-steps/Step6CategoryGrade';
 import StepPlaceholder from '@/components/registration-steps/StepPlaceholder';
 import { FaTag } from 'react-icons/fa6';
 
@@ -22,32 +26,238 @@ const steps = [
     { id: 9, name: 'Receipt', icon: FaReceipt, description: 'Receipt', completed: false },
 ];
 
-interface RegistrationContinuationProps {
-    token: string;
-}
 
-export default function RegistrationContinuation({ token }: RegistrationContinuationProps) {
-    const router = useRouter();
+export default function RegistrationContinuation() {
     const [currentStep, setCurrentStep] = useState(2); // Start from step 2
     const [formData, setFormData] = useState({
         // Step 2: Company Details
         companyName: '',
-        rcNumber: '',
+        cacNumber: '',
         tinNumber: '',
         address: '',
-        city: '',
-        state: '',
+        lga: '',
+        website: '',
     });
+
+    // Step 3: Directors
+    const [directors, setDirectors] = useState([
+        {
+            id: '1',
+            fullName: '',
+            phone: '',
+            email: '',
+            documentType: '',
+            documentValue: '',
+        }
+    ]);
+
+    // Step 4: Bank Details (Optional)
+    const [bankDetails, setBankDetails] = useState({
+        bankName: '',
+        accountNumber: '',
+        accountName: '',
+    });
+
+    // Step 6: Category & Grade
+    const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
+    const [selectedGrade, setSelectedGrade] = useState<string>('');
+
+    // Step 5: Documents (Mock data - will come from API)
+    const [documents, setDocuments] = useState<DocumentRequirement[]>([
+        {
+            id: 'cac',
+            name: 'CAC Incorporation Certificate',
+            required: true,
+            hasValidityPeriod: false,
+            uploaded: false,
+            validFrom: '',
+            validTo: '',
+        },
+        {
+            id: 'tcc',
+            name: 'Tax Clearance Certificate (TCC)',
+            required: true,
+            validFor: '1 year',
+            hasValidityPeriod: true,
+            uploaded: false,
+            validFrom: '',
+            validTo: '',
+        },
+        {
+            id: 'pencom',
+            name: 'PENCOM Compliance Certificate',
+            required: true,
+            validFor: '1 year',
+            hasValidityPeriod: true,
+            uploaded: false,
+            validFrom: '',
+            validTo: '',
+        },
+        {
+            id: 'itf',
+            name: 'ITF Certificate',
+            required: true,
+            validFor: '1 year',
+            hasValidityPeriod: true,
+            uploaded: false,
+            validFrom: '',
+            validTo: '',
+        },
+        {
+            id: 'nsitf',
+            name: 'NSITF Certificate',
+            required: true,
+            validFor: '1 year',
+            hasValidityPeriod: true,
+            uploaded: false,
+            validFrom: '',
+            validTo: '',
+        },
+        {
+            id: 'sworn-affidavit',
+            name: 'Sworn Affidavit of Authenticity',
+            required: true,
+            hasValidityPeriod: false,
+            uploaded: false,
+            validFrom: '',
+            validTo: '',
+        },
+        {
+            id: 'bank-reference',
+            name: 'Bank Reference Letter',
+            required: false,
+            hasValidityPeriod: false,
+            uploaded: false,
+            validFrom: '',
+            validTo: '',
+        },
+        {
+            id: 'past-projects',
+            name: 'Past Project References',
+            required: false,
+            hasValidityPeriod: false,
+            uploaded: false,
+            validFrom: '',
+            validTo: '',
+        },
+    ]);
 
     const handleInputChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    const handleBankDetailsChange = (field: string, value: string) => {
+        setBankDetails(prev => ({ ...prev, [field]: value }));
+    };
+
+    // Auto-fill helper for simulation mode
+    const autoFillCurrentStep = () => {
+        if (currentStep === 2) {
+            setFormData({
+                companyName: 'ABC Construction Limited',
+                cacNumber: 'RC123456',
+                tinNumber: '12345678-0001',
+                address: '123 Main Street, Victoria Island',
+                lga: 'Lagos Island',
+                website: 'https://www.abcconstruction.com',
+            });
+            toast.success('Step 2 auto-filled');
+        } else if (currentStep === 3) {
+            setDirectors([
+                {
+                    id: '1',
+                    fullName: 'John Doe',
+                    phone: '08012345678',
+                    email: 'john.doe@example.com',
+                    documentType: 'NIN',
+                    documentValue: '12345678901',
+                },
+                {
+                    id: '2',
+                    fullName: 'Jane Smith',
+                    phone: '08087654321',
+                    email: 'jane.smith@example.com',
+                    documentType: 'BVN',
+                    documentValue: '22334455667',
+                },
+            ]);
+            toast.success('Step 3 auto-filled');
+        } else if (currentStep === 4) {
+            setBankDetails({
+                bankName: 'First Bank of Nigeria',
+                accountNumber: '1234567890',
+                accountName: 'ABC Construction Limited',
+            });
+            toast.success('Step 4 auto-filled');
+        } else if (currentStep === 5) {
+            // Mark all documents as uploaded
+            const autoFilledDocs = documents.map(doc => ({
+                ...doc,
+                uploaded: true,
+                fileName: `${doc.id}_sample.pdf`,
+                fileSize: '245.67 KB',
+                uploadedDate: new Date().toISOString().split('T')[0],
+                fileType: 'application/pdf',
+                validFrom: doc.hasValidityPeriod ? '2024-01-01' : '',
+                validTo: doc.hasValidityPeriod ? '2025-01-01' : '',
+            }));
+            setDocuments(autoFilledDocs);
+            toast.success('Step 5 auto-filled - All documents marked as uploaded');
+        } else if (currentStep === 6) {
+            setSelectedSectors(['services', 'supplies']);
+            setSelectedGrade('b');
+            toast.success('Step 6 auto-filled');
+        } else {
+            toast.info('No auto-fill available for this step');
+        }
+    };
+
     const handleContinue = async () => {
         // Validate current step
         if (currentStep === 2) {
-            if (!formData.companyName || !formData.rcNumber) {
-                toast.error('Please fill in required fields');
+            if (!formData.companyName || !formData.cacNumber || !formData.tinNumber || !formData.address || !formData.lga) {
+                toast.error('Please fill in all required fields');
+                return;
+            }
+        }
+
+        if (currentStep === 3) {
+            // Validate all directors have required fields
+            const hasEmptyFields = directors.some(
+                d => !d.fullName || !d.phone || !d.email || !d.documentType || !d.documentValue
+            );
+            if (hasEmptyFields) {
+                toast.error('Please fill in all director information');
+                return;
+            }
+        }
+
+        if (currentStep === 5) {
+            // Validate all required documents are uploaded
+            const requiredDocs = documents.filter(d => d.required);
+            const missingDocs = requiredDocs.filter(d => !d.uploaded);
+            if (missingDocs.length > 0) {
+                toast.error('Please upload all required documents');
+                return;
+            }
+            
+            // Validate validity periods for uploaded documents
+            const docsWithValidity = documents.filter(d => d.uploaded && d.hasValidityPeriod);
+            const missingValidity = docsWithValidity.filter(d => !d.validFrom || !d.validTo);
+            if (missingValidity.length > 0) {
+                toast.error('Please provide validity dates for all applicable documents');
+                return;
+            }
+        }
+
+        if (currentStep === 6) {
+            // Validate sectors and grade selection
+            if (selectedSectors.length === 0) {
+                toast.error('Please select at least one sector');
+                return;
+            }
+            if (!selectedGrade) {
+                toast.error('Please select a grade');
                 return;
             }
         }
@@ -75,13 +285,47 @@ export default function RegistrationContinuation({ token }: RegistrationContinua
                     <Step2CompanyDetails
                         formData={{
                             companyName: formData.companyName,
-                            rcNumber: formData.rcNumber,
+                            cacNumber: formData.cacNumber,
                             tinNumber: formData.tinNumber,
                             address: formData.address,
-                            city: formData.city,
-                            state: formData.state,
+                            lga: formData.lga,
+                            website: formData.website,
                         }}
                         onInputChange={handleInputChange}
+                    />
+                );
+            
+            case 3:
+                return (
+                    <Step3Directors
+                        directors={directors}
+                        onDirectorsChange={setDirectors}
+                    />
+                );
+            
+            case 4:
+                return (
+                    <Step4BankDetails
+                        formData={bankDetails}
+                        onInputChange={handleBankDetailsChange}
+                    />
+                );
+            
+            case 5:
+                return (
+                    <Step5Documents
+                        documents={documents}
+                        onDocumentsChange={setDocuments}
+                    />
+                );
+            
+            case 6:
+                return (
+                    <Step6CategoryGrade
+                        selectedSectors={selectedSectors}
+                        selectedGrade={selectedGrade}
+                        onSectorsChange={setSelectedSectors}
+                        onGradeChange={setSelectedGrade}
                     />
                 );
             
@@ -210,11 +454,46 @@ export default function RegistrationContinuation({ token }: RegistrationContinua
                         <CardDescription>
                             {currentStep === 2
                                 ? 'Provide your company registration details'
+                                : currentStep === 3
+                                ? 'Add information for all company directors'
+                                : currentStep === 4
+                                ? 'Add bank information for future transactions'
+                                : currentStep === 5
+                                ? 'Upload all required certificates and documents (PDF, PNG, or JPEG format)'
+                                : currentStep === 6
+                                ? 'Choose your sectors and classification grade'
                                 : `Complete step ${currentStep} of your registration`
                             }
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
+                        {/* Auto-fill Helper (Simulation Mode Only) */}
+                        {process.env.NEXT_PUBLIC_ENV === 'sim' && currentStep >= 2 && currentStep <= 6 && (
+                            <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-yellow-600 text-lg">⚡</span>
+                                        <div>
+                                            <p className="text-sm font-semibold text-yellow-900">
+                                                Simulation Mode - Quick Fill
+                                            </p>
+                                            <p className="text-xs text-yellow-700">
+                                                Auto-fill this step with sample data
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        onClick={autoFillCurrentStep}
+                                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                                        size="sm"
+                                    >
+                                        Fill Step {currentStep}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
                         {renderStepContent()}
 
                         {/* Navigation Buttons */}

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash, FaKey } from 'react-icons/fa';
 import { useDebounce } from '@/hooks/useDebounce';
 
 interface Step1AccountProps {
@@ -30,6 +30,35 @@ interface PasswordStrength {
 export default function Step1Account({ formData, onInputChange, onContinue }: Step1AccountProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // Generate strong password
+    const generatePassword = () => {
+        const length = 16;
+        const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        const numbers = '0123456789';
+        const special = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+        const allChars = uppercase + lowercase + numbers + special;
+        
+        let password = '';
+        // Ensure at least one of each type
+        password += uppercase[Math.floor(Math.random() * uppercase.length)];
+        password += lowercase[Math.floor(Math.random() * lowercase.length)];
+        password += numbers[Math.floor(Math.random() * numbers.length)];
+        password += special[Math.floor(Math.random() * special.length)];
+        
+        // Fill the rest randomly
+        for (let i = password.length; i < length; i++) {
+            password += allChars[Math.floor(Math.random() * allChars.length)];
+        }
+        
+        // Shuffle the password
+        password = password.split('').sort(() => Math.random() - 0.5).join('');
+        
+        onInputChange('password', password);
+        onInputChange('confirmPassword', password);
+        setShowPassword(true);
+    };
     
     // Debounced values for validation
     const debouncedEmail = useDebounce(formData.email, 500);
@@ -205,8 +234,20 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
 
             {/* Password */}
             <div>
-                <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
-                <div className="relative mt-1.5">
+                <div className="flex items-center justify-between mb-1.5">
+                    <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={generatePassword}
+                        className="h-7 text-xs text-theme-green hover:text-theme-green/80 hover:bg-green-50"
+                    >
+                        <FaKey className="mr-1" />
+                        Generate Password
+                    </Button>
+                </div>
+                <div className="relative">
                     <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}

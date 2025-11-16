@@ -74,7 +74,7 @@ export default function LandingPage() {
                                 </li>
                             </ul>
 
-                            <div className="space-y-2">
+                            <div className="grid gap-y-2">
                                 <Link href="/register">
                                     <Button className="w-full bg-theme-green hover:bg-emerald-700 cursor-pointer active:scale-95 transition-transform duration-300">
                                         Register Your Company

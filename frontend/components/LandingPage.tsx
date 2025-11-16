@@ -120,11 +120,13 @@ export default function LandingPage() {
                                 </li>
                             </ul>
 
-                            <div className="space-y-2">
-                                <Button variant="outline" className="w-full cursor-pointer active:scale-95 transition-transform duration-300">
-                                    <FaSearch className="mr-2" />
-                                    Search Directory
-                                </Button>
+                            <div className="grid gap-y-2">
+                                <Link href="/directory">
+                                    <Button variant="outline" className="w-full cursor-pointer active:scale-95 transition-transform duration-300">
+                                        <FaSearch className="mr-2" />
+                                        Search Directory
+                                    </Button>
+                                </Link>
                                 <Link href="/verify-certificate">
                                     <Button variant="outline" className="w-full cursor-pointer active:scale-95 transition-transform duration-300">
                                         Verify Certificate

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition, useMemo } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,25 +24,67 @@ interface VerificationData {
 
 export default function VerificationForm() {
     const [registrationId, setRegistrationId] = useState('');
-    const [isVerifying, setIsVerifying] = useState(false);
+    // Debounced value for validation after user stops typing
+    const debouncedRegistrationId = useDebounce(registrationId, 500);
+    const [isPending, startTransition] = useTransition();
+    const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<VerificationData | null>(null);
+
+    // Validate registration ID format (e.g., IMO-CONT-2024-001)
+    const validateFormat = (value: string): boolean => {
+        if (!value.trim()) return false;
+        // Pattern: IMO-CONT-YYYY-XXX or similar format
+        const pattern = /^[A-Z]{2,4}-[A-Z]{2,4}-\d{4}-\d{3,4}$/i;
+        return pattern.test(value.trim());
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setRegistrationId(value);
+        
+        // Clear result when user types
+        if (result) {
+            setResult(null);
+        }
+    };
+
+    // Compute validation error using debounced value (after user stops typing)
+    const validationError = useMemo(() => {
+        if (!debouncedRegistrationId.trim()) {
+            return '';
+        }
+        if (!validateFormat(debouncedRegistrationId)) {
+            return 'Invalid format. Use: IMO-CONT-YYYY-XXX';
+        }
+        return '';
+    }, [debouncedRegistrationId]);
+
+    // Check if form is valid
+    const isFormValid = debouncedRegistrationId.trim() && validateFormat(debouncedRegistrationId) && !validationError;
 
     const handleVerify = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!registrationId.trim()) {
+        if (!debouncedRegistrationId.trim()) {
             toast.error('Please enter a registration ID');
             return;
         }
+        
+        if (!validateFormat(debouncedRegistrationId)) {
+            toast.error('Invalid registration ID format');
+            return;
+        }
 
-        setIsVerifying(true);
+        setIsLoading(true);
         
         // Simulate API call
-        setTimeout(() => {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        
+        startTransition(() => {
             // Mock successful verification
             const mockResult: VerificationData = {
                 contractorName: 'ABC Construction Ltd',
-                registrationId: registrationId,
+                registrationId: debouncedRegistrationId,
                 rcbnNumber: 'RC1234567',
                 grade: 'Grade A',
                 lga: 'Owerri Municipal',
@@ -51,9 +94,12 @@ export default function VerificationForm() {
             };
             
             setResult(mockResult);
-            setIsVerifying(false);
-            toast.success('Certificate verified successfully!');
-        }, 1500);
+            setIsLoading(false);
+            toast.success('Certificate Verified', {
+                description: `${mockResult.contractorName} - Registration confirmed`,
+                duration: 3000,
+            });
+        });
     };
 
     return (
@@ -76,21 +122,30 @@ export default function VerificationForm() {
                                 type="text"
                                 placeholder="e.g., IMO-CONT-2024-001"
                                 value={registrationId}
-                                onChange={(e) => setRegistrationId(e.target.value)}
-                                className="h-12"
+                                onChange={handleInputChange}
+                                className={`h-12 ${validationError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                                autoComplete="off"
+                                aria-invalid={!!validationError}
+                                aria-describedby="registrationId-error registrationId-help"
                             />
-                            <p className="text-xs text-gray-500">
-                                Enter the registration ID found on the contractor&apos;s certificate
-                            </p>
+                            {validationError ? (
+                                <p id="registrationId-error" className="text-xs text-red-600 font-medium">
+                                    {validationError}
+                                </p>
+                            ) : (
+                                <p id="registrationId-help" className="text-xs text-gray-500">
+                                    Supported format: <span className="font-mono">IMO-CONT-YYYY-XXX</span>
+                                </p>
+                            )}
                         </div>
 
                         <Button
                             type="submit"
-                            disabled={isVerifying}
+                            disabled={!isFormValid || isLoading || isPending}
                             className="w-full h-12 bg-theme-green hover:bg-theme-green/90 cursor-pointer active:scale-95 transition-transform duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <FaSearch className="mr-2" />
-                            {isVerifying ? 'Verifying...' : 'Verify Certificate'}
+                            {(isLoading || isPending) ? 'Verifying...' : 'Verify Certificate'}
                         </Button>
 
                         {/* Info Alert */}
@@ -108,18 +163,22 @@ export default function VerificationForm() {
             </Card>
 
             {/* Verification Result */}
-            {result && (
-                <VerificationResult
-                    contractorName={result.contractorName}
-                    registrationId={result.registrationId}
-                    rcbnNumber={result.rcbnNumber}
-                    grade={result.grade}
-                    lga={result.lga}
-                    status={result.status}
-                    validUntil={result.validUntil}
-                    category={result.category}
-                />
-            )}
+            <div className={`transition-all duration-500 ease-in-out ${
+                result ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 h-0 overflow-hidden'
+            }`}>
+                {result && (
+                    <VerificationResult
+                        contractorName={result.contractorName}
+                        registrationId={result.registrationId}
+                        rcbnNumber={result.rcbnNumber}
+                        grade={result.grade}
+                        lga={result.lga}
+                        status={result.status}
+                        validUntil={result.validUntil}
+                        category={result.category}
+                    />
+                )}
+            </div>
 
             {/* Additional Information */}
             <div className="mt-8 text-center">

@@ -30,7 +30,19 @@ export default function RootLayout({
                 className={`${geistSans.variable} ${geistMono.variable} antialiased satoshi-font`}
             >
                 <StoreProvider>{children}</StoreProvider>
-                <Toaster />
+                <Toaster 
+                    position="top-center"
+                    expand={true}
+                    richColors
+                    toastOptions={{
+                        style: {
+                            padding: '16px 24px',
+                            fontSize: '12px',
+                            minHeight: '60px',
+                        },
+                        className: 'text-base',
+                    }}
+                />
             </body>
         </html>
     );

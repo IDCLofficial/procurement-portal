@@ -75,10 +75,12 @@ export default function LandingPage() {
                             </ul>
 
                             <div className="space-y-2">
-                                <Button className="w-full bg-theme-green hover:bg-emerald-700 cursor-pointer active:scale-95 transition-transform duration-300">
-                                    Register Your Company
-                                    <FaArrowRight className="ml-2" />
-                                </Button>
+                                <Link href="/register">
+                                    <Button className="w-full bg-theme-green hover:bg-emerald-700 cursor-pointer active:scale-95 transition-transform duration-300">
+                                        Register Your Company
+                                        <FaArrowRight className="ml-2" />
+                                    </Button>
+                                </Link>
                                 <Button variant="outline" className="w-full cursor-pointer active:scale-95 transition-transform duration-300">
                                     Vendor Login
                                 </Button>

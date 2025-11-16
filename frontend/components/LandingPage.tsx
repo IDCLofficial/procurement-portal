@@ -32,11 +32,11 @@ export default function LandingPage() {
                     Secure, Transparent & Efficient
                 </Badge>
 
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-4">
                     Welcome to Imo State E-Procurement Platform
                 </h2>
 
-                <p className="text-gray-600 max-w-3xl mx-auto text-lg mb-12">
+                <p className="text-gray-600 max-w-3xl mx-auto sm:text-lg text-base mb-12">
                     A comprehensive digital platform for contractor registration, renewal, and verification. Built to
                     ensure transparency, compliance, and efficiency in public procurement.
                 </p>
@@ -49,12 +49,12 @@ export default function LandingPage() {
                             <div className="w-12 h-12 bg-theme-green rounded-lg flex items-center justify-center mb-4">
                                 <FaBuilding className="text-white text-xl" />
                             </div>
-                            <CardTitle className="text-xl">Vendor Registration</CardTitle>
+                            <CardTitle className="sm:text-xl text-lg">Vendor Registration</CardTitle>
                             <CardDescription>
                                 Register your company and manage contractor credentials
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className='-mt-5'>
                             <ul className="space-y-3 mb-6">
                                 <li className="flex items-start gap-2 text-sm text-gray-600">
                                     <FaCheckCircle className="text-theme-green mt-0.5 shrink-0" />
@@ -95,12 +95,12 @@ export default function LandingPage() {
                             <div className="w-12 h-12 bg-theme-green rounded-lg flex items-center justify-center mb-4">
                                 <FaSearch className="text-white text-xl" />
                             </div>
-                            <CardTitle className="text-xl">Public Directory</CardTitle>
+                            <CardTitle className="sm:text-xl text-lg">Public Directory</CardTitle>
                             <CardDescription>
                                 Search and verify registered contractors
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className='-mt-5'>
                             <ul className="space-y-3 mb-6">
                                 <li className="flex items-start gap-2 text-sm text-gray-600">
                                     <FaCheckCircle className="text-theme-green mt-0.5 shrink-0" />
@@ -145,8 +145,8 @@ export default function LandingPage() {
             <section className="bg-gray-50 py-16">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Platform Features</h3>
-                        <p className="text-gray-600">Comprehensive tools for efficient procurement management</p>
+                        <h3 className="sm:text-2xl text-lg font-bold text-gray-900 mb-2">Platform Features</h3>
+                        <p className="text-gray-600 sm:text-base text-sm">Comprehensive tools for efficient procurement management</p>
                     </div>
 
                     <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
@@ -156,9 +156,9 @@ export default function LandingPage() {
                                 <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <FaFileAlt className="text-theme-green text-xl" />
                                 </div>
-                                <CardTitle className="text-lg">Digital Documents</CardTitle>
+                                <CardTitle className="sm:text-lg text-base">Digital Documents</CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className='-mt-5'>
                                 <p className="text-sm text-gray-600">
                                     Secure upload and storage of compliance certificates
                                 </p>
@@ -171,9 +171,9 @@ export default function LandingPage() {
                                 <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <FaCog className="text-theme-green text-xl" />
                                 </div>
-                                <CardTitle className="text-lg">Automated Workflow</CardTitle>
+                                <CardTitle className="sm:text-lg text-base">Automated Workflow</CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className='-mt-5'>
                                 <p className="text-sm text-gray-600">
                                     Streamlined approval process with SLA tracking
                                 </p>
@@ -186,9 +186,9 @@ export default function LandingPage() {
                                 <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <FaShieldAlt className="text-theme-green text-xl" />
                                 </div>
-                                <CardTitle className="text-lg">Secure Payments</CardTitle>
+                                <CardTitle className="sm:text-lg text-base">Secure Payments</CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className='-mt-5'>
                                 <p className="text-sm text-gray-600">
                                     Integrated payment gateway for registration fees
                                 </p>
@@ -201,9 +201,9 @@ export default function LandingPage() {
                                 <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <FaUsers className="text-theme-green text-xl" />
                                 </div>
-                                <CardTitle className="text-lg">Public Transparency</CardTitle>
+                                <CardTitle className="sm:text-lg text-base">Public Transparency</CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className='-mt-5'>
                                 <p className="text-sm text-gray-600">
                                     Open directory for contractor verification
                                 </p>

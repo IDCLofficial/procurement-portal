@@ -50,13 +50,13 @@ export default function ContractorTable({
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-xl">Search Results</CardTitle>
+                        <CardTitle className="sm:text-xl text-base">Search Results</CardTitle>
                         <p className="text-sm text-gray-600 mt-1">{contractors.length} contractors found</p>
                     </div>
                     <Button 
                         variant="outline" 
                         onClick={onExportCSV}
-                        className="cursor-pointer active:scale-95 transition-transform duration-300"
+                        className="cursor-pointer sm:text-base text-xs active:scale-95 transition-transform duration-300"
                     >
                         <FaDownload className="mr-2" />
                         Export CSV
@@ -128,7 +128,7 @@ export default function ContractorTable({
                                 </TableHeader>
                                 <TableBody>
                                     {paginatedContractors.map((contractor, index) => (
-                                        <TableRow key={contractor.id}>
+                                        <TableRow key={contractor.id} className={index % 2 === 1 ? 'bg-gray-50' : 'bg-white' + " hover:bg-gray-50"}>
                                             <TableCell className="font-medium text-gray-600">{startIndex + index + 1}</TableCell>
                                             <TableCell className="font-medium">{contractor.name}</TableCell>
                                             <TableCell className="font-mono text-sm">{contractor.rcbnNumber}</TableCell>
@@ -170,10 +170,10 @@ export default function ContractorTable({
                         {/* Pagination */}
                         {totalPages > 1 && (
                             <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 max-sm:hidden">
                                     Showing {startIndex + 1} to {Math.min(endIndex, contractors.length)} of {contractors.length} results
                                 </p>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 max-sm:flex-1 max-sm:justify-between">
                                     <Button
                                         variant="outline"
                                         size="sm"

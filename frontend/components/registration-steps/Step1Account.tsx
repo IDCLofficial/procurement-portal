@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -15,6 +16,7 @@ interface Step1AccountProps {
         confirmPassword: string;
     };
     onInputChange: (field: string, value: string) => void;
+    onContinue?: () => void;
 }
 
 interface PasswordStrength {
@@ -25,7 +27,7 @@ interface PasswordStrength {
     message: string;
 }
 
-export default function Step1Account({ formData, onInputChange }: Step1AccountProps) {
+export default function Step1Account({ formData, onInputChange, onContinue }: Step1AccountProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     
@@ -320,6 +322,21 @@ export default function Step1Account({ formData, onInputChange }: Step1AccountPr
                     </p>
                 )}
             </div>
+
+            {/* Continue Button */}
+            {onContinue && (
+                <div className="mt-8 pt-6 border-t">
+                    <Button
+                        onClick={onContinue}
+                        className="w-full bg-theme-green hover:bg-theme-green/90"
+                    >
+                        Continue
+                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

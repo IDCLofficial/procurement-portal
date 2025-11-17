@@ -81,9 +81,11 @@ export default function LandingPage() {
                                         <FaArrowRight className="ml-2" />
                                     </Button>
                                 </Link>
-                                <Button variant="outline" className="w-full cursor-pointer active:scale-95 transition-transform duration-300">
-                                    Vendor Login
-                                </Button>
+                                <Link href="/vendor-login">
+                                    <Button variant="outline" className="w-full cursor-pointer active:scale-95 transition-transform duration-300">
+                                        Vendor Login
+                                    </Button>
+                                </Link>
                                 <p className="text-xs text-gray-500 text-center pt-2">
                                     New contractors and existing vendors
                                 </p>

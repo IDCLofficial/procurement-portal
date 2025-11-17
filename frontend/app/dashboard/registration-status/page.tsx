@@ -3,7 +3,8 @@
 import { FaCheckCircle, FaClock, FaExclamationCircle, FaEye, FaFileAlt, FaBuilding, FaUsers, FaCreditCard, FaSync, FaArrowLeft } from 'react-icons/fa';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Header from '@/components/Header';
+import DashboardHeader from '@/components/DashboardHeader';
+// import Header from '@/components/Header';
 
 export default function RegistrationStatusPage() {
     // Mock data - will come from API
@@ -101,13 +102,13 @@ export default function RegistrationStatusPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <Header
-                description='ABC Construction Ltd'
-                title='Registration Status'
+            <DashboardHeader
+                companyName='ABC Construction Ltd'
+                subtitle='Registration Status'
                 hasBackButton
                 rightButton={
-                    <Button variant="outline" size="sm">
-                        <FaSync className="mr-2" />
+                    <Button variant="outline" className='group' size="sm">
+                        <FaSync className="mr-2 group-active:rotate-90 transition-transform duration-300 origin-center" />
                         Refresh Status
                     </Button>
                 }
@@ -161,19 +162,17 @@ export default function RegistrationStatusPage() {
                                             className="flex items-center justify-between py-5 first:pt-0"
                                         >
                                             <div className="flex items-center gap-4">
-                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                                    section.status === 'verified' ? 'bg-green-100' :
-                                                    section.status === 'under_review' ? 'bg-blue-100' : 'bg-gray-100'
-                                                }`}>
-                                                    <section.icon className={`text-xl ${
-                                                        section.status === 'verified' ? 'text-green-600' :
-                                                        section.status === 'under_review' ? 'text-blue-600' : 'text-gray-600'
-                                                    }`} />
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${section.status === 'verified' ? 'bg-green-100' :
+                                                        section.status === 'under_review' ? 'bg-blue-100' : 'bg-gray-100'
+                                                    }`}>
+                                                    <section.icon className={`text-xl ${section.status === 'verified' ? 'text-green-600' :
+                                                            section.status === 'under_review' ? 'text-blue-600' : 'text-gray-600'
+                                                        }`} />
                                                 </div>
                                                 <div>
                                                     <h4 className="text-base font-medium text-gray-900 mb-1">{section.name}</h4>
                                                     <p className="text-sm text-gray-500">
-                                                        {section.status === 'under_review' 
+                                                        {section.status === 'under_review'
                                                             ? `Currently being reviewed by ${section.verifiedBy}`
                                                             : `Verified by ${section.verifiedBy} on ${section.verifiedDate}`
                                                         }
@@ -227,13 +226,12 @@ export default function RegistrationStatusPage() {
                                         <div key={index} className="flex gap-4">
                                             <div className="flex flex-col items-center">
                                                 <div
-                                                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                                                        item.status === 'completed'
+                                                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${item.status === 'completed'
                                                             ? 'bg-green-100'
                                                             : item.status === 'in_progress'
-                                                            ? 'bg-blue-100'
-                                                            : 'bg-gray-100'
-                                                    }`}
+                                                                ? 'bg-blue-100'
+                                                                : 'bg-gray-100'
+                                                        }`}
                                                 >
                                                     {item.status === 'completed' ? (
                                                         <FaCheckCircle className="text-green-600 text-sm" />

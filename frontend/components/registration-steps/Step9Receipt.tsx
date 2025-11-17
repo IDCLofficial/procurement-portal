@@ -2,6 +2,7 @@
 
 import { FaCheckCircle, FaDownload, FaEnvelope, FaArrowRight } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 interface Step9ReceiptProps {
     transactionRef: string;
@@ -31,6 +32,7 @@ export default function Step9Receipt({
     selectedGrade,
 }: Step9ReceiptProps) {
     const totalPaid = registrationFee + processingFee + certificateFee;
+    const router = useRouter();
 
     const formatCurrency = (amount: number) => {
         return `₦${amount.toLocaleString()}`;
@@ -54,8 +56,7 @@ export default function Step9Receipt({
     };
 
     const handleViewApplicationStatus = () => {
-        // TODO: Navigate to dashboard
-        console.log('View application status');
+        router.push('/dashboard/registration-status');
     };
 
     return (

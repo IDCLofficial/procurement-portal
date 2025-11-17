@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Header from '@/components/Header';
 import RegistrationContinuation from '@/components/RegistrationContinuation';
 import { toast } from 'sonner';
+import DashboardHeader from '@/components/DashboardHeader';
 
 export default function CompleteRegistrationPage() {
     const router = useRouter();
@@ -35,12 +35,12 @@ export default function CompleteRegistrationPage() {
 
     return (
         <div className="min-h-screen bg-linear-to-b from-green-50 to-gray-50">
-            <Header
-                title="Complete Your Registration"
-                description="Continue with your company registration"
-                hasBackButton={false}
+            <DashboardHeader
+                companyName='ABC Construction Ltd'
+                subtitle="Complete Your Registration"
+                justLogout
             />
-            <RegistrationContinuation token={token} />
+            <RegistrationContinuation />
         </div>
     );
 }

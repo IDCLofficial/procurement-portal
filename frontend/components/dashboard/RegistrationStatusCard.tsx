@@ -1,0 +1,242 @@
+'use client';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FaCheckCircle, FaDownload, FaEdit, FaTimesCircle, FaExclamationCircle, FaBan } from 'react-icons/fa';
+
+interface RegistrationStatusCardProps {
+    registrationId: string;
+    validUntil?: string;
+    daysRemaining?: number;
+    status: 'approved' | 'declined' | 'expired' | 'suspended';
+    declineReason?: string;
+    suspensionReason?: string;
+    onDownloadCertificate?: () => void;
+    onUpdateProfile?: () => void;
+    onReapply?: () => void;
+    onContactSupport?: () => void;
+}
+
+export default function RegistrationStatusCard({
+    registrationId,
+    validUntil,
+    daysRemaining,
+    status = 'approved',
+    declineReason,
+    suspensionReason,
+    onDownloadCertificate,
+    onUpdateProfile,
+    onReapply,
+    onContactSupport,
+}: RegistrationStatusCardProps) {
+    // Status badge configuration
+    const statusConfig = {
+        approved: {
+            badge: { bg: 'bg-green-50', text: 'text-green-700', icon: FaCheckCircle, label: 'Approved' },
+            cardBg: '',
+        },
+        declined: {
+            badge: { bg: 'bg-red-50', text: 'text-red-700', icon: FaTimesCircle, label: 'Declined' },
+            cardBg: 'bg-red-50/30',
+        },
+        expired: {
+            badge: { bg: 'bg-orange-50', text: 'text-orange-700', icon: FaExclamationCircle, label: 'Expired' },
+            cardBg: 'bg-orange-50/30',
+        },
+        suspended: {
+            badge: { bg: 'bg-yellow-50', text: 'text-yellow-700', icon: FaBan, label: 'Suspended' },
+            cardBg: 'bg-yellow-50/30',
+        },
+    };
+
+    const config = statusConfig[status];
+    const StatusIcon = config.badge.icon;
+
+    return (
+        <Card className={`shadow-sm ${config.cardBg}`}>
+            <CardContent className="px-6">
+                <div className="flex items-start justify-between mb-6">
+                    <div>
+                        <h2 className="text-base font-semibold text-gray-900 mb-1">Registration Status</h2>
+                        <p className="text-sm text-gray-500">Current status of your contractor registration</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 ${config.badge.bg} ${config.badge.text} text-xs font-medium rounded-full`}>
+                        <StatusIcon className="text-xs" />
+                        {config.badge.label}
+                    </span>
+                </div>
+
+                {/* Decline/Suspension Reason Alert */}
+                {(status === 'declined' && declineReason) && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-start gap-3">
+                            <FaTimesCircle className="text-red-600 text-lg mt-0.5 shrink-0" />
+                            <div className="flex-1">
+                                <p className="text-sm font-semibold text-red-900 mb-1">Reason for Decline</p>
+                                <p className="text-sm text-red-800">{declineReason}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {(status === 'suspended' && suspensionReason) && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-start gap-3">
+                            <FaBan className="text-yellow-600 text-lg mt-0.5 shrink-0" />
+                            <div className="flex-1">
+                                <p className="text-sm font-semibold text-yellow-900 mb-1">Reason for Suspension</p>
+                                <p className="text-sm text-yellow-800">{suspensionReason}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {status === 'expired' && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-start gap-3">
+                            <FaExclamationCircle className="text-orange-600 text-lg mt-0.5 shrink-0" />
+                            <div className="flex-1">
+                                <p className="text-sm font-semibold text-orange-900 mb-1">Registration Expired</p>
+                                <p className="text-sm text-orange-800">Your registration has expired. Please renew to continue accessing services.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    {/* Registration ID */}
+                    <div className={`${
+                        status === 'approved' ? 'bg-green-50 border-green-200' :
+                        status === 'declined' ? 'bg-red-50 border-red-200' :
+                        status === 'expired' ? 'bg-orange-50 border-orange-200' :
+                        'bg-yellow-50 border-yellow-200'
+                    } border rounded-lg p-4`}>
+                        <div className="flex items-start gap-2">
+                            <StatusIcon className={`${
+                                status === 'approved' ? 'text-green-600' :
+                                status === 'declined' ? 'text-red-600' :
+                                status === 'expired' ? 'text-orange-600' :
+                                'text-yellow-600'
+                            } text-lg mt-0.5`} />
+                            <div className="flex-1">
+                                <p className={`text-xs font-medium mb-1 ${
+                                    status === 'approved' ? 'text-green-700' :
+                                    status === 'declined' ? 'text-red-700' :
+                                    status === 'expired' ? 'text-orange-700' :
+                                    'text-yellow-700'
+                                }`}>Registration ID</p>
+                                <p className={`text-sm font-semibold ${
+                                    status === 'approved' ? 'text-green-900' :
+                                    status === 'declined' ? 'text-red-900' :
+                                    status === 'expired' ? 'text-orange-900' :
+                                    'text-yellow-900'
+                                }`}>{registrationId}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Valid Until - Only show for approved/expired/suspended */}
+                    {(status === 'approved' || status === 'expired' || status === 'suspended') && validUntil && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-start gap-2">
+                                <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div className="flex-1">
+                                    <p className="text-xs text-blue-700 font-medium mb-1">
+                                        {status === 'expired' ? 'Expired On' : 'Valid Until'}
+                                    </p>
+                                    <p className="text-sm font-semibold text-blue-900">{validUntil}</p>
+                                    {daysRemaining !== undefined && status === 'approved' && (
+                                        <p className="text-xs text-blue-600 mt-0.5">{daysRemaining} days remaining</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Action Buttons - Dynamic based on status */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {status === 'approved' && (
+                        <>
+                            <Button
+                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                                onClick={onDownloadCertificate}
+                            >
+                                <FaDownload className="mr-2 text-sm" />
+                                Download Certificate
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={onUpdateProfile}
+                            >
+                                <FaEdit className="mr-2 text-sm" />
+                                Update Profile
+                            </Button>
+                        </>
+                    )}
+
+                    {status === 'declined' && (
+                        <>
+                            <Button
+                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                                onClick={onReapply}
+                            >
+                                <FaEdit className="mr-2 text-sm" />
+                                Reapply for Registration
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={onContactSupport}
+                            >
+                                Contact Support
+                            </Button>
+                        </>
+                    )}
+
+                    {status === 'expired' && (
+                        <>
+                            <Button
+                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                                onClick={onReapply}
+                            >
+                                <FaEdit className="mr-2 text-sm" />
+                                Renew Registration
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={onUpdateProfile}
+                            >
+                                <FaEdit className="mr-2 text-sm" />
+                                Update Profile
+                            </Button>
+                        </>
+                    )}
+
+                    {status === 'suspended' && (
+                        <>
+                            <Button
+                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                                onClick={onContactSupport}
+                            >
+                                Contact Support
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={onUpdateProfile}
+                            >
+                                <FaEdit className="mr-2 text-sm" />
+                                View Details
+                            </Button>
+                        </>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}

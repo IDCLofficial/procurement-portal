@@ -111,7 +111,7 @@ export default function Step6CategoryGrade({
                                 key={sector.id}
                                 type="button"
                                 onClick={() => toggleSector(sector.id)}
-                                className={`relative p-6 rounded-lg border-2 text-left transition-all ${
+                                className={`relative p-6 rounded-lg border-2 text-left transition-all cursor-pointer active:scale-[0.98] ${
                                     isSelected
                                         ? 'border-theme-green bg-green-50'
                                         : 'border-gray-300 bg-white hover:border-gray-400'
@@ -156,7 +156,7 @@ export default function Step6CategoryGrade({
                                 key={grade.id}
                                 type="button"
                                 onClick={() => onGradeChange(grade.id)}
-                                className={`p-6 rounded-lg border-2 text-center transition-all ${
+                                className={`p-6 rounded-lg border-2 text-center transition-all cursor-pointer active:scale-[0.98] active:rotate-2 ${
                                     isSelected
                                         ? 'border-theme-green bg-green-50'
                                         : 'border-gray-300 bg-white hover:border-gray-400'

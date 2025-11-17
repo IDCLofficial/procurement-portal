@@ -172,7 +172,7 @@ export default function RegistrationContinuation() {
                 cacNumber: 'RC123456',
                 tinNumber: '12345678-0001',
                 address: '123 Main Street, Victoria Island',
-                lga: 'Lagos Island',
+                lga: 'Orlu',
                 website: 'https://www.abcconstruction.com',
             });
             toast.success('Step 2 auto-filled');

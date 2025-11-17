@@ -22,7 +22,7 @@ export default function Step8ConfirmPayment({
     return (
         <div className="space-y-6">
             {/* Important Notice */}
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-5">
+            <div className="bg-linear-to-b from-white to-yellow-50 border-2 border-yellow-400 rounded-lg p-5">
                 <div className="flex gap-3">
                     <FaExclamationCircle className="text-yellow-600 text-2xl mt-0.5 shrink-0" />
                     <div>

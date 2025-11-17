@@ -122,10 +122,6 @@ export default function CertificatesPage() {
         console.log('More actions:', id);
     };
 
-    const handleBackToDashboard = () => {
-        console.log('Back to dashboard');
-    };
-
     // Calculate metrics
     const totalCertificates = certificates.length;
     const activeCertificates = certificates.filter(c => c.status === 'active').length;

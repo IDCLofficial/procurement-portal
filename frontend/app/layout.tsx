@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import StoreProvider from "@/store/StoreProvider";
 import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 
@@ -33,9 +32,8 @@ export default function RootLayout({
                 <NextTopLoader
                     color="#047857"
                     showSpinner={false}
-                 />
-                <StoreProvider>{children}</StoreProvider>
-                <Toaster 
+                />
+                <Toaster
                     position="top-center"
                     expand={true}
                     richColors
@@ -48,6 +46,7 @@ export default function RootLayout({
                         className: 'text-base',
                     }}
                 />
+                <>{children}</>
             </body>
         </html>
     );

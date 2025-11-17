@@ -24,10 +24,12 @@ const defaultActions: QuickAction[] = [
     {
         icon: FaFileAlt,
         label: 'Manage Documents',
+        url: "/dashboard/certificates"
     },
     {
         icon: FaEdit,
         label: 'Edit Company Profile',
+        url: "/dashboard/profile"
     },
     {
         icon: FaCreditCard,

@@ -86,7 +86,7 @@ export default function DashboardPage() {
     };
 
     const handleStartRenewal = () => {
-        console.log('Start renewal process');
+        router.push('/dashboard/renewal');
     };
 
     const handleManageDocuments = () => {

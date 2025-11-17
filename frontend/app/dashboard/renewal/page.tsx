@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import StepIndicator from '@/components/renewal/StepIndicator';
 import Step1ReviewInformation from '@/components/renewal/Step1ReviewInformation';
 import Step2UpdateDocuments from '@/components/renewal/Step2UpdateDocuments';
+import Step3Payment from '@/components/renewal/Step3Payment';
 import DocumentsRequiringUpdateSection from '@/components/renewal/DocumentsRequiringUpdateSection';
-import { FaArrowRight } from 'react-icons/fa';
+import { FaArrowRight, FaArrowLeft } from 'react-icons/fa';
+import { FaCreditCard } from 'react-icons/fa6';
 
 export default function RegistrationRenewalPage() {
     const router = useRouter();
@@ -91,6 +93,18 @@ export default function RegistrationRenewalPage() {
         // Handle file upload logic
     };
 
+    const handlePayment = () => {
+        console.log('Processing payment...');
+        // Handle payment logic
+    };
+
+    const summaryItems = [
+        { label: 'Current Period', value: 'Jan 1, 2024 - Dec 31, 2024' },
+        { label: 'Renewal Period', value: 'Jan 1, 2025 - Dec 31, 2025' },
+        { label: 'Documents Updated', value: '0 of 4' },
+        { label: 'Processing Time', value: '3-5 business days' },
+    ];
+
     return (
         <div className="min-h-screen bg-gray-50">
             <DashboardHeader
@@ -149,7 +163,8 @@ export default function RegistrationRenewalPage() {
                                 variant="outline"
                                 onClick={() => setCurrentStep(1)}
                             >
-                                Back
+                                <FaArrowLeft className="mr-2 text-sm" />
+                                Previous
                             </Button>
                             <Button
                                 className="bg-teal-700 hover:bg-teal-800 text-white px-8"
@@ -164,9 +179,32 @@ export default function RegistrationRenewalPage() {
 
                 {/* Step 3: Payment */}
                 {currentStep === 3 && (
-                    <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                        <p className="text-gray-500">Step 3: Payment - Coming soon...</p>
-                    </div>
+                    <>
+                        <Step3Payment
+                            amount="₦180,000"
+                            categories={['WORKS • ICT', 'Grade A']}
+                            summaryItems={summaryItems}
+                            onPayment={handlePayment}
+                        />
+
+                        {/* Navigation Buttons */}
+                        <div className="flex justify-between mt-6">
+                            <Button
+                                variant="outline"
+                                onClick={() => setCurrentStep(2)}
+                            >
+                                <FaArrowLeft className="mr-2 text-sm" />
+                                Previous
+                            </Button>
+                            <Button
+                                className="bg-teal-700 hover:bg-teal-800 text-white px-8"
+                                onClick={handlePayment}
+                            >
+                                <FaCreditCard className="mr-2 text-sm" />
+                                Pay ₦180,000
+                            </Button>
+                        </div>
+                    </>
                 )}
             </div>
         </div>

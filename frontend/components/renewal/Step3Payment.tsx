@@ -1,29 +1,36 @@
 'use client';
 
-import { FaCreditCard } from 'react-icons/fa';
+import RenewalFeeCard from './RenewalFeeCard';
+import RenewalSummarySection from './RenewalSummarySection';
+import PostPaymentInfoBox from './PostPaymentInfoBox';
 
 interface Step3PaymentProps {
-    onComplete: () => void;
+    amount: string;
+    categories: string[];
+    summaryItems: Array<{ label: string; value: string }>;
+    onPayment: () => void;
 }
 
-export default function Step3Payment({ onComplete }: Step3PaymentProps) {
+export default function Step3Payment({ amount, categories, summaryItems, /* onPayment */ }: Step3PaymentProps) {
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-start gap-3 mb-6">
-                <FaCreditCard className="text-gray-600 text-xl mt-1" />
-                <div>
-                    <h2 className="text-base font-semibold text-gray-900 mb-1">
-                        Payment
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                        Process renewal fee
-                    </p>
-                </div>
-            </div>
+        <div className="space-y-6">
+            {/* Renewal Fee Card */}
+            <RenewalFeeCard amount={amount} categories={categories} />
 
-            <div className="text-center py-12 text-gray-500">
-                Step 3: Payment - Coming soon...
-            </div>
+            {/* Renewal Summary */}
+            <RenewalSummarySection items={summaryItems} totalAmount={amount} />
+
+            {/* Post Payment Info */}
+            <PostPaymentInfoBox
+                title="What happens after payment:"
+                items={[
+                    'Your renewal application will be submitted for review',
+                    'BPPPI staff will verify your updated documents (3-5 business days)',
+                    "You'll receive email notifications at each stage",
+                    'Once approved, your registration will be extended to Dec 31, 2025',
+                    'Your new certificate will be available for download',
+                ]}
+            />
         </div>
     );
 }

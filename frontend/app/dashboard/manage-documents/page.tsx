@@ -1,11 +1,11 @@
 'use client';
 
 import DashboardHeader from '@/components/DashboardHeader';
-import StatusMetricCard from '@/components/certificates/StatusMetricCard';
-import ProgressBar from '@/components/certificates/ProgressBar';
-import AlertBanner from '@/components/certificates/AlertBanner';
-import DocumentCard from '@/components/certificates/DocumentCard';
-import InstructionsCard from '@/components/certificates/InstructionsCard';
+import StatusMetricCard from '@/components/manage-documents/StatusMetricCard';
+import ProgressBar from '@/components/manage-documents/ProgressBar';
+import AlertBanner from '@/components/manage-documents/AlertBanner';
+import DocumentCard from '@/components/manage-documents/DocumentCard';
+import InstructionsCard from '@/components/manage-documents/InstructionsCard';
 import { FaFileAlt, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 
 export default function CertificatesPage() {

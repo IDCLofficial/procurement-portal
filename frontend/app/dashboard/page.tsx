@@ -6,8 +6,10 @@ import QuickActionsCard from '@/components/dashboard/QuickActionsCard';
 import RenewalReminderCard from '@/components/dashboard/RenewalReminderCard';
 import ComplianceDocumentsCard from '@/components/dashboard/ComplianceDocumentsCard';
 import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
+    const router = useRouter();
     // Mock data - will come from API
     const complianceDocuments = [
         {
@@ -88,7 +90,7 @@ export default function DashboardPage() {
     };
 
     const handleManageDocuments = () => {
-        console.log('Manage documents');
+        router.push('/dashboard/manage-documents');
     };
 
     const handleDownloadDocument = (documentId: string) => {

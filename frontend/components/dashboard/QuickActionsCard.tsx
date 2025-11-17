@@ -24,7 +24,7 @@ const defaultActions: QuickAction[] = [
     {
         icon: FaFileAlt,
         label: 'Manage Documents',
-        url: "/dashboard/certificates"
+        url: "/dashboard/manage-documents"
     },
     {
         icon: FaEdit,

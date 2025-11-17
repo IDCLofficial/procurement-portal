@@ -14,7 +14,12 @@ interface StepIndicatorProps {
 }
 
 export default function StepIndicator({ steps }: StepIndicatorProps) {
-    const activeSteps = steps.filter((step) => step.status === 'active');
+    const completedSteps = steps.filter((step) => step.status === 'completed').length;
+    const activeStepIndex = steps.findIndex((step) => step.status === 'active');
+    const progressPercentage = activeStepIndex >= 0 
+        ? ((completedSteps + 0.5) / steps.length) * 100 
+        : (completedSteps / steps.length) * 100;
+
     return (
         <div className="bg-white border-b border-gray-200 py-6">
             <div className="container mx-auto px-4">
@@ -59,10 +64,10 @@ export default function StepIndicator({ steps }: StepIndicatorProps) {
                     ))}
                 </div>
 
-                <div className='p-1 px-0.5 w-full bg-gray-300 max-w-4xl mx-auto rounded-3xl relative'>
+                <div className='h-2 w-full bg-gray-300 max-w-4xl mx-auto rounded-3xl relative'>
                     <div 
-                        className='h-1 bg-theme-green rounded-3xl absolute top-1/2 transform -translate-y-1/2'
-                        style={{ width: `${activeSteps.length / steps.length * 100}%` }}
+                        className='h-full bg-theme-green rounded-3xl transition-all duration-300 ease-in-out'
+                        style={{ width: `${progressPercentage}%` }}
                     ></div>
                 </div>
             </div>

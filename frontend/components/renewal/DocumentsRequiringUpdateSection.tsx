@@ -5,7 +5,8 @@ import DocumentUpdateItem from './DocumentUpdateItem';
 
 interface Document {
     title: string;
-    expiryDate: string;
+    expiryDate?: string;
+    currentExpiry?: string;
     status: 'expiring_soon' | 'expired';
 }
 
@@ -28,6 +29,7 @@ export default function DocumentsRequiringUpdateSection({
                         key={index}
                         title={doc.title}
                         expiryDate={doc.expiryDate}
+                        currentExpiry={doc.currentExpiry}
                         status={doc.status}
                     />
                 ))}

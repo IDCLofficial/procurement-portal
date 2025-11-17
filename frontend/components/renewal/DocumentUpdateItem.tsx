@@ -4,11 +4,13 @@ import { FaFileAlt } from 'react-icons/fa';
 
 interface DocumentUpdateItemProps {
     title: string;
-    expiryDate: string;
+    expiryDate?: string;
+    currentExpiry?: string;
     status: 'expiring_soon' | 'expired';
 }
 
-export default function DocumentUpdateItem({ title, expiryDate, status }: DocumentUpdateItemProps) {
+export default function DocumentUpdateItem({ title, expiryDate, currentExpiry, status }: DocumentUpdateItemProps) {
+    const displayExpiry = expiryDate || currentExpiry || 'N/A';
     const statusConfig = {
         expiring_soon: {
             label: 'Expiring Soon',
@@ -32,7 +34,7 @@ export default function DocumentUpdateItem({ title, expiryDate, status }: Docume
                 </div>
                 <div className="flex-1">
                     <h4 className="text-sm font-medium text-gray-900">{title}</h4>
-                    <p className="text-xs text-gray-500">Current expiry: {expiryDate}</p>
+                    <p className="text-xs text-gray-500">Current expiry: {displayExpiry}</p>
                 </div>
             </div>
             <span

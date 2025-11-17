@@ -1,28 +1,48 @@
 'use client';
 
-import { FaUpload } from 'react-icons/fa';
+import RenewalDocumentUploadCard from './RenewalDocumentUploadCard';
+import UploadInstructionBanner from './UploadInstructionBanner';
 
-interface Step2UpdateDocumentsProps {
-    onContinue: () => void;
+interface Document {
+    title: string;
+    currentExpiry: string;
+    status: 'expiring_soon' | 'expired';
 }
 
-export default function Step2UpdateDocuments({ onContinue }: Step2UpdateDocumentsProps) {
+interface Step2UpdateDocumentsProps {
+    documents: Document[];
+    onFileUpload: (title: string, file: File, validFrom: string, validTo: string) => void;
+}
+
+export default function Step2UpdateDocuments({ documents, onFileUpload }: Step2UpdateDocumentsProps) {
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-start gap-3 mb-6">
-                <FaUpload className="text-gray-600 text-xl mt-1" />
-                <div>
-                    <h2 className="text-base font-semibold text-gray-900 mb-1">
-                        Update Documents
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                        Upload renewed certificates
-                    </p>
-                </div>
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-1">
+                    Upload Renewed Certificates
+                </h2>
+                <p className="text-sm text-gray-500">
+                    Upload updated versions of expired or expiring compliance documents
+                </p>
             </div>
 
-            <div className="text-center py-12 text-gray-500">
-                Step 2: Update Documents - Coming soon...
+            {/* Instruction Banner */}
+            <UploadInstructionBanner message="Upload the latest versions of your certificates. All documents will be verified by BPPPI staff before approval." />
+
+            {/* Document Upload Cards */}
+            <div className="space-y-4">
+                {documents.map((doc, index) => (
+                    <RenewalDocumentUploadCard
+                        key={index}
+                        title={doc.title}
+                        currentExpiry={doc.currentExpiry}
+                        status={doc.status}
+                        onFileUpload={(file, validFrom, validTo) =>
+                            onFileUpload(doc.title, file, validFrom, validTo)
+                        }
+                    />
+                ))}
             </div>
         </div>
     );

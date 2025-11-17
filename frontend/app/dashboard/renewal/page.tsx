@@ -1,34 +1,43 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import StepIndicator from '@/components/renewal/StepIndicator';
 import Step1ReviewInformation from '@/components/renewal/Step1ReviewInformation';
+import Step2UpdateDocuments from '@/components/renewal/Step2UpdateDocuments';
 import DocumentsRequiringUpdateSection from '@/components/renewal/DocumentsRequiringUpdateSection';
 import { FaArrowRight } from 'react-icons/fa';
 
 export default function RegistrationRenewalPage() {
     const router = useRouter();
+    const [currentStep, setCurrentStep] = useState(1);
+
+    const getStepStatus = (stepNumber: number): 'completed' | 'active' | 'pending' => {
+        if (stepNumber < currentStep) return 'completed';
+        if (stepNumber === currentStep) return 'active';
+        return 'pending';
+    };
 
     const steps = [
         {
             number: 1,
             title: 'Review Information',
             subtitle: 'Current status',
-            status: 'active' as const,
+            status: getStepStatus(1),
         },
         {
             number: 2,
             title: 'Update Documents',
             subtitle: 'Upload renewed certificate',
-            status: 'pending' as const,
+            status: getStepStatus(2),
         },
         {
             number: 3,
             title: 'Payment',
             subtitle: 'Process renewal fee',
-            status: 'pending' as const,
+            status: getStepStatus(3),
         },
     ];
 
@@ -45,22 +54,22 @@ export default function RegistrationRenewalPage() {
     const documentsRequiringUpdate = [
         {
             title: 'Tax Clearance Certificate (TCC)',
-            expiryDate: '31/12/2024',
+            currentExpiry: '31/12/2024',
             status: 'expiring_soon' as const,
         },
         {
             title: 'PENCOM Compliance Certificate',
-            expiryDate: '15/12/2024',
+            currentExpiry: '15/12/2024',
             status: 'expired' as const,
         },
         {
             title: 'ITF Certificate',
-            expiryDate: '31/12/2024',
+            currentExpiry: '31/12/2024',
             status: 'expiring_soon' as const,
         },
         {
             title: 'NSITF Certificate',
-            expiryDate: '31/12/2024',
+            currentExpiry: '31/12/2024',
             status: 'expiring_soon' as const,
         },
     ];
@@ -74,8 +83,12 @@ export default function RegistrationRenewalPage() {
     };
 
     const handleContinue = () => {
-        console.log('Continue to upload documents');
-        // Navigate to step 2
+        setCurrentStep(2);
+    };
+
+    const handleFileUpload = (title: string, file: File, validFrom: string, validTo: string) => {
+        console.log('File uploaded:', title, file.name, validFrom, validTo);
+        // Handle file upload logic
     };
 
     return (
@@ -92,31 +105,69 @@ export default function RegistrationRenewalPage() {
 
             <div className="container mx-auto px-4 py-8 max-w-4xl">
                 {/* Step 1: Review Information */}
-                <Step1ReviewInformation
-                    registrationId="IMO-CONT-2024-001"
-                    companyName="ABC Construction Limited"
-                    currentExpiryDate="31 December 2024"
-                    newExpiryDate="31 December 2025"
-                    categories={categories}
-                    verificationItems={verificationItems}
-                    onUpdateCompanyInfo={handleUpdateCompanyInfo}
-                />
+                {currentStep === 1 && (
+                    <>
+                        <Step1ReviewInformation
+                            registrationId="IMO-CONT-2024-001"
+                            companyName="ABC Construction Limited"
+                            currentExpiryDate="31 December 2024"
+                            newExpiryDate="31 December 2025"
+                            categories={categories}
+                            verificationItems={verificationItems}
+                            onUpdateCompanyInfo={handleUpdateCompanyInfo}
+                        />
 
-                {/* Documents Requiring Update */}
-                <div className="mt-6">
-                    <DocumentsRequiringUpdateSection documents={documentsRequiringUpdate} />
-                </div>
+                        {/* Documents Requiring Update */}
+                        <div className="mt-6">
+                            <DocumentsRequiringUpdateSection documents={documentsRequiringUpdate} />
+                        </div>
 
-                {/* Continue Button */}
-                <div className="flex justify-end mt-6">
-                    <Button
-                        className="bg-teal-700 hover:bg-teal-800 text-white px-8"
-                        onClick={handleContinue}
-                    >
-                        Continue to Update Documents
-                        <FaArrowRight className="ml-2 text-sm" />
-                    </Button>
-                </div>
+                        {/* Continue Button */}
+                        <div className="flex justify-end mt-6">
+                            <Button
+                                className="bg-teal-700 hover:bg-teal-800 text-white px-8"
+                                onClick={handleContinue}
+                            >
+                                Continue to Update Documents
+                                <FaArrowRight className="ml-2 text-sm" />
+                            </Button>
+                        </div>
+                    </>
+                )}
+
+                {/* Step 2: Update Documents */}
+                {currentStep === 2 && (
+                    <>
+                        <Step2UpdateDocuments
+                            documents={documentsRequiringUpdate}
+                            onFileUpload={handleFileUpload}
+                        />
+
+                        {/* Navigation Buttons */}
+                        <div className="flex justify-between mt-6">
+                            <Button
+                                variant="outline"
+                                onClick={() => setCurrentStep(1)}
+                            >
+                                Back
+                            </Button>
+                            <Button
+                                className="bg-teal-700 hover:bg-teal-800 text-white px-8"
+                                onClick={() => setCurrentStep(3)}
+                            >
+                                Continue to Payment
+                                <FaArrowRight className="ml-2 text-sm" />
+                            </Button>
+                        </div>
+                    </>
+                )}
+
+                {/* Step 3: Payment */}
+                {currentStep === 3 && (
+                    <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                        <p className="text-gray-500">Step 3: Payment - Coming soon...</p>
+                    </div>
+                )}
             </div>
         </div>
     );

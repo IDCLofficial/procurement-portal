@@ -3,6 +3,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { VendorsModule } from './vendors/vendors.module';
+import { EmailModule } from './email/email.module';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { CompaniesModule } from './companies/companies.module';
+import { CacModule } from './cac/cac.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -13,7 +20,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('MONGO_URI'),
       }),
-    })
+    }),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1h' },
+    }),
+    PassportModule,
+    VendorsModule,
+    EmailModule,
+    CompaniesModule,
+    CacModule,
+    DocumentsModule
   ],
   controllers: [AppController],
   providers: [AppService],

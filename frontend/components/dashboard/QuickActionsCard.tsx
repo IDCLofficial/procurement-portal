@@ -34,10 +34,12 @@ const defaultActions: QuickAction[] = [
     {
         icon: FaCreditCard,
         label: 'Payment History',
+        url: "/dashboard/payment-history"
     },
     {
         icon: FaBell,
         label: 'Notifications',
+        url: "/dashboard/notifications"
     },
 ];
 

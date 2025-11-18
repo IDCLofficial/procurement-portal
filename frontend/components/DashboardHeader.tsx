@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from './ui/button';
-import { Bell, Settings, Share2, LogOut } from 'lucide-react';
+import { Bell, Settings, LogOut } from 'lucide-react';
 import { FaAngleLeft } from 'react-icons/fa6';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -61,32 +61,28 @@ export default function DashboardHeader({
                 {rightButton || (
                     <div className="flex items-center gap-2">
                         {!justLogout && <React.Fragment>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 text-gray-600 hover:text-gray-900"
-                                aria-label="Notifications"
-                            >
-                                <Bell className="h-5 w-5" />
-                            </Button>
+                            <Link href="/dashboard/notifications">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9 text-gray-600 hover:text-gray-900"
+                                    aria-label="Notifications"
+                                >
+                                    <Bell className="h-5 w-5" />
+                                </Button>
+                            </Link>
                             
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 text-gray-600 hover:text-gray-900"
-                                aria-label="Settings"
-                            >
-                                <Settings className="h-5 w-5" />
-                            </Button>
-                            
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 text-gray-600 hover:text-gray-900"
-                                aria-label="Share"
-                            >
-                                <Share2 className="h-5 w-5" />
-                            </Button>
+                            <Link href="/dashboard/settings">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9 text-gray-600 hover:text-gray-900"
+                                    aria-label="Settings"
+                                >
+                                    <Settings className="h-5 w-5" />
+                                </Button>
+                            </Link>
+                        
                             <div className="h-6 w-px bg-gray-300 mx-1" />
                         </React.Fragment>}
 

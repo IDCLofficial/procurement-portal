@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import DashboardHeader from '@/components/DashboardHeader';
 import StatCard from '@/components/payment-history/StatCard';
 import SearchInput from '@/components/payment-history/SearchInput';
 import FilterDropdown from '@/components/payment-history/FilterDropdown';
 import PaymentHistoryTable from '@/components/payment-history/PaymentHistoryTable';
 import ReceiptInfoBox from '@/components/payment-history/ReceiptInfoBox';
-import { Wallet, Calendar, Receipt, Clock } from 'lucide-react';
+import { Wallet, Calendar, Receipt, Clock, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import SubHeader from '@/components/SubHeader';
 
 export default function PaymentHistoryPage() {
     const [searchQuery, setSearchQuery] = useState('');
@@ -151,10 +152,6 @@ export default function PaymentHistoryPage() {
         { value: 'upgrade', label: 'Upgrade' },
     ];
 
-    const handleLogout = () => {
-        console.log('Logout');
-    };
-
     const handleDownload = (id: string) => {
         console.log('Download receipt:', id);
     };
@@ -163,13 +160,25 @@ export default function PaymentHistoryPage() {
         console.log('View receipt:', id);
     };
 
+    const handleExport = () => {
+        console.log('Export payment history');
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
-            <DashboardHeader
-                companyName="Payment History"
-                subtitle="Back to Dashboard"
+            <SubHeader
+                title='Payment History'
                 hasBackButton
-                onLogout={handleLogout}
+                rightButton={
+                    <Button
+                        variant="outline"
+                        className="bg-teal-700 hover:bg-teal-800 text-white"
+                        onClick={handleExport}
+                    >
+                        <Download className="w-4 h-4 mr-2" />
+                        Export
+                    </Button>
+                }
             />
 
             <div className="container mx-auto px-4 py-8 max-w-7xl">

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import StepIndicator from '@/components/renewal/StepIndicator';
 import Step1ReviewInformation from '@/components/renewal/Step1ReviewInformation';
@@ -11,6 +10,7 @@ import Step3Payment from '@/components/renewal/Step3Payment';
 import DocumentsRequiringUpdateSection from '@/components/renewal/DocumentsRequiringUpdateSection';
 import { FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 import { FaCreditCard } from 'react-icons/fa6';
+import SubHeader from '@/components/SubHeader';
 
 export default function RegistrationRenewalPage() {
     const router = useRouter();
@@ -76,10 +76,6 @@ export default function RegistrationRenewalPage() {
         },
     ];
 
-    const handleLogout = () => {
-        console.log('Logout');
-    };
-
     const handleUpdateCompanyInfo = () => {
         router.push('/dashboard/profile');
     };
@@ -107,17 +103,15 @@ export default function RegistrationRenewalPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <DashboardHeader
-                companyName="Registration Renewal"
-                subtitle="Back to Dashboard"
+            <SubHeader
+                title='Registration Renewal'
                 hasBackButton
-                onLogout={handleLogout}
             />
 
             {/* Step Indicator */}
             <StepIndicator steps={steps} />
 
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="container mx-auto px-4 py-6 max-w-4xl">
                 {/* Step 1: Review Information */}
                 {currentStep === 1 && (
                     <>

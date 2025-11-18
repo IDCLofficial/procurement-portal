@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import NotificationStatCard from '@/components/notifications/NotificationStatCard';
@@ -24,6 +23,7 @@ import {
     Filter,
     Check
 } from 'lucide-react';
+import SubHeader from '@/components/SubHeader';
 
 export default function NotificationsPage() {
     const [activeTab, setActiveTab] = useState('all');
@@ -165,10 +165,6 @@ export default function NotificationsPage() {
         return true;
     });
 
-    const handleLogout = () => {
-        console.log('Logout');
-    };
-
     const handleMarkAsRead = (id: string) => {
         console.log('Mark as read:', id);
     };
@@ -187,21 +183,19 @@ export default function NotificationsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <DashboardHeader
-                companyName="Notifications"
-                subtitle="Back to Dashboard"
+            <SubHeader
+                title='Notifications'
                 hasBackButton
                 rightButton ={
                     <Button
                         variant="outline"
                         onClick={handleMarkAllAsRead}
-                        className="bg-teal-600 hover:bg-teal-700 text-white"
+                        className="bg-teal-600 hover:bg-teal-700 text-white hover:text-white"
                     >
                         <Check className="w-4 h-4 mr-2" />
                         <span>Mark All as Read</span>
                     </Button>
                 }
-                onLogout={handleLogout}
             />
 
             <div className="container mx-auto px-4 py-8 max-w-5xl">

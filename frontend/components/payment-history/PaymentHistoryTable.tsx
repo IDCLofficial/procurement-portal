@@ -72,10 +72,6 @@ export default function PaymentHistoryTable({ transactions, onDownload, onViewRe
         setCurrentPage(1); // Reset to first page when changing page size
     };
 
-    const handleExport = () => {
-        console.log('Export payment history');
-    };
-
     return (
         <div className="bg-white rounded-xl border border-gray-200">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between gap-4">
@@ -83,13 +79,6 @@ export default function PaymentHistoryTable({ transactions, onDownload, onViewRe
                     <h3 className="text-base font-semibold text-gray-900 mb-1">Transaction History</h3>
                     <p className="text-sm text-gray-500">Complete record of all payments and transactions</p>
                 </div>
-                <Button
-                    onClick={handleExport}
-                    className="bg-teal-700 hover:bg-teal-800 text-white"
-                >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export
-                </Button>
             </div>
 
             <div className="overflow-x-auto">

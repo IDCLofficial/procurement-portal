@@ -43,7 +43,7 @@ export default function TabNavigation({ tabs, activeTab, onTabChange }: TabNavig
                                 />
                             )}
                             <span className="relative z-10 text-base">{tab.icon}</span>
-                            <span className="relative z-10">{tab.label}</span>
+                            <span className="relative z-10 max-sm:hidden">{tab.label}</span>
                         </button>
                     );
                 })}

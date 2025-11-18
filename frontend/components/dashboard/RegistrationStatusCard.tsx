@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FaCheckCircle, FaDownload, FaEdit, FaTimesCircle, FaExclamationCircle, FaBan } from 'react-icons/fa';
+import Link from 'next/link';
 
 interface RegistrationStatusCardProps {
     registrationId: string;
@@ -167,14 +168,15 @@ export default function RegistrationStatusCard({
                                 <FaDownload className="mr-2 text-sm" />
                                 Download Certificate
                             </Button>
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                onClick={onUpdateProfile}
-                            >
-                                <FaEdit className="mr-2 text-sm" />
-                                Update Profile
-                            </Button>
+                            <Link href="/dashboard/profile">
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                >
+                                    <FaEdit className="mr-2 text-sm" />
+                                    Update Profile
+                                </Button>
+                            </Link>
                         </>
                     )}
 
@@ -206,14 +208,15 @@ export default function RegistrationStatusCard({
                                 <FaEdit className="mr-2 text-sm" />
                                 Renew Registration
                             </Button>
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                onClick={onUpdateProfile}
-                            >
-                                <FaEdit className="mr-2 text-sm" />
-                                Update Profile
-                            </Button>
+                            <Link href="/dashboard/profile">
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                >
+                                    <FaEdit className="mr-2 text-sm" />
+                                    Update Profile
+                                </Button>
+                            </Link>
                         </>
                     )}
 

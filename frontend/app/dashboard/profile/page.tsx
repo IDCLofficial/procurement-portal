@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import ProfileUpdateGuidelines from '@/components/profile/ProfileUpdateGuidelines';
 import TabNavigation from '@/components/profile/TabNavigation';
@@ -14,6 +13,7 @@ import PrivacyNote from '@/components/profile/PrivacyNote';
 import BankVerificationBadge from '@/components/profile/BankVerificationBadge';
 import InfoBanner from '@/components/profile/InfoBanner';
 import { FaBuilding, FaUsers, FaUniversity } from 'react-icons/fa';
+import SubHeader from '@/components/SubHeader';
 
 export default function EditProfilePage() {
     const router = useRouter();
@@ -133,27 +133,14 @@ export default function EditProfilePage() {
         router.back();
     };
 
-    const handleLogout = () => {
-        console.log('Logout');
-    };
-
     return (
         <div className="min-h-screen bg-gray-50">
-            <DashboardHeader
-                companyName="ABC Construction Ltd"
-                subtitle="Back to Dashboard"
+            <SubHeader
+                title='Edit Company Profile'
                 hasBackButton
-                onLogout={handleLogout}
             />
 
             <div className="container mx-auto px-4 py-6">
-                {/* Page Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-2xl font-bold text-gray-900">Edit Company Profile</h1>
-                    </div>
-                </div>
-
                 {/* Guidelines */}
                 <ProfileUpdateGuidelines guidelines={guidelines} />
 

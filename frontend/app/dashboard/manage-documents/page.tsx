@@ -1,12 +1,12 @@
 'use client';
 
-import DashboardHeader from '@/components/DashboardHeader';
 import StatusMetricCard from '@/components/manage-documents/StatusMetricCard';
 import ProgressBar from '@/components/manage-documents/ProgressBar';
 import AlertBanner from '@/components/manage-documents/AlertBanner';
 import DocumentCard from '@/components/manage-documents/DocumentCard';
 import InstructionsCard from '@/components/manage-documents/InstructionsCard';
 import { FaFileAlt, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
+import SubHeader from '@/components/SubHeader';
 
 export default function CertificatesPage() {
     // Mock data
@@ -106,10 +106,6 @@ export default function CertificatesPage() {
         'Keep digital and physical copies of all certificates in a secure location',
     ];
 
-    const handleLogout = () => {
-        console.log('Logout');
-    };
-
     const handleViewCertificate = (id: string) => {
         console.log('View certificate:', id);
     };
@@ -131,19 +127,14 @@ export default function CertificatesPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <DashboardHeader
-                companyName="ABC Construction Ltd"
-                subtitle="Back to Dashboard"
+            <SubHeader
+                title='Manage Compliance Documents'
                 hasBackButton
-                onLogout={handleLogout}
             />
 
             <div className="container mx-auto px-64 py-6">
                 {/* Page Header */}
                 <div className="my-6">
-                    <div className="flex items-center gap-3 mb-2">
-                        <h1 className="text-2xl font-bold text-gray-900">Manage Compliance Documents</h1>
-                    </div>
                     <p className="text-sm text-gray-600">View and manage all your compliance documents and certificates</p>
                 </div>
 

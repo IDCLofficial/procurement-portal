@@ -3,7 +3,7 @@
 import { FaCheckCircle, FaClock, FaExclamationCircle, FaEye, FaFileAlt, FaBuilding, FaUsers, FaCreditCard, FaSync, FaArrowLeft } from 'react-icons/fa';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import DashboardHeader from '@/components/DashboardHeader';
+import SubHeader from '@/components/SubHeader';
 // import Header from '@/components/Header';
 
 export default function RegistrationStatusPage() {
@@ -102,9 +102,8 @@ export default function RegistrationStatusPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <DashboardHeader
-                companyName='ABC Construction Ltd'
-                subtitle='Registration Status'
+            <SubHeader
+                title='Registration Status'
                 hasBackButton
                 rightButton={
                     <Button variant="outline" className='group' size="sm">

@@ -132,7 +132,7 @@ export class CertificatesService {
           address: company.address,
           lga: company.lga,
           website: company.website || '',
-          category: company.category || '',
+          categories: company.categories || [],
           grade: company.grade || ''
         }
       };

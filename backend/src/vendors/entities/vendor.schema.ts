@@ -1,7 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type VendorDocument = Vendor & Document;
+
+export enum companyForm{
+  STEP1="step1",
+  STEP2="step2",
+  STEP3="step3",
+  STEP4="step4",
+  STEP5="step5",
+  COMPLETE="complete"
+}
 
 @Schema({ timestamps: true })
 export class Vendor {
@@ -20,8 +29,14 @@ export class Vendor {
   @Prop({required:true, default: false })
   isVerified: boolean;
 
-  @Prop({required:true, default:" "})
-  certificateId:string
+  @Prop({required:false, default:" "})
+  certificateId:string;
+
+  @Prop({required:false, ref:"Company"})
+  companyId:Types.ObjectId;
+
+  @Prop({required:true, enum:companyForm, default:companyForm.STEP1})
+  companyForm:companyForm
 }
 
 export const VendorSchema = SchemaFactory.createForClass(Vendor);

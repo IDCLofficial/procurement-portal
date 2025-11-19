@@ -65,10 +65,10 @@ export class Company {
 
     @Prop({ 
         required: false, 
-        type: String,
+        type: Array,
         default:""
     })
-    category?: string
+    categories: string[]
     
     @Prop({ 
         required: false, 

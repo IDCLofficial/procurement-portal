@@ -254,7 +254,9 @@ export class VendorsService {
           
           // Update category and grade if provided
           if (updateRegistrationDto.categoriesAndGrade) {
-            existingCompany.category = JSON.stringify(updateRegistrationDto.categoriesAndGrade.categories);
+            existingCompany.categories = updateRegistrationDto.categoriesAndGrade.categories.map(
+              cat => `${cat.sector} - ${cat.service}`
+            );
             existingCompany.grade = updateRegistrationDto.categoriesAndGrade.grade;
           }
           
@@ -270,11 +272,17 @@ export class VendorsService {
             lga: updateRegistrationDto.company.lga,
             website: updateRegistrationDto.company.website || '',
             status: Status.PENDING,
-            category: updateRegistrationDto.categoriesAndGrade ? JSON.stringify(updateRegistrationDto.categoriesAndGrade.categories) : '',
+            categories: updateRegistrationDto.categoriesAndGrade 
+              ? updateRegistrationDto.categoriesAndGrade.categories.map(cat => `${cat.sector} - ${cat.service}`)
+              : [],
             grade: updateRegistrationDto.categoriesAndGrade?.grade || ''
           });
           
           results.company = await newCompany.save();
+
+          // Update vendor's companyId
+          vendor.companyId = results.company._id;
+          await vendor.save();
         }
       }
 

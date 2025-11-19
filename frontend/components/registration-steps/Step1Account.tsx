@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash, FaKey } from 'react-icons/fa';
 import { useDebounce } from '@/hooks/useDebounce';
+import { copyToClipboard } from '@/lib';
 
 interface Step1AccountProps {
     formData: {
@@ -15,6 +17,7 @@ interface Step1AccountProps {
         password: string;
         confirmPassword: string;
     };
+    isLoading: boolean;
     onInputChange: (field: string, value: string) => void;
     onContinue?: () => void;
 }
@@ -27,7 +30,7 @@ interface PasswordStrength {
     message: string;
 }
 
-export default function Step1Account({ formData, onInputChange, onContinue }: Step1AccountProps) {
+export default function Step1Account({ formData, onInputChange, onContinue, isLoading }: Step1AccountProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -57,6 +60,7 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
         
         onInputChange('password', password);
         onInputChange('confirmPassword', password);
+        copyToClipboard(password, 'Password copied to clipboard');
         setShowPassword(true);
     };
     
@@ -168,6 +172,7 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
                     id="fullName"
                     placeholder="John Doe"
                     value={formData.fullName}
+                    disabled={isLoading}
                     onChange={(e) => onInputChange('fullName', e.target.value)}
                     className={`mt-1.5 ${fullNameError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     required
@@ -193,6 +198,7 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
                         type="email"
                         placeholder="john@company.com"
                         value={formData.email}
+                        disabled={isLoading}
                         onChange={(e) => onInputChange('email', e.target.value)}
                         className={`mt-1.5 ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         required
@@ -215,6 +221,7 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
                         type="tel"
                         placeholder="+234 xxx xxx xxxx"
                         value={formData.phone}
+                        disabled={isLoading}
                         onChange={(e) => onInputChange('phone', e.target.value)}
                         className={`mt-1.5 ${phoneError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         required
@@ -241,6 +248,7 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
                         variant="ghost"
                         size="sm"
                         onClick={generatePassword}
+                        disabled={isLoading}
                         className="h-7 text-xs text-theme-green hover:text-theme-green/80 hover:bg-green-50"
                     >
                         <FaKey className="mr-1" />
@@ -253,6 +261,7 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Min. 8 characters"
                         value={formData.password}
+                        disabled={isLoading}
                         onChange={(e) => onInputChange('password', e.target.value)}
                         className={`pr-10 ${passwordError && formData.password.length >= 8 ? 'border-orange-400 focus-visible:ring-orange-400' : ''}`}
                         required
@@ -285,46 +294,91 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
                         
                         {/* Requirements Checklist */}
                         <ul className="text-xs space-y-1 mt-2">
-                            <li className="flex items-center gap-2">
-                                <span className={formData.password.length >= 8 ? 'text-green-600' : 'text-gray-400'}>
-                                    {formData.password.length >= 8 ? '✓' : '○'}
-                                </span>
-                                <span className={formData.password.length >= 8 ? 'text-gray-700' : 'text-gray-500'}>
-                                    At least 8 characters
-                                </span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className={/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}>
-                                    {/[A-Z]/.test(formData.password) ? '✓' : '○'}
-                                </span>
-                                <span className={/[A-Z]/.test(formData.password) ? 'text-gray-700' : 'text-gray-500'}>
-                                    One uppercase letter
-                                </span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className={/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}>
-                                    {/[a-z]/.test(formData.password) ? '✓' : '○'}
-                                </span>
-                                <span className={/[a-z]/.test(formData.password) ? 'text-gray-700' : 'text-gray-500'}>
-                                    One lowercase letter
-                                </span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className={/[0-9]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}>
-                                    {/[0-9]/.test(formData.password) ? '✓' : '○'}
-                                </span>
-                                <span className={/[0-9]/.test(formData.password) ? 'text-gray-700' : 'text-gray-500'}>
-                                    One number
-                                </span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className={/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}>
-                                    {/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '✓' : '○'}
-                                </span>
-                                <span className={/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? 'text-gray-700' : 'text-gray-500'}>
-                                    One special character (!@#$%^&*)
-                                </span>
-                            </li>
+                            <AnimatePresence mode="popLayout">
+                                {!formData.password.length && (
+                                    <motion.li 
+                                        key="empty-password"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <span className="text-gray-400">○</span>
+                                        <span className="text-gray-500">Start typing to see requirements</span>
+                                    </motion.li>
+                                )}
+                                
+                                {formData.password.length > 0 && formData.password.length < 8 && (
+                                    <motion.li 
+                                        key="length"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <span className="text-gray-400">○</span>
+                                        <span className="text-gray-500">At least 8 characters</span>
+                                    </motion.li>
+                                )}
+                                
+                                {formData.password.length > 0 && !/[A-Z]/.test(formData.password) && (
+                                    <motion.li 
+                                        key="uppercase"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <span className="text-gray-400">○</span>
+                                        <span className="text-gray-500">One uppercase letter</span>
+                                    </motion.li>
+                                )}
+                                
+                                {formData.password.length > 0 && !/[a-z]/.test(formData.password) && (
+                                    <motion.li 
+                                        key="lowercase"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <span className="text-gray-400">○</span>
+                                        <span className="text-gray-500">One lowercase letter</span>
+                                    </motion.li>
+                                )}
+                                
+                                {formData.password.length > 0 && !/[0-9]/.test(formData.password) && (
+                                    <motion.li 
+                                        key="number"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <span className="text-gray-400">○</span>
+                                        <span className="text-gray-500">One number</span>
+                                    </motion.li>
+                                )}
+                                
+                                {formData.password.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) && (
+                                    <motion.li 
+                                        key="special"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <span className="text-gray-400">○</span>
+                                        <span className="text-gray-500">One special character (!@#$%^&*)</span>
+                                    </motion.li>
+                                )}
+                            </AnimatePresence>
                         </ul>
                     </div>
                 )}
@@ -338,6 +392,7 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Re-enter password"
+                        disabled={isLoading}
                         value={formData.confirmPassword}
                         onChange={(e) => onInputChange('confirmPassword', e.target.value)}
                         className={`pr-10 ${passwordMatchError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
@@ -369,6 +424,7 @@ export default function Step1Account({ formData, onInputChange, onContinue }: St
                 <div className="mt-8 pt-6 border-t">
                     <Button
                         onClick={onContinue}
+                        disabled={isLoading}
                         className="w-full bg-theme-green hover:bg-theme-green/90"
                     >
                         Continue

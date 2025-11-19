@@ -6,19 +6,20 @@ import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { FaEnvelope, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
 import { toast } from 'sonner';
+import { useVerifyVendorMutation } from '@/store/api/vendor.api';
 
 interface EmailVerificationProps {
     email: string;
-    userId: string;
     onVerified: () => void;
     onCancel?: () => void;
 }
 
-export default function EmailVerification({ email, userId, onVerified, onCancel }: EmailVerificationProps) {
+export default function EmailVerification({ email, onVerified, onCancel }: EmailVerificationProps) {
     const [otp, setOtp] = useState('');
-    const [isVerifying, setIsVerifying] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [resendTimer, setResendTimer] = useState(60);
+
+    const [verifyVendorMutation, { isLoading: isVerifyingVendor }] = useVerifyVendorMutation();
 
     // Countdown timer for resend
     useEffect(() => {
@@ -33,25 +34,62 @@ export default function EmailVerification({ email, userId, onVerified, onCancel 
     const canResend = resendTimer === 0;
 
     const handleVerify = async () => {
-        if (otp.length !== 6) {
-            toast.error('Please enter the complete 6-digit code');
+        if (otp.length !== 5) {
+            toast.error('Please enter the complete 5-digit code');
             return;
         }
 
-        setIsVerifying(true);
-        
-        // Simulate API call
-        setTimeout(() => {
-            // TODO: Replace with actual API call using userId
-            console.log('Verifying OTP for user:', userId);
-            if (otp === '123456') {
-                toast.success('Email verified successfully!');
-                onVerified();
-            } else {
-                toast.error('Invalid verification code. Please try again.');
+
+        try {
+            toast.loading('Verifying your account...', { id: 'verify-vendor' });
+            const response = await verifyVendorMutation({ email, otp });
+            console.log(response);
+
+            // Check if response has an error property (RTK Query error response)
+            if ('error' in response) {
+                toast.dismiss('verify-vendor');
+
+
+                // Extract error message with proper typing
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const error = response.error as any;
+                const errorMessage =
+                    error?.data?.message ||
+                    error?.message ||
+                    'Failed to create vendor';
+
+                toast.error(errorMessage);
+                return;
             }
-            setIsVerifying(false);
-        }, 1500);
+
+            // Success case
+            toast.dismiss('verify-vendor');
+            onVerified();
+        } catch (error) {
+            console.error('Error creating vendor:', error);
+
+            // Dismiss loading toast
+            toast.dismiss('verify-vendor');
+
+            // Handle different error types
+            let errorMessage = 'Failed to create vendor. Please try again.';
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error && typeof error === 'object') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const err = error as Record<string, any>;
+                errorMessage =
+                    err.data?.message ||
+                    err.message ||
+                    err.error?.message ||
+                    errorMessage;
+            }
+
+            toast.error(errorMessage);
+        }
     };
 
     const handleResend = async () => {
@@ -93,7 +131,7 @@ export default function EmailVerification({ email, userId, onVerified, onCancel 
                 <Label htmlFor="otp" className="text-center block">Enter Verification Code</Label>
                 <div className="flex justify-center">
                     <InputOTP
-                        maxLength={6}
+                        maxLength={5}
                         value={otp}
                         onChange={(value) => setOtp(value)}
                     >
@@ -103,7 +141,6 @@ export default function EmailVerification({ email, userId, onVerified, onCancel 
                             <InputOTPSlot index={2} />
                             <InputOTPSlot index={3} />
                             <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
                         </InputOTPGroup>
                     </InputOTP>
                 </div>
@@ -113,10 +150,10 @@ export default function EmailVerification({ email, userId, onVerified, onCancel 
             <div className="flex flex-row-reverse gap-3">
                 <Button
                     onClick={handleVerify}
-                    disabled={otp.length !== 6 || isVerifying}
+                    disabled={otp.length !== 5 || isVerifyingVendor}
                     className="flex-1 bg-theme-green hover:bg-theme-green/90"
                 >
-                    {isVerifying ? (
+                    {isVerifyingVendor ? (
                         <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                             Verifying...

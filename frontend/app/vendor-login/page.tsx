@@ -10,9 +10,14 @@ import Image from 'next/image';
 import { FaEye, FaEyeSlash } from 'react-icons/fa6';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useDebounce } from '@/hooks/useDebounce';
-import { decrypt, encrypt } from '@/lib/crypto';
+import { useLoginVendorMutation } from '@/store/api/vendor.api';
+import { toast } from 'sonner';
+import { ResponseSuccess } from '@/store/api/types';
+import { useAuth } from '@/components/providers/public-service/AuthProvider';
+
 
 export default function VendorLoginPage() {
+    const { login } = useAuth();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -22,6 +27,7 @@ export default function VendorLoginPage() {
         email: false,
         password: false,
     });
+    const [loginVendor, { isLoading }] = useLoginVendorMutation();
 
     // Debounced values for validation
     const debouncedEmail = useDebounce(formData.email, 500);
@@ -54,9 +60,27 @@ export default function VendorLoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isFormValid) return;
-        // Handle login logic here
-        const encryptedEmail = encrypt(JSON.stringify(formData));
-        console.log('Login attempt:', encryptedEmail);
+        
+        try {
+            toast.loading('Logging in...', { id: "login"});
+            const response = await loginVendor({
+                email: formData.email,
+                password: formData.password,
+            });
+
+            if (response.error) {
+                throw new Error("Invalid email or password");
+            }
+
+            const { token } = response.data as unknown as ResponseSuccess["data"];
+
+            toast.dismiss("login");
+            toast.success("Login successful");
+            login(token);
+        } catch (error) {
+            toast.dismiss("login");
+            toast.error((error as unknown as Error).message || "An unknown error occurred");
+        }
     };
 
     const handleBlur = (field: 'email' | 'password') => {
@@ -105,6 +129,7 @@ export default function VendorLoginPage() {
                                     type="email"
                                     placeholder="your-email@company.com"
                                     value={formData.email}
+                                    disabled={isLoading}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     onBlur={() => handleBlur('email')}
                                     className={`mt-1.5 bg-gray-50 ${
@@ -145,6 +170,7 @@ export default function VendorLoginPage() {
                                         type={showPassword ? 'text' : 'password'}
                                         placeholder="Enter your password"
                                         value={formData.password}
+                                        disabled={isLoading}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         onBlur={() => handleBlur('password')}
                                         className={`bg-gray-50 pr-10 ${
@@ -179,7 +205,7 @@ export default function VendorLoginPage() {
                             <Button
                                 type="submit"
                                 title='Submit form'
-                                disabled={!isFormValid}
+                                disabled={!isFormValid || isLoading}
                                 className="w-full bg-theme-green hover:bg-theme-green/90 text-white h-11 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Sign In

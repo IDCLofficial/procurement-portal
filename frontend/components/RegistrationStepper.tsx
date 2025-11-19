@@ -8,6 +8,9 @@ import { toast } from 'sonner';
 import Step1Account from '@/components/registration-steps/Step1Account';
 import EmailVerification from '@/components/registration-steps/EmailVerification';
 import { FaTag } from 'react-icons/fa6';
+import { useCreateVendorMutation } from '@/store/api/vendor.api';
+import { CreateVendorRequest } from '@/store/api/types';
+import { decrypt, encrypt } from '@/lib/crypto';
 
 const allSteps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact' },
@@ -24,6 +27,8 @@ const allSteps = [
 export default function RegistrationStepper() {
     const searchParams = useSearchParams();
     const router = useRouter();
+
+    const [createVendor, { isLoading: isCreatingVendor }] = useCreateVendorMutation();
     
     // Obscure param names for security
     // vrf = verification mode (requires uid)
@@ -46,19 +51,10 @@ export default function RegistrationStepper() {
     };
     
     const handleEmailVerified = () => {
-        // Generate token for authenticated session
-        const token = userId || 'temp_token_' + Math.random().toString(36).substring(2, 15);
-        
-        // Store token in sessionStorage
-        sessionStorage.setItem('registration_token', token);
-        sessionStorage.setItem('registration_email', formData.email);
-        
         toast.success('Email verified! Redirecting to complete registration...');
-        
-        // Redirect to dashboard to continue registration
         setTimeout(() => {
-            router.push(`/dashboard/complete-registration?token=${token}`);
-        }, 1500);
+            router.push(`/dashboard/complete-registration`);
+        }, 100);
     };
 
     const handleCancelVerification = () => {
@@ -70,6 +66,10 @@ export default function RegistrationStepper() {
     };
 
     const handleContinue = async () => {
+        if (isCreatingVendor) {
+            toast.info('Please wait while we create your account...');
+            return;
+        };
         // Validate Step 1
         if (!formData.fullName || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
             toast.error('Please fill in all fields');
@@ -86,22 +86,86 @@ export default function RegistrationStepper() {
 
         // Step 1 complete - trigger email verification
         // TODO: Send registration data to backend and get userId
-        const mockUserId = 'usr_' + Math.random().toString(36).substring(2, 15);
+        // const mockUserId = 'usr_' + Math.random().toString(36).substring(2, 15);
         
         // Simulate API call
-        toast.loading('Creating your account...');
-        setTimeout(() => {
-            toast.dismiss();
-            toast.success('Account created! Please check your email for verification code.');
+        // toast.loading('Creating your account...');
+        // setTimeout(() => {
+        //     toast.dismiss();
+        //     toast.success('Account created! Please check your email for verification code.');
             
-            // Set URL params for email verification
+        //     // Set URL params for email verification
+        //     const params = new URLSearchParams();
+        //     params.set('vrf', '1');
+        //     params.set('uid', mockUserId);
+            
+        //     router.replace(`/register?${params.toString()}`);
+        //     setShowEmailVerification(true);
+        // }, 1500);
+
+        const payload: CreateVendorRequest = {
+            email: formData.email,
+            fullname: formData.fullName,
+            password: formData.password,
+            phoneNo: formData.phone
+        };
+
+        try {
+            toast.loading('Creating your account...', { id: 'create-vendor' });
+            const response = await createVendor(payload);
+
+            // Check if response has an error property (RTK Query error response)
+            if ('error' in response) {
+                toast.dismiss('create-vendor');
+
+                // Extract error message with proper typing
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const error = response.error as any;
+                const errorMessage =
+                    error?.data?.message ||
+                    error?.message ||
+                    'Failed to create vendor';
+
+                toast.error(errorMessage);
+                return;
+            }
+
+            // Success case
+            toast.dismiss('create-vendor');
+            toast.success('Vendor created successfully!');
+
             const params = new URLSearchParams();
             params.set('vrf', '1');
-            params.set('uid', mockUserId);
+            params.set('uid', encrypt(payload.email));
             
             router.replace(`/register?${params.toString()}`);
             setShowEmailVerification(true);
-        }, 1500);
+
+        } catch (error) {
+            console.error('Error creating vendor:', error);
+
+            // Dismiss loading toast
+            toast.dismiss('create-vendor');
+
+            // Handle different error types
+            let errorMessage = 'Failed to create vendor. Please try again.';
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error && typeof error === 'object') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const err = error as Record<string, any>;
+                errorMessage =
+                    err.data?.message ||
+                    err.message ||
+                    err.error?.message ||
+                    errorMessage;
+            }
+
+            toast.error(errorMessage);
+        }
     };
 
 
@@ -110,8 +174,7 @@ export default function RegistrationStepper() {
         if (showEmailVerification) {
             return (
                 <EmailVerification
-                    email={formData.email || 'your-email@example.com'}
-                    userId={userId}
+                    email={decrypt(userId)}
                     onVerified={handleEmailVerified}
                     onCancel={handleCancelVerification}
                 />
@@ -128,6 +191,7 @@ export default function RegistrationStepper() {
                     password: formData.password,
                     confirmPassword: formData.confirmPassword,
                 }}
+                isLoading={isCreatingVendor}
                 onInputChange={handleInputChange}
                 onContinue={handleContinue}
             />

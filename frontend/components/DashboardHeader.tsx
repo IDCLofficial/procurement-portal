@@ -7,22 +7,22 @@ import { Bell, Settings, LogOut } from 'lucide-react';
 import { FaAngleLeft } from 'react-icons/fa6';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { useAuth } from './providers/public-service/AuthProvider';
 
 export default function DashboardHeader({
     companyName = 'ABC Construction Ltd',
     subtitle = 'Vendor Portal',
     hasBackButton = false,
     rightButton,
-    onLogout,
     justLogout = false,
 }: {
     companyName?: string;
     subtitle?: string;
     hasBackButton?: boolean;
     rightButton?: React.ReactNode;
-    onLogout?: () => void;
     justLogout?: boolean;
 }) {
+    const { logout } = useAuth();
     const router = useRouter();
     return (
         <header className="sticky top-0 z-50 border-b bg-white shadow-sm">
@@ -89,7 +89,7 @@ export default function DashboardHeader({
                         <Button
                             variant="ghost"
                             className="h-9 px-3 text-gray-700 hover:text-gray-900 font-medium"
-                            onClick={onLogout}
+                            onClick={logout}
                         >
                             <LogOut className="h-4 w-4 mr-2" />
                             Logout

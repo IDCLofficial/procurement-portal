@@ -53,16 +53,11 @@ export default function ExpiredStatusExample() {
         console.log('Download document:', documentId);
     };
 
-    const handleLogout = () => {
-        console.log('Logout');
-    };
-
     return (
         <div className="min-h-screen bg-gray-50">
             <DashboardHeader
                 companyName="ABC Construction Ltd"
                 subtitle="Vendor Portal"
-                onLogout={handleLogout}
             />
 
             <div className="container mx-auto px-4 py-6">

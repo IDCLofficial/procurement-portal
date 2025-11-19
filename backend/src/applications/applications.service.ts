@@ -108,11 +108,10 @@ export class ApplicationsService {
       const certificate = new this.certificateModel({
         certificateId: certificateId,
         contractorId: company.userId, // Reference to the vendor
-        contractorName: application.companyName,
+        contractorName: application.contractorName,
         registrationId: application.applicationId,
         rcBnNumber: application.rcBnNumber,
         grade: application.grade,
-        lga: application.lga,
         status: 'Approved',
         validUntil: validUntil
       });

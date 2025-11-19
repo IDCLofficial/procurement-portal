@@ -103,7 +103,10 @@ export class VendorsService {
         throw new BadRequestException('Invalid password');
       }
       const { password: _, ...user } = vendor.toObject();
-      return {user, token: this.tokenHandlers.generateToken(user)};
+      return {
+        message:"Login Successful",
+        token: this.tokenHandlers.generateToken(user)
+      };
     }
 
   /**

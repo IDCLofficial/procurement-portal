@@ -11,6 +11,7 @@ import TokenHandlers from 'src/lib/generateToken';
 import { updateRegistrationDto } from './dto/update-registration.dto';
 import { Company, CompanyDocument, Directors, DirectorsDocument, Status } from '../companies/entities/company.schema';
 import { verificationDocuments, verificationDocument } from '../documents/entities/document.schema';
+import { loginDto } from './dto/logn.dto';
 
 @Injectable()
 export class VendorsService {
@@ -24,6 +25,20 @@ export class VendorsService {
     private tokenHandlers: TokenHandlers
   ) {}
 
+  /**
+   * Create a new vendor account
+   * 
+   * @param createVendorDto - Vendor registration data
+   * @returns Success message indicating registration completion
+   * @throws {ConflictException} If vendor with email already exists
+   * @throws {Error} If verification email fails to send
+   * 
+   * @description
+   * - Validates email uniqueness
+   * - Hashes password with bcrypt
+   * - Creates vendor with unverified status
+   * - Sends OTP verification email
+   */
   async create(createVendorDto: CreateVendorDto): Promise<{ message: string }> {
     // Check if vendor with email already exists
     const existingVendor = await this.vendorModel.findOne({
@@ -63,12 +78,26 @@ export class VendorsService {
     };
   }
 
-    async login(email: string, password: string): Promise<any> {
-      const vendor = await this.vendorModel.findOne({ email }).exec();
+  /**
+   * Authenticate vendor login
+   * 
+   * @param email - Vendor email address
+   * @param password - Vendor password (plain text)
+   * @returns User object (without password) and JWT token
+   * @throws {NotFoundException} If vendor not found
+   * @throws {BadRequestException} If password is invalid
+   * 
+   * @description
+   * - Validates vendor existence
+   * - Compares password with hashed version
+   * - Generates JWT token for authentication
+   */
+  async login(body:loginDto): Promise<any> {
+      const vendor = await this.vendorModel.findOne({ email:body.email }).exec();
       if (!vendor) {
         throw new NotFoundException('Vendor not found');
       }
-      const isPasswordValid = await bcrypt.compare(password, vendor.password);
+      const isPasswordValid = await bcrypt.compare(body.password, vendor.password);
       if (!isPasswordValid) {
         throw new BadRequestException('Invalid password');
       }
@@ -76,10 +105,28 @@ export class VendorsService {
       return {user, token: this.tokenHandlers.generateToken(user)};
     }
 
+  /**
+   * Get all vendor accounts
+   * 
+   * @returns Array of all vendors in the database
+   * 
+   * @description
+   * Retrieves all vendor records without filtering
+   */
   async findAll(): Promise<Vendor[]> {
     return this.vendorModel.find().exec();
   }
 
+  /**
+   * Get a single vendor by ID
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @returns Vendor document
+   * @throws {NotFoundException} If vendor not found
+   * 
+   * @description
+   * Retrieves a specific vendor by their unique ID
+   */
   async findOne(id: string): Promise<Vendor> {
     const vendor = await this.vendorModel.findById(id).exec();
     if (!vendor) {
@@ -88,6 +135,19 @@ export class VendorsService {
     return vendor;
   }
 
+  /**
+   * Update vendor profile information
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @param updateVendorDto - Updated vendor data
+   * @returns Updated vendor document
+   * @throws {NotFoundException} If vendor not found
+   * 
+   * @description
+   * - Updates vendor profile fields
+   * - Automatically hashes password if provided
+   * - Returns updated document
+   */
   async update(id: string, updateVendorDto: UpdateVendorDto): Promise<Vendor> {
     if (updateVendorDto.password) {
       const salt = await bcrypt.genSalt();
@@ -102,6 +162,22 @@ export class VendorsService {
     return updatedVendor;
   }
 
+  /**
+   * Register or update company details for a vendor
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @param updateRegistrationDto - Company registration data including company info, directors, bank details, documents, and categories
+   * @returns Success message with saved company, directors, and document data
+   * @throws {NotFoundException} If vendor not found
+   * @throws {BadRequestException} If registration fails
+   * 
+   * @description
+   * - Creates or updates company information
+   * - Manages directors data
+   * - Handles verification documents
+   * - Stores bank details and service categories
+   * - Sets company status to PENDING for new registrations
+   */
   async registerCompany(id:string, updateRegistrationDto:updateRegistrationDto): Promise<any> {
     const vendor = await this.vendorModel.findById(id).exec();
     if (!vendor) {
@@ -209,6 +285,16 @@ export class VendorsService {
     }
   }
 
+  /**
+   * Delete a vendor account
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @returns Deleted vendor document
+   * @throws {NotFoundException} If vendor not found
+   * 
+   * @description
+   * Permanently removes vendor from the database
+   */
   async remove(id: string): Promise<Vendor> {
     const deletedVendor = await this.vendorModel.findByIdAndDelete(id).exec();
     if (!deletedVendor) {
@@ -217,7 +303,21 @@ export class VendorsService {
     return deletedVendor;
   }
 
-  async verifyEmail(email: string, otp: string): Promise<{ success: boolean; message: string }> {
+  /**
+   * Verify vendor email with OTP
+   * 
+   * @param email - Vendor email address
+   * @param otp - One-time password received via email
+   * @returns Success status and verification message
+   * @throws {NotFoundException} If vendor not found
+   * @throws {BadRequestException} If OTP is invalid or expired
+   * 
+   * @description
+   * - Validates OTP against email service
+   * - Marks vendor as verified
+   * - Returns success message
+   */
+  async verifyEmail(email: string, otp: string): Promise<{ success: boolean; message: string; data: Vendor, token:string}> {
     const vendor = await this.vendorModel.findOne({ email });
     
     if (!vendor) {
@@ -225,7 +325,7 @@ export class VendorsService {
     }
 
     if (vendor.isVerified) {
-      return { success: true, message: 'Email already verified' };
+      throw new BadRequestException('Email already verified');
     }
 
     // Verify OTP using the email service
@@ -237,14 +337,56 @@ export class VendorsService {
 
     // Mark as verified
     vendor.isVerified = true;
-    await vendor.save();
 
-    // Save the vendor after successful verification
-    await vendor.save();
+    const newVendor = await vendor.save();
+
+    const { password: _, ...user } = newVendor.toObject();
 
     return { 
       success: true, 
-      message: 'Email verified successfully. Your account is now active.' 
+      message: 'Email verified successfully. Your account is now active.',
+      data: user as any,
+      token: this.tokenHandlers.generateToken(user)
+    };
+  }
+
+  /**
+   * Resend email verification OTP
+   * 
+   * @param email - Vendor email address
+   * @returns Success status and confirmation message
+   * @throws {NotFoundException} If vendor not found
+   * @throws {BadRequestException} If email already verified or OTP send fails
+   * 
+   * @description
+   * - Checks vendor exists and is not already verified
+   * - Generates and sends new OTP via email
+   * - Returns success confirmation
+   */
+  async resendVerificationOtp(email: string): Promise<{ success: boolean; message: string }> {
+    const vendor = await this.vendorModel.findOne({ email });
+    
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    if (vendor.isVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    // Send new OTP email
+    const emailSent = await this.emailService.sendOtpEmail(
+      email,
+      vendor.fullname || 'Vendor',
+    );
+
+    if (!emailSent) {
+      throw new BadRequestException('Failed to send verification email. Please try again later.');
+    }
+
+    return { 
+      success: true, 
+      message: 'Verification OTP has been resent to your email.' 
     };
   }
 }

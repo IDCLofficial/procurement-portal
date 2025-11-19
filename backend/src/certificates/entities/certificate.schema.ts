@@ -1,0 +1,33 @@
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
+
+export type CertificateDocument = Certificate & Document;
+
+@Schema({timestamps:true})
+export class Certificate {
+    @Prop({required:true, unique:true})
+    certificateId: string;
+
+    @Prop({ type: Types.ObjectId, ref: 'Vendor', required: true })
+    contractorId: Types.ObjectId;
+
+    @Prop({required:true})
+    contractorName: string;
+
+    @Prop({required:true})
+    rcBnNumber: string;
+
+    @Prop({required:true})
+    grade: string;
+
+    @Prop({required:true})
+    lga: string;
+
+    @Prop({required:true, default: "Approved"})
+    status: "Approved";
+
+    @Prop({required:true})
+    validUntil: Date;
+}
+
+export const CertificateSchema = SchemaFactory.createForClass(Certificate);

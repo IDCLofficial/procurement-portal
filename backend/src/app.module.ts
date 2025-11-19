@@ -11,6 +11,7 @@ import { CompaniesModule } from './companies/companies.module';
 import { CacModule } from './cac/cac.module';
 import { DocumentsModule } from './documents/documents.module';
 import { CategoriesModule } from './categories/categories.module';
+import { ApplicationsModule } from './applications/applications.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CategoriesModule } from './categories/categories.module';
     CacModule,
     DocumentsModule,
     CategoriesModule,
+    ApplicationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

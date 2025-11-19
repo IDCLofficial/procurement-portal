@@ -17,8 +17,11 @@ export class Vendor {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ default: false })
+  @Prop({required:true, default: false })
   isVerified: boolean;
+
+  @Prop({required:true, default:""})
+  certificateId:string
 }
 
 export const VendorSchema = SchemaFactory.createForClass(Vendor);

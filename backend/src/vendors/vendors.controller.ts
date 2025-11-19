@@ -5,13 +5,28 @@ import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { ApiOperation, ApiResponse, ApiTags, ApiBody} from '@nestjs/swagger';
 import { CreateCompanyDto } from 'src/companies/dto/create-company.dto';
 import { updateRegistrationDto } from './dto/update-registration.dto';
+import { loginDto } from './dto/logn.dto';
 
 @ApiTags('vendors')
 @Controller('vendors')
 export class VendorsController {
   constructor(private readonly vendorsService: VendorsService) {}
 
-  //create a new vendor account
+  /**
+   * Create a new vendor account
+   * 
+   * @param createVendorDto - Vendor registration data including fullname, email, phone, and password
+   * @returns Success message indicating registration completion and verification email sent
+   * 
+   * @example
+   * POST /vendors
+   * Body: {
+   *   "fullname": "John Doe",
+   *   "email": "vendor@example.com",
+   *   "phoneNo": "08012345678",
+   *   "password": "SecurePass123!"
+   * }
+   */
   @Post()
   @ApiOperation({ 
     summary: 'Create a new vendor account',
@@ -48,10 +63,24 @@ export class VendorsController {
     return this.vendorsService.create(createVendorDto);
   }
 
+  /**
+   * Vendor login
+   * 
+   * @param body - Login credentials containing email and password
+   * @returns User object and JWT authentication token
+   * 
+   * @example
+   * POST /vendors/login
+   * Body: {
+   *   "email": "vendor@example.com",
+   *   "password": "SecurePass123!"
+   * }
+   */
+  @Post('login')
   @ApiOperation({ summary: 'Vendor login' })
   @ApiBody({
     description: 'Vendor login credentials',
-    type: Object,
+    type: loginDto,
     schema: {
       properties: {
         email: { type: 'string', example: 'vendor@example.com' },
@@ -62,25 +91,54 @@ export class VendorsController {
   })
   @ApiResponse({ status: 200, description: 'Login successful', schema: { type: 'object', properties: { token: { type: 'string' } } } })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @Post('login')
-  login(@Body() body: { email: string; password: string }) {
-    return this.vendorsService.login(body.email, body.password);
+  login(@Body() body: loginDto) {
+    return this.vendorsService.login(body);
   }
-  
 
-  //get all vendor accounts
+  /**
+   * Get all vendor accounts
+   * 
+   * @returns Array of all registered vendors
+   * 
+   * @example
+   * GET /vendors
+   */
   @Get()
   findAll() {
     return this.vendorsService.findAll();
   }
 
-  // get a single vendor profile
+  /**
+   * Get a single vendor profile by ID
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @returns Vendor profile details
+   * 
+   * @example
+   * GET /vendors/profile/507f1f77bcf86cd799439011
+   */
   @Get('profile/:id')
   findOne(@Param('id') id: string) {
     return this.vendorsService.findOne(id);
   }
 
-  
+  /**
+   * Register company details for a vendor
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @param updateRegistrationDto - Company registration data including company info, directors, bank details, documents, and categories
+   * @returns Success message with saved company, directors, and document data
+   * 
+   * @example
+   * PATCH /vendors/register-company/507f1f77bcf86cd799439011
+   * Body: {
+   *   "company": {
+   *     "companyName": "Tech Solutions Ltd",
+   *     "cacNumber": "RC123456",
+   *     "tin": "12345678-0001"
+   *   }
+   * }
+   */
   @Patch('/register-company/:id')
   @ApiOperation({ 
     summary: 'Register company details for a vendor',
@@ -162,19 +220,52 @@ export class VendorsController {
     return this.vendorsService.registerCompany(id, updateRegistrationDto);
   }
 
-  // update a vendor profile
+  /**
+   * Update a vendor profile
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @param updateVendorDto - Updated vendor data (fullname, email, phone, password)
+   * @returns Updated vendor profile
+   * 
+   * @example
+   * PATCH /vendors/profile/507f1f77bcf86cd799439011
+   * Body: {
+   *   "fullname": "John Updated Doe",
+   *   "phoneNo": "08098765432"
+   * }
+   */
   @Patch('profile/:id')
   update(@Param('id') id: string, @Body() updateVendorDto: UpdateVendorDto) {
     return this.vendorsService.update(id, updateVendorDto);
   }
 
-  // delete a vendor account
+  /**
+   * Delete a vendor account
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @returns Deleted vendor record
+   * 
+   * @example
+   * DELETE /vendors/507f1f77bcf86cd799439011
+   */
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.vendorsService.remove(id);
   }
 
-  // Verify vendor email
+  /**
+   * Verify vendor email with OTP
+   * 
+   * @param body - Email and OTP code for verification
+   * @returns Success status and verification message
+   * 
+   * @example
+   * POST /vendors/verify-email
+   * Body: {
+   *   "email": "vendor@example.com",
+   *   "otp": "123456"
+   * }
+   */
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify vendor email' })
   @ApiBody({
@@ -195,6 +286,43 @@ export class VendorsController {
     const { email, otp } = body;
     try {
       return await this.vendorsService.verifyEmail(email, otp);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  /**
+   * Resend email verification OTP
+   * 
+   * @param body - Email address to resend OTP to
+   * @returns Success status and message confirming OTP was resent
+   * 
+   * @example
+   * POST /vendors/resend-verification-otp
+   * Body: {
+   *   "email": "vendor@example.com"
+   * }
+   */
+  @Post('resend-verification-otp')
+  @ApiOperation({ summary: 'Resend email verification OTP' })
+  @ApiBody({
+    type: Object,
+    examples: {
+      valid: {
+        summary: 'Resend OTP request',
+        value: {
+          email: 'vendor@example.com'
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'OTP resent successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Vendor not found' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Email already verified or failed to send OTP' })
+  async resendVerificationOtp(@Body() body: { email: string }) {
+    const { email } = body;
+    try {
+      return await this.vendorsService.resendVerificationOtp(email);
     } catch (error) {
       throw new BadRequestException(error.message);
     }

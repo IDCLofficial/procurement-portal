@@ -10,14 +10,39 @@ import { Status } from './entities/company.schema';
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
+  /**
+   * Register a new company
+   * 
+   * @param createCompanyDto - Company registration data
+   * @returns The newly created company record
+   * 
+   * @example
+   * POST /companies
+   * Body: {
+   *   "companyName": "Tech Solutions Ltd",
+   *   "cacNumber": "RC123456",
+   *   "tin": "12345678-0001"
+   * }
+   */
+  @Post()
   @ApiOperation({summary:"Register a company"})
   @ApiBody({type:CreateCompanyDto})
   @ApiResponse({status:201,description:"Company created successfully"})
-  @Post()
   create(@Body() createCompanyDto: CreateCompanyDto) {
     return this.companiesService.create(createCompanyDto);
   }
 
+  /**
+   * Get all registered companies with optional filtering and pagination
+   * 
+   * @param status - Optional filter by company status (Pending, Needs Review, Approved, Rejected)
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @returns Paginated list of companies with metadata
+   * 
+   * @example
+   * GET /companies?status=Approved&page=1&limit=10
+   */
   @Get()
   @ApiOperation({ 
     summary: 'Get all registered companies',
@@ -131,14 +156,36 @@ export class CompaniesController {
     return this.companiesService.findAll(status, pageNum, limitNum);
   }
 
+  /**
+   * Get a single company by ID
+   * 
+   * @param id - Company ID (MongoDB ObjectId)
+   * @returns Company details
+   * 
+   * @example
+   * GET /companies/507f1f77bcf86cd799439011
+   */
+  @Get(':id')
   @ApiOperation({summary:"Get a company by id"})
   @ApiQuery({name:"id",required:true,description:"Id of the vendor"})
   @ApiResponse({status:200,description:"Company fetched successfully"})
-  @Get(':id')
   findOne(@Param('id') id: string) {
     return this.companiesService.findOne(id);
   }
 
+  /**
+   * Update company status
+   * 
+   * @param id - Company ID (MongoDB ObjectId)
+   * @param updateStatusDto - New status data
+   * @returns Updated company record
+   * 
+   * @example
+   * PATCH /companies/status/507f1f77bcf86cd799439011
+   * Body: {
+   *   "status": "Approved"
+   * }
+   */
   @Patch('status/:id')
   @ApiOperation({ 
     summary: 'Update company status',
@@ -195,19 +242,42 @@ export class CompaniesController {
     return this.companiesService.updateStatus(id, updateStatusDto);
   }
 
+  /**
+   * Update company information
+   * 
+   * @param id - Company ID (MongoDB ObjectId)
+   * @param updateCompanyDto - Updated company data
+   * @returns Updated company record
+   * 
+   * @example
+   * PATCH /companies/507f1f77bcf86cd799439011
+   * Body: {
+   *   "companyName": "Updated Tech Solutions Ltd",
+   *   "website": "https://newtechsolutions.com"
+   * }
+   */
+  @Patch(':id')
   @ApiOperation({summary:"Update a company by id"})
   @ApiQuery({name:"id",required:true,description:"Id of the vendor"})
   @ApiBody({type:UpdateCompanyDto})
   @ApiResponse({status:200,description:"Company updated successfully"})
-  @Patch(':id')
   update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
     return this.companiesService.update(+id, updateCompanyDto);
   }
 
+  /**
+   * Delete a company by ID
+   * 
+   * @param id - Company ID (MongoDB ObjectId)
+   * @returns Deleted company record
+   * 
+   * @example
+   * DELETE /companies/507f1f77bcf86cd799439011
+   */
+  @Delete(':id')
   @ApiOperation({summary:"Delete a company by id"})
   @ApiQuery({name:"id",required:true,description:"Id of the vendor"})
   @ApiResponse({status:200,description:"Company deleted successfully"})
-  @Delete(':id')
   remove(@Param('id') id: string) {
     return this.companiesService.remove(+id);
   }

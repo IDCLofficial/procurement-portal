@@ -24,10 +24,6 @@ export class CategoriesService {
     return await this.categoryModel.find();
   }
 
-  async findOne(id: string) {
-    return await this.categoryModel.findById(id);
-  }
-
   async remove(id: number) {
     const category = await this.categoryModel.findByIdAndDelete(id);
     if(!category){

@@ -102,22 +102,28 @@ export class EmailService {
       `;
 
       const result = await this.resend.emails.send({
-        from: emailConfig?.from || 'noreply@myimoapp.com',
+        from: emailConfig?.from || 'noreply@ezconadvisory.com',
         to: [email],
         subject: 'Your Verification Code',
         html: emailHtml,
       });
 
       if (result.error) {
-        this.logger.error('Failed to send OTP email:', result.error);
-        throw new ConflictException(result.error)
+        this.logger.error('Failed to send OTP email:', result.error);        
+        throw new ConflictException(`Failed to send email`)
       }
 
       this.logger.log(`OTP sent successfully to ${email}`);
       return true;
     } catch (error) {
       this.logger.error('Error sending OTP email:', error);
-      throw new ConflictException(error)
+      
+      // Don't hide the actual error in development
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      
+      throw new ConflictException('Failed to send verification email. Please try again.')
     }
   }
 

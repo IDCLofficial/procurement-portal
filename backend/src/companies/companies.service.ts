@@ -24,7 +24,7 @@ export class CompaniesService {
     }
   }
 
-  async findAll(status?: Status) {
+  async findAll(status?: Status, page: number = 1, limit: number = 10) {
     try{
       const filter: any = {};
       
@@ -33,10 +33,25 @@ export class CompaniesService {
         filter.status = status;
       }
       
-      const companies = await this.companyModel.find(filter).exec();
+      // Calculate pagination
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination metadata
+      const total = await this.companyModel.countDocuments(filter).exec();
+      
+      // Get paginated results
+      const companies = await this.companyModel
+        .find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }) // Sort by newest first
+        .exec();
       
       return {
-        total: companies.length,
+        total: total,
+        page: page,
+        limit: limit,
+        totalPages: Math.ceil(total / limit),
         companies: companies
       };
     }catch(err){

@@ -24,13 +24,6 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
-  @ApiOperation({summary:"Get a category by id"})
-  @ApiResponse({status:200, description:"Category found"})
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.categoriesService.findOne(id);
-  }
-
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.categoriesService.remove(+id);

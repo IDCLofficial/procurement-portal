@@ -21,7 +21,7 @@ export class CompaniesController {
   @Get()
   @ApiOperation({ 
     summary: 'Get all registered companies',
-    description: 'Retrieves all registered companies with optional filtering by status. Returns the total count and list of companies.'
+    description: 'Retrieves all registered companies with optional filtering by status and pagination. Returns paginated results with metadata.'
   })
   @ApiQuery({
     name: 'status',
@@ -52,6 +52,20 @@ export class CompaniesController {
       }
     }
   })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number for pagination (starts from 1)',
+    example: 1
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page',
+    example: 10
+  })
   @ApiResponse({ 
     status: HttpStatus.OK, 
     description: 'Companies retrieved successfully',
@@ -60,8 +74,23 @@ export class CompaniesController {
       properties: {
         total: {
           type: 'number',
-          example: 10,
+          example: 100,
           description: 'Total number of companies matching the filter'
+        },
+        page: {
+          type: 'number',
+          example: 1,
+          description: 'Current page number'
+        },
+        limit: {
+          type: 'number',
+          example: 10,
+          description: 'Number of items per page'
+        },
+        totalPages: {
+          type: 'number',
+          example: 10,
+          description: 'Total number of pages'
         },
         companies: {
           type: 'array',
@@ -92,8 +121,14 @@ export class CompaniesController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid status value or failed to retrieve companies'
   })
-  findAll(@Query('status') status?: Status) {
-    return this.companiesService.findAll(status);
+  findAll(
+    @Query('status') status?: Status,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
+  ) {
+    const pageNum = page ? Number(page) : 1;
+    const limitNum = limit ? Number(limit) : 10;
+    return this.companiesService.findAll(status, pageNum, limitNum);
   }
 
   @ApiOperation({summary:"Get a company by id"})

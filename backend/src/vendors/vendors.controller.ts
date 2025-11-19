@@ -3,6 +3,8 @@ import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { ApiOperation, ApiResponse, ApiTags, ApiBody} from '@nestjs/swagger';
+import { CreateCompanyDto } from 'src/companies/dto/create-company.dto';
+import { updateRegistrationDto } from './dto/update-registration.dto';
 
 @ApiTags('vendors')
 @Controller('vendors')
@@ -72,14 +74,96 @@ export class VendorsController {
     return this.vendorsService.findAll();
   }
 
-  // get a single vendor account
-  @Get(':id')
+  // get a single vendor profile
+  @Get('profile/:id')
   findOne(@Param('id') id: string) {
     return this.vendorsService.findOne(id);
   }
 
-  // update a vendor account
-  @Patch(':id')
+  
+  @Patch('/register-company/:id')
+  @ApiOperation({ 
+    summary: 'Register company details for a vendor',
+    description: 'Updates vendor registration with company information, directors, bank details, documents, and service categories. All fields are optional to allow partial updates.'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Company registration updated successfully'
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Vendor not found with the provided ID'
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data'
+  })
+  @ApiBody({ 
+    type: updateRegistrationDto,
+    examples: {
+      complete: {
+        summary: 'Complete company registration',
+        value: {
+          company: {
+            companyName: 'Tech Solutions Ltd',
+            cacNumber: 'RC123456',
+            tin: '12345678-0001',
+            businessAddres: '123 Business Street, Victoria Island',
+            lga: 'Lagos Island',
+            website: 'https://techsolutions.com'
+          },
+          directors: [
+            {
+              fullName: 'Jane Smith',
+              idType: 'National ID',
+              id: 'NIN12345678',
+              phone: 2348012345678,
+              email: 'jane.smith@techsolutions.com'
+            }
+          ],
+          bankDetails: {
+            bankName: 'First Bank of Nigeria',
+            accountNumber: 1234567890,
+            accountName: 'Tech Solutions Ltd'
+          },
+          documents: [
+            {
+              documentType: 'CAC Certificate',
+              validFrom: '2023-01-01',
+              validTo: '2028-01-01'
+            }
+          ],
+          categoriesAndGrade: {
+            categories: [
+              {
+                sector: 'Information Technology',
+                service: 'Software Development'
+              }
+            ],
+            grade: 'Grade A'
+          }
+        }
+      },
+      partial: {
+        summary: 'Partial update - company info only',
+        value: {
+          company: {
+            companyName: 'Tech Solutions Ltd',
+            cacNumber: 'RC123456',
+            tin: '12345678-0001',
+            businessAddres: '123 Business Street',
+            lga: 'Lagos Island'
+          }
+        }
+      }
+    }
+  })
+  registerCompany(@Param('id') id: string, @Body() updateRegistrationDto:updateRegistrationDto) {
+    return this.vendorsService.registerCompany(id, updateRegistrationDto);
+  }
+
+  // update a vendor profile
+  @Patch('profile/:id')
   update(@Param('id') id: string, @Body() updateVendorDto: UpdateVendorDto) {
     return this.vendorsService.update(id, updateVendorDto);
   }

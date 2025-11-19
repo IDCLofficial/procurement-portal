@@ -2,29 +2,33 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @ApiOperation({summary:"Create a category"})
+  @ApiBody({type:CreateCategoryDto})
+  @ApiResponse({status:200, description:"Category created successfully"})
   @Post()
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
 
+  @ApiOperation({summary:"Get all categories"})
+  @ApiResponse({status:200, description:"All categories"})
   @Get()
   findAll() {
     return this.categoriesService.findAll();
   }
 
+  @ApiOperation({summary:"Get a category by id"})
+  @ApiResponse({status:200, description:"Category found"})
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.categoriesService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoriesService.update(+id, updateCategoryDto);
+    return this.categoriesService.findOne(id);
   }
 
   @Delete(':id')

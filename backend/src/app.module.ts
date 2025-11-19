@@ -10,6 +10,7 @@ import { PassportModule } from '@nestjs/passport';
 import { CompaniesModule } from './companies/companies.module';
 import { CacModule } from './cac/cac.module';
 import { DocumentsModule } from './documents/documents.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { DocumentsModule } from './documents/documents.module';
     EmailModule,
     CompaniesModule,
     CacModule,
-    DocumentsModule
+    DocumentsModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

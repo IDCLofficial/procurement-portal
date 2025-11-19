@@ -2,6 +2,13 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document, Types } from 'mongoose';
 
+export enum Status{
+    PENDING="Pending",
+    NEED_REVIEW="Needs Review",
+    APPROVED="Approved",
+    REJECTED="Rejected"
+}
+
 export type CompanyDocument = Company & Document;
 export type DirectorsDocument = Directors & Document
 
@@ -52,6 +59,10 @@ export class Company {
     @Prop({ required: true })
     lga: string;
 
+    @ApiProperty()
+    @Prop({required:true})
+    status:Status
+
     @Prop({ 
         required: false, 
         type: String,
@@ -71,7 +82,7 @@ export class Company {
         type:Types.ObjectId,
         ref:"Document"
     })
-    directors?: Types.ObjectId;
+    documents?: Types.ObjectId;
 
     @ApiProperty({ description: 'Website of the company', example: 'https://www.techinnovators.com', required: false })
     @Prop()

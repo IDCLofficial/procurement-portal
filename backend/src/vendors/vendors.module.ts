@@ -4,14 +4,18 @@ import { VendorsService } from './vendors.service';
 import { VendorsController } from './vendors.controller';
 import { Vendor, VendorSchema } from './entities/vendor.schema';
 import { EmailService } from '../email/email.service';
-import { PassportModule } from '@nestjs/passport';
 import TokenHandlers from 'src/lib/generateToken';
+import { Company, CompanySchema, Directors, DirectorsSchema } from 'src/companies/entities/company.schema';
+import { verificationDocuments, VerificationDocumentSchema } from 'src/documents/entities/document.schema';
 
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]),
+    MongooseModule.forFeature([{ name: Company.name, schema: CompanySchema }]),
+    MongooseModule.forFeature([{ name: Directors.name, schema: DirectorsSchema }]),
+    MongooseModule.forFeature([{ name: verificationDocuments.name, schema: VerificationDocumentSchema }]),
   ],
   controllers: [VendorsController],
   providers: [VendorsService, EmailService, TokenHandlers],

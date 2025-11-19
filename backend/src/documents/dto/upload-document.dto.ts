@@ -4,14 +4,14 @@ import { Types } from "mongoose";
 
 export class CreateDocumentDto {
     @ApiProperty({
-        description: 'The MongoDB ObjectId of the company this document belongs to',
+        description: 'The MongoDB ObjectId of the vendor this document belongs to',
         example: '507f1f77bcf86cd799439011',
         required: true,
         type: String // Important for Swagger to know this is a string representation of ObjectId
     })
     @IsNotEmpty()
     @IsString()
-    companyId: string;
+    vendor: string;
 
     @ApiProperty({
         description: 'Name of the document',

@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateDocumentDto } from './dto/upload-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
+import { UpdateDocumentStatusDto } from './dto/update-document-status.dto';
 import { createDocumentPresetDto } from './dto/create-document-preset.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { verificationDocPreset, PresetDocument, verificationDocuments, verificationDocument } from './entities/document.schema';
+import { verificationDocPreset, PresetDocument, verificationDocuments, verificationDocument, Status } from './entities/document.schema';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -50,7 +51,7 @@ export class DocumentsService {
     );
 
     const newDoc = await this.verificationDocumentModel.insertMany({
-        companyId: new Types.ObjectId(createDocumentDto.companyId),
+        vendor: new Types.ObjectId(createDocumentDto.vendor),
         documentName: createDocumentDto.documentName,
         key:key,
         documentUrl: `https://${process.env.SIRV_S3_BUCKET}.s3.sirv.com/${key}`,
@@ -94,19 +95,32 @@ export class DocumentsService {
     return `This action returns all documents`;
   }
 
-  async findDocsByCompany(id: string) {
-    const docs = await this.verificationDocumentModel.find({companyId: new Types.ObjectId(id)})
+  async findDocsByVendor(id: string) {
+    const docs = await this.verificationDocumentModel.find({vendor: new Types.ObjectId(id)})
     if(!docs){
       throw new BadRequestException('Documents not found')
     }
-    return docs;
+    return {
+      vendor:new Types.ObjectId(id),
+      documents:docs
+    };
   }
 
-  update(id: number, updateDocumentDto: UpdateDocumentDto) {
-    return `This action updates a #${id} document`;
-  }
+  async updateDocumentStatus(id: string, updateDocumentStatusDto: UpdateDocumentStatusDto): Promise<verificationDocuments> {
+    try {
+      const document = await this.verificationDocumentModel.findById(id);
+      
+      if (!document) {
+        throw new NotFoundException('Document not found');
+      }
 
-  remove(id: number) {
-    return `This action removes a #${id} document`;
+      document.status = updateDocumentStatusDto.status;
+      return await document.save();
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new BadRequestException('Failed to update document status', err.message);
+    }
   }
 }

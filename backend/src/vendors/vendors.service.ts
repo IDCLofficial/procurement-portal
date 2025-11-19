@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
@@ -8,11 +8,17 @@ import { Vendor, VendorDocument } from './entities/vendor.schema';
 import { EmailService } from '../email/email.service';
 import { JwtService } from '@nestjs/jwt';
 import TokenHandlers from 'src/lib/generateToken';
+import { updateRegistrationDto } from './dto/update-registration.dto';
+import { Company, CompanyDocument, Directors, DirectorsDocument, Status } from '../companies/entities/company.schema';
+import { verificationDocuments, verificationDocument } from '../documents/entities/document.schema';
 
 @Injectable()
 export class VendorsService {
   constructor(
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
+    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    @InjectModel(Directors.name) private directorsModel: Model<DirectorsDocument>,
+    @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>,
     @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
     private tokenHandlers: TokenHandlers
@@ -94,6 +100,113 @@ export class VendorsService {
       throw new NotFoundException(`Vendor with ID ${id} not found`);
     }
     return updatedVendor;
+  }
+
+  async registerCompany(id:string, updateRegistrationDto:updateRegistrationDto): Promise<any> {
+    const vendor = await this.vendorModel.findById(id).exec();
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${id} not found`);
+    }
+
+    const vendorObjectId = new Types.ObjectId(id);
+    const results: any = {
+      vendor: vendor,
+      company: null,
+      directors: null,
+      bankDetails: updateRegistrationDto.bankDetails || null,
+      documents: [],
+      categoriesAndGrade: updateRegistrationDto.categoriesAndGrade || null
+    };
+
+    try {
+      // Save company data to Company collection
+      if (updateRegistrationDto.company) {
+        const existingCompany = await this.companyModel.findOne({ userId: vendorObjectId }).exec();
+        
+        if (existingCompany) {
+          // Update existing company
+          existingCompany.companyName = updateRegistrationDto.company.companyName;
+          existingCompany.cacNumber = updateRegistrationDto.company.cacNumber;
+          existingCompany.tin = updateRegistrationDto.company.tin;
+          existingCompany.address = updateRegistrationDto.company.businessAddres;
+          existingCompany.lga = updateRegistrationDto.company.lga;
+          existingCompany.website = updateRegistrationDto.company.website || '';
+          
+          // Update category and grade if provided
+          if (updateRegistrationDto.categoriesAndGrade) {
+            existingCompany.category = JSON.stringify(updateRegistrationDto.categoriesAndGrade.categories);
+            existingCompany.grade = updateRegistrationDto.categoriesAndGrade.grade;
+          }
+          
+          results.company = await existingCompany.save();
+        } else {
+          // Create new company
+          const newCompany = new this.companyModel({
+            userId: vendorObjectId,
+            companyName: updateRegistrationDto.company.companyName,
+            cacNumber: updateRegistrationDto.company.cacNumber,
+            tin: updateRegistrationDto.company.tin,
+            address: updateRegistrationDto.company.businessAddres,
+            lga: updateRegistrationDto.company.lga,
+            website: updateRegistrationDto.company.website || '',
+            status: Status.PENDING,
+            category: updateRegistrationDto.categoriesAndGrade ? JSON.stringify(updateRegistrationDto.categoriesAndGrade.categories) : '',
+            grade: updateRegistrationDto.categoriesAndGrade?.grade || ''
+          });
+          
+          results.company = await newCompany.save();
+        }
+      }
+
+      // Save directors data to Directors collection
+      if (updateRegistrationDto.directors && updateRegistrationDto.directors.length > 0) {
+        const existingDirectors = await this.directorsModel.findOne({ userId: vendorObjectId }).exec();
+        
+        const directorsData = updateRegistrationDto.directors.map(director => ({
+          name: director.fullName,
+          email: director.email,
+          phone: director.phone.toString(),
+          id: director.id
+        }));
+        
+        if (existingDirectors) {
+          // Update existing directors
+          existingDirectors.directors = directorsData;
+          results.directors = await existingDirectors.save();
+        } else {
+          // Create new directors entry
+          const newDirectors = new this.directorsModel({
+            userId: vendorObjectId,
+            directors: directorsData
+          });
+          
+          results.directors = await newDirectors.save();
+        }
+      }
+
+      // Save documents to verificationDocuments collection
+      if (updateRegistrationDto.documents && updateRegistrationDto.documents.length > 0) {
+        for (const doc of updateRegistrationDto.documents) {
+          const newDocument = new this.verificationDocumentModel({
+            vendor: vendorObjectId,
+            documentName: doc.documentType,
+            documentUrl: '', // URL will be populated when file is uploaded
+            validFrom: doc.validFrom || '',
+            validTo: doc.validTo || ''
+          });
+          
+          const savedDoc = await newDocument.save();
+          results.documents.push(savedDoc);
+        }
+      }
+
+      return {
+        message: 'Company registration updated successfully',
+        data: results
+      };
+    } catch (error) {
+      throw new BadRequestException(`Failed to register company: ${error.message}`);
+    }
   }
 
   async remove(id: string): Promise<Vendor> {

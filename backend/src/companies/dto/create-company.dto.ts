@@ -3,9 +3,9 @@ import { IsString, IsOptional, IsNotEmpty } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class CreateCompanyDto {
-    @ApiProperty({ description: 'ObjectId of the user', example: '507f1f77bcf86cd799439011' })
+    @ApiProperty({ description: 'ObjectId of the vendor', example: '507f1f77bcf86cd799439011' })
     @IsString()
-    userId: Types.ObjectId;
+    vendorId: Types.ObjectId;
 
     @ApiProperty({ description: 'Name of the company', example: 'Tech Innovators Inc.' })
     @IsString()

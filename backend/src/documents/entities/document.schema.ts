@@ -9,7 +9,12 @@ export enum renewalFreq {
     none="n/a",
     annual="annual"
 }
-
+export enum Status{
+    PENDING="Pending",
+    NEED_REVIEW="Needs Review",
+    APPROVED="Approved",
+    REJECTED="Rejected"
+}
 export type PresetDocument = verificationDocPreset & Document;
 export type verificationDocument = verificationDocuments & Document;
 
@@ -30,8 +35,8 @@ export class verificationDocPreset {
 
 @Schema({timestamps:true})
 export class verificationDocuments{
-    @Prop({required:true, type:Types.ObjectId, ref:'Company', default:"691b16becc8430c0c0352e13"})
-    companyId: Types.ObjectId;
+    @Prop({required:true, type:Types.ObjectId, ref:'Vendor'})
+    vendor: Types.ObjectId;
     
     @Prop({required:true})
     documentName:string;
@@ -44,6 +49,9 @@ export class verificationDocuments{
 
     @Prop({required:true, default:" "})
     validTo:string;
+
+    @Prop({required:true, default:Status.PENDING})
+    status:Status;
 }
 
 export const VerificationDocumentPresetSchema = SchemaFactory.createForClass(verificationDocPreset);

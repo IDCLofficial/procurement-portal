@@ -25,6 +25,9 @@ export class EmailService {
       throw new Error('RESEND_API_KEY is required');
     }
     this.resend = new Resend(emailConfig.apiKey);
+    
+    // Cleanup expired OTPs every 5 minutes to prevent memory leaks
+    setInterval(() => this.cleanupExpiredOtps(), 5 * 60 * 1000);
   }
 
   // Generate a random OTP code

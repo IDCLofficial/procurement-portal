@@ -112,9 +112,10 @@ export class VendorsService {
    * 
    * @description
    * Retrieves all vendor records without filtering
+   * Limited to 1000 records to prevent memory issues
    */
   async findAll(): Promise<Vendor[]> {
-    return this.vendorModel.find().exec();
+    return this.vendorModel.find().limit(1000).select('-password').exec();
   }
 
   /**

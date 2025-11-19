@@ -8,8 +8,6 @@ import TokenHandlers from 'src/lib/generateToken';
 import { Company, CompanySchema, Directors, DirectorsSchema } from 'src/companies/entities/company.schema';
 import { verificationDocuments, VerificationDocumentSchema } from 'src/documents/entities/document.schema';
 
-console.log('JWT_SECRET:', process.env.JWT_SECRET);
-
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]),

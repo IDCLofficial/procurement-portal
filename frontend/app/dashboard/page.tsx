@@ -7,8 +7,11 @@ import RenewalReminderCard from '@/components/dashboard/RenewalReminderCard';
 import ComplianceDocumentsCard from '@/components/dashboard/ComplianceDocumentsCard';
 import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/providers/public-service/AuthProvider';
 
 export default function DashboardPage() {
+    const { user } = useAuth();
+
     const router = useRouter();
     // Mock data - will come from API
     const complianceDocuments = [
@@ -100,8 +103,8 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <DashboardHeader
-                companyName="ABC Construction Ltd"
-                subtitle="Vendor Portal"
+                companyName={user?.fullname}
+                subtitle={"Vendor Portal"}
             />
 
             <div className="container mx-auto px-4 py-6">

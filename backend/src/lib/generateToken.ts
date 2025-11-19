@@ -7,7 +7,7 @@ export default class TokenHandlers {
     constructor(private jwtService: JwtService) {}
     generateToken(user: any) {
         const token = this.jwtService.sign({
-            sub: user.id,
+            sub: user._id || user.id,
             email: user.email,
         });
         return token;

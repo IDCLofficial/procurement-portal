@@ -12,6 +12,8 @@ import { CacModule } from './cac/cac.module';
 import { DocumentsModule } from './documents/documents.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ApplicationsModule } from './applications/applications.module';
+import { UsersModule } from './users/users.module';
+import { JwtStrategy } from './config/jwt.strategy';
 
 @Module({
   imports: [
@@ -36,8 +38,9 @@ import { ApplicationsModule } from './applications/applications.module';
     DocumentsModule,
     CategoriesModule,
     ApplicationsModule,
+    UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, JwtStrategy],
 })
 export class AppModule {}

@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException, Req, Headers, UseGuards } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
-import { ApiOperation, ApiResponse, ApiTags, ApiBody} from '@nestjs/swagger';
-import { CreateCompanyDto } from 'src/companies/dto/create-company.dto';
+import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
 import { updateRegistrationDto } from './dto/update-registration.dto';
 import { loginDto } from './dto/logn.dto';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @ApiTags('vendors')
 @Controller('vendors')
@@ -109,17 +109,73 @@ export class VendorsController {
   }
 
   /**
-   * Get a single vendor profile by ID
+   * Get authenticated vendor profile
    * 
-   * @param id - Vendor ID (MongoDB ObjectId)
-   * @returns Vendor profile details
+   * @param authorization - JWT token from Authorization header
+   * @returns Vendor profile details without password
+   * @throws {NotFoundException} If vendor not found
+   * @throws {UnauthorizedException} If JWT token is invalid or missing
+   * 
+   * @description
+   * Retrieves the profile of the currently authenticated vendor using the JWT token.
+   * The vendor ID is extracted by decoding the JWT token from the Authorization header.
+   * Requires a valid JWT token in the Authorization header as "Bearer {token}".
    * 
    * @example
-   * GET /vendors/profile/507f1f77bcf86cd799439011
+   * GET /vendors/profile
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
    */
-  @Get('profile/:id')
-  findOne(@Param('id') id: string) {
-    return this.vendorsService.findOne(id);
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get authenticated vendor profile',
+    description: 'Retrieves the profile of the currently logged-in vendor using the JWT token from the Authorization header.'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Vendor profile retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        fullname: { type: 'string', example: 'John Doe' },
+        email: { type: 'string', example: 'vendor@example.com' },
+        phoneNo: { type: 'string', example: '08012345678' },
+        isVerified: { type: 'boolean', example: true },
+        certificateId: { type: 'string', example: 'CERT123456' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Invalid or missing JWT token',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 401 },
+        message: { type: 'string', example: 'Invalid or missing token' }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Vendor not found',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 404 },
+        message: { type: 'string', example: 'Vendor with ID 507f1f77bcf86cd799439011 not found' },
+        error: { type: 'string', example: 'Not Found' }
+      }
+    }
+  })
+  findOne(@Headers('authorization') authHeader: string) {
+    return this.vendorsService.getProfile(authHeader);
   }
 
   /**

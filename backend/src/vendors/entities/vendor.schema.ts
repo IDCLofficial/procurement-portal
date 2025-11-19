@@ -20,7 +20,7 @@ export class Vendor {
   @Prop({required:true, default: false })
   isVerified: boolean;
 
-  @Prop({required:true, default:""})
+  @Prop({required:true, default:" "})
   certificateId:string
 }
 

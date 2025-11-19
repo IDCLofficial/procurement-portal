@@ -72,7 +72,8 @@ async function bootstrap() {
     .setTitle('Procurement Portal API')
     .setDescription('API documentation for procurement bureau portal')
     .setVersion('1.0')
-    .addTag('vendors', 'vendor endpoints')
+    .addTag('vendors', 'Vendor endpoints')
+    .addTag('users', 'User management endpoints')
     .addBearerAuth() // optional: adds Authorization header
     .build();
 

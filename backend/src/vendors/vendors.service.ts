@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -22,7 +22,8 @@ export class VendorsService {
     @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>,
     @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
-    private tokenHandlers: TokenHandlers
+    private tokenHandlers: TokenHandlers,
+    private jwtService: JwtService
   ) {}
 
   /**
@@ -119,21 +120,60 @@ export class VendorsService {
   }
 
   /**
-   * Get a single vendor by ID
+   * Get vendor profile from JWT token
    * 
-   * @param id - Vendor ID (MongoDB ObjectId)
-   * @returns Vendor document
+   * @param authorization - Authorization header containing Bearer token
+   * @returns Vendor document without password
+   * @throws {UnauthorizedException} If token is missing or invalid
    * @throws {NotFoundException} If vendor not found
    * 
    * @description
-   * Retrieves a specific vendor by their unique ID
+   * Retrieves the authenticated vendor's profile by:
+   * 1. Extracting the JWT token from the Authorization header
+   * 2. Decoding the token to get the user ID
+   * 3. Fetching the vendor profile from the database
+   * 4. Returning the profile without the password field
    */
-  async findOne(id: string): Promise<Vendor> {
-    const vendor = await this.vendorModel.findById(id).exec();
-    if (!vendor) {
-      throw new NotFoundException(`Vendor with ID ${id} not found`);
+  async getProfile(authHeader: string): Promise<Omit<Vendor, 'password'>> {
+    // Check if authorization header exists
+    console.log('Authorization header:', authHeader);
+    
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header is missing');
     }
-    return vendor;
+
+    // Extract token from "Bearer <token>" format
+    const token = authHeader.replace('Bearer ', '').trim();
+    
+    if (!token) {
+      throw new UnauthorizedException('Token is missing');
+    }
+
+    try {
+      // Decode the JWT token
+      const decoded = this.jwtService.verify(token);
+      
+      // Extract user ID from token payload (using 'sub' as per JWT standard)
+      const userId = decoded.sub || decoded._id || decoded.id;
+      
+      if (!userId) {
+        throw new UnauthorizedException('Invalid token payload - user ID not found');
+      }
+
+      // Fetch vendor profile without password
+      const vendor = await this.vendorModel.findById(userId).select('-password').exec();
+      
+      if (!vendor) {
+        throw new NotFoundException(`Vendor with ID ${userId} not found`);
+      }
+      
+      return vendor.toObject();
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 
   /**

@@ -59,10 +59,6 @@ export class Company {
     @Prop({ required: true })
     lga: string;
 
-    @ApiProperty()
-    @Prop({required:true})
-    status:Status
-
     @Prop({ 
         required: false, 
         type: Array,

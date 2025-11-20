@@ -71,23 +71,23 @@ export class CompaniesService {
     }
   }
 
-  async updateStatus(id: string, updateStatusDto: UpdateStatusDto): Promise<Company> {
-    try {
-      const company = await this.companyModel.findById(id);
+  // async updateStatus(id: string, updateStatusDto: UpdateStatusDto): Promise<Company> {
+  //   try {
+  //     const company = await this.companyModel.findById(id);
       
-      if (!company) {
-        throw new NotFoundException('Company not found');
-      }
+  //     if (!company) {
+  //       throw new NotFoundException('Company not found');
+  //     }
 
-      company.status = updateStatusDto.status;
-      return await company.save();
-    } catch (err) {
-      if (err instanceof NotFoundException) {
-        throw err;
-      }
-      throw new BadRequestException('Failed to update company status', err.message);
-    }
-  }
+  //     company.status = updateStatusDto.status;
+  //     return await company.save();
+  //   } catch (err) {
+  //     if (err instanceof NotFoundException) {
+  //       throw err;
+  //     }
+  //     throw new BadRequestException('Failed to update company status', err.message);
+  //   }
+  // }
 
   update(id: number, updateCompanyDto: UpdateCompanyDto) {
     return `This action updates a #${id} company`;

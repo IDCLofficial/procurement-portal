@@ -279,37 +279,61 @@ export class VendorsService {
     if (!vendor) {
       throw new NotFoundException(`Vendor not found`);
     }
-    const company = await this.companyModel.findOne({companyName:updateRegistrationDto.company.companyName}).exec();
-    if(company){
-      throw new BadRequestException('Company has already been registered');
-    }
 
     try{
       if(updateRegistrationDto.company){
         try{
-          const newCompany = new this.companyModel({
-            companyName:updateRegistrationDto.company.companyName,
-            cacNumber:updateRegistrationDto.company.cacNumber,
-            tin:updateRegistrationDto.company.tin,
-            address:updateRegistrationDto.company.businessAddres,
-            lga:updateRegistrationDto.company.lga,
-            website:updateRegistrationDto.company.website || "not specified",
-            userId:vendor._id,
-          })
-          const result = await newCompany.save();
-          
-          vendor.companyForm = companyForm.STEP2;
-          vendor.companyId = result._id as Types.ObjectId;
-          await vendor.save()
-          
-          return {
-            message:"company registered successfully",
-            result:result,
-            nextStep: vendor.companyForm
+          // Check if company already exists for this vendor
+          let company = await this.companyModel.findOne({
+            $or: [
+              { companyName: updateRegistrationDto.company.companyName },
+              { userId: vendor._id }
+            ]
+          }).exec();
+
+          let result;
+          if (company) {
+            // Update existing company
+            company.companyName = updateRegistrationDto.company.companyName;
+            company.cacNumber = updateRegistrationDto.company.cacNumber;
+            company.tin = updateRegistrationDto.company.tin;
+            company.address = updateRegistrationDto.company.businessAddres;
+            company.lga = updateRegistrationDto.company.lga;
+            company.website = updateRegistrationDto.company.website || "not specified";
+            
+            result = await company.save();
+            
+            return {
+              message: "Company information updated successfully",
+              result: result,
+              nextStep: vendor.companyForm
+            }
+          } else {
+            // Create new company
+            const newCompany = new this.companyModel({
+              companyName: updateRegistrationDto.company.companyName,
+              cacNumber: updateRegistrationDto.company.cacNumber,
+              tin: updateRegistrationDto.company.tin,
+              address: updateRegistrationDto.company.businessAddres,
+              lga: updateRegistrationDto.company.lga,
+              website: updateRegistrationDto.company.website || "not specified",
+              userId: vendor._id,
+            })
+            result = await newCompany.save();
+            
+            vendor.companyForm = companyForm.STEP2;
+            vendor.companyId = result._id as Types.ObjectId;
+            await vendor.save()
+            
+            return {
+              message: "Company registered successfully",
+              result: result,
+              nextStep: vendor.companyForm
+            }
           }
         }catch(err){
           this.Logger.debug(`${err}`)
-          throw new ConflictException('There was an error registering company')
+          throw new ConflictException('There was an error registering/updating company')
         }
       }
       /**
@@ -317,30 +341,50 @@ export class VendorsService {
        */
       if(updateRegistrationDto.directors){
         try{
-          const directors = await this.directorsModel.findOne({userId:vendor._id}).exec()
+          // Check if directors already exist for this vendor
+          let directors = await this.directorsModel.findOne({userId:vendor._id}).exec()
+          
+          let result;
           if(directors){
-            throw new BadRequestException("Directors have already been registered for this vendor")
-          }
-          const newDirectors = new this.directorsModel({
-            userId:vendor._id,
-            directors:updateRegistrationDto.directors
-          })
-          const result = await newDirectors.save();
-          const company = await this.companyModel.findOne({userId:vendor._id})
-          if(company){
-            company.directors = result._id as Types.ObjectId;
-            await company.save()
-            return{
-              result
+            // Update existing directors
+            directors.directors = updateRegistrationDto.directors;
+            result = await directors.save();
+            
+            return {
+              message: "Directors information updated successfully",
+              result: result,
+              nextStep: vendor.companyForm
             }
-          }else{
-            new Logger.error("company not found")
-            throw new NotFoundException("Company not found")
+          } else {
+            // Create new directors record
+            const newDirectors = new this.directorsModel({
+              userId:vendor._id,
+              directors:updateRegistrationDto.directors
+            })
+            result = await newDirectors.save();
+            
+            const company = await this.companyModel.findOne({userId:vendor._id})
+            if(company){
+              company.directors = result._id as Types.ObjectId;
+              await company.save()
+              
+              vendor.companyForm = companyForm.STEP3;
+              await vendor.save();
+              
+              return {
+                message: "Directors registered successfully",
+                result: result,
+                nextStep: vendor.companyForm
+              }
+            }else{
+              this.Logger.error("company not found")
+              throw new NotFoundException("Company not found")
+            }
           }
 
         }catch(err){
-          new Logger.error(err);
-          throw new ConflictException('Error updating directors')
+          this.Logger.debug(`${err}`);
+          throw new ConflictException('Error registering/updating directors')
         }
       }
 

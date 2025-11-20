@@ -9,11 +9,10 @@ export type registerCompany={
     website?:string
 }
 export type directors={
-    fullName:string,
-    idType:string,
-    id:string,
-    phone:number,
-    email:string
+    name:string,
+    email:string,
+    phone:string,
+    id:string
 }
 export type bankDetails={
     bankName:string,

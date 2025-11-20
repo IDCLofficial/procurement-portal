@@ -14,22 +14,10 @@ export type DirectorsDocument = Directors & Document
 
 export enum documentType {"NIN","International Passport", "Drivers licence", "Voters card"}
 
-@Schema({ timestamps: true })
-export class Director {
-    @ApiProperty({ description: 'Name of the director', example: 'John Doe' })
-    @Prop({ required: true })
-    name: string;
-
-    @ApiProperty({ description: 'Email of the director', example: 'john.doe@example.com' })
-    @Prop({ required: true })
-    email: string;
-
-    @ApiProperty({ description: 'Phone number of the director', example: '+1234567890' })
-    @Prop({ required: true })
-    phone: string;
-
-    @ApiProperty({ description: 'Id of the director  ', example: 'Male' })
-    @Prop({ required: true })
+export type Director = {
+    name: string,
+    email: string,
+    phone: string,
     id: string
 }
 

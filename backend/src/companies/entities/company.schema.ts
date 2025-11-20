@@ -68,7 +68,7 @@ export class Company {
         type: Array,
         default:""
     })
-    categories: string[]
+    categories: object[]
     
     @Prop({ 
         required: false, 
@@ -87,6 +87,25 @@ export class Company {
     @ApiProperty({ description: 'Website of the company', example: 'https://www.techinnovators.com', required: false })
     @Prop()
     website?: string;
+
+    @ApiProperty({ description: 'Bank name', example: 'First Bank', required: false })
+    @Prop({ required: false })
+    bankName?: string;
+
+    @ApiProperty({ description: 'Account number', example: 1234567890, required: false })
+    @Prop({ required: false })
+    accountNumber?: number;
+
+    @ApiProperty({ description: 'Account name', example: 'Tech Innovators Inc.', required: false })
+    @Prop({ required: false })
+    accountName?: string;
+
+    @Prop({
+        required:true,
+        type:Types.ObjectId,
+        ref:"Director"
+    })
+    directors?:Types.ObjectId
 }
 
 @Schema({ timestamps: true })

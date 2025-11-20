@@ -24,11 +24,11 @@ export class CreateUserDto {
 
   @ApiProperty({
     description: 'Phone number of the user',
-    example: '+2348012345678',
+    example: '08012345678',
   })
   @IsNotEmpty({ message: 'Phone number is required' })
   @IsString({ message: 'Phone number must be a string' })
-  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Invalid phone number format' })
+  @Matches(/^0[789][01]\d{8}$/, { message: 'Invalid phone number format. Must be 11 digits starting with 070-091' })
   phoneNo: string;
 
   @ApiProperty({

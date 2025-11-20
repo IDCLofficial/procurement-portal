@@ -1,10 +1,10 @@
-import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
-import { Vendor, VendorDocument } from './entities/vendor.schema';
+import { companyForm, Vendor, VendorDocument } from './entities/vendor.schema';
 import { EmailService } from '../email/email.service';
 import { JwtService } from '@nestjs/jwt';
 import TokenHandlers from 'src/lib/generateToken';
@@ -227,112 +227,183 @@ export class VendorsService {
     if (!vendor) {
       throw new NotFoundException(`Vendor with ID ${id} not found`);
     }
+    const company = await this.companyModel.findOne({companyName:updateRegistrationDto.company.companyName}).exec();
+    if(company){
+      throw new BadRequestException('Company has already been registered');
+    }
 
-    const vendorObjectId = new Types.ObjectId(id);
-    const results: any = {
-      vendor: vendor,
-      company: null,
-      directors: null,
-      bankDetails: updateRegistrationDto.bankDetails || null,
-      documents: [],
-      categoriesAndGrade: updateRegistrationDto.categoriesAndGrade || null
-    };
-
-    try {
-      // Save company data to Company collection
-      if (updateRegistrationDto.company) {
-        const existingCompany = await this.companyModel.findOne({ userId: vendorObjectId }).exec();
-        
-        if (existingCompany) {
-          // Update existing company
-          existingCompany.companyName = updateRegistrationDto.company.companyName;
-          existingCompany.cacNumber = updateRegistrationDto.company.cacNumber;
-          existingCompany.tin = updateRegistrationDto.company.tin;
-          existingCompany.address = updateRegistrationDto.company.businessAddres;
-          existingCompany.lga = updateRegistrationDto.company.lga;
-          existingCompany.website = updateRegistrationDto.company.website || '';
+    try{
+      if(updateRegistrationDto.company){
+        try{
+          const newCompany = new this.companyModel({
+            companyName:updateRegistrationDto.company.companyName,
+            cacNumber:updateRegistrationDto.company.cacNumber,
+            tin:updateRegistrationDto.company.tin,
+            address:updateRegistrationDto.company.businessAddres,
+            lga:updateRegistrationDto.company.lga,
+            website:updateRegistrationDto.company.website || "not specified",
+            userId:vendor._id,
+          })
+          const result = await newCompany.save();
           
-          // Update category and grade if provided
-          if (updateRegistrationDto.categoriesAndGrade) {
-            existingCompany.categories = updateRegistrationDto.categoriesAndGrade.categories.map(
-              cat => `${cat.sector} - ${cat.service}`
-            );
-            existingCompany.grade = updateRegistrationDto.categoriesAndGrade.grade;
+          vendor.companyForm = companyForm.STEP2;
+          await vendor.save()
+          
+          return {
+            message:"company registered successfully",
+            result:result,
+            nextStep: vendor.companyForm
+          }
+        }catch(err){
+          new Logger.error(err)
+          throw new ConflictException('There was an error registering company')
+        }
+      }
+      /**
+       * update company registration for directors
+       */
+      if(updateRegistrationDto.directors){
+        try{
+          const directors = await this.directorsModel.findOne({userId:vendor._id}).exec()
+          if(directors){
+            throw new BadRequestException("Directors have already been registered for this vendor")
+          }
+          const newDirectors = new this.directorsModel({
+            userId:vendor._id,
+            directors:updateRegistrationDto.directors
+          })
+          const result = await newDirectors.save();
+          const company = await this.companyModel.findOne({userId:vendor._id})
+          if(company){
+            company.directors = result._id as Types.ObjectId;
+            await company.save()
+            return{
+              result
+            }
+          }else{
+            new Logger.error("company not found")
+            throw new NotFoundException("Company not found")
+          }
+
+        }catch(err){
+          new Logger.error(err);
+          throw new ConflictException('Error updating directors')
+        }
+      }
+
+      /**
+       * update company registration for bank details
+       */
+      if(updateRegistrationDto.bankDetails){
+        try{
+          const company = await this.companyModel.findOne({userId:vendor._id})
+          if(!company){
+            new Logger.error("company not found")
+            throw new NotFoundException("Company not found. Please register company first.")
           }
           
-          results.company = await existingCompany.save();
-        } else {
-          // Create new company
-          const newCompany = new this.companyModel({
-            userId: vendorObjectId,
-            companyName: updateRegistrationDto.company.companyName,
-            cacNumber: updateRegistrationDto.company.cacNumber,
-            tin: updateRegistrationDto.company.tin,
-            address: updateRegistrationDto.company.businessAddres,
-            lga: updateRegistrationDto.company.lga,
-            website: updateRegistrationDto.company.website || '',
-            status: Status.PENDING,
-            categories: updateRegistrationDto.categoriesAndGrade 
-              ? updateRegistrationDto.categoriesAndGrade.categories.map(cat => `${cat.sector} - ${cat.service}`)
-              : [],
-            grade: updateRegistrationDto.categoriesAndGrade?.grade || ''
+          // Store bank details in company (assuming they're part of company schema or embedded)
+          // If bank details need a separate collection, create a new model
+          Object.assign(company, {
+            bankName: updateRegistrationDto.bankDetails.bankName,
+            accountNumber: updateRegistrationDto.bankDetails.accountNumber,
+            accountName: updateRegistrationDto.bankDetails.accountName
           });
           
-          results.company = await newCompany.save();
-
-          // Update vendor's companyId
-          vendor.companyId = results.company._id;
+          await company.save();
+          
+          vendor.companyForm = companyForm.STEP3;
           await vendor.save();
-        }
-      }
-
-      // Save directors data to Directors collection
-      if (updateRegistrationDto.directors && updateRegistrationDto.directors.length > 0) {
-        const existingDirectors = await this.directorsModel.findOne({ userId: vendorObjectId }).exec();
-        
-        const directorsData = updateRegistrationDto.directors.map(director => ({
-          name: director.fullName,
-          email: director.email,
-          phone: director.phone.toString(),
-          id: director.id
-        }));
-        
-        if (existingDirectors) {
-          // Update existing directors
-          existingDirectors.directors = directorsData;
-          results.directors = await existingDirectors.save();
-        } else {
-          // Create new directors entry
-          const newDirectors = new this.directorsModel({
-            userId: vendorObjectId,
-            directors: directorsData
-          });
           
-          results.directors = await newDirectors.save();
+          return {
+            message: "Bank details updated successfully",
+            result: company,
+            nextStep: vendor.companyForm
+          }
+        }catch(err){
+          new Logger.error(err);
+          throw new ConflictException('Error updating bank details')
         }
       }
 
-      // Save documents to verificationDocuments collection
-      if (updateRegistrationDto.documents && updateRegistrationDto.documents.length > 0) {
-        for (const doc of updateRegistrationDto.documents) {
-          const newDocument = new this.verificationDocumentModel({
-            vendor: vendorObjectId,
-            documentName: doc.documentType,
-            documentUrl: '', // URL will be populated when file is uploaded
-            validFrom: doc.validFrom || '',
-            validTo: doc.validTo || ''
+      /**
+       * update company registration for documents
+       */
+      if(updateRegistrationDto.documents){
+        try{
+          const company = await this.companyModel.findOne({userId:vendor._id})
+          if(!company){
+            new Logger.error("company not found")
+            throw new NotFoundException("Company not found. Please register company first.")
+          }
+
+          // Create verification documents
+          const documentPromises = updateRegistrationDto.documents.map(doc => {
+            const newDoc = new this.verificationDocumentModel({
+              vendor: vendor._id,
+              documentName: doc.documentType,
+              documentUrl: "", // Will be updated when files are uploaded
+              validFrom: doc.validFrom || " ",
+              validTo: doc.validTo || " "
+            });
+            return newDoc.save();
           });
+
+          const savedDocuments = await Promise.all(documentPromises);
           
-          const savedDoc = await newDocument.save();
-          results.documents.push(savedDoc);
+          // Update company with documents reference (if storing first document ID)
+          if(savedDocuments.length > 0){
+            company.documents = savedDocuments[0]._id as Types.ObjectId;
+            await company.save();
+          }
+
+          vendor.companyForm = companyForm.STEP4;
+          await vendor.save();
+
+          return {
+            message: "Documents registered successfully",
+            result: savedDocuments,
+            nextStep: vendor.companyForm
+          }
+        }catch(err){
+          new Logger.error(err);
+          throw new ConflictException('Error updating documents')
         }
       }
 
+      /**
+       * update company registration for categories and grade
+       */
+      if(updateRegistrationDto.categoriesAndGrade){
+        try{
+          const company = await this.companyModel.findOne({userId:vendor._id})
+          if(!company){
+            new Logger.error("company not found")
+            throw new NotFoundException("Company not found. Please register company first.")
+          }
+
+          company.categories = updateRegistrationDto.categoriesAndGrade.categories;
+          company.grade = updateRegistrationDto.categoriesAndGrade.grade;
+          await company.save();
+
+          vendor.companyForm = companyForm.COMPLETE;
+          await vendor.save();
+
+          return {
+            message: "Categories and grade updated successfully. Registration complete!",
+            result: company,
+            nextStep: vendor.companyForm
+          }
+        }catch(err){
+          Logger.error(err);
+          throw new ConflictException('Error updating categories and grade')
+        }
+      }
       return {
         message: 'Company registration updated successfully',
-        data: results
+        data: vendor
       };
-    } catch (error) {
+    }catch(error) {
       throw new BadRequestException(`Failed to register company: ${error.message}`);
     }
   }

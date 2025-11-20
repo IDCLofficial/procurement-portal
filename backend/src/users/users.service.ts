@@ -106,4 +106,33 @@ export class UsersService {
       token: this.tokenHandlers.generateToken(userWithoutPassword),
     };
   }
+
+  /**
+   * Get all users by name, excluding Admin role
+   * 
+   * @returns Array of users sorted by fullName (without password field)
+   * 
+   * @description
+   * - Retrieves all users except those with Admin role
+   * - Sorts users alphabetically by fullName
+   * - Excludes password field from response
+   * - Returns empty array if no users found
+   */
+  async getUsersByName(): Promise<Omit<User, 'password'>[]> {
+    const users = await this.userModel
+      .find({ role: { $ne: 'Admin' } })
+      .select('-password')
+      .sort({ fullName: 1 })
+      .exec();
+
+    return users.map(user => ({
+      fullName: user.fullName,
+      role: user.role,
+      email: user.email,
+      phoneNo: user.phoneNo,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      assignedApps: user.assignedApps,
+    }));
+  }
 }

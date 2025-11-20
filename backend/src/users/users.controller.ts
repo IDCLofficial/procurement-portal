@@ -129,6 +129,45 @@ export class UsersController {
   }
 
   /**
+   * Get all users sorted by name (excluding Admin role)
+   * 
+   * @returns Array of users sorted alphabetically by fullName
+   * 
+   * @description
+   * Retrieves all users except those with Admin role, sorted by name.
+   * Passwords are excluded from the response.
+   */
+  @Get('usersByName')
+  @ApiOperation({ 
+    summary: 'Get all users by name',
+    description: 'Retrieves all users sorted alphabetically by name, excluding Admin role users'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Users retrieved successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string' },
+          fullName: { type: 'string' },
+          email: { type: 'string' },
+          phoneNo: { type: 'string' },
+          role: { type: 'string', enum: ['Desk officer', 'Auditor', 'Registrar'] },
+          isActive: { type: 'boolean' },
+          assignedApps: { type: 'number' },
+          lastLogin: { type: 'string', format: 'date-time' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      }
+    }
+  })
+  getUsersByName(){
+    return this.usersService.getUsersByName();
+  }
+  /**
    * User login authentication
    * 
    * @param loginUserDto - User login credentials (email and password)

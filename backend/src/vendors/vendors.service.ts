@@ -386,11 +386,11 @@ export class VendorsService {
           company.grade = updateRegistrationDto.categoriesAndGrade.grade;
           await company.save();
 
-          vendor.companyForm = companyForm.COMPLETE;
+          vendor.companyForm = companyForm.STEP6;
           await vendor.save();
 
           return {
-            message: "Categories and grade updated successfully. Registration complete!",
+            message: "Categories and grade updated successfully. Proceed to payment",
             result: company,
             nextStep: vendor.companyForm
           }

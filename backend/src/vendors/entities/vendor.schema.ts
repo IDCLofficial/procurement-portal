@@ -9,6 +9,7 @@ export enum companyForm{
   STEP3="step3",
   STEP4="step4",
   STEP5="step5",
+  STEP6="step6",
   COMPLETE="complete"
 }
 

@@ -319,7 +319,6 @@ export class VendorsController {
     @Body() updateRegistrationDto:updateRegistrationDto,
     @UploadedFiles() files: Express.Multer.File[]
   ) {
-    console.log(req)
     return this.vendorsService.registerCompany(req, updateRegistrationDto, files);
   }
 

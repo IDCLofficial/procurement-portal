@@ -1,4 +1,5 @@
 import { IsArray, IsObject, IsOptional } from "class-validator"
+import { idType } from "src/companies/entities/company.schema"
 
 export type registerCompany={
     companyName:string,
@@ -12,6 +13,7 @@ export type directors={
     name:string,
     email:string,
     phone:string,
+    idType:idType,
     id:string
 }
 export type bankDetails={

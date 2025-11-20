@@ -9,6 +9,13 @@ export enum Status{
     REJECTED="Rejected"
 }
 
+export enum idType{
+    NIN="NIN",
+    VOTERS_CARD="Voters Card",
+    DRIVERS_LICENSE="Drivers License",
+    INTERNATIONAL_PASSPORT="International Passport"
+}
+
 export type CompanyDocument = Company & Document;
 export type DirectorsDocument = Directors & Document
 
@@ -18,6 +25,7 @@ export type Director = {
     name: string,
     email: string,
     phone: string,
+    idType:idType,
     id: string
 }
 

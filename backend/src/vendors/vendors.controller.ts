@@ -202,7 +202,25 @@ export class VendorsController {
   })
   @ApiResponse({ 
     status: HttpStatus.OK, 
-    description: 'Company registration updated successfully'
+    description: 'Company registration updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Categories and grade updated successfully. Proceed to payment'
+        },
+        result: {
+          type: 'object',
+          description: 'Company details with updated categories and grade'
+        },
+        nextStep: {
+          type: 'string',
+          enum: ['company', 'directors', 'bankDetails', 'documents', 'categoriesAndGrade', 'complete'],
+          description: 'Current step in the registration process'
+        }
+      }
+    }
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,

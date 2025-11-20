@@ -272,6 +272,7 @@ export class VendorsService {
           const result = await newCompany.save();
           
           vendor.companyForm = companyForm.STEP2;
+          vendor.companyId = result._id as Types.ObjectId;
           await vendor.save()
           
           return {

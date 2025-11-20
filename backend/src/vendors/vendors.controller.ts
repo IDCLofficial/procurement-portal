@@ -275,11 +275,17 @@ export class VendorsController {
             type: 'object',
             properties: {
               documentType: { type: 'string', example: 'CAC Certificate' },
+              documentUrl: {
+                type: 'string',
+                example: 'https://cdn.example.com/documents/cac-certificate.pdf',
+                description: 'URL of the uploaded document file that corresponds to an entry in the files array'
+              },
               validFrom: { type: 'string', example: '2023-01-01' },
               validTo: { type: 'string', example: '2028-01-01' }
-            }
+            },
+            required: ['documentType', 'documentUrl']
           },
-          description: 'Document metadata (files uploaded separately via files field)'
+          description: 'Document metadata; each item should have a matching uploaded file in the files field'
         },
         categoriesAndGrade: {
           type: 'object',

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -14,6 +15,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { UsersModule } from './users/users.module';
 import { JwtStrategy } from './config/jwt.strategy';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -30,6 +32,13 @@ import { JwtStrategy } from './config/jwt.strategy';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60000,      // Time window in milliseconds (60 seconds)
+        limit: 5,       // Max number of requests per IP within ttl
+      },
+    ]),
     PassportModule,
     VendorsModule,
     EmailModule,
@@ -41,6 +50,13 @@ import { JwtStrategy } from './config/jwt.strategy';
     UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService, JwtStrategy],
+  providers: [
+    AppService, 
+    JwtStrategy,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

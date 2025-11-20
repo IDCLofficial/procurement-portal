@@ -4,12 +4,11 @@ import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 export type VendorDocument = Vendor & Document;
 
 export enum companyForm{
-  STEP1="step1",
-  STEP2="step2",
-  STEP3="step3",
-  STEP4="step4",
-  STEP5="step5",
-  STEP6="step6",
+  STEP1="company",
+  STEP2="directors",
+  STEP3="bankDetails",
+  STEP4="documents",
+  STEP5="categoriesAndGrade",
   COMPLETE="complete"
 }
 
@@ -38,6 +37,12 @@ export class Vendor {
 
   @Prop({required:true, enum:companyForm, default:companyForm.STEP1})
   companyForm:companyForm
+
+  @Prop({ default: 0 })
+  otpFailedAttempts: number;
+
+  @Prop({ type: Date })
+  otpLockoutUntil?: Date;
 }
 
 export const VendorSchema = SchemaFactory.createForClass(Vendor);

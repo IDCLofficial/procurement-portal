@@ -386,9 +386,6 @@ export class VendorsService {
           company.grade = updateRegistrationDto.categoriesAndGrade.grade;
           await company.save();
 
-          vendor.companyForm = companyForm.STEP6;
-          await vendor.save();
-
           return {
             message: "Categories and grade updated successfully. Proceed to payment",
             result: company,
@@ -451,15 +448,48 @@ export class VendorsService {
       throw new BadRequestException('Email already verified');
     }
 
+    // Check if account is locked out
+    const now = new Date();
+    if (vendor.otpLockoutUntil && vendor.otpLockoutUntil > now) {
+      const remainingMinutes = Math.ceil((vendor.otpLockoutUntil.getTime() - now.getTime()) / (1000 * 60));
+      throw new BadRequestException(
+        `Too many failed attempts. Please try again in ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`
+      );
+    }
+
+    // Reset failed attempts if lockout period has expired
+    if (vendor.otpLockoutUntil && vendor.otpLockoutUntil <= now) {
+      vendor.otpFailedAttempts = 0;
+      vendor.otpLockoutUntil = undefined;
+    }
+
     // Verify OTP using the email service
     const result = this.emailService.verifyOtp(email, otp);
     
     if (!result.isValid) {
-      throw new BadRequestException(result.message || 'Invalid or expired OTP');
+      // Increment failed attempts
+      vendor.otpFailedAttempts = (vendor.otpFailedAttempts || 0) + 1;
+
+      // Lock out after 3 failed attempts
+      if (vendor.otpFailedAttempts >= 3) {
+        vendor.otpLockoutUntil = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
+        await vendor.save();
+        throw new BadRequestException(
+          'Too many failed attempts. Your account has been locked for 30 minutes.'
+        );
+      }
+
+      await vendor.save();
+      const attemptsLeft = 3 - vendor.otpFailedAttempts;
+      throw new BadRequestException(
+        `${result.message || 'Invalid or expired OTP'}. ${attemptsLeft} attempt${attemptsLeft > 1 ? 's' : ''} remaining.`
+      );
     }
 
-    // Mark as verified
+    // Mark as verified and reset failed attempts
     vendor.isVerified = true;
+    vendor.otpFailedAttempts = 0;
+    vendor.otpLockoutUntil = undefined;
 
     const newVendor = await vendor.save();
 

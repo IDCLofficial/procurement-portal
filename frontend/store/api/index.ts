@@ -1,3 +1,4 @@
+import { decrypt } from '@/lib/crypto';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL
@@ -8,7 +9,10 @@ export const apiSlice = createApi({
     baseQuery: fetchBaseQuery({
         baseUrl: BASE_URL,
         prepareHeaders: (headers, { endpoint }) => {
-            const token = localStorage.getItem('token');
+            const enc_token = localStorage.getItem('token');
+            if (!enc_token) return headers;
+            const token = decrypt(enc_token);
+
             // Add ngrok header for external API calls
             const skipAuthEndpoints = ["createVendor", "verifyVendor", "loginVendor", "resendVerificationOtp"]
             // headers.set('ngrok-skip-browser-warning', 'true')
@@ -18,7 +22,6 @@ export const apiSlice = createApi({
                 }
                 headers.set('Authorization', `Bearer ${token}`)
             }
-            console.log(headers)
             return headers
         },
     }),

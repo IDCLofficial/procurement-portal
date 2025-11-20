@@ -38,7 +38,7 @@ interface User {
     phoneNo: string;
     certificateId: string;
     isVerified: boolean;
-    companyForm: string;
+    companyForm: VendorSteps;
     isVerified: boolean;
     createdAt: string;
     updatedAt: string;
@@ -55,6 +55,7 @@ interface ResponseSuccess {
 type LoginVendorResponse = ResponseSuccess | ResponseError;
 
 enum VendorSteps {
+    COMPLETE = "complete",
     COMPANY = "company",
     DIRECTORS = "directors",
     BANK_DETAILS = "bankDetails",

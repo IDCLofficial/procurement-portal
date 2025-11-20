@@ -1,9 +1,9 @@
 "use client"
-import { encrypt } from '@/lib/crypto';
+import { decrypt, encrypt } from '@/lib/crypto';
 import { User } from '@/store/api/types';
 import { useGetProfileQuery } from '@/store/api/vendor.api';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useContext, useMemo, useState } from 'react'
 
 interface AuthContextType {
     user: User | null;
@@ -11,6 +11,7 @@ interface AuthContextType {
     isLoading: boolean;
     isAuthenticated: boolean;
     isLoggingOut: boolean;
+    clearToken: () => void;
     refresh: () => void;
     login: (token: string) => void;
     logout: () => void;
@@ -26,9 +27,11 @@ const getStoredToken = () => {
 
     try {
         const storedToken = localStorage.getItem('token');
+        if (!storedToken) return null;
+        const dec_token = decrypt(storedToken);
         
-        if (storedToken && storedToken !== 'n/a') {
-            return storedToken;
+        if (dec_token && dec_token !== 'n/a') {
+            return dec_token;
         }
         
         return null;
@@ -59,6 +62,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         return !!(token && user && !isError);
     }, [token, user, isError]);
 
+    const clearToken = useCallback(() => {
+        setToken(null);
+        localStorage.removeItem('token');
+    }, []);
+
     React.useEffect(() => {
         if (!user) return;
 
@@ -73,28 +81,20 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         }
     }, [user, router]);
 
-
-    // Redirect to dashboard when authenticated
-    useEffect(() => {
-        if (isAuthenticated && user && !isLoading) {
-            console.log("Logged In", { user, token });
-        }
-    }, [isAuthenticated, user, isLoading, token]);
-
     const login = useCallback((token: string) => {
+        const enc_token = encrypt(token);
         setToken(token);
-        localStorage.setItem('token', token);
+        localStorage.setItem('token', enc_token);
         // User will be fetched automatically by useGetProfileQuery
         router.replace('/dashboard');
     }, [router]);
 
     const logout = useCallback(() => {
         setIsLoggingOut(true);
-        setToken(null);
-        localStorage.removeItem('token');
+        clearToken();
         setIsLoggingOut(false);
         router.replace('/vendor-login');
-    }, [router]);
+    }, [router, clearToken]);
 
     const refresh = useCallback(() => {
         if (token) {
@@ -111,7 +111,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         refresh,
         login,
         logout,
-    }), [user, token, isLoading, isAuthenticated, isLoggingOut, refresh, login, logout]);
+        clearToken,
+    }), [user, token, isLoading, isAuthenticated, isLoggingOut, refresh, login, logout, clearToken]);
 
     return (
         <AuthContext.Provider value={value}>

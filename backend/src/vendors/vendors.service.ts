@@ -12,9 +12,13 @@ import { updateRegistrationDto } from './dto/update-registration.dto';
 import { Company, CompanyDocument, Directors, DirectorsDocument, Status } from '../companies/entities/company.schema';
 import { verificationDocuments, verificationDocument } from '../documents/entities/document.schema';
 import { loginDto } from './dto/logn.dto';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { ValidationError } from 'class-validator';
 
 @Injectable()
 export class VendorsService {
+  private s3: S3Client;
+
   constructor(
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
@@ -24,7 +28,24 @@ export class VendorsService {
     private emailService: EmailService,
     private tokenHandlers: TokenHandlers,
     private jwtService: JwtService
-  ) {}
+  ) {
+    // Initialize S3 client for Sirv
+    const accessKeyId = process.env.SIRV_S3_ACCESS_KEY;
+    const secretAccessKey = process.env.SIRV_S3_SECRET_KEY;
+    const endpoint = process.env.SIRV_S3_ENDPOINT;
+
+    if (accessKeyId && secretAccessKey && endpoint) {
+      this.s3 = new S3Client({
+        region: 'auto',
+        endpoint,
+        credentials: {
+          accessKeyId,
+          secretAccessKey,
+        },
+        forcePathStyle: true,
+      });
+    }
+  }
 
   /**
    * Create a new vendor account
@@ -97,6 +118,9 @@ export class VendorsService {
       const vendor = await this.vendorModel.findOne({ email:body.email }).exec();
       if (!vendor) {
         throw new NotFoundException('Vendor not found');
+      }
+      if(!vendor.isVerified){
+        throw new UnauthorizedException('Email not verified')
       }
       const isPasswordValid = await bcrypt.compare(body.password, vendor.password);
       if (!isPasswordValid) {
@@ -211,6 +235,7 @@ export class VendorsService {
    * 
    * @param id - Vendor ID (MongoDB ObjectId)
    * @param updateRegistrationDto - Company registration data including company info, directors, bank details, documents, and categories
+   * @param files - Optional uploaded files for documents
    * @returns Success message with saved company, directors, and document data
    * @throws {NotFoundException} If vendor not found
    * @throws {BadRequestException} If registration fails
@@ -218,11 +243,11 @@ export class VendorsService {
    * @description
    * - Creates or updates company information
    * - Manages directors data
-   * - Handles verification documents
+   * - Handles verification documents with file uploads to Sirv
    * - Stores bank details and service categories
    * - Sets company status to PENDING for new registrations
    */
-  async registerCompany(id:string, updateRegistrationDto:updateRegistrationDto): Promise<any> {
+  async registerCompany(id:string, updateRegistrationDto:updateRegistrationDto, files?: Express.Multer.File[]): Promise<any> {
     const vendor = await this.vendorModel.findById(id).exec();
     if (!vendor) {
       throw new NotFoundException(`Vendor with ID ${id} not found`);
@@ -337,19 +362,60 @@ export class VendorsService {
             throw new NotFoundException("Company not found. Please register company first.")
           }
 
-          // Create verification documents
-          const documentPromises = updateRegistrationDto.documents.map(doc => {
-            const newDoc = new this.verificationDocumentModel({
-              vendor: vendor._id,
-              documentName: doc.documentType,
-              documentUrl: "", // Will be updated when files are uploaded
-              validFrom: doc.validFrom || " ",
-              validTo: doc.validTo || " "
-            });
-            return newDoc.save();
-          });
+          // Upload files to Sirv and create verification documents
+          const savedDocuments: verificationDocument[] = [];
+          
+          if (files && files.length > 0) {
+            // Upload files to Sirv
+            for (let i = 0; i < files.length; i++) {
+              const file = files[i];
+              const docMetadata = updateRegistrationDto.documents[i];
+              
+              if (!docMetadata) {
+                throw new BadRequestException(`Missing metadata for file ${i + 1}`);
+              }
 
-          const savedDocuments = await Promise.all(documentPromises);
+              // Upload to Sirv
+              const key = `uploads/${docMetadata.documentType}_${Date.now()}_${file.originalname}`;
+              
+              await this.s3.send(
+                new PutObjectCommand({
+                  Bucket: process.env.SIRV_S3_BUCKET,
+                  Key: key,
+                  Body: file.buffer,
+                  ContentType: file.mimetype,
+                })
+              );
+
+              const documentUrl = `https://${process.env.SIRV_S3_BUCKET}.s3.sirv.com/${key}`;
+
+              // Create document record with Sirv URL
+              const newDoc = new this.verificationDocumentModel({
+                vendor: vendor._id,
+                documentName: docMetadata.documentType,
+                key: key,
+                documentUrl: documentUrl,
+                validFrom: docMetadata.validFrom || " ",
+                validTo: docMetadata.validTo || " "
+              });
+
+              const saved = await newDoc.save();
+              savedDocuments.push(saved);
+            }
+          } else if (updateRegistrationDto.documents.length > 0) {
+            // No files uploaded, use URLs from DTO (if already uploaded separately)
+            const documentPromises = updateRegistrationDto.documents.map(doc => {
+              const newDoc = new this.verificationDocumentModel({
+                vendor: vendor._id,
+                documentName: doc.documentType,
+                documentUrl: doc.documentUrl || "",
+                validFrom: doc.validFrom || " ",
+                validTo: doc.validTo || " "
+              });
+              return newDoc.save();
+            });
+            savedDocuments.push(...await Promise.all(documentPromises));
+          }
           
           // Update company with documents reference (if storing first document ID)
           if(savedDocuments.length > 0){
@@ -367,7 +433,7 @@ export class VendorsService {
           }
         }catch(err){
           new Logger.error(err);
-          throw new ConflictException('Error updating documents')
+          throw new ConflictException('Error updating documents: ' + err.message)
         }
       }
 

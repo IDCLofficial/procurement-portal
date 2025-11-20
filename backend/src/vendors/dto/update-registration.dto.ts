@@ -22,6 +22,7 @@ export type bankDetails={
 }
 export type documents={
     documentType:string,
+    documentUrl:string,  // URL returned from Sirv after uploading via /documents endpoint
     validFrom?:string,
     validTo?:string
 }

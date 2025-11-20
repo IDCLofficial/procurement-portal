@@ -1,11 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException, Req, Headers, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException, Req, Headers, UseGuards, UseInterceptors, UploadedFiles } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
-import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiBearerAuth, ApiHeader, ApiConsumes } from '@nestjs/swagger';
 import { updateRegistrationDto } from './dto/update-registration.dto';
 import { loginDto } from './dto/logn.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('vendors')
 @Controller('vendors')
@@ -196,9 +197,11 @@ export class VendorsController {
    * }
    */
   @Patch('/register-company/:id')
+  @UseInterceptors(FilesInterceptor('files', 10)) // Allow up to 10 files
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ 
     summary: 'Register company details for a vendor',
-    description: 'Updates vendor registration with company information, directors, bank details, documents, and service categories. All fields are optional to allow partial updates.'
+    description: 'Updates vendor registration with company information, directors, bank details, documents, and service categories. All fields are optional to allow partial updates. Files can be uploaded for documents.'
   })
   @ApiResponse({ 
     status: HttpStatus.OK, 
@@ -231,67 +234,86 @@ export class VendorsController {
     description: 'Invalid input data'
   })
   @ApiBody({ 
-    type: updateRegistrationDto,
-    examples: {
-      complete: {
-        summary: 'Complete company registration',
-        value: {
-          company: {
-            companyName: 'Tech Solutions Ltd',
-            cacNumber: 'RC123456',
-            tin: '12345678-0001',
-            businessAddres: '123 Business Street, Victoria Island',
-            lga: 'Lagos Island',
-            website: 'https://techsolutions.com'
-          },
-          directors: [
-            {
-              fullName: 'Jane Smith',
-              idType: 'National ID',
-              id: 'NIN12345678',
-              phone: 2348012345678,
-              email: 'jane.smith@techsolutions.com'
+    schema: {
+      type: 'object',
+      properties: {
+        company: {
+          type: 'object',
+          properties: {
+            companyName: { type: 'string', example: 'Tech Solutions Ltd' },
+            cacNumber: { type: 'string', example: 'RC123456' },
+            tin: { type: 'string', example: '12345678-0001' },
+            businessAddres: { type: 'string', example: '123 Business Street, Victoria Island' },
+            lga: { type: 'string', example: 'Lagos Island' },
+            website: { type: 'string', example: 'https://techsolutions.com' }
+          }
+        },
+        directors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              fullName: { type: 'string', example: 'Jane Smith' },
+              idType: { type: 'string', example: 'National ID' },
+              id: { type: 'string', example: 'NIN12345678' },
+              phone: { type: 'number', example: 2348012345678 },
+              email: { type: 'string', example: 'jane.smith@techsolutions.com' }
             }
-          ],
-          bankDetails: {
-            bankName: 'First Bank of Nigeria',
-            accountNumber: 1234567890,
-            accountName: 'Tech Solutions Ltd'
-          },
-          documents: [
-            {
-              documentType: 'CAC Certificate',
-              validFrom: '2023-01-01',
-              validTo: '2028-01-01'
+          }
+        },
+        bankDetails: {
+          type: 'object',
+          properties: {
+            bankName: { type: 'string', example: 'First Bank of Nigeria' },
+            accountNumber: { type: 'number', example: 1234567890 },
+            accountName: { type: 'string', example: 'Tech Solutions Ltd' }
+          }
+        },
+        documents: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              documentType: { type: 'string', example: 'CAC Certificate' },
+              validFrom: { type: 'string', example: '2023-01-01' },
+              validTo: { type: 'string', example: '2028-01-01' }
             }
-          ],
-          categoriesAndGrade: {
-            categories: [
-              {
-                sector: 'Information Technology',
-                service: 'Software Development'
+          },
+          description: 'Document metadata (files uploaded separately via files field)'
+        },
+        categoriesAndGrade: {
+          type: 'object',
+          properties: {
+            categories: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  sector: { type: 'string', example: 'Information Technology' },
+                  service: { type: 'string', example: 'Software Development' }
+                }
               }
-            ],
-            grade: 'Grade A'
+            },
+            grade: { type: 'string', example: 'Grade A' }
           }
-        }
-      },
-      partial: {
-        summary: 'Partial update - company info only',
-        value: {
-          company: {
-            companyName: 'Tech Solutions Ltd',
-            cacNumber: 'RC123456',
-            tin: '12345678-0001',
-            businessAddres: '123 Business Street',
-            lga: 'Lagos Island'
-          }
+        },
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary'
+          },
+          description: 'Upload document files (PDF, images, etc.) - corresponds to documents array'
         }
       }
     }
   })
-  registerCompany(@Param('id') id: string, @Body() updateRegistrationDto:updateRegistrationDto) {
-    return this.vendorsService.registerCompany(id, updateRegistrationDto);
+  registerCompany(
+    @Param('id') id: string, 
+    @Body() updateRegistrationDto:updateRegistrationDto,
+    @UploadedFiles() files: Express.Multer.File[]
+  ) {
+    return this.vendorsService.registerCompany(id, updateRegistrationDto, files);
   }
 
   /**

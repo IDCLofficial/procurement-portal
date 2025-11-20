@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { Request } from 'express';
 import * as bcrypt from 'bcrypt';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
@@ -247,10 +248,33 @@ export class VendorsService {
    * - Stores bank details and service categories
    * - Sets company status to PENDING for new registrations
    */
-  async registerCompany(id:string, updateRegistrationDto:updateRegistrationDto, files?: Express.Multer.File[]): Promise<any> {
-    const vendor = await this.vendorModel.findById(id).exec();
+  async registerCompany(req:Request, updateRegistrationDto:updateRegistrationDto, files?: Express.Multer.File[]): Promise<any> {
+    // Extract and verify JWT token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header is missing');
+    }
+    
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      throw new UnauthorizedException('Token is missing');
+    }
+    
+    let userId: string;
+    try {
+      const decoded = this.jwtService.verify(token);
+      userId = decoded.sub || decoded._id || decoded.id;
+      
+      if (!userId) {
+        throw new UnauthorizedException('Invalid token payload');
+      }
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+    
+    const vendor = await this.vendorModel.findById(userId).exec();
     if (!vendor) {
-      throw new NotFoundException(`Vendor with ID ${id} not found`);
+      throw new NotFoundException(`Vendor not found`);
     }
     const company = await this.companyModel.findOne({companyName:updateRegistrationDto.company.companyName}).exec();
     if(company){

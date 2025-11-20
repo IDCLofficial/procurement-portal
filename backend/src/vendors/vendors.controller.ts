@@ -196,7 +196,7 @@ export class VendorsController {
    *   }
    * }
    */
-  @Patch('/register-company/:id')
+  @Patch('/register-company')
   @UseInterceptors(FilesInterceptor('files', 10)) // Allow up to 10 files
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ 
@@ -309,11 +309,11 @@ export class VendorsController {
     }
   })
   registerCompany(
-    @Param('id') id: string, 
+    @Req() req:any, 
     @Body() updateRegistrationDto:updateRegistrationDto,
     @UploadedFiles() files: Express.Multer.File[]
   ) {
-    return this.vendorsService.registerCompany(id, updateRegistrationDto, files);
+    return this.vendorsService.registerCompany(req, updateRegistrationDto, files);
   }
 
   /**

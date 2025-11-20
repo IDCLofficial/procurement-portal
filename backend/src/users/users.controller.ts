@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { Role } from './entities/user.schema';
+import { AdminGuard } from '../guards/admin.guard';
 
 @ApiTags('users')
 @Controller('users')
@@ -291,5 +292,108 @@ export class UsersController {
   })
   login(@Body() loginUserDto: LoginUserDto) {
     return this.usersService.login(loginUserDto);
+  }
+
+  /**
+   * Delete a user account (Admin only)
+   * 
+   * @param id - User ID (MongoDB ObjectId) to delete
+   * @returns Deleted user object (without password)
+   * @throws {UnauthorizedException} 401 - If token is missing or invalid
+   * @throws {ForbiddenException} 403 - If user is not an Admin
+   * @throws {NotFoundException} 404 - If user not found
+   * @throws {BadRequestException} 400 - If attempting to delete an Admin user
+   * 
+   * @description
+   * Deletes a user account from the system. Only users with Admin role can perform this action.
+   * The endpoint:
+   * - Validates the JWT token from Authorization header
+   * - Verifies the requesting user has Admin role
+   * - Prevents deletion of Admin users
+   * - Permanently removes the user from the database
+   * - Returns the deleted user data (without password)
+   * 
+   * @example
+   * DELETE /users/507f1f77bcf86cd799439011
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   */
+  @Delete(':id')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Delete a user (Admin only)',
+    description: 'Permanently deletes a user account. Only accessible by users with Admin role. Cannot delete Admin users.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        fullName: { type: 'string', example: 'John Doe' },
+        email: { type: 'string', example: 'john.doe@education.gov' },
+        phoneNo: { type: 'string', example: '+2348012345678' },
+        role: { type: 'string', enum: ['Desk officer', 'Auditor', 'Registrar'], example: 'Desk officer' },
+        isActive: { type: 'boolean', example: true },
+        assignedApps: { type: 'number', example: 5 },
+        lastLogin: { type: 'string', format: 'date-time' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Missing or invalid token',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 401 },
+        message: { type: 'string', example: 'Authorization header missing' },
+        error: { type: 'string', example: 'Unauthorized' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Forbidden - Admin role required',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 403 },
+        message: { type: 'string', example: 'Access denied. Admin role required.' },
+        error: { type: 'string', example: 'Forbidden' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 404 },
+        message: { type: 'string', example: 'User with ID 507f1f77bcf86cd799439011 not found' },
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Cannot delete Admin users',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 400 },
+        message: { type: 'string', example: 'Cannot delete Admin users' },
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
+  })
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(id);
   }
 }

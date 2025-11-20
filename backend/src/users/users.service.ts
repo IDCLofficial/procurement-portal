@@ -135,4 +135,41 @@ export class UsersService {
       assignedApps: user.assignedApps,
     }));
   }
+
+  /**
+   * Delete a user by ID (Admin only)
+   * 
+   * @param id - User ID to delete
+   * @returns Deleted user object (without password)
+   * @throws {NotFoundException} If user not found
+   * @throws {BadRequestException} If attempting to delete an Admin user
+   * 
+   * @description
+   * - Validates user existence
+   * - Prevents deletion of Admin users
+   * - Permanently removes user from database
+   * - Returns deleted user data without password
+   */
+  async remove(id: string): Promise<Omit<User, 'password'>> {
+    const user = await this.userModel.findById(id).exec();
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Prevent deletion of Admin users
+    if (user.role === 'Admin') {
+      throw new BadRequestException('Cannot delete Admin users');
+    }
+
+    const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
+
+    if (!deletedUser) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Return deleted user without password
+    const { password: _, ...userWithoutPassword } = deletedUser.toObject();
+    return userWithoutPassword;
+  }
 }

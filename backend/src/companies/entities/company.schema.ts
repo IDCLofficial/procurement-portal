@@ -66,7 +66,7 @@ export class Company {
     @Prop({ 
         required: false, 
         type: Array,
-        default:""
+        default:[]
     })
     categories: object[]
     
@@ -88,20 +88,20 @@ export class Company {
     @Prop()
     website?: string;
 
-    @ApiProperty({ description: 'Bank name', example: 'First Bank', required: false })
+    @ApiProperty({ description: 'Bank name', example: 'First Bank', required: true, default:" " })
     @Prop({ required: false })
     bankName?: string;
 
-    @ApiProperty({ description: 'Account number', example: 1234567890, required: false })
+    @ApiProperty({ description: 'Account number', example: 1234567890, required: true, default:0 })
     @Prop({ required: false })
     accountNumber?: number;
 
-    @ApiProperty({ description: 'Account name', example: 'Tech Innovators Inc.', required: false })
+    @ApiProperty({ description: 'Account name', example: 'Tech Innovators Inc.', required: true, default:" " })
     @Prop({ required: false })
     accountName?: string;
 
     @Prop({
-        required:true,
+        required:false,
         type:Types.ObjectId,
         ref:"Director"
     })

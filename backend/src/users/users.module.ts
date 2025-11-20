@@ -4,13 +4,14 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User, UserSchema } from './entities/user.schema';
 import TokenHandlers from 'src/lib/generateToken';
+import { AdminGuard } from '../guards/admin.guard';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [UsersController],
-  providers: [UsersService, TokenHandlers],
+  providers: [UsersService, TokenHandlers, AdminGuard],
   exports: [UsersService],
 })
 export class UsersModule {}

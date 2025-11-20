@@ -37,23 +37,23 @@ export type categoriesAndGrade={
 
 
 export class updateRegistrationDto{
-    @IsObject()
     @IsOptional()
+    @IsObject()
     company:registerCompany
 
-    @IsArray()
     @IsOptional()
+    @IsArray()
     directors:directors[]
 
-    @IsObject()
     @IsOptional()
+    @IsObject()
     bankDetails:bankDetails
 
-    @IsArray()
     @IsOptional()
+    @IsArray()
     documents:documents[]
 
-    @IsObject()
     @IsOptional()
+    @IsObject()
     categoriesAndGrade:categoriesAndGrade
 }

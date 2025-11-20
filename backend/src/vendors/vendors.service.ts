@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Request } from 'express';
@@ -15,10 +15,12 @@ import { verificationDocuments, verificationDocument } from '../documents/entiti
 import { loginDto } from './dto/logn.dto';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ValidationError } from 'class-validator';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class VendorsService {
   private s3: S3Client;
+  private readonly Logger = new Logger(Vendor.name)
 
   constructor(
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
@@ -28,7 +30,7 @@ export class VendorsService {
     @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
     private tokenHandlers: TokenHandlers,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {
     // Initialize S3 client for Sirv
     const accessKeyId = process.env.SIRV_S3_ACCESS_KEY;
@@ -250,6 +252,7 @@ export class VendorsService {
    */
   async registerCompany(req:Request, updateRegistrationDto:updateRegistrationDto, files?: Express.Multer.File[]): Promise<any> {
     // Extract and verify JWT token from Authorization header
+    console.log(updateRegistrationDto)
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       throw new UnauthorizedException('Authorization header is missing');
@@ -305,7 +308,7 @@ export class VendorsService {
             nextStep: vendor.companyForm
           }
         }catch(err){
-          new Logger.error(err)
+          this.Logger.debug(`${err}`)
           throw new ConflictException('There was an error registering company')
         }
       }
@@ -371,7 +374,7 @@ export class VendorsService {
             nextStep: vendor.companyForm
           }
         }catch(err){
-          new Logger.error(err);
+          this.Logger.debug(`${err}`)
           throw new ConflictException('Error updating bank details')
         }
       }
@@ -457,7 +460,7 @@ export class VendorsService {
             nextStep: vendor.companyForm
           }
         }catch(err){
-          new Logger.error(err);
+          this.Logger.debug(`${err}`)
           throw new ConflictException('Error updating documents: ' + err.message)
         }
       }
@@ -487,11 +490,9 @@ export class VendorsService {
           throw new ConflictException('Error updating categories and grade')
         }
       }
-      return {
-        message: 'Company registration updated successfully',
-        data: vendor
-      };
     }catch(error) {
+      this.Logger.debug(`${error}`)
+      console.log(error)
       throw new BadRequestException(`Failed to register company: ${error.message}`);
     }
   }

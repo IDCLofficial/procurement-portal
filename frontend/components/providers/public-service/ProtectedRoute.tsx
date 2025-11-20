@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useAuth } from "./AuthProvider";
-import { usePathname, useRouter } from "next/navigation";
+import { notFound, usePathname, useRouter } from "next/navigation";
+import { VendorSteps } from "@/store/api/enum";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const value = useAuth();
@@ -40,7 +41,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         return null;
     }
 
-    if (pathname !== "/dashboard/complete-registration" && user.companyForm !== "complete") {
+    if (pathname !== "/dashboard/complete-registration" && user.companyForm !== VendorSteps.COMPLETE) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
@@ -49,6 +50,10 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
                 </div>
             </div>
         )
+    }
+
+    if (pathname === "/dashboard/complete-registration" && user.companyForm === VendorSteps.COMPLETE) {
+        return notFound()
     }
 
     return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { DocumentRequirement } from '@/types/registration';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import Step8ConfirmPayment from '@/components/registration-steps/Step8ConfirmPay
 import Step9Receipt from '@/components/registration-steps/Step9Receipt';
 import StepPlaceholder from '@/components/registration-steps/StepPlaceholder';
 import { FaTag } from 'react-icons/fa6';
+import { useAuth } from './providers/public-service/AuthProvider';
+import { VendorSteps } from '@/store/api/enum';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -31,7 +33,31 @@ const steps = [
 
 
 export default function RegistrationContinuation() {
-    const [currentStep, setCurrentStep] = useState(2); // Start from step 2
+    const { user } = useAuth();   
+    const setStartPoint = useMemo(() => {
+        if (!user) return 1;
+        switch(user.companyForm){
+            case VendorSteps.COMPANY:
+                return 2;
+            case VendorSteps.DIRECTORS:
+                return 3;
+            case VendorSteps.BANK_DETAILS:
+                return 4;
+            case VendorSteps.DOCUMENTS:
+                return 5;
+            case VendorSteps.CATEGORIES_AND_GRADE:
+                return 6;
+            case VendorSteps.PAYMENT_SUMMARY:
+                return 7;
+            case VendorSteps.CONFIRM_PAYMENT:
+                return 8;
+            case VendorSteps.RECEIPT:
+                return 9;
+            default:
+                return 1;
+        }
+    }, [user]);
+    const [currentStep, setCurrentStep] = useState(setStartPoint); // Start from step 2
     const [formData, setFormData] = useState({
         // Step 2: Company Details
         companyName: '',

@@ -1,3 +1,5 @@
+import { VendorSteps } from "./enum";
+
 interface CreateVendorRequest {
     fullname: string;
     email: string;
@@ -54,15 +56,6 @@ interface ResponseSuccess {
 
 type LoginVendorResponse = ResponseSuccess | ResponseError;
 
-enum VendorSteps {
-    COMPLETE = "complete",
-    COMPANY = "company",
-    DIRECTORS = "directors",
-    BANK_DETAILS = "bankDetails",
-    DOCUMENTS = "documents",
-    CATEGORIES_AND_GRADE = "categoriesAndGrade",
-}
-
 interface CompleteVendorRegistrationRequest {
     [VendorSteps.COMPANY]?: {
         companyName: string;
@@ -101,4 +94,4 @@ interface CompleteVendorRegistrationRequest {
 
 
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, VendorSteps };
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest };

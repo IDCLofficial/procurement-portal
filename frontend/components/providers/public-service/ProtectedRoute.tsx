@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const value = useAuth();
-    const { isLoading, isAuthenticated, isLoggingOut } = value;
+    const { isLoading, isAuthenticated, isLoggingOut, user } = value;
     const router = useRouter();
 
 
@@ -19,8 +19,14 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         if (!isLoading && !isAuthenticated) {
             // Not authenticated, redirect to login
             router.replace('/vendor-login')
+            return;
         }
-    }, [isAuthenticated, isLoading, router, isLoggingOut])
+
+        if (user){
+
+        }
+
+    }, [isAuthenticated, isLoading, router, isLoggingOut, user])
 
     if (isLoading) {
         return (
@@ -33,7 +39,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         )
     }
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.isVerified) {
         return null;
     }
 

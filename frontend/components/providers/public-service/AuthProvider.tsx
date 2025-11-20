@@ -1,4 +1,5 @@
 "use client"
+import { encrypt } from '@/lib/crypto';
 import { User } from '@/store/api/types';
 import { useGetProfileQuery } from '@/store/api/vendor.api';
 import { useRouter } from 'next/navigation';
@@ -57,6 +58,20 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const isAuthenticated = useMemo(() => {
         return !!(token && user && !isError);
     }, [token, user, isError]);
+
+    React.useEffect(() => {
+        if (!user) return;
+
+        if (!user.isVerified) {
+            localStorage.removeItem('token');
+
+            const params = new URLSearchParams();
+            params.set('vrf', '1');
+            params.set('uid', encrypt(user.email));
+            
+            router.replace(`/register?${params.toString()}`);
+        }
+    }, [user, router]);
 
 
     // Redirect to dashboard when authenticated

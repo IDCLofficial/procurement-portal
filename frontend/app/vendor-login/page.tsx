@@ -10,14 +10,17 @@ import Image from 'next/image';
 import { FaEye, FaEyeSlash } from 'react-icons/fa6';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useLoginVendorMutation } from '@/store/api/vendor.api';
+import { useLoginVendorMutation, useResendVerificationOtpMutation } from '@/store/api/vendor.api';
 import { toast } from 'sonner';
-import { ResponseSuccess } from '@/store/api/types';
+import { ResponseError, ResponseSuccess } from '@/store/api/types';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
+import { encrypt } from '@/lib/crypto';
+import { useRouter } from 'next/navigation';
 
 
 export default function VendorLoginPage() {
     const { login } = useAuth();
+    const router = useRouter();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -28,6 +31,7 @@ export default function VendorLoginPage() {
         password: false,
     });
     const [loginVendor, { isLoading }] = useLoginVendorMutation();
+    const [resendVerificationOtpMutation] = useResendVerificationOtpMutation();
 
     // Debounced values for validation
     const debouncedEmail = useDebounce(formData.email, 500);
@@ -57,6 +61,60 @@ export default function VendorLoginPage() {
         );
     }, [formData.email, formData.password, emailError, passwordError]);
 
+    const handleResend = async () => {        
+        try {
+            toast.loading('Sending verification code...', { id: 'resend-otp' });
+            const response = await resendVerificationOtpMutation({ email: formData.email });
+
+            console.log('Resend OTP response:', response);
+
+            // Check if response has an error property (RTK Query error response)
+            if ('error' in response) {
+                toast.dismiss('resend-otp');
+
+                // Extract error message with proper typing
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const error = response.error as any;
+                const errorMessage =
+                    error?.data?.message ||
+                    error?.message ||
+                    'Failed to resend verification code';
+
+                toast.error(errorMessage);
+                return;
+            }
+
+            // Success case
+            toast.dismiss('resend-otp');
+            toast.success('Verification code resent to your email');
+
+        } catch (error) {
+            console.error('Error resending verification code:', error);
+
+            // Dismiss loading toast
+            toast.dismiss('resend-otp');
+
+            // Handle different error types
+            let errorMessage = 'Failed to resend verification code. Please try again.';
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error && typeof error === 'object') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const err = error as Record<string, any>;
+                errorMessage =
+                    err.data?.message ||
+                    err.message ||
+                    err.error?.message ||
+                    errorMessage;
+            }
+
+            toast.error(errorMessage);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isFormValid) return;
@@ -69,7 +127,15 @@ export default function VendorLoginPage() {
             });
 
             if (response.error) {
-                throw new Error("Invalid email or password");
+                if ((response.error as ResponseError["error"]).data.message === "Email not verified") {
+                    await handleResend();
+                    const params = new URLSearchParams();
+                    params.set('vrf', '1');
+                    params.set('uid', encrypt(formData.email));
+
+                    router.replace(`/register?${params.toString()}`);
+                }
+                throw new Error((response.error as ResponseError["error"]).data.message || "Invalid email or password");
             }
 
             const { token } = response.data as unknown as ResponseSuccess["data"];
@@ -159,6 +225,7 @@ export default function VendorLoginPage() {
                                     </Label>
                                     <Link 
                                         href="/forgot-password" 
+                                        tabIndex={-1}
                                         className="text-xs text-theme-green hover:text-theme-green/80 font-medium"
                                     >
                                         Forgot password?

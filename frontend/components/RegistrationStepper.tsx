@@ -53,7 +53,7 @@ export default function RegistrationStepper() {
     const handleEmailVerified = () => {
         toast.success('Email verified! Redirecting to complete registration...');
         setTimeout(() => {
-            router.push(`/dashboard/complete-registration`);
+            router.replace(`/dashboard/complete-registration`);
         }, 100);
     };
 
@@ -83,25 +83,6 @@ export default function RegistrationStepper() {
             toast.error('Password must be at least 8 characters');
             return;
         }
-
-        // Step 1 complete - trigger email verification
-        // TODO: Send registration data to backend and get userId
-        // const mockUserId = 'usr_' + Math.random().toString(36).substring(2, 15);
-        
-        // Simulate API call
-        // toast.loading('Creating your account...');
-        // setTimeout(() => {
-        //     toast.dismiss();
-        //     toast.success('Account created! Please check your email for verification code.');
-            
-        //     // Set URL params for email verification
-        //     const params = new URLSearchParams();
-        //     params.set('vrf', '1');
-        //     params.set('uid', mockUserId);
-            
-        //     router.replace(`/register?${params.toString()}`);
-        //     setShowEmailVerification(true);
-        // }, 1500);
 
         const payload: CreateVendorRequest = {
             email: formData.email,

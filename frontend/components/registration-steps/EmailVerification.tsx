@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { FaEnvelope, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
 import { toast } from 'sonner';
-import { useVerifyVendorMutation } from '@/store/api/vendor.api';
+import { useResendVerificationOtpMutation, useVerifyVendorMutation } from '@/store/api/vendor.api';
 
 interface EmailVerificationProps {
     email: string;
@@ -16,10 +16,10 @@ interface EmailVerificationProps {
 
 export default function EmailVerification({ email, onVerified, onCancel }: EmailVerificationProps) {
     const [otp, setOtp] = useState('');
-    const [isResending, setIsResending] = useState(false);
     const [resendTimer, setResendTimer] = useState(60);
 
     const [verifyVendorMutation, { isLoading: isVerifyingVendor }] = useVerifyVendorMutation();
+    const [resendVerificationOtpMutation, { isLoading: isResendingOtp }] = useResendVerificationOtpMutation();
 
     // Countdown timer for resend
     useEffect(() => {
@@ -95,15 +95,58 @@ export default function EmailVerification({ email, onVerified, onCancel }: Email
     const handleResend = async () => {
         if (!canResend) return;
         
-        setIsResending(true);
-        
-        // Simulate API call
-        setTimeout(() => {
-            // TODO: Replace with actual API call
+        try {
+            toast.loading('Sending verification code...', { id: 'resend-otp' });
+            const response = await resendVerificationOtpMutation({ email });
+
+            console.log('Resend OTP response:', response);
+
+            // Check if response has an error property (RTK Query error response)
+            if ('error' in response) {
+                toast.dismiss('resend-otp');
+
+                // Extract error message with proper typing
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const error = response.error as any;
+                const errorMessage =
+                    error?.data?.message ||
+                    error?.message ||
+                    'Failed to resend verification code';
+
+                toast.error(errorMessage);
+                return;
+            }
+
+            // Success case
+            toast.dismiss('resend-otp');
             toast.success('Verification code resent to your email');
-            setIsResending(false);
             setResendTimer(60); // Reset timer
-        }, 1000);
+
+        } catch (error) {
+            console.error('Error resending verification code:', error);
+
+            // Dismiss loading toast
+            toast.dismiss('resend-otp');
+
+            // Handle different error types
+            let errorMessage = 'Failed to resend verification code. Please try again.';
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error && typeof error === 'object') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const err = error as Record<string, any>;
+                errorMessage =
+                    err.data?.message ||
+                    err.message ||
+                    err.error?.message ||
+                    errorMessage;
+            }
+
+            toast.error(errorMessage);
+        }
     };
 
     const handleCancel = () => {
@@ -133,7 +176,11 @@ export default function EmailVerification({ email, onVerified, onCancel }: Email
                     <InputOTP
                         maxLength={5}
                         value={otp}
-                        onChange={(value) => setOtp(value)}
+                        onChange={(value) => {
+                            // Only allow numeric characters
+                            const numericValue = value.replace(/[^0-9]/g, '');
+                            setOtp(numericValue);
+                        }}
                     >
                         <InputOTPGroup>
                             <InputOTPSlot index={0} />
@@ -147,11 +194,11 @@ export default function EmailVerification({ email, onVerified, onCancel }: Email
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-row-reverse gap-3">
+            <div className="flex flex-row-reverse flex-wrap gap-3 max-md:px-10">
                 <Button
                     onClick={handleVerify}
                     disabled={otp.length !== 5 || isVerifyingVendor}
-                    className="flex-1 bg-theme-green hover:bg-theme-green/90"
+                    className="flex-1 bg-theme-green min-w-64 hover:bg-theme-green/90"
                 >
                     {isVerifyingVendor ? (
                         <>
@@ -170,7 +217,7 @@ export default function EmailVerification({ email, onVerified, onCancel }: Email
                     <Button
                         onClick={handleCancel}
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 min-w-64"
                     >
                         <FaArrowLeft className="mr-2" />
                         Back to Registration
@@ -181,25 +228,25 @@ export default function EmailVerification({ email, onVerified, onCancel }: Email
             {/* Resend Code */}
             <div className="text-center">
                 <p className="text-sm text-gray-600 mb-2">Didn&apos;t receive the code?</p>
-                <button
+                <Button
+                    variant={"ghost"}
                     onClick={handleResend}
-                    disabled={!canResend || isResending}
-                    className="text-sm text-theme-green hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!canResend || isResendingOtp}
                 >
-                    {isResending ? (
+                    {isResendingOtp ? (
                         'Sending...'
                     ) : canResend ? (
                         'Resend Code'
                     ) : (
                         `Resend in ${resendTimer}s`
                     )}
-                </button>
+                </Button>
             </div>
 
             {/* Help Text */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-xs text-blue-900">
-                    <strong>Note:</strong> The verification code will expire in 10 minutes. 
+                    <strong>Note:</strong> The verification code will expire in 15 minutes. 
                     Check your spam folder if you don&apos;t see the email.
                 </p>
             </div>

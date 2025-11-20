@@ -1,6 +1,6 @@
 import { apiSlice } from './';
 import endpoints from './endpoints.const';
-import { CreateVendorRequest, LoginVendorRequest, LoginVendorResponse, User, VerifyVendorRequest } from './types';
+import { CompleteVendorRegistrationRequest, CreateVendorRequest, LoginVendorRequest, LoginVendorResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest } from './types';
 
 export const vendorApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -18,6 +18,13 @@ export const vendorApi = apiSlice.injectEndpoints({
                 body,
             }),
         }),
+        resendVerificationOtp: builder.mutation<unknown, ResendVerificationOtpRequest>({
+            query: (body) => ({
+                url: endpoints.resendVerificationCode,
+                method: 'POST',
+                body,
+            }),
+        }),
         loginVendor: builder.mutation<LoginVendorResponse, LoginVendorRequest>({
             query: (body) => ({
                 url: endpoints.loginVendor,
@@ -31,6 +38,13 @@ export const vendorApi = apiSlice.injectEndpoints({
                 method: 'GET',
             }),
         }),
+        completeVendorRegistration: builder.mutation<unknown, CompleteVendorRegistrationRequest>({
+            query: (body) => ({
+                url: endpoints.complete_vendor_registration,
+                method: 'PATCH',
+                body,
+            }),
+        }),
     })
 })
 
@@ -38,5 +52,6 @@ export const {
     useCreateVendorMutation,
     useVerifyVendorMutation,
     useLoginVendorMutation,
+    useResendVerificationOtpMutation,
     useGetProfileQuery,
 } = vendorApi;

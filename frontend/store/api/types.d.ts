@@ -10,6 +10,10 @@ interface VerifyVendorRequest {
     otp: string;
 }
 
+interface ResendVerificationOtpRequest {
+    email: string;
+}
+
 interface LoginVendorRequest {
     email: string;
     password: string;
@@ -32,6 +36,9 @@ interface User {
     fullname: string;
     email: string;
     phoneNo: string;
+    certificateId: string;
+    isVerified: boolean;
+    companyForm: string;
     isVerified: boolean;
     createdAt: string;
     updatedAt: string;
@@ -47,5 +54,50 @@ interface ResponseSuccess {
 
 type LoginVendorResponse = ResponseSuccess | ResponseError;
 
+enum VendorSteps {
+    COMPANY = "company",
+    DIRECTORS = "directors",
+    BANK_DETAILS = "bankDetails",
+    DOCUMENTS = "documents",
+    CATEGORIES_AND_GRADE = "categoriesAndGrade",
+}
 
-export { CreateVendorRequest, VerifyVendorRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, User };
+interface CompleteVendorRegistrationRequest {
+    [VendorSteps.COMPANY]?: {
+        companyName: string;
+        cacNumber: string;
+        tin: string;
+        businessAddres: string;
+        lga: string;
+        website: string;
+    };
+    [VendorSteps.DIRECTORS]?: {
+        fullName: string;
+        idType: string;
+        id: string;
+        phone: number;
+        email: string;
+    }[];
+    [VendorSteps.BANK_DETAILS]?: {
+        bankName: string;
+        accountNumber: number;
+        accountName: string;
+    };
+    [VendorSteps.DOCUMENTS]?: {
+        documentType: string;
+        validFrom?: string;
+        validTo?: string;
+    }[];
+    [VendorSteps.CATEGORIES_AND_GRADE]?: {
+        categories: {
+            sector: string;
+            service: string;
+        }[];
+        grade: string;
+    };
+}
+
+
+
+
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, VendorSteps };

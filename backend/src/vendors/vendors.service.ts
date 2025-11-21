@@ -269,7 +269,7 @@ export class VendorsService {
             ]
           }).exec();
 
-          let result;
+          let result:any;
           if (company) {
             // Update existing company
             company.companyName = updateRegistrationDto.company.companyName;

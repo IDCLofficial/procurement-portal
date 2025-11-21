@@ -289,6 +289,8 @@ export default function RegistrationContinuation() {
                 toast.loading('Saving your company details...', { id: "company" });
                 const response = await completeVendorRegistration(payload);
 
+                console.log({response})
+
                 if (response.error) {
                     throw new Error((response.error as ResponseError["error"]).data.message);
                 }

@@ -181,6 +181,9 @@ export class UsersController {
     }
   })
   getUsersByName(@Req() req:any){
+    if(!req.headers.authorization){
+      throw new UnauthorizedException('Unauthorized')
+    }
     const token = req.headers.authorization.split(' ')[1];
     try{
       const decoded = this.jwtService.verify(token, {

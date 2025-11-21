@@ -1,14 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Query, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Status } from './entities/company.schema';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { User } from '../decorators/user.decorator';
+import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
 
 @Controller('companies')
 export class CompaniesController {
-  constructor(private readonly companiesService: CompaniesService) {}
+  constructor(
+    private readonly companiesService: CompaniesService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   /**
    * Register a new company
@@ -154,6 +161,92 @@ export class CompaniesController {
     const pageNum = page ? Number(page) : 1;
     const limitNum = limit ? Number(limit) : 10;
     return this.companiesService.findAll(status, pageNum, limitNum);
+  }
+
+  /**
+   * Get the company associated with the authenticated user
+   * 
+   * @description
+   * This endpoint retrieves the company record for the currently authenticated user.
+   * The user ID is extracted from the JWT token provided in the Authorization header.
+   * The token must be in the format: "Bearer <token>"
+   * 
+   * @param req - Express request object containing the authorization header
+   * @returns The company record associated with the user's ID
+   * 
+   * @throws {UnauthorizedException} If the token is missing, invalid, or expired
+   * @throws {BadRequestException} If no company is found for the user
+   * 
+   * @example
+   * GET /companies/my-company
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   */
+  @Get('my-company')
+  @ApiOperation({ 
+    summary: 'Get company by authenticated user',
+    description: 'Retrieves the company record associated with the currently authenticated user. Requires a valid JWT token in the Authorization header.'
+  })
+  @ApiBearerAuth()
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Company retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        userId: { type: 'string', example: '507f1f77bcf86cd799439012' },
+        companyName: { type: 'string', example: 'Tech Solutions Ltd' },
+        cacNumber: { type: 'string', example: 'RC123456' },
+        tin: { type: 'string', example: '12345678-0001' },
+        address: { type: 'string', example: '123 Business Street' },
+        lga: { type: 'string', example: 'Lagos Island' },
+        status: { type: 'string', enum: ['Pending', 'Needs Review', 'Approved', 'Rejected'], example: 'Approved' },
+        website: { type: 'string', example: 'https://techsolutions.com' },
+        category: { type: 'string', example: 'Technology' },
+        grade: { type: 'string', example: 'A' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Invalid or missing token'
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Company not found for this user'
+  })
+  getMyCompany(@Req() req: any) {
+    // Extract token from authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header missing');
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Token missing');
+    }
+
+    try {
+      // Decode the JWT token
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+
+      // Extract the _id from the decoded token
+      const userId = decoded._id;
+      if (!userId) {
+        throw new UnauthorizedException('User ID not found in token');
+      }
+
+      return this.companiesService.findOne(userId);
+    } catch (err) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 
   /**

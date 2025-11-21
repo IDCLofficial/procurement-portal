@@ -1,9 +1,13 @@
 "use client"
 import { decrypt, encrypt } from '@/lib/crypto';
 import { User } from '@/store/api/types';
-import { useGetProfileQuery } from '@/store/api/vendor.api';
+import { useGetCompanyDetailsQuery, useGetProfileQuery } from '@/store/api/vendor.api';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useContext, useMemo, useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux';
+import { selectAuthIsLoading, selectAuthIsAuthenticated, selectAuthIsLoggingOut, login, logout, clearToken, refresh } from '@/store/slices/authSlice';
+import { selectUserData } from '@/store/slices/userSlice';
+import { selectCompanyData } from '@/store/slices/companySlice';
 
 interface AuthContextType {
     user: User | null;
@@ -44,28 +48,41 @@ const getStoredToken = () => {
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const [token, setToken] = useState<string | null>(() => getStoredToken());
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
+    const dispatch = useDispatch();
 
-    // Fetch profile when token is available
-    const { data, isLoading, isError, refetch } = useGetProfileQuery(undefined, {
+    // Sync slice on mount if token exists
+    React.useEffect(() => {
+        if (token) {
+            dispatch(login(token));
+        }
+    }, [token, dispatch]);
+
+    // Keep queries for fetching data
+    const { refetch: refetchProfile } = useGetProfileQuery(undefined, {
+        skip: !token || token === 'n/a',
+    });
+    const { refetch: refetchCompanyDetails } = useGetCompanyDetailsQuery(undefined, {
         skip: !token || token === 'n/a',
     });
 
-    // Derive user and isAuthenticated directly from query data
-    const user = useMemo(() => {
-        if (!token) return null;
-        return data ? (data as User) : null;
-    }, [data, token]);
+    // Use slice data
+    const user = useSelector(selectUserData);
+    const isAuthenticated = useSelector(selectAuthIsAuthenticated);
+    const isLoading = useSelector(selectAuthIsLoading);
+    const isLoggingOut = useSelector(selectAuthIsLoggingOut);
+    const company = useSelector(selectCompanyData);
 
-    const isAuthenticated = useMemo(() => {
-        return !!(token && user && !isError);
-    }, [token, user, isError]);
+    React.useEffect(() => {
+        if (!company) return;
+        console.log('company', company);
+    }, [company]);
 
-    const clearToken = useCallback(() => {
+    const handleClearToken = useCallback(() => {
         setToken(null);
         localStorage.removeItem('token');
-    }, []);
+        dispatch(clearToken());
+    }, [dispatch]);
 
     React.useEffect(() => {
         if (!user) return;
@@ -81,26 +98,28 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         }
     }, [user, router]);
 
-    const login = useCallback((token: string) => {
+    const handleLogin = useCallback((token: string) => {
         const enc_token = encrypt(token);
         setToken(token);
         localStorage.setItem('token', enc_token);
+        dispatch(login(token));
         // User will be fetched automatically by useGetProfileQuery
         router.replace('/dashboard');
-    }, [router]);
+    }, [router, dispatch]);
 
-    const logout = useCallback(() => {
-        setIsLoggingOut(true);
-        clearToken();
-        setIsLoggingOut(false);
+    const handleLogout = useCallback(() => {
+        dispatch(logout());
+        handleClearToken();
         router.replace('/vendor-login');
-    }, [router, clearToken]);
+    }, [router, handleClearToken, dispatch]);
 
-    const refresh = useCallback(() => {
+    const handleRefresh = useCallback(() => {
+        dispatch(refresh());
         if (token) {
-            refetch();
+            refetchProfile();
+            refetchCompanyDetails();
         }
-    }, [token, refetch]);
+    }, [token, refetchProfile, refetchCompanyDetails, dispatch]);
 
     const value = useMemo(() => ({
         user,
@@ -108,11 +127,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         isLoading,
         isAuthenticated,
         isLoggingOut,
-        refresh,
-        login,
-        logout,
-        clearToken,
-    }), [user, token, isLoading, isAuthenticated, isLoggingOut, refresh, login, logout, clearToken]);
+        refresh: handleRefresh,
+        login: handleLogin,
+        logout: handleLogout,
+        clearToken: handleClearToken,
+    }), [user, token, isLoading, isAuthenticated, isLoggingOut, handleRefresh, handleLogin, handleLogout, handleClearToken]);
 
     return (
         <AuthContext.Provider value={value}>

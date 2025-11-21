@@ -5,6 +5,7 @@ import StoreProvider from "@/store/StoreProvider";
 import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 import AuthProvider from "@/components/providers/public-service/AuthProvider";
+import DebugSlices from "@/components/ui/DebugSlices";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -50,6 +51,7 @@ export default function RootLayout({
                 />
                 <StoreProvider>
                     <AuthProvider>{children}</AuthProvider>
+                    <DebugSlices />
                 </StoreProvider>
             </body>
         </html>

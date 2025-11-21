@@ -1,6 +1,6 @@
 import { apiSlice } from './';
 import endpoints from './endpoints.const';
-import { CompleteVendorRegistrationRequest, CreateVendorRequest, LoginVendorRequest, LoginVendorResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest } from './types';
+import { CompanyDetailsResponse, CompleteVendorRegistrationRequest, CreateVendorRequest, LoginVendorRequest, LoginVendorResponse, RegisterCompanyResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest } from './types';
 
 export const vendorApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -38,7 +38,13 @@ export const vendorApi = apiSlice.injectEndpoints({
                 method: 'GET',
             }),
         }),
-        completeVendorRegistration: builder.mutation<unknown, CompleteVendorRegistrationRequest>({
+        getCompanyDetails: builder.query<CompanyDetailsResponse, void>({
+            query: () => ({
+                url: endpoints.getCompanyDetails,
+                method: 'GET',
+            }),
+        }),
+        completeVendorRegistration: builder.mutation<RegisterCompanyResponse, CompleteVendorRegistrationRequest>({
             query: (body) => ({
                 url: endpoints.complete_vendor_registration,
                 method: 'PATCH',
@@ -53,5 +59,7 @@ export const {
     useVerifyVendorMutation,
     useLoginVendorMutation,
     useResendVerificationOtpMutation,
+    useCompleteVendorRegistrationMutation,
     useGetProfileQuery,
+    useGetCompanyDetailsQuery
 } = vendorApi;

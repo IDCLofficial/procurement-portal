@@ -92,6 +92,52 @@ interface CompleteVendorRegistrationRequest {
 }
 
 
+interface RegisterCompanyResponse {
+    data: {
+        message: string;
+        result: {
+            userId: string;
+            companyName: string;
+            cacNumber: string;
+            tin: string;
+            address: string;
+            lga: string;
+            grade: string;
+            website: string;
+            _id: string;
+            categories: string[];
+            createdAt: string;
+            updatedAt: string;
+            __v: number;
+        };
+        nextStep: string;
+    };
+}
 
+interface CompanyDetailsResponse {
+    userId: string;
+    companyName: string;
+    cacNumber: string;
+    tin: string;
+    address: string;
+    lga: string;
+    grade: string;
+    website: string;
+    _id: string;
+    categories: string[];
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+    directors?: {
+        fullName: string;
+        idType: string;
+        id: string;
+        phone: number;
+        email: string;
+    }[];
+    bankName?: string;
+    accountNumber?: number;
+    accountName?: string;
+}
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest };
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse };

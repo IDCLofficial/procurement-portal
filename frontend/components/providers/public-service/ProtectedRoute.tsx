@@ -7,24 +7,44 @@ import { VendorSteps } from "@/store/api/enum";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const value = useAuth();
-    const { isLoading, isAuthenticated, isLoggingOut, user } = value;
+    const { isLoading, isAuthenticated, isLoggingOut, user, token, clearToken } = value;
     const router = useRouter();
     const pathname = usePathname();
 
+    const NEXT_PUBLIC_CAN_SKIP_COMPLETE_REGISTRATION = process.env.NEXT_PUBLIC_CAN_SKIP;
+
     useEffect(() => {
-        if (isLoggingOut) return;
-        if (!isLoading && !isAuthenticated) {
-            // Not authenticated, redirect to login
+        // If not loading and no token, redirect
+        if (!isLoading && !token) {
+            // console.log("No token, redirecting to login", value);
+            clearToken();
             router.replace('/vendor-login')
             return;
         }
 
-        if (user && user.companyForm !== "complete"){
-            router.replace('/dashboard/complete-registration');
+        // If logging out, don't do anything
+        if (isLoggingOut) {
             return;
         }
 
-    }, [isAuthenticated, isLoading, router, isLoggingOut, user]);
+        // If user is not verified, redirect to register
+        if (user && !user.isVerified) {
+            const params = new URLSearchParams();
+            params.set('vrf', '1');
+            params.set('uid', btoa(user.email)); // Note: using btoa for simplicity, adjust if needed
+            router.replace(`/register?${params.toString()}`);
+            return;
+        }
+
+        if (NEXT_PUBLIC_CAN_SKIP_COMPLETE_REGISTRATION !== 'true') {
+            if (user && user.companyForm !== "complete"){
+                // console.log("User not complete, redirecting to complete registration", user);
+                router.replace('/dashboard/complete-registration');
+                return;
+            }
+        }
+
+    }, [isAuthenticated, isLoading, router, isLoggingOut, user, token, clearToken, NEXT_PUBLIC_CAN_SKIP_COMPLETE_REGISTRATION]);
 
     if (isLoading) {
         return (
@@ -41,7 +61,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         return null;
     }
 
-    if (pathname !== "/dashboard/complete-registration" && user.companyForm !== VendorSteps.COMPLETE) {
+    if (NEXT_PUBLIC_CAN_SKIP_COMPLETE_REGISTRATION !== 'true' && pathname !== "/dashboard/complete-registration" && user.companyForm !== VendorSteps.COMPLETE) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">

@@ -177,7 +177,7 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                             </label>
                         </div>
                     ) : (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="bg-linear-to-b  from-white to-green-100 border border-green-400 rounded-lg p-4 shadow-lg shadow-black/5">
                             <div className="flex items-start justify-between">
                                 <div className="flex items-start gap-3 flex-1">
                                     {doc.fileType?.includes('pdf') ? (

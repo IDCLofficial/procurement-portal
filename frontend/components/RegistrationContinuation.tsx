@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import type { DocumentRequirement } from '@/types/registration';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,11 @@ import StepPlaceholder from '@/components/registration-steps/StepPlaceholder';
 import { FaTag } from 'react-icons/fa6';
 import { useAuth } from './providers/public-service/AuthProvider';
 import { VendorSteps } from '@/store/api/enum';
+import { useCompleteVendorRegistrationMutation } from '@/store/api/vendor.api';
+import { Loader2 } from 'lucide-react';
+import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
+import { useSelector } from 'react-redux';
+import { selectCompanyData } from '@/store/slices/companySlice';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -34,8 +39,9 @@ const steps = [
 
 export default function RegistrationContinuation() {
     const { user } = useAuth();   
+    const companyData = useSelector(selectCompanyData);
     const setStartPoint = useMemo(() => {
-        if (!user) return 1;
+        if (!user) return 2;
         switch(user.companyForm){
             case VendorSteps.COMPANY:
                 return 2;
@@ -54,18 +60,18 @@ export default function RegistrationContinuation() {
             case VendorSteps.RECEIPT:
                 return 9;
             default:
-                return 1;
+                return 2;
         }
     }, [user]);
     const [currentStep, setCurrentStep] = useState(setStartPoint); // Start from step 2
     const [formData, setFormData] = useState({
         // Step 2: Company Details
-        companyName: '',
-        cacNumber: '',
-        tinNumber: '',
-        address: '',
-        lga: '',
-        website: '',
+        companyName: companyData?.companyName || '',
+        cacNumber: companyData?.cacNumber || '',
+        tinNumber: companyData?.tin || '',
+        address: companyData?.address || '',
+        lga: companyData?.lga || '',
+        website: companyData?.website || '',
     });
 
     // Step 3: Directors
@@ -82,9 +88,9 @@ export default function RegistrationContinuation() {
 
     // Step 4: Bank Details (Optional)
     const [bankDetails, setBankDetails] = useState({
-        bankName: '',
-        accountNumber: '',
-        accountName: '',
+        bankName: companyData?.bankName || '',
+        accountNumber: companyData?.accountNumber || '',
+        accountName: companyData?.accountName || '',
     });
 
     // Step 6: Category & Grade
@@ -217,7 +223,7 @@ export default function RegistrationContinuation() {
                     fullName: 'Jane Smith',
                     phone: '08087654321',
                     email: 'jane.smith@example.com',
-                    documentType: 'BVN',
+                    documentType: 'NIN',
                     documentValue: '22334455667',
                 },
             ]);
@@ -252,6 +258,8 @@ export default function RegistrationContinuation() {
         }
     };
 
+    const [completeVendorRegistration, { isLoading }] = useCompleteVendorRegistrationMutation();
+
     const handleContinue = async () => {
         // Validate current step
         if (currentStep === 2) {
@@ -259,6 +267,33 @@ export default function RegistrationContinuation() {
                 toast.error('Please fill in all required fields');
                 return;
             }
+
+            const payload = {
+                [VendorSteps.COMPANY]: {
+                    companyName: formData.companyName,
+                    cacNumber: formData.cacNumber,
+                    tin: formData.tinNumber,
+                    businessAddres: formData.address,
+                    lga: formData.lga,
+                    website: formData.website,
+                }
+            }
+            try {
+                toast.loading('Saving your company details...', { id: "company" });
+                const response = await completeVendorRegistration(payload);
+
+                if (response.error) {
+                    throw new Error((response.error as ResponseError["error"]).data.message);
+                }
+                toast.dismiss("company");
+                toast.success('Company details saved successfully');
+                setCurrentStep(currentStep + 1);
+            } catch (error) {
+                toast.dismiss("company");
+                console.error('Error saving company details:', error);
+                toast.error((error as Error).message || 'Failed to save your company details');
+            }
+            return;
         }
 
         if (currentStep === 3) {
@@ -270,6 +305,60 @@ export default function RegistrationContinuation() {
                 toast.error('Please fill in all director information');
                 return;
             }
+
+            const payload = {
+                [VendorSteps.DIRECTORS]: directors.map((director) => ({
+                    fullName: director.fullName,
+                    idType: director.documentType,
+                    id: director.documentValue,
+                    phone: Number(director.phone),
+                    email: director.email,
+                }))
+            }
+            try {
+                toast.loading('Saving your company directors details...', { id: "directors" });
+                const response = await completeVendorRegistration(payload);
+
+                if (response.error) {
+                    throw new Error((response.error as ResponseError["error"]).data.message);
+                }
+                toast.dismiss("directors");
+                toast.success('Company directors details saved successfully');
+                setCurrentStep(currentStep + 1);
+            } catch (error) {
+                toast.dismiss("directors");
+                console.error('Error saving company directors details:', error);
+                toast.error((error as Error).message || 'Failed to save your company details');
+            }
+
+            return;
+        }
+
+        if (currentStep === 4) {
+            const payload: CompleteVendorRegistrationRequest = {
+                [VendorSteps.BANK_DETAILS]: {
+                    bankName: bankDetails.bankName,
+                    accountName: bankDetails.accountName,
+                    accountNumber: Number(bankDetails.accountNumber),
+                }
+            }
+            try {
+                toast.loading('Saving your company bank details...', { id: "bankDetails" });
+                const response = await completeVendorRegistration(payload);
+
+                if (response.error) {
+                    throw new Error((response.error as ResponseError["error"]).data.message);
+                }
+                toast.dismiss("bankDetails");
+                toast.success('Company bank details saved successfully');
+                setCurrentStep(currentStep + 1);
+            } catch (error) {
+                toast.dismiss("bankDetails");
+                console.error('Error saving company bank details:', error);
+                toast.error((error as Error).message || 'Failed to save your company details');
+            }
+
+            return;
         }
 
         if (currentStep === 5) {
@@ -559,7 +648,7 @@ export default function RegistrationContinuation() {
                                         <span className="text-yellow-600 text-lg">⚡</span>
                                         <div>
                                             <p className="text-sm font-semibold text-yellow-900">
-                                                Simulation Mode - Quick Fill
+                                                Simulation Mode - Quick Fill ({JSON.stringify(user?.companyForm)})
                                             </p>
                                             <p className="text-xs text-yellow-700">
                                                 Auto-fill this step with sample data
@@ -586,25 +675,32 @@ export default function RegistrationContinuation() {
                             <Button
                                 variant="outline"
                                 onClick={handleBack}
-                                disabled={currentStep === 2}
+                                disabled={currentStep === 2 || isLoading}
                                 className="min-w-[100px]"
                             >
                                 {currentStep === 8 ? 'Back to Summary' : 'Back'}
                             </Button>
                             <Button
                                 onClick={handleContinue}
+                                disabled={isLoading}
                                 className="bg-theme-green hover:bg-theme-green/90 min-w-[100px]"
                             >
-                                {currentStep === steps.length 
-                                    ? 'Complete' 
-                                    : currentStep === 8
-                                    ? 'Confirm & Pay Now'
-                                    : currentStep === 7 
-                                    ? 'Continue to Confirm' 
-                                    : 'Continue'}
-                                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
+                                {isLoading
+                                    ?
+                                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                                    :
+                                    <Fragment>
+                                        {currentStep === steps.length
+                                            ? 'Complete'
+                                            : currentStep === 8
+                                                ? 'Confirm & Pay Now'
+                                                : currentStep === 7
+                                                    ? 'Continue to Confirm'
+                                                    : 'Continue'}
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Fragment>}
                             </Button>
                         </div>
                         )}

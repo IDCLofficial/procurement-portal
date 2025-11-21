@@ -1,10 +1,16 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import appReducer from './slices/appSlice';
+import authReducer from './slices/authSlice';
+import userReducer from './slices/userSlice';
+import companyReducer from './slices/companySlice';
 import { vendorApi } from './api/vendor.api';
 
 const rootReducer = combineReducers({
   [vendorApi.reducerPath]: vendorApi.reducer,
   app: appReducer,
+  auth: authReducer,
+  user: userReducer,
+  company: companyReducer,
   // Add more slices here as needed
 });
 

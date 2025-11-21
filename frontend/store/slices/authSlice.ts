@@ -54,7 +54,7 @@ const authSlice = createSlice({
           state.isLoading = false;
         }
       })
-      .addMatcher(vendorApi.endpoints.getProfile.matchFulfilled, (state, action) => {
+      .addMatcher(vendorApi.endpoints.getProfile.matchFulfilled, (state) => {
         state.isLoading = false;
       })
       .addMatcher(vendorApi.endpoints.loginVendor.matchPending, (state) => {

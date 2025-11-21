@@ -409,7 +409,7 @@ export class VendorsService {
           
           await company.save();
           
-          vendor.companyForm = companyForm.STEP3;
+          vendor.companyForm = companyForm.STEP4;
           await vendor.save();
           
           return {
@@ -495,7 +495,7 @@ export class VendorsService {
             await company.save();
           }
 
-          vendor.companyForm = companyForm.STEP4;
+          vendor.companyForm = companyForm.STEP5;
           await vendor.save();
 
           return {

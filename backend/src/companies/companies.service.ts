@@ -61,7 +61,7 @@ export class CompaniesService {
 
   async findOne(id: string) {
     try{
-      const company = await this.companyModel.findOne({userId:new Types.ObjectId(id)})
+      const company = await this.companyModel.findOne({userId:new Types.ObjectId(id)}).populate("directors").exec();
       if(!company){
         throw new BadRequestException('Company not found')
       }

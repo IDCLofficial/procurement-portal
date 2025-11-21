@@ -221,6 +221,7 @@ export class CompaniesController {
   })
   getMyCompany(@Req() req: any) {
     // Extract token from authorization header
+    
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       throw new UnauthorizedException('Authorization header missing');
@@ -230,6 +231,7 @@ export class CompaniesController {
     if (!token) {
       throw new UnauthorizedException('Token missing');
     }
+    console.log(token)
 
     try {
       // Decode the JWT token
@@ -237,14 +239,18 @@ export class CompaniesController {
         secret: process.env.JWT_SECRET,
       });
 
+      console.log(decoded)
+
       // Extract the _id from the decoded token
       const userId = decoded._id;
+      console.log(userId)
       if (!userId) {
         throw new UnauthorizedException('User ID not found in token');
       }
 
       return this.companiesService.findOne(userId);
     } catch (err) {
+      console.log(err)
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

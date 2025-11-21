@@ -164,32 +164,13 @@ export class VendorsService {
    * 3. Fetching the vendor profile from the database
    * 4. Returning the profile without the password field
    */
-  async getProfile(authHeader: string): Promise<Omit<Vendor, 'password'>> {
-    // Check if authorization header exists
-    console.log('Authorization header:', authHeader);
+  async getProfile(userId: string): Promise<Omit<Vendor, 'password'>> {
     
-    if (!authHeader) {
-      throw new UnauthorizedException('Authorization header is missing');
+    if (!userId) {
+      throw new UnauthorizedException('An error occured');
     }
 
-    // Extract token from "Bearer <token>" format
-    const token = authHeader.replace('Bearer ', '').trim();
-    
-    if (!token) {
-      throw new UnauthorizedException('Token is missing');
-    }
-
-    try {
-      // Decode the JWT token
-      const decoded = this.jwtService.verify(token);
-      
-      // Extract user ID from token payload (using 'sub' as per JWT standard)
-      const userId = decoded.sub || decoded._id || decoded.id;
-      
-      if (!userId) {
-        throw new UnauthorizedException('Invalid token payload - user ID not found');
-      }
-
+    try{
       // Fetch vendor profile without password
       const vendor = await this.vendorModel.findById(userId).select('-password').exec();
       
@@ -198,11 +179,8 @@ export class VendorsService {
       }
       
       return vendor.toObject();
-    } catch (error) {
-      if (error instanceof NotFoundException || error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new UnauthorizedException('Invalid or expired token');
+    }catch(err){
+      throw new BadRequestException("An erorr occured")
     }
   }
 

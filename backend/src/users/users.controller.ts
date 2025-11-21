@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -6,11 +6,15 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { Role } from './entities/user.schema';
 import { AdminGuard } from '../guards/admin.guard';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   /**
    * Create a new user account
@@ -125,8 +129,19 @@ export class UsersController {
       }
     }
   })
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(@Body() createUserDto: CreateUserDto, @Req() req:any) {
+    const token = req.headers.authorization.split(' ')[1];
+    try{
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      if(!decoded._id || decoded.role !== 'Admin'){
+        throw new UnauthorizedException('Unauthorized')
+      }
+      return this.usersService.create(createUserDto);
+    }catch(err){
+      throw new UnauthorizedException('Unauthorized')
+    }
   }
 
   /**
@@ -165,8 +180,19 @@ export class UsersController {
       }
     }
   })
-  getUsersByName(){
-    return this.usersService.getUsersByName();
+  getUsersByName(@Req() req:any){
+    const token = req.headers.authorization.split(' ')[1];
+    try{
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      if(!decoded._id || decoded.role !== 'Admin'){
+        throw new UnauthorizedException('Unauthorized')
+      }
+      return this.usersService.getUsersByName();
+    }catch(err){
+      throw new UnauthorizedException('Unauthorized')
+    }
   }
   /**
    * User login authentication
@@ -393,7 +419,18 @@ export class UsersController {
       },
     },
   })
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  remove(@Param('id') id: string, @Req() req:any) {
+    const token = req.headers.authorization.split(' ')[1];
+    try{
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      if(!decoded._id || decoded.role !== 'Admin'){
+        throw new UnauthorizedException('Unauthorized')
+      }
+      return this.usersService.remove(id);
+    }catch(err){
+      throw new UnauthorizedException('Unauthorized')
+    }
   }
 }

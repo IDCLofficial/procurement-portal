@@ -50,6 +50,36 @@ export class ApplicationsService {
     }
   }
 
+  async findByAssignedTo(userId: string, page: number = 1, limit: number = 10) {
+    try {
+      const filter = { assignedTo: userId };
+      
+      // Calculate pagination
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination metadata
+      const total = await this.applicationModel.countDocuments(filter).exec();
+      
+      // Get paginated results
+      const applications = await this.applicationModel
+        .find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }) // Sort by newest first
+        .exec();
+      
+      return {
+        total: total,
+        page: page,
+        limit: limit,
+        totalPages: Math.ceil(total / limit),
+        applications: applications
+      };
+    } catch (err) {
+      throw new BadRequestException('Failed to get assigned applications', err.message);
+    }
+  }
+
   async updateApplicationStatus(id: string, updateApplicationStatusDto: UpdateApplicationStatusDto): Promise<Application> {
     try {
       const application = await this.applicationModel.findById(id);

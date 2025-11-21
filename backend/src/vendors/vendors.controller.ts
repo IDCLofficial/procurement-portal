@@ -7,11 +7,15 @@ import { updateRegistrationDto } from './dto/update-registration.dto';
 import { loginDto } from './dto/logn.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('vendors')
 @Controller('vendors')
 export class VendorsController {
-  constructor(private readonly vendorsService: VendorsService) {}
+  constructor(
+    private readonly vendorsService: VendorsService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   /**
    * Create a new vendor account
@@ -175,8 +179,10 @@ export class VendorsController {
       }
     }
   })
-  findOne(@Headers('authorization') authHeader: string) {
-    return this.vendorsService.getProfile(authHeader);
+  findOne(@Req() req:any) {
+    const authHeader = req.headers.authorization;
+    const userId = this.jwtService.decode(authHeader.split(' ')[1])._id;
+    return this.vendorsService.getProfile(userId);
   }
 
   /**

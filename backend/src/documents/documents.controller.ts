@@ -16,6 +16,15 @@ export class DocumentsController {
   ) {}
 
 
+  /**
+   * Upload a document for vendor verification
+   * 
+   * @param {CreateDocumentDto} createDocumentDto - Document metadata including vendor ID and document details
+   * @param {Express.Multer.File} file - The uploaded file from multipart/form-data request
+   * @returns {Promise<Object>} The uploaded document record with file URL
+   * @throws {BadRequestException} If file is missing or invalid
+   * @throws {ConflictException} If upload to storage fails
+   */
   @ApiOperation({summary:"Upload a document"})
   @ApiProperty({type:CreateDocumentDto})
   @ApiBody({type:CreateDocumentDto})
@@ -29,6 +38,16 @@ export class DocumentsController {
     return this.documentsService.uploadFile(file, createDocumentDto);
   }
 
+  /**
+   * Set document presets that vendors must upload during registration
+   * 
+   * Defines the required documents, their expiry settings, and renewal frequency.
+   * Used by administrators to configure which documents vendors need to provide.
+   * 
+   * @param {createDocumentPresetDto} createDocumentPresetDto - Document preset configuration
+   * @returns {Promise<Object>} The created document preset record
+   * @throws {ConflictException} If preset creation fails
+   */
   @ApiOperation({summary:"set the Documents that will be uploaded by the vendor companies"})
   @ApiProperty({type: createDocumentPresetDto})
   @ApiResponse({status:200, description:"Document preset set successfully"})
@@ -37,6 +56,14 @@ export class DocumentsController {
     return this.documentsService.setPreset(createDocumentPresetDto);
   }
 
+  /**
+   * Retrieve all verification documents in the system
+   * 
+   * Returns all uploaded vendor documents across all vendors.
+   * Useful for admin dashboards and document management.
+   * 
+   * @returns {Promise<Array>} Array of all verification documents
+   */
   @ApiOperation({summary:"Get all documents"})
   @ApiResponse({status:200, description:"All documents"})
   @Get()
@@ -44,6 +71,16 @@ export class DocumentsController {
     return this.documentsService.findAll();
   }
 
+  /**
+   * Retrieve all documents for a specific vendor
+   * 
+   * Fetches all verification documents associated with a vendor by their ID.
+   * Returns documents with their status, URLs, and validity information.
+   * 
+   * @param {string} id - The vendor ID (MongoDB ObjectId)
+   * @returns {Promise<Array>} Array of documents belonging to the vendor
+   * @throws {NotFoundException} If vendor not found or has no documents
+   */
   @ApiOperation({summary:"Get documents for a company by its id"})
   @ApiResponse({status:200, description:"Documents found"})
   @Get(':id')
@@ -51,6 +88,22 @@ export class DocumentsController {
     return this.documentsService.findDocsByVendor(id);
   }
 
+  /**
+   * Update the verification status of a document
+   * 
+   * Allows administrators to change the status of a vendor's document during the
+   * verification process. Status transitions:
+   * - Pending: Initial state after upload
+   * - Needs Review: Flagged for additional review
+   * - Approved: Document verified and accepted
+   * - Rejected: Document rejected, vendor must re-upload
+   * 
+   * @param {string} id - The document ID (MongoDB ObjectId)
+   * @param {UpdateDocumentStatusDto} updateDocumentStatusDto - New status value
+   * @returns {Promise<Object>} Updated document with new status
+   * @throws {NotFoundException} If document with given ID not found
+   * @throws {BadRequestException} If status value is invalid
+   */
   @Patch('status/:id')
   @ApiOperation({ 
     summary: 'Update document status',

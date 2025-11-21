@@ -30,7 +30,7 @@ export type necessaryDocument={
     fileName:string,
     fileSize:string,
     fileType:string,
-    validFor:string,
+    validFor?:string,
     hasValidityPeriod:boolean
 }
 type category={

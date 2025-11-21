@@ -63,8 +63,8 @@ export class verificationDocuments{
     @Prop({required:true})
     fileType:string;
 
-    @Prop({required:true})
-    validFor:string;
+    @Prop({required:false})
+    validFor?:string;
 
     @Prop({required:true})
     hasValidityPeriod:boolean;

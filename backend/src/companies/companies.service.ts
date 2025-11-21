@@ -61,11 +61,18 @@ export class CompaniesService {
 
   async findOne(id: string) {
     try{
-      const company = await this.companyModel.findOne({userId:new Types.ObjectId(id)}).populate("directors").exec();
+      const company = await this.companyModel.findOne({userId:new Types.ObjectId(id)}).populate("directors", "directors").exec();
       if(!company){
         throw new BadRequestException('Company not found')
       }
-      return company
+      
+      // Convert to plain object and flatten directors structure
+      const companyObject: any = company.toObject();
+      if (companyObject.directors && typeof companyObject.directors === 'object' && 'directors' in companyObject.directors) {
+        companyObject.directors = companyObject.directors.directors;
+      }
+      
+      return companyObject
     }catch(err){
       throw new BadRequestException('Failed to get company', err.message)
     }

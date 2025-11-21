@@ -490,8 +490,7 @@ export class VendorsService {
       }
     }catch(error) {
       this.Logger.debug(`${error}`)
-      console.log(error)
-      throw new BadRequestException(`Failed to register company: ${error.message}`);
+      throw new BadRequestException(`An error occured`);
     }
   }
 

@@ -95,7 +95,7 @@ export class Company {
     @Prop({
         required:false,
         type:Types.ObjectId,
-        ref:"Director"
+        ref:"Directors"
     })
     directors?:Types.ObjectId
 }

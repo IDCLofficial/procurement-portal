@@ -75,7 +75,14 @@ export default function RegistrationContinuation() {
     });
 
     // Step 3: Directors
-    const [directors, setDirectors] = useState([
+    const [directors, setDirectors] = useState(companyData?.directors ? (companyData.directors).map((director, index) => ({
+        id: (index + 1).toString(),
+        fullName: director.fullName,
+        phone: String(director.phone),
+        email: director.email,
+        documentType: director.idType,
+        documentValue: director.id,
+    })) : [
         {
             id: '1',
             fullName: '',
@@ -89,7 +96,7 @@ export default function RegistrationContinuation() {
     // Step 4: Bank Details (Optional)
     const [bankDetails, setBankDetails] = useState({
         bankName: companyData?.bankName || '',
-        accountNumber: companyData?.accountNumber || '',
+        accountNumber: String(companyData?.accountNumber) || '',
         accountName: companyData?.accountName || '',
     });
 

@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
 
 export default function DashboardPage() {
-    const { user } = useAuth();
+    const { user, company } = useAuth();
 
     const router = useRouter();
     // Mock data - will come from API
@@ -103,7 +103,7 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <DashboardHeader
-                companyName={user?.fullname}
+                companyName={company?.companyName || user?.fullname}
                 subtitle={"Vendor Portal"}
             />
 

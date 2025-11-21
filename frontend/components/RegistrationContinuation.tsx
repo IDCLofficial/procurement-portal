@@ -695,7 +695,7 @@ export default function RegistrationContinuation() {
                             <Button
                                 onClick={handleContinue}
                                 disabled={isLoading}
-                                className="bg-theme-green hover:bg-theme-green/90 min-w-[100px]"
+                                className="bg-theme-green hover:bg-theme-green/90 min-w-[100px] cursor-pointer"
                             >
                                 {isLoading
                                     ?

@@ -11,6 +11,7 @@ import { FaTag } from 'react-icons/fa6';
 import { useCreateVendorMutation } from '@/store/api/vendor.api';
 import { CreateVendorRequest } from '@/store/api/types';
 import { decrypt, encrypt } from '@/lib/crypto';
+import { useAuth } from './providers/public-service/AuthProvider';
 
 const allSteps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact' },
@@ -25,6 +26,7 @@ const allSteps = [
 ];
 
 export default function RegistrationStepper() {
+    const { login } = useAuth();
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -50,11 +52,9 @@ export default function RegistrationStepper() {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
     
-    const handleEmailVerified = () => {
+    const handleEmailVerified = (token: string) => {
         toast.success('Email verified! Redirecting to complete registration...');
-        setTimeout(() => {
-            router.replace(`/dashboard/complete-registration`);
-        }, 100);
+        login(token);
     };
 
     const handleCancelVerification = () => {

@@ -48,6 +48,7 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addMatcher(vendorApi.endpoints.loginVendor.matchFulfilled, (state, action) => {
+        console.log(action.payload)
         if ('data' in action.payload && action.payload.data) {
           state.token = action.payload.data.token;
           state.isAuthenticated = true;

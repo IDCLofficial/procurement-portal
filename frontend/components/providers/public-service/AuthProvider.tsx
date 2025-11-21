@@ -1,6 +1,6 @@
 "use client"
 import { decrypt, encrypt } from '@/lib/crypto';
-import { User } from '@/store/api/types';
+import { CompanyDetailsResponse, User } from '@/store/api/types';
 import { useGetCompanyDetailsQuery, useGetProfileQuery } from '@/store/api/vendor.api';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useContext, useMemo, useState } from 'react'
@@ -11,6 +11,7 @@ import { selectCompanyData } from '@/store/slices/companySlice';
 
 interface AuthContextType {
     user: User | null;
+    company: CompanyDetailsResponse | null;
     token: string | null;
     isLoading: boolean;
     isAuthenticated: boolean;
@@ -73,11 +74,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const isLoggingOut = useSelector(selectAuthIsLoggingOut);
     const company = useSelector(selectCompanyData);
 
-    React.useEffect(() => {
-        if (!company) return;
-        console.log('company', company);
-    }, [company]);
-
     const handleClearToken = useCallback(() => {
         setToken(null);
         localStorage.removeItem('token');
@@ -123,6 +119,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     const value = useMemo(() => ({
         user,
+        company,
         token,
         isLoading,
         isAuthenticated,
@@ -131,7 +128,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         login: handleLogin,
         logout: handleLogout,
         clearToken: handleClearToken,
-    }), [user, token, isLoading, isAuthenticated, isLoggingOut, handleRefresh, handleLogin, handleLogout, handleClearToken]);
+    }), [user, token, isLoading, isAuthenticated, isLoggingOut, handleRefresh, handleLogin, handleLogout, handleClearToken, company]);
 
     return (
         <AuthContext.Provider value={value}>

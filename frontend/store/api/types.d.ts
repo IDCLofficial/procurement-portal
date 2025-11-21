@@ -93,25 +93,23 @@ interface CompleteVendorRegistrationRequest {
 
 
 interface RegisterCompanyResponse {
-    data: {
-        message: string;
-        result: {
-            userId: string;
-            companyName: string;
-            cacNumber: string;
-            tin: string;
-            address: string;
-            lga: string;
-            grade: string;
-            website: string;
-            _id: string;
-            categories: string[];
-            createdAt: string;
-            updatedAt: string;
-            __v: number;
-        };
-        nextStep: string;
+    message: string;
+    result: {
+        userId: string;
+        companyName: string;
+        cacNumber: string;
+        tin: string;
+        address: string;
+        lga: string;
+        grade: string;
+        website: string;
+        _id: string;
+        categories: string[];
+        createdAt: string;
+        updatedAt: string;
+        __v: number;
     };
+    nextStep: string;
 }
 
 interface CompanyDetailsResponse {

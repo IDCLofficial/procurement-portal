@@ -21,7 +21,7 @@ const companySlice = createSlice({
         state.data = action.payload;
       })
       .addMatcher(vendorApi.endpoints.completeVendorRegistration.matchFulfilled, (state, action) => {
-        const result = action.payload.data.result;
+        const result = action.payload.result;
         if (result) {
           state.data = {
             userId: result.userId,

@@ -21,11 +21,17 @@ export type bankDetails={
     accountNumber:number,
     accountName:string
 }
-export type documents={
-    documentType:string,
-    documentUrl:string,  // URL returned from Sirv after uploading via /documents endpoint
+export type necessaryDocument={
+    fileUrl:string,
     validFrom?:string,
-    validTo?:string
+    validTo?:string,
+    documentType:string,
+    uploadedDate:string,
+    fileName:string,
+    fileSize:string,
+    fileType:string,
+    validFor:string,
+    hasValidityPeriod:boolean
 }
 type category={
     sector:string,
@@ -52,7 +58,7 @@ export class updateRegistrationDto{
 
     @IsOptional()
     @IsArray()
-    documents:documents[]
+    documents:necessaryDocument[]
 
     @IsOptional()
     @IsObject()

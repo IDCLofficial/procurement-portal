@@ -379,8 +379,8 @@ export class ApplicationsController {
 
       // Extract the _id from the decoded token
       const userId = decoded._id;
-      if (!userId) {
-        throw new UnauthorizedException('User ID not found in token');
+      if (!userId || !decoded.role) {
+        throw new UnauthorizedException('Not a valid user');
       }
 
       const pageNum = page ? Number(page) : 1;

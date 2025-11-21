@@ -15,6 +15,7 @@ export enum Status{
     APPROVED="Approved",
     REJECTED="Rejected"
 }
+
 export type PresetDocument = verificationDocPreset & Document;
 export type verificationDocument = verificationDocuments & Document;
 
@@ -39,16 +40,34 @@ export class verificationDocuments{
     vendor: Types.ObjectId;
     
     @Prop({required:true})
-    documentName:string;
+    fileUrl:string;
+
+    @Prop({required:false})
+    validFrom?:string;
+
+    @Prop({required:false})
+    validTo?:string;
 
     @Prop({required:true})
-    documentUrl:string;
+    documentType:string;
 
-    @Prop({required:true, default:" "})
-    validFrom:string;
+    @Prop({required:true})
+    uploadedDate:string;
 
-    @Prop({required:true, default:" "})
-    validTo:string;
+    @Prop({required:true})
+    fileName:string;
+
+    @Prop({required:true})
+    fileSize:string;
+
+    @Prop({required:true})
+    fileType:string;
+
+    @Prop({required:true})
+    validFor:string;
+
+    @Prop({required:true})
+    hasValidityPeriod:boolean;
 
     @Prop({required:true, default:Status.PENDING})
     status:Status;

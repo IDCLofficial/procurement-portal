@@ -71,10 +71,10 @@ export class Company {
 
     @Prop({
         required:false,
-        type:Types.ObjectId,
+        type:[Types.ObjectId],
         ref:"Document"
     })
-    documents?: Types.ObjectId;
+    documents?: Types.ObjectId[];
 
     @ApiProperty({ description: 'Website of the company', example: 'https://www.techinnovators.com', required: false })
     @Prop()

@@ -11,11 +11,12 @@ import { JwtService } from '@nestjs/jwt';
 import TokenHandlers from 'src/lib/generateToken';
 import { updateRegistrationDto } from './dto/update-registration.dto';
 import { Company, CompanyDocument, Directors, DirectorsDocument, Status } from '../companies/entities/company.schema';
-import { verificationDocuments, verificationDocument } from '../documents/entities/document.schema';
+import { verificationDocuments, verificationDocument, Status as DocumentStatus } from '../documents/entities/document.schema';
 import { loginDto } from './dto/logn.dto';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ValidationError } from 'class-validator';
 import { Logger } from '@nestjs/common';
+import { necessaryDocument } from './dto/update-registration.dto';
 
 @Injectable()
 export class VendorsService {
@@ -402,80 +403,60 @@ export class VendorsService {
       if(updateRegistrationDto.documents){
         try{
           const company = await this.companyModel.findOne({userId:vendor._id})
-          if(!company){
-            new Logger.error("company not found")
-            throw new NotFoundException("Company not found. Please register company first.")
-          }
-
-          // Upload files to Sirv and create verification documents
-          const savedDocuments: verificationDocument[] = [];
-          
-          if (files && files.length > 0) {
-            // Upload files to Sirv
-            for (let i = 0; i < files.length; i++) {
-              const file = files[i];
-              const docMetadata = updateRegistrationDto.documents[i];
+          // Process each document - create or update individual document records
+          const savedDocs = await Promise.all(
+            updateRegistrationDto.documents.map(async (doc) => {
+              // Check if document with same type already exists for this vendor
+              const existingDoc = await this.verificationDocumentModel.findOne({
+                vendor: vendor._id,
+                documentType: doc.documentType
+              });
               
-              if (!docMetadata) {
-                throw new BadRequestException(`Missing metadata for file ${i + 1}`);
+              if (existingDoc) {
+                // Update existing document
+                existingDoc.fileUrl = doc.fileUrl;
+                existingDoc.validFrom = doc.validFrom;
+                existingDoc.validTo = doc.validTo;
+                existingDoc.uploadedDate = doc.uploadedDate;
+                existingDoc.fileName = doc.fileName;
+                existingDoc.fileSize = doc.fileSize;
+                existingDoc.fileType = doc.fileType;
+                existingDoc.validFor = doc.validFor;
+                existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
+                existingDoc.status = DocumentStatus.PENDING;
+                
+                return await existingDoc.save();
+              } else {
+                // Create new document record
+                const newDoc = new this.verificationDocumentModel({
+                  vendor: vendor._id,
+                  fileUrl: doc.fileUrl,
+                  validFrom: doc.validFrom,
+                  validTo: doc.validTo,
+                  documentType: doc.documentType,
+                  uploadedDate: doc.uploadedDate,
+                  fileName: doc.fileName,
+                  fileSize: doc.fileSize,
+                  fileType: doc.fileType,
+                  validFor: doc.validFor,
+                  hasValidityPeriod: doc.hasValidityPeriod,
+                  status: DocumentStatus.PENDING
+                });
+                return await newDoc.save();
               }
-
-              // Upload to Sirv
-              const key = `uploads/${docMetadata.documentType}_${Date.now()}_${file.originalname}`;
-              
-              await this.s3.send(
-                new PutObjectCommand({
-                  Bucket: process.env.SIRV_S3_BUCKET,
-                  Key: key,
-                  Body: file.buffer,
-                  ContentType: file.mimetype,
-                })
-              );
-
-              const documentUrl = `https://${process.env.SIRV_S3_BUCKET}.s3.sirv.com/${key}`;
-
-              // Create document record with Sirv URL
-              const newDoc = new this.verificationDocumentModel({
-                vendor: vendor._id,
-                documentName: docMetadata.documentType,
-                key: key,
-                documentUrl: documentUrl,
-                validFrom: docMetadata.validFrom || " ",
-                validTo: docMetadata.validTo || " "
-              });
-
-              const saved = await newDoc.save();
-              savedDocuments.push(saved);
-            }
-          } else if (updateRegistrationDto.documents.length > 0) {
-            // No files uploaded, use URLs from DTO (if already uploaded separately)
-            const documentPromises = updateRegistrationDto.documents.map(doc => {
-              const newDoc = new this.verificationDocumentModel({
-                vendor: vendor._id,
-                documentName: doc.documentType,
-                documentUrl: doc.documentUrl || "",
-                validFrom: doc.validFrom || " ",
-                validTo: doc.validTo || " "
-              });
-              return newDoc.save();
-            });
-            savedDocuments.push(...await Promise.all(documentPromises));
+            })
+          );
+          if(company){
+            company.documents = savedDocs.map(doc=>doc._id as Types.ObjectId)
+            await company.save()
           }
-          
-          // Update company with documents reference (if storing first document ID)
-          if(savedDocuments.length > 0){
-            company.documents = savedDocuments[0]._id as Types.ObjectId;
-            await company.save();
-          }
-
           vendor.companyForm = companyForm.STEP5;
           await vendor.save();
-
+          
           return {
-            message: "Documents registered successfully",
-            result: savedDocuments,
-            nextStep: vendor.companyForm
-          }
+            message: "Documents uploaded successfully",
+            documents: savedDocs
+          };
         }catch(err){
           this.Logger.debug(`${err}`)
           throw new ConflictException('Error updating documents: ' + err.message)

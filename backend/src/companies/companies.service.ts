@@ -71,7 +71,7 @@ export class CompaniesService {
       if (companyObject.directors && typeof companyObject.directors === 'object' && 'directors' in companyObject.directors) {
         companyObject.directors = companyObject.directors.directors;
       }
-      
+      console.log(companyObject)
       return companyObject
     }catch(err){
       throw new BadRequestException('Failed to get company', err.message)

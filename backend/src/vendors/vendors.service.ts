@@ -230,7 +230,6 @@ export class VendorsService {
    */
   async registerCompany(req:Request, updateRegistrationDto:updateRegistrationDto, files?: Express.Multer.File[]): Promise<any> {
     // Extract and verify JWT token from Authorization header
-    console.log(updateRegistrationDto)
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       throw new UnauthorizedException('Authorization header is missing');
@@ -260,14 +259,13 @@ export class VendorsService {
 
     try{
       if(updateRegistrationDto.company){
+        const checkIfNameExists = await this.companyModel.findOne({companyName:updateRegistrationDto.company.companyName}).exec();
+        if(checkIfNameExists && checkIfNameExists.userId !== new Types.ObjectId(vendor._id as Types.ObjectId)){
+          throw new BadRequestException('company name already exists')
+        }
         try{
           // Check if company already exists for this vendor
-          let company = await this.companyModel.findOne({
-            $or: [
-              { companyName: updateRegistrationDto.company.companyName },
-              { userId: vendor._id }
-            ]
-          }).exec();
+          let company = await this.companyModel.findOne({ userId: vendor._id }).exec();
 
           let result:any;
           if (company) {
@@ -371,29 +369,26 @@ export class VendorsService {
        */
       if(updateRegistrationDto.bankDetails){
         try{
-          const company = await this.companyModel.findOne({userId:vendor._id})
-          if(!company){
-            new Logger.error("company not found")
-            throw new NotFoundException("Company not found. Please register company first.")
-          }
-          
+          const company = await this.companyModel.findOne({userId:vendor._id})          
           // Store bank details in company (assuming they're part of company schema or embedded)
           // If bank details need a separate collection, create a new model
-          Object.assign(company, {
-            bankName: updateRegistrationDto.bankDetails.bankName,
-            accountNumber: updateRegistrationDto.bankDetails.accountNumber,
-            accountName: updateRegistrationDto.bankDetails.accountName
-          });
-          
-          await company.save();
-          
-          vendor.companyForm = companyForm.STEP4;
-          await vendor.save();
-          
-          return {
-            message: "Bank details updated successfully",
-            result: company,
-            nextStep: vendor.companyForm
+          if(company){
+            Object.assign(company, {
+              bankName: updateRegistrationDto.bankDetails.bankName,
+              accountNumber: updateRegistrationDto.bankDetails.accountNumber,
+              accountName: updateRegistrationDto.bankDetails.accountName
+            });
+            
+            await company.save();
+            
+            vendor.companyForm = companyForm.STEP4;
+            await vendor.save();
+            
+            return {
+              message: "Bank details updated successfully",
+              result: company,
+              nextStep: vendor.companyForm
+            }
           }
         }catch(err){
           this.Logger.debug(`${err}`)
@@ -604,6 +599,20 @@ export class VendorsService {
     vendor.isVerified = true;
     vendor.otpFailedAttempts = 0;
     vendor.otpLockoutUntil = undefined;
+
+    const newCompany = new this.companyModel({
+      ...Company,
+      companyName:" ",
+      cacNumber:" ",
+      tin:" ",
+      address:" ",
+      lga:" ",
+      categories:[],
+      userId:vendor._id
+    })
+    const savedCompany = await newCompany.save();
+
+    vendor.companyId = savedCompany._id as Types.ObjectId;
 
     const newVendor = await vendor.save();
 

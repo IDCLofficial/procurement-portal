@@ -126,6 +126,7 @@ export class UsersService {
       .exec();
 
     return users.map(user => ({
+      id:user._id,
       fullName: user.fullName,
       role: user.role,
       email: user.email,

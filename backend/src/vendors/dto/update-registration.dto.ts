@@ -33,9 +33,9 @@ export type necessaryDocument={
     validFor?:string,
     hasValidityPeriod:boolean
 }
-type category={
+export type category={
     sector:string,
-    service:string,
+    service:string
 }
 export type categoriesAndGrade={
     categories:category[],

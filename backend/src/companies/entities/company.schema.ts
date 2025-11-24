@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document, Types } from 'mongoose';
+import { Category } from 'src/categories/entities/category.schema';
+import { category } from 'src/vendors/dto/update-registration.dto';
 
 export enum Status{
     PENDING="Pending",
@@ -60,7 +62,7 @@ export class Company {
         type: Array,
         default:[]
     })
-    categories: object[]
+    categories: category[]
     
     @Prop({ 
         required: false, 

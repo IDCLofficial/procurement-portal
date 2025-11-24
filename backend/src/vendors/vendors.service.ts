@@ -480,7 +480,6 @@ export class VendorsService {
             new Logger.error("company not found")
             throw new NotFoundException("Company not found. Please register company first.")
           }
-
           company.categories = updateRegistrationDto.categoriesAndGrade.categories;
           company.grade = updateRegistrationDto.categoriesAndGrade.grade;
           await company.save();

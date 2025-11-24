@@ -151,102 +151,142 @@ export class ApplicationsController {
   }
 
   /**
-   * Get a single application by ID
+   * Get applications assigned to authenticated user
    * 
    * @description
-   * Retrieves a specific application by its ID.
-   * This endpoint is restricted to authenticated users in the users collection.
-   * The user's authentication is verified through the JWT token provided in the Authorization header.
+   * Retrieves all applications that have been assigned to the currently authenticated user.
+   * The user ID is extracted from the JWT token provided in the Authorization header.
+   * Supports pagination to handle large datasets efficiently.
    * 
-   * @param id - Application ID (MongoDB ObjectId)
    * @param req - Express request object containing the authorization header
-   * @returns Application record with all details
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @returns Paginated list of applications assigned to the user with metadata
    * 
-   * @throws {UnauthorizedException} If token is missing, invalid, or user is not authenticated
-   * @throws {NotFoundException} If application with given ID is not found
+   * @throws {UnauthorizedException} If token is missing, invalid, or expired
+   * @throws {BadRequestException} If failed to retrieve applications
    * 
    * @example
-   * GET /applications/507f1f77bcf86cd799439011
+   * GET /applications/my-assignments?page=1&limit=10
    * Headers: {
    *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
    * }
    */
-  @Get(':id')
   @ApiOperation({ 
-    summary: 'Get application by ID',
-    description: 'Retrieves a specific application by its ID. Requires authentication. Users collection only.'
+    summary: 'Get applications assigned to authenticated user',
+    description: 'Retrieves all applications assigned to the currently authenticated user. Requires a valid JWT token in the Authorization header.'
   })
-  @ApiParam({
-    name: 'id',
-    required: true,
-    description: 'Application ID (MongoDB ObjectId)',
-    example: '507f1f77bcf86cd799439011'
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number for pagination (starts from 1)',
+    example: 1
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page',
+    example: 10
   })
   @ApiResponse({ 
     status: HttpStatus.OK, 
-    description: 'Application retrieved successfully',
+    description: 'Assigned applications retrieved successfully',
     schema: {
       type: 'object',
       properties: {
-        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
-        applicationId: { type: 'string', example: 'APP-2025-001' },
-        contractorName: { type: 'string', example: 'Tech Solutions Ltd' },
-        companyId: { type: 'string', example: '507f1f77bcf86cd799439012' },
-        rcBnNumber: { type: 'string', example: 'RC123456' },
-        grade: { type: 'string', example: 'Grade A' },
-        applicationStatus: { 
-          type: 'string', 
-          enum: ['PENDING', 'APPROVED', 'REJECTED'],
-          example: 'PENDING'
+        total: {
+          type: 'number',
+          example: 15,
+          description: 'Total number of applications assigned to the user'
         },
-        currentStatus: { type: 'string', example: 'Pending Desk Review' },
-        assignedTo: { type: 'string', example: '507f1f77bcf86cd799439013' },
-        assignedToName: { type: 'string', example: 'John Doe' },
-        createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time' }
+        page: {
+          type: 'number',
+          example: 1,
+          description: 'Current page number'
+        },
+        limit: {
+          type: 'number',
+          example: 10,
+          description: 'Number of items per page'
+        },
+        totalPages: {
+          type: 'number',
+          example: 2,
+          description: 'Total number of pages'
+        },
+        applications: {
+          type: 'array',
+          description: 'Array of application objects assigned to the user',
+          items: {
+            type: 'object',
+            properties: {
+              _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+              applicationId: { type: 'string', example: 'APP-2025-001' },
+              contractorName: { type: 'string', example: 'Tech Solutions Ltd' },
+              assignedTo: { type: 'string', example: '507f1f77bcf86cd799439012' },
+              assignedToName: { type: 'string', example: 'John Doe' },
+              applicationStatus: { 
+                type: 'string', 
+                enum: ['PENDING', 'APPROVED', 'REJECTED'],
+                example: 'PENDING'
+              },
+              currentStatus: { type: 'string', example: 'Pending Desk Review' },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' }
+            }
+          }
+        }
       }
     }
   })
   @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Application not found'
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Invalid or missing token'
   })
   @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Unauthorized - Valid user authentication required'
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Failed to retrieve assigned applications'
   })
-  findOne(
-    @Param('id') id: string,
-    @Req() req: any
-  ) {
-    // Extract token from authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      throw new UnauthorizedException('Authorization header missing🤪');
-    }
-
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      throw new UnauthorizedException('Token missing🫤');
-    }
-
+  @Get('my-assignments')
+  getMyAssignments(
+    @Req() req: any,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
+  ) { 
     try {
-      // Decode and verify the JWT token
+      // Extract token from authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        throw new UnauthorizedException('Authorization header missing');
+      }
+  
+      const token = authHeader.split(' ')[1];
+      if (!token) {
+        throw new UnauthorizedException('Token missing');
+      }
+      // Decode the JWT token
       const decoded = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
       });
 
-      // Verify that the user has a valid _id and role (users collection check)
-      if (!decoded._id || !decoded.role) {
-        throw new UnauthorizedException('You are not allowed to access this route😒');
+      // Extract the _id from the decoded token
+      const userId = decoded._id;
+      console.log('User ID from token:', userId);
+      console.log('Decoded token:', decoded);
+      
+      if (!userId || !decoded.role) {
+        throw new UnauthorizedException('Not a valid user');
       }
 
-      return this.applicationsService.findOne(id);
+      const pageNum = page ? Number(page) : 1;
+      const limitNum = limit ? Number(limit) : 10;
+      
+      return this.applicationsService.findByAssignedTo(userId, pageNum, limitNum);
     } catch (err) {
-      if (err instanceof UnauthorizedException) {
-        throw err;
-      }
-      throw new UnauthorizedException('Invalid or expired token 😒');
+      console.error('Error in getMyAssignments:', err);
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 
@@ -464,139 +504,102 @@ export class ApplicationsController {
   }
 
   /**
-   * Assign an application to a user
+   * Get a single application by ID
    * 
    * @description
-   * Retrieves all applications that have been assigned to the currently authenticated user.
-   * The user ID is extracted from the JWT token provided in the Authorization header.
-   * Supports pagination to handle large datasets efficiently.
+   * Retrieves a specific application by its ID.
+   * This endpoint is restricted to authenticated users in the users collection.
+   * The user's authentication is verified through the JWT token provided in the Authorization header.
    * 
+   * @param id - Application ID (MongoDB ObjectId)
    * @param req - Express request object containing the authorization header
-   * @param page - Page number for pagination (default: 1)
-   * @param limit - Number of items per page (default: 10)
-   * @returns Paginated list of applications assigned to the user with metadata
+   * @returns Application record with all details
    * 
-   * @throws {UnauthorizedException} If token is missing, invalid, or expired
-   * @throws {BadRequestException} If failed to retrieve applications
+   * @throws {UnauthorizedException} If token is missing, invalid, or user is not authenticated
+   * @throws {NotFoundException} If application with given ID is not found
    * 
    * @example
-   * GET /applications/my-assignments?page=1&limit=10
+   * GET /applications/507f1f77bcf86cd799439011
    * Headers: {
    *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
    * }
    */
-  @Get('my-assignments')
+  @Get(':id')
   @ApiOperation({ 
-    summary: 'Get applications assigned to authenticated user',
-    description: 'Retrieves all applications assigned to the currently authenticated user. Requires a valid JWT token in the Authorization header.'
+    summary: 'Get application by ID',
+    description: 'Retrieves a specific application by its ID. Requires authentication. Users collection only.'
   })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number for pagination (starts from 1)',
-    example: 1
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Number of items per page',
-    example: 10
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Application ID (MongoDB ObjectId)',
+    example: '507f1f77bcf86cd799439011'
   })
   @ApiResponse({ 
     status: HttpStatus.OK, 
-    description: 'Assigned applications retrieved successfully',
+    description: 'Application retrieved successfully',
     schema: {
       type: 'object',
       properties: {
-        total: {
-          type: 'number',
-          example: 15,
-          description: 'Total number of applications assigned to the user'
+        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        applicationId: { type: 'string', example: 'APP-2025-001' },
+        contractorName: { type: 'string', example: 'Tech Solutions Ltd' },
+        companyId: { type: 'string', example: '507f1f77bcf86cd799439012' },
+        rcBnNumber: { type: 'string', example: 'RC123456' },
+        grade: { type: 'string', example: 'Grade A' },
+        applicationStatus: { 
+          type: 'string', 
+          enum: ['PENDING', 'APPROVED', 'REJECTED'],
+          example: 'PENDING'
         },
-        page: {
-          type: 'number',
-          example: 1,
-          description: 'Current page number'
-        },
-        limit: {
-          type: 'number',
-          example: 10,
-          description: 'Number of items per page'
-        },
-        totalPages: {
-          type: 'number',
-          example: 2,
-          description: 'Total number of pages'
-        },
-        applications: {
-          type: 'array',
-          description: 'Array of application objects assigned to the user',
-          items: {
-            type: 'object',
-            properties: {
-              _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
-              applicationId: { type: 'string', example: 'APP-2025-001' },
-              contractorName: { type: 'string', example: 'Tech Solutions Ltd' },
-              assignedTo: { type: 'string', example: '507f1f77bcf86cd799439012' },
-              assignedToName: { type: 'string', example: 'John Doe' },
-              applicationStatus: { 
-                type: 'string', 
-                enum: ['PENDING', 'APPROVED', 'REJECTED'],
-                example: 'PENDING'
-              },
-              currentStatus: { type: 'string', example: 'Pending Desk Review' },
-              createdAt: { type: 'string', format: 'date-time' },
-              updatedAt: { type: 'string', format: 'date-time' }
-            }
-          }
-        }
+        currentStatus: { type: 'string', example: 'Pending Desk Review' },
+        assignedTo: { type: 'string', example: '507f1f77bcf86cd799439013' },
+        assignedToName: { type: 'string', example: 'John Doe' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' }
       }
     }
   })
   @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Unauthorized - Invalid or missing token'
+    status: HttpStatus.NOT_FOUND,
+    description: 'Application not found'
   })
   @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Failed to retrieve assigned applications'
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Valid user authentication required'
   })
-  getMyAssignments(
-    @Req() req: any,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number
+  findOne(
+    @Param('id') id: string,
+    @Req() req: any
   ) {
     // Extract token from authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-      throw new UnauthorizedException('Authorization header missing');
+      throw new UnauthorizedException('Authorization header missing🤪');
     }
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      throw new UnauthorizedException('Token missing');
+      throw new UnauthorizedException('Token missing🫤');
     }
 
     try {
-      // Decode the JWT token
+      // Decode and verify the JWT token
       const decoded = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
       });
 
-      // Extract the _id from the decoded token
-      const userId = decoded._id;
-      if (!userId || !decoded.role) {
-        throw new UnauthorizedException('Not a valid user');
+      // Verify that the user has a valid _id and role (users collection check)
+      if (!decoded._id || !decoded.role) {
+        throw new UnauthorizedException('You are not allowed to access this route😒');
       }
 
-      const pageNum = page ? Number(page) : 1;
-      const limitNum = limit ? Number(limit) : 10;
-      
-      return this.applicationsService.findByAssignedTo(userId, pageNum, limitNum);
+      return this.applicationsService.findOne(id);
     } catch (err) {
-      throw new UnauthorizedException('Invalid or expired token');
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Invalid or expired token 😒');
     }
   }
 }

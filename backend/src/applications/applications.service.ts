@@ -71,6 +71,7 @@ export class ApplicationsService {
   }
 
   async findByAssignedTo(userId: string, page: number = 1, limit: number = 10) {
+    console.log(userId)
     try {
       const filter = { assignedTo: new Types.ObjectId(userId)};
       

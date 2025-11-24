@@ -1,23 +1,26 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsEnum, IsLowercase, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { Grade } from "../entities/category.schema";
 
 export class CreateCategoryDto {
     @ApiProperty({example:"sector"})
     @IsString()
     @IsNotEmpty()
+    @IsLowercase()
     sector:string;
 
-    @ApiProperty({example:"description"})
+    @ApiProperty({example:"grade"})
     @IsNotEmpty()
-    description:string;
+    @IsEnum(Grade)
+    grade:Grade;
 
-    @ApiProperty({example:"registrationCost"})
-    @IsNumber()
+    @ApiProperty({example:"fee"})
     @IsNotEmpty()
-    registrationCost:number;
+    @IsNumber()
+    fee:number;
 
-    @ApiProperty({example:"financialCapacity"})
-    @IsNumber()
+    @ApiProperty({example:"effective date"})
     @IsNotEmpty()
-    financialCapacity:number;
+    @IsString()
+    effectiveDate:string;
 }

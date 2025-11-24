@@ -2,9 +2,13 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document, Types } from "mongoose";
 
 export enum ApplicationStatus {
-    PENDING = 'PENDING',
-    APPROVED = 'APPROVED',
-    REJECTED = 'REJECTED'
+    PENDING_DESK_REVIEW = 'Pending Desk Review',
+    FORWARDED_TO_REGISTRAR = 'Forwarded to Registrar',
+    PENDING_PAYMENT = 'Pending Payment',
+    CLARIFICATION_REQUESTED = 'Clarification Requested',
+    SLA_BREACH = 'SLA Breach',
+    APPROVED = 'Approved',
+    REJECTED = 'Rejected'
 }
 
 export enum SLAStatus {
@@ -58,15 +62,15 @@ export class Application {
 
     @Prop({ enum: Object.values(SLAStatus) })
     slaStatus: SLAStatus;
-    
+
     @Prop({ type: Types.ObjectId, ref: 'User' })
     assignedTo: Types.ObjectId;
 
     @Prop()
     assignedToName: string;
 
-    @Prop({ required: true, enum: Object.values(ApplicationStatus), default: ApplicationStatus.PENDING })
-    applicationStatus: CurrentStatus;
+    @Prop({ required: true, enum: Object.values(ApplicationStatus), default: ApplicationStatus.PENDING_DESK_REVIEW })
+    applicationStatus: ApplicationStatus;
 }
 
 export const ApplicationSchema = SchemaFactory.createForClass(Application);

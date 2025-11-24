@@ -1,15 +1,15 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { ApplicationStatus, CurrentStatus } from '../entities/application.schema';
+import { ApplicationStatus } from '../entities/application.schema';
 
 export class UpdateApplicationStatusDto {
   @ApiProperty({
     description: 'Status of the application',
-    enum: CurrentStatus,
-    example: CurrentStatus.APPROVED,
+    enum: ApplicationStatus,
+    example: ApplicationStatus.APPROVED,
     required: true
   })
-  @IsEnum(CurrentStatus)
+  @IsEnum(ApplicationStatus)
   @IsNotEmpty()
-  applicationStatus: CurrentStatus;
+  applicationStatus: ApplicationStatus;
 }

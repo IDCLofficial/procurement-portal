@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Application, ApplicationDocument, ApplicationStatus, CurrentStatus } from './entities/application.schema';
+import { Application, ApplicationDocument, ApplicationStatus } from './entities/application.schema';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { AssignApplicationDto } from './dto/assign-application.dto';
 import { Certificate, CertificateDocument } from '../certificates/entities/certificate.schema';
@@ -50,6 +50,23 @@ export class ApplicationsService {
       };
     } catch (err) {
       throw new BadRequestException('Failed to get applications', err.message);
+    }
+  }
+
+  async findOne(id: string): Promise<Application> {
+    try {
+      const application = await this.applicationModel.findById(id).exec();
+      
+      if (!application) {
+        throw new NotFoundException('Application not found');
+      }
+      
+      return application;
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new BadRequestException('Failed to get application', err.message);
     }
   }
 
@@ -141,7 +158,7 @@ export class ApplicationsService {
       application.applicationStatus = updateApplicationStatusDto.applicationStatus;
       
       // If status changed to APPROVED, generate certificate
-      if (updateApplicationStatusDto.applicationStatus === CurrentStatus.APPROVED && oldStatus !== CurrentStatus.APPROVED) {
+      if (updateApplicationStatusDto.applicationStatus === ApplicationStatus.APPROVED && oldStatus !== ApplicationStatus.APPROVED) {
         await this.generateCertificate(application);
       }
       

@@ -12,7 +12,7 @@ export class CategoriesService {
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
-    const category = await this.categoryModel.findOne({sector: createCategoryDto.sector})
+    const category = await this.categoryModel.findOne({sector: createCategoryDto.sector.toLowerCase(), grade: createCategoryDto.grade})
     if(category){
       throw new BadRequestException('Category already exists')
     }

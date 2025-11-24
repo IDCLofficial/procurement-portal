@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiBody } from 
 import { ApplicationsService } from './applications.service';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { AssignApplicationDto } from './dto/assign-application.dto';
-import { ApplicationStatus } from './entities/application.schema';
+import { ApplicationStatus, CurrentStatus } from './entities/application.schema';
 import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('Applications')
@@ -42,11 +42,11 @@ export class ApplicationsController {
     required: false,
     enum: ApplicationStatus,
     description: 'Filter applications by status',
-    example: ApplicationStatus.PENDING,
+    example: ApplicationStatus.PENDING_DESK_REVIEW,
     examples: {
       pending: {
         summary: 'Get pending applications',
-        value: ApplicationStatus.PENDING
+        value: ApplicationStatus.PENDING_DESK_REVIEW
       },
       approved: {
         summary: 'Get approved applications',
@@ -147,6 +147,106 @@ export class ApplicationsController {
       return this.applicationsService.findAll(status, pageNum, limitNum);
     }catch(err){
       throw new UnauthorizedException('Unauthorized')
+    }
+  }
+
+  /**
+   * Get a single application by ID
+   * 
+   * @description
+   * Retrieves a specific application by its ID.
+   * This endpoint is restricted to authenticated users in the users collection.
+   * The user's authentication is verified through the JWT token provided in the Authorization header.
+   * 
+   * @param id - Application ID (MongoDB ObjectId)
+   * @param req - Express request object containing the authorization header
+   * @returns Application record with all details
+   * 
+   * @throws {UnauthorizedException} If token is missing, invalid, or user is not authenticated
+   * @throws {NotFoundException} If application with given ID is not found
+   * 
+   * @example
+   * GET /applications/507f1f77bcf86cd799439011
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   */
+  @Get(':id')
+  @ApiOperation({ 
+    summary: 'Get application by ID',
+    description: 'Retrieves a specific application by its ID. Requires authentication. Users collection only.'
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Application ID (MongoDB ObjectId)',
+    example: '507f1f77bcf86cd799439011'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Application retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        applicationId: { type: 'string', example: 'APP-2025-001' },
+        contractorName: { type: 'string', example: 'Tech Solutions Ltd' },
+        companyId: { type: 'string', example: '507f1f77bcf86cd799439012' },
+        rcBnNumber: { type: 'string', example: 'RC123456' },
+        grade: { type: 'string', example: 'Grade A' },
+        applicationStatus: { 
+          type: 'string', 
+          enum: ['PENDING', 'APPROVED', 'REJECTED'],
+          example: 'PENDING'
+        },
+        currentStatus: { type: 'string', example: 'Pending Desk Review' },
+        assignedTo: { type: 'string', example: '507f1f77bcf86cd799439013' },
+        assignedToName: { type: 'string', example: 'John Doe' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Application not found'
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Valid user authentication required'
+  })
+  findOne(
+    @Param('id') id: string,
+    @Req() req: any
+  ) {
+    // Extract token from authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header missing🤪');
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Token missing🫤');
+    }
+
+    try {
+      // Decode and verify the JWT token
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+
+      // Verify that the user has a valid _id and role (users collection check)
+      if (!decoded._id || !decoded.role) {
+        throw new UnauthorizedException('You are not allowed to access this route😒');
+      }
+
+      return this.applicationsService.findOne(id);
+    } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Invalid or expired token 😒');
     }
   }
 
@@ -300,7 +400,7 @@ export class ApplicationsController {
       pending: {
         summary: 'Set status to Pending',
         value: {
-          applicationStatus: ApplicationStatus.PENDING
+          applicationStatus: ApplicationStatus.PENDING_DESK_REVIEW
         }
       },
       approved: {
@@ -364,7 +464,7 @@ export class ApplicationsController {
   }
 
   /**
-   * Get applications assigned to the authenticated user
+   * Assign an application to a user
    * 
    * @description
    * Retrieves all applications that have been assigned to the currently authenticated user.

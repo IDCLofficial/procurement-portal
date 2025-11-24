@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto, UpdateCategoryFieldsDto } from './dto/update-category.dto';
+import { UpdateCategoryFieldsDto } from './dto/update-category.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Category } from './entities/category.schema';
@@ -12,7 +12,7 @@ export class CategoriesService {
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
-    const category = await this.categoryModel.findOne({sector: createCategoryDto.sector.toLowerCase(), grade: createCategoryDto.grade})
+    const category = await this.categoryModel.findOne({sector: createCategoryDto.sector.toLowerCase()})
     if(category){
       throw new BadRequestException('Category already exists')
     }
@@ -32,15 +32,11 @@ export class CategoriesService {
         throw new NotFoundException('Category not found');
       }
 
-      // Update only the allowed fields
-      if (updateCategoryFieldsDto.fee !== undefined) {
-        category.fee = updateCategoryFieldsDto.fee;
-      }
+        // Update only the allowed fields
+        if (updateCategoryFieldsDto.sector !== "") {
+          category.sector = updateCategoryFieldsDto.sector;
+        }
       
-      if (updateCategoryFieldsDto.effectiveDate !== undefined) {
-        category.effectiveDate = updateCategoryFieldsDto.effectiveDate;
-      }
-
       return await category.save();
     } catch (err) {
       if (err instanceof NotFoundException) {

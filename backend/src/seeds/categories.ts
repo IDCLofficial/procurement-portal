@@ -7,12 +7,14 @@ dotenv.config();
 // Define schema interface
 interface ICategory {
   sector: string;
+  description:string;
 }
 
 // Define Mongoose schema
 const categorySchema = new mongoose.Schema<ICategory>(
   {
-    sector: { type: String, required: true }
+    sector: { type: String, required: true },
+    description: { type: String, required: true }
   },
   { timestamps: true }
 );
@@ -33,10 +35,10 @@ async function seedCategories() {
 
     // Categories data
     const categories: ICategory[] = [
-      { sector: 'works' },
-      { sector: 'supplies' },
-      { sector: 'ict' },
-      { sector: 'services' }
+      { sector: 'works', description: 'Construction & Engineering' },
+      { sector: 'supplies', description: 'Goods & Materials' },
+      { sector: 'ict', description: 'Information & Communication Technology' },
+      { sector: 'services', description: 'Professional Services' }
     ];
 
     // Insert categories

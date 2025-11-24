@@ -4,6 +4,7 @@ import { UpdateCategoryFieldsDto } from './dto/update-category.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Category } from './entities/category.schema';
+import { Grade } from './entities/grade.schema';
 
 @Injectable()
 export class CategoriesService {
@@ -11,6 +12,7 @@ export class CategoriesService {
   
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<Category>,
+    @InjectModel(Grade.name) private gradeModel: Model<Grade>
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
@@ -24,10 +26,12 @@ export class CategoriesService {
 
   async findAll() {
     try{
-      return await this.categoryModel.find();
+      const categories = await this.categoryModel.find();
+      const grades = await this.gradeModel.find();
+      return {categories, grades};
     }catch(err){
-      this.logger.error(`Failed to retrieve categories: ${err.message}`);
-      throw new BadRequestException('Failed to retrieve categories');
+      this.logger.error(`Failed to retrieve categories or grades: ${err.message}`);
+      throw new BadRequestException('Failed to retrieve categories or grades');
     }
   }
 

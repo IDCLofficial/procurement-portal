@@ -9,6 +9,7 @@ export enum companyForm{
   STEP3="bankDetails",
   STEP4="documents",
   STEP5="categoriesAndGrade",
+  STEP6="Payment",
   COMPLETE="complete"
 }
 

@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { UpdateCategoryDto, UpdateCategoryFieldsDto } from './dto/update-category.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Category } from './entities/category.schema';
@@ -22,6 +22,32 @@ export class CategoriesService {
 
   async findAll() {
     return await this.categoryModel.find();
+  }
+
+  async update(id: string, updateCategoryFieldsDto: UpdateCategoryFieldsDto): Promise<Category> {
+    try {
+      const category = await this.categoryModel.findById(id);
+      
+      if (!category) {
+        throw new NotFoundException('Category not found');
+      }
+
+      // Update only the allowed fields
+      if (updateCategoryFieldsDto.fee !== undefined) {
+        category.fee = updateCategoryFieldsDto.fee;
+      }
+      
+      if (updateCategoryFieldsDto.effectiveDate !== undefined) {
+        category.effectiveDate = updateCategoryFieldsDto.effectiveDate;
+      }
+
+      return await category.save();
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new BadRequestException('Failed to update category', err.message);
+    }
   }
 
   async remove(id: number) {

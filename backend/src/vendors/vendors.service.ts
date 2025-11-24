@@ -425,7 +425,20 @@ export class VendorsService {
                 existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
                 existingDoc.status = DocumentStatus.PENDING;
                 
-                return await existingDoc.save();
+                const result = await existingDoc.save();
+                return {
+                  id: result._id,
+                  vendor: vendor._id,
+                  validFrom: doc.validFrom,
+                  validTo: doc.validTo,
+                  documentType: doc.documentType,
+                  uploadedDate: doc.uploadedDate,
+                  fileName: doc.fileName,
+                  fileSize: doc.fileSize,
+                  fileType: doc.fileType,
+                  hasValidityPeriod: doc.hasValidityPeriod,
+                  status: DocumentStatus.PENDING
+                };
               } else {
                 // Create new document record
                 const newDoc = new this.verificationDocumentModel({
@@ -442,12 +455,25 @@ export class VendorsService {
                   hasValidityPeriod: doc.hasValidityPeriod,
                   status: DocumentStatus.PENDING
                 });
-                return await newDoc.save();
+                const result = await newDoc.save();
+                return {
+                  id: result._id,
+                  vendor: vendor._id,
+                  validFrom: doc.validFrom,
+                  validTo: doc.validTo,
+                  documentType: doc.documentType,
+                  uploadedDate: doc.uploadedDate,
+                  fileName: doc.fileName,
+                  fileSize: doc.fileSize,
+                  fileType: doc.fileType,
+                  hasValidityPeriod: doc.hasValidityPeriod,
+                  status: DocumentStatus.PENDING
+                };
               }
             })
           );
           if(company){
-            company.documents = savedDocs.map(doc=>doc._id as Types.ObjectId)
+            company.documents = savedDocs.map(doc=>doc.id as Types.ObjectId)
             await company.save()
           }
           vendor.companyForm = companyForm.STEP5;

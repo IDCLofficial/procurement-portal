@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryFieldsDto } from './dto/update-category.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,6 +7,8 @@ import { Category } from './entities/category.schema';
 
 @Injectable()
 export class CategoriesService {
+  private readonly logger = new Logger(CategoriesService.name);
+  
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<Category>,
   ) {}
@@ -21,7 +23,12 @@ export class CategoriesService {
   }
 
   async findAll() {
-    return await this.categoryModel.find();
+    try{
+      return await this.categoryModel.find();
+    }catch(err){
+      this.logger.error(`Failed to retrieve categories: ${err.message}`);
+      throw new BadRequestException('Failed to retrieve categories');
+    }
   }
 
   async update(id: string, updateCategoryFieldsDto: UpdateCategoryFieldsDto): Promise<Category> {

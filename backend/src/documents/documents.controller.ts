@@ -57,6 +57,21 @@ export class DocumentsController {
   }
 
   /**
+   * Get all document presets
+   * 
+   * Retrieves all configured document presets that vendors must upload.
+   * Returns preset configurations including document names, expiry settings, and renewal frequency.
+   * 
+   * @returns {Promise<Array>} Array of all document presets
+   */
+  @ApiOperation({ summary: "Get all document presets" })
+  @ApiResponse({ status: 200, description: "Document presets retrieved successfully" })
+  @Get('presets')
+  getPresets() {
+    return this.documentsService.getPresets();
+  }
+
+  /**
    * Retrieve all verification documents in the system
    * 
    * Returns all uploaded vendor documents across all vendors.

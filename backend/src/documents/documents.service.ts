@@ -91,6 +91,15 @@ export class DocumentsService {
     }
   }
 
+  async getPresets(): Promise<verificationDocPreset[]> {
+    try {
+      const presets = await this.documentPresetModel.find().exec();
+      return presets;
+    } catch (err) {
+      throw new BadRequestException('Failed to retrieve document presets', err.message);
+    }
+  }
+
   findAll() {
     return `This action returns all documents`;
   }

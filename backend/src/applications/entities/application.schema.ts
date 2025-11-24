@@ -58,10 +58,7 @@ export class Application {
 
     @Prop({ enum: Object.values(SLAStatus) })
     slaStatus: SLAStatus;
-
-    @Prop({ required: true, enum: Object.values(CurrentStatus) })
-    currentStatus: CurrentStatus;
-
+    
     @Prop({ type: Types.ObjectId, ref: 'User' })
     assignedTo: Types.ObjectId;
 
@@ -69,7 +66,7 @@ export class Application {
     assignedToName: string;
 
     @Prop({ required: true, enum: Object.values(ApplicationStatus), default: ApplicationStatus.PENDING })
-    applicationStatus: ApplicationStatus;
+    applicationStatus: CurrentStatus;
 }
 
 export const ApplicationSchema = SchemaFactory.createForClass(Application);

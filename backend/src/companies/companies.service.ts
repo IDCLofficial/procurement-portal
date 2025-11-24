@@ -5,10 +5,14 @@ import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { Company, CompanyDocument, Status } from './entities/company.schema';
+import { verificationDocuments } from 'src/documents/entities/document.schema';
 
 @Injectable()
 export class CompaniesService {
-  constructor(@InjectModel(Company.name) private companyModel: Model<CompanyDocument>) {}
+  constructor(
+    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    @InjectModel(verificationDocuments.name) private documentModel: Model<verificationDocuments>
+  ) {}
 
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
     try {
@@ -61,7 +65,10 @@ export class CompaniesService {
 
   async findOne(id: string) {
     try{
-      const company = await this.companyModel.findOne({userId:new Types.ObjectId(id)}).populate("directors", "directors").exec();
+      const company = await this.companyModel.findOne({userId:new Types.ObjectId(id)})
+        .populate("directors", "directors")
+        .populate("documents")
+        .exec();
       if(!company){
         throw new BadRequestException('Company not found')
       }
@@ -71,7 +78,7 @@ export class CompaniesService {
       if (companyObject.directors && typeof companyObject.directors === 'object' && 'directors' in companyObject.directors) {
         companyObject.directors = companyObject.directors.directors;
       }
-      console.log(companyObject)
+      console.log(companyObject.directors)
       return companyObject
     }catch(err){
       throw new BadRequestException('Failed to get company', err.message)

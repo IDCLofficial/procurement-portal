@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Application, ApplicationDocument, ApplicationStatus } from './entities/application.schema';
+import { Application, ApplicationDocument, ApplicationStatus, CurrentStatus } from './entities/application.schema';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { Certificate, CertificateDocument } from '../certificates/entities/certificate.schema';
 import { Company, CompanyDocument } from '../companies/entities/company.schema';
@@ -92,7 +92,7 @@ export class ApplicationsService {
       application.applicationStatus = updateApplicationStatusDto.applicationStatus;
       
       // If status changed to APPROVED, generate certificate
-      if (updateApplicationStatusDto.applicationStatus === ApplicationStatus.APPROVED && oldStatus !== ApplicationStatus.APPROVED) {
+      if (updateApplicationStatusDto.applicationStatus === CurrentStatus.APPROVED && oldStatus !== CurrentStatus.APPROVED) {
         await this.generateCertificate(application);
       }
       

@@ -72,7 +72,7 @@ export class Company {
     @Prop({
         required:false,
         type:[Types.ObjectId],
-        ref:"Document"
+        ref:"verificationDocuments"
     })
     documents?: Types.ObjectId[];
 

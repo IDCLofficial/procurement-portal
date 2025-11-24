@@ -21,7 +21,7 @@ export class DocumentsController {
    * 
    * @param {CreateDocumentDto} createDocumentDto - Document metadata including vendor ID and document details
    * @param {Express.Multer.File} file - The uploaded file from multipart/form-data request
-   * @returns {Promise<Object>} The uploaded document record with file URL
+   * @returns { Promise<Object>} The uploaded document record with file URL
    * @throws {BadRequestException} If file is missing or invalid
    * @throws {ConflictException} If upload to storage fails
    */

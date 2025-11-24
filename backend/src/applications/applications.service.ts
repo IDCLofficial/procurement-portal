@@ -1,10 +1,12 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Application, ApplicationDocument, ApplicationStatus, CurrentStatus } from './entities/application.schema';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
+import { AssignApplicationDto } from './dto/assign-application.dto';
 import { Certificate, CertificateDocument } from '../certificates/entities/certificate.schema';
 import { Company, CompanyDocument } from '../companies/entities/company.schema';
+import { User, UserDocument } from '../users/entities/user.schema';
 import { generateCertificateId } from '../lib/generateCertificateId';
 
 @Injectable()
@@ -12,7 +14,8 @@ export class ApplicationsService {
   constructor(
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
     @InjectModel(Certificate.name) private certificateModel: Model<CertificateDocument>,
-    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>
+    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>
   ) {}
 
   async findAll(status?: ApplicationStatus, page: number = 1, limit: number = 10) {
@@ -77,6 +80,52 @@ export class ApplicationsService {
       };
     } catch (err) {
       throw new BadRequestException('Failed to get assigned applications', err.message);
+    }
+  }
+
+  async assignApplication(id: string, assignApplicationDto: AssignApplicationDto): Promise<Application> {
+    try {
+      // Find the application
+      const application = await this.applicationModel.findById(id);
+      if (!application) {
+        throw new NotFoundException('Application not found');
+      }
+
+      // Verify the user exists
+      const user = await this.userModel.findById(assignApplicationDto.userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const previouslyAssignedTo = application.assignedTo?.toString();
+      const newAssignedTo = assignApplicationDto.userId;
+
+      // If application was previously assigned to someone else, decrement their count
+      if (previouslyAssignedTo && previouslyAssignedTo !== newAssignedTo) {
+        await this.userModel.findByIdAndUpdate(
+          previouslyAssignedTo,
+          { $inc: { assignedApps: -1 } }
+        );
+      }
+
+      // Assign the application
+      application.assignedTo = new Types.ObjectId(newAssignedTo);
+      application.assignedToName = assignApplicationDto.userName;
+
+      // Increment the new user's assigned apps count (only if not already assigned to them)
+      if (!previouslyAssignedTo || previouslyAssignedTo !== newAssignedTo) {
+        await this.userModel.findByIdAndUpdate(
+          newAssignedTo,
+          { $inc: { assignedApps: 1 } }
+        );
+      }
+
+      return await application.save();
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new BadRequestException('Failed to assign application', err.message);
     }
   }
 

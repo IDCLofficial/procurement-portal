@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, HttpStatus, R
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { ApplicationsService } from './applications.service';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
+import { AssignApplicationDto } from './dto/assign-application.dto';
 import { ApplicationStatus } from './entities/application.schema';
 import { JwtService } from '@nestjs/jwt';
 
@@ -146,6 +147,113 @@ export class ApplicationsController {
       return this.applicationsService.findAll(status, pageNum, limitNum);
     }catch(err){
       throw new UnauthorizedException('Unauthorized')
+    }
+  }
+
+  /**
+   * Assign an application to a user
+   * 
+   * @description
+   * Assigns a specific application to a user from the users collection.
+   * This endpoint is restricted to Admin users only.
+   * The user's role is verified through the JWT token provided in the Authorization header.
+   * When an application is assigned, the user's assignedApps count is automatically incremented.
+   * If the application was previously assigned to another user, their count is decremented.
+   * 
+   * @param id - Application ID (MongoDB ObjectId)
+   * @param assignApplicationDto - DTO containing the user ID and name to assign to
+   * @param req - Express request object containing the authorization header
+   * @returns Updated application record with assignment information
+   * 
+   * @throws {UnauthorizedException} If token is missing, invalid, or user is not an Admin
+   * @throws {NotFoundException} If application or user with given ID is not found
+   * @throws {BadRequestException} If invalid request data
+   * 
+   * @example
+   * PATCH /applications/assign/507f1f77bcf86cd799439011
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   * Body: {
+   *   "userId": "507f1f77bcf86cd799439012",
+   *   "userName": "John Doe"
+   * }
+   */
+  @Patch('assign/:id')
+  @ApiOperation({ 
+    summary: 'Assign application to a user',
+    description: 'Assigns an application to a specific user. Updates the assignedApps count for both the new and previous assignees (if any). Admin only.'
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Application ID (MongoDB ObjectId)',
+    example: '507f1f77bcf86cd799439011'
+  })
+  @ApiBody({ 
+    type: AssignApplicationDto,
+    examples: {
+      assign: {
+        summary: 'Assign to user',
+        value: {
+          userId: '507f1f77bcf86cd799439012',
+          userName: 'John Doe'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Application assigned successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        applicationId: { type: 'string', example: 'APP-2024-001' },
+        contractorName: { type: 'string', example: 'ABC Construction Ltd' },
+        assignedTo: { type: 'string', example: '507f1f77bcf86cd799439012' },
+        assignedToName: { type: 'string', example: 'John Doe' },
+        applicationStatus: { type: 'string', example: 'PENDING' }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Application or user not found'
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Admin role required'
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid request data'
+  })
+  assignApplication(
+    @Param('id') id: string, 
+    @Body() assignApplicationDto: AssignApplicationDto,
+    @Req() req: any
+  ) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Authorization token required');
+    }
+
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      
+      if (!decoded._id || decoded.role !== 'Admin') {
+        throw new UnauthorizedException('Admin role required');
+      }
+      
+      return this.applicationsService.assignApplication(id, assignApplicationDto);
+    } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 

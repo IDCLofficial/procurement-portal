@@ -72,7 +72,7 @@ export class ApplicationsService {
 
   async findByAssignedTo(userId: string, page: number = 1, limit: number = 10) {
     try {
-      const filter = { assignedTo: userId };
+      const filter = { assignedTo: new Types.ObjectId(userId)};
       
       // Calculate pagination
       const skip = (page - 1) * limit;

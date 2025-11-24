@@ -16,6 +16,7 @@ import { ApplicationsModule } from './applications/applications.module';
 import { UsersModule } from './users/users.module';
 import { JwtStrategy } from './config/jwt.strategy';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     CategoriesModule,
     ApplicationsModule,
     UsersModule,
+    PaymentsModule
   ],
   controllers: [AppController],
   providers: [

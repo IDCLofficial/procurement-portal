@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { FaUpload, FaEye, FaTrash, FaCheckCircle, FaFileAlt, FaFilePdf, FaFileImage } from 'react-icons/fa';
 import type { DocumentRequirement } from '@/types/registration';
+import { DocumentStatus } from '@/types/registration';
+import sirvClient from '@/lib/sirv.class';
 
 interface Step5DocumentsProps {
     documents: DocumentRequirement[];
@@ -17,43 +19,47 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
     const [previewDoc, setPreviewDoc] = useState<DocumentRequirement | null>(null);
     const [zoom, setZoom] = useState(100);
 
-    const handleFileUpload = (docId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (docId: string, event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             // Validate file type
-            const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-            if (!validTypes.includes(file.type)) {
-                toast.error('Invalid file type. Please upload a PDF, PNG, or JPEG file');
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+            if (!allowedTypes.includes(file.type)) {
+                toast.error('Please upload a PDF or image file (JPEG, PNG)');
                 return;
             }
 
-            // Validate file size (max 10MB)
-            const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+            // Validate file size (10MB limit)
+            const maxSize = 10 * 1024 * 1024; // 10MB
             if (file.size > maxSize) {
-                toast.error('File size too large. Maximum size is 10MB');
+                toast.error('File size must be less than 10MB');
                 return;
             }
 
-            // Create a temporary URL for the file
             const fileUrl = URL.createObjectURL(file);
-            
-            // Simulate file upload
+
+            // Update documents state
             const updatedDocs = documents.map(doc => {
                 if (doc.id === docId) {
                     return {
                         ...doc,
+                        file,
                         uploaded: true,
                         fileName: file.name,
-                        fileSize: `${(file.size / 1024).toFixed(2)} KB`,
-                        uploadedDate: new Date().toISOString().split('T')[0],
-                        fileUrl: fileUrl,
+                        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                        uploadedDate: new Date().toLocaleDateString(),
                         fileType: file.type,
+                        status: DocumentStatus.IDLE,
+                        error: undefined,
+                        fileUrl: '',
+                        previewUrl: fileUrl,
+                        changed: true,
                     };
                 }
                 return doc;
             });
+
             onDocumentsChange(updatedDocs);
-            toast.success('Document uploaded successfully');
         }
     };
 
@@ -61,8 +67,8 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
         const updatedDocs = documents.map(doc => {
             if (doc.id === docId) {
                 // Revoke the object URL to free up memory
-                if (doc.fileUrl) {
-                    URL.revokeObjectURL(doc.fileUrl);
+                if (doc.previewUrl) {
+                    URL.revokeObjectURL(doc.previewUrl);
                 }
                 return {
                     ...doc,
@@ -71,9 +77,14 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                     fileSize: undefined,
                     uploadedDate: undefined,
                     fileUrl: undefined,
+                    previewUrl: undefined,
                     fileType: undefined,
                     validFrom: undefined,
                     validTo: undefined,
+                    status: DocumentStatus.IDLE,
+                    error: undefined,
+                    file: undefined,
+                    changed: true,
                 };
             }
             return doc;
@@ -81,10 +92,48 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
         onDocumentsChange(updatedDocs);
     };
 
+    const handleRetryUpload = async (docId: string) => {
+        const doc = documents.find(d => d.id === docId);
+        if (!doc || !doc.file) return;
+
+        // Set status to uploading
+        const updatedDocs = documents.map(d => 
+            d.id === docId ? { ...d, status: DocumentStatus.UPLOADING, error: undefined } : d
+        );
+        onDocumentsChange(updatedDocs);
+
+        try {
+            const fileSirvUrl = await sirvClient.uploadAttachment(doc.file);
+
+            // Update to success
+            const successDocs = documents.map(d => 
+                d.id === docId ? { 
+                    ...d, 
+                    status: DocumentStatus.SUCCESS, 
+                    fileUrl: fileSirvUrl,
+                    error: undefined 
+                } : d
+            );
+            onDocumentsChange(successDocs);
+            toast.success(`${doc.name} uploaded successfully`);
+        } catch (error) {
+            console.error('Upload failed:', error);
+            const errorDocs = documents.map(d => 
+                d.id === docId ? { 
+                    ...d, 
+                    status: DocumentStatus.ERROR, 
+                    error: 'Upload failed. Please try again.' 
+                } : d
+            );
+            onDocumentsChange(errorDocs);
+            toast.error(`Failed to upload ${doc.name}`);
+        }
+    };
+
     const handleValidityChange = (docId: string, field: 'validFrom' | 'validTo', value: string) => {
         const updatedDocs = documents.map(doc => {
             if (doc.id === docId) {
-                return { ...doc, [field]: value };
+                return { ...doc, [field]: value, changed: true };
             }
             return doc;
         });
@@ -121,9 +170,29 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                             )}
                         </div>
                         {doc.uploaded && (
-                            <div className="flex items-center gap-1 text-green-600 text-sm">
-                                <FaCheckCircle />
-                                <span>Uploaded</span>
+                            <div className="flex items-center gap-1 text-sm">
+                                {doc.status === DocumentStatus.UPLOADING && (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                        <span className="text-blue-600">Uploading...</span>
+                                    </>
+                                )}
+                                {doc.status === DocumentStatus.SUCCESS && (
+                                    <>
+                                        <FaCheckCircle className="text-green-600" />
+                                        <span className="text-green-600">Uploaded</span>
+                                    </>
+                                )}
+                                {doc.status === DocumentStatus.ERROR && (
+                                    <>
+                                        <span className="text-red-600">❌ Upload Failed</span>
+                                    </>
+                                )}
+                                {doc.status === DocumentStatus.IDLE && (
+                                    <>
+                                        <span className="text-gray-600">Ready to Upload</span>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
@@ -152,6 +221,11 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                     type="date"
                                     value={doc.validTo || ''}
                                     onChange={(e) => handleValidityChange(doc.id, 'validTo', e.target.value)}
+                                    min={doc.validFrom ? (() => {
+                                        const date = new Date(doc.validFrom);
+                                        date.setFullYear(date.getFullYear() + 1);
+                                        return date.toISOString().split('T')[0];
+                                    })() : undefined}
                                     className="mt-1"
                                 />
                             </div>
@@ -179,25 +253,25 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                     ) : (
                         <div className="bg-linear-to-b  from-white to-green-100 border border-green-400 rounded-lg p-4 shadow-lg shadow-black/5">
                             <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-3 flex-1">
-                                    {doc.fileType?.includes('pdf') ? (
+                                <div className="flex items-start gap-3 flex-1 max-w-[70%]">
+                                    {(doc.fileType || doc.file?.type)?.includes('pdf') ? (
                                         <FaFilePdf className="text-red-600 mt-1 text-lg" />
-                                    ) : doc.fileType?.startsWith('image/') ? (
+                                    ) : (doc.fileType || doc.file?.type)?.startsWith('image/') ? (
                                         <FaFileImage className="text-blue-600 mt-1 text-lg" />
                                     ) : (
                                         <FaFileAlt className="text-green-600 mt-1" />
                                     )}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 truncate">
-                                            {doc.fileName}
+                                        <p className="text-sm font-medium truncate text-gray-900">
+                                            {doc.fileName || doc.file?.name}
                                         </p>
                                         <div className="flex items-center gap-2 mt-0.5">
                                             <p className="text-xs text-gray-600">
-                                                {doc.fileSize} • Uploaded {doc.uploadedDate}
+                                                {doc.fileSize || doc.file?.size} • Uploaded {doc.uploadedDate || doc.file?.lastModified}
                                             </p>
-                                            {doc.fileType && (
+                                            {(doc.fileType || doc.file?.type) && (
                                                 <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-                                                    {doc.fileType.includes('pdf') ? 'PDF' : doc.fileType.includes('png') ? 'PNG' : 'JPEG'}
+                                                    {(doc.fileType || doc.file?.type)?.includes('pdf') ? 'PDF' : (doc.fileType || doc.file?.type)?.includes('png') ? 'PNG' : 'JPEG'}
                                                 </span>
                                             )}
                                         </div>
@@ -226,21 +300,41 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                 </div>
                             </div>
 
+                            {/* Error Display */}
+                            {doc.status === DocumentStatus.ERROR && doc.error && (
+                                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <p className="text-sm text-red-700">{doc.error}</p>
+                                </div>
+                            )}
+
                             {/* Replace Document Option */}
                             <div className="mt-3 pt-3 border-t border-green-200">
-                                <input
-                                    type="file"
-                                    id={`replace-${doc.id}`}
-                                    accept=".pdf,.png,.jpg,.jpeg"
-                                    onChange={(e) => handleFileUpload(doc.id, e)}
-                                    className="hidden"
-                                />
-                                <label
-                                    htmlFor={`replace-${doc.id}`}
-                                    className="text-xs text-gray-600 hover:text-gray-900 cursor-pointer underline"
-                                >
-                                    Replace document
-                                </label>
+                                {doc.status === DocumentStatus.ERROR ? (
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={() => handleRetryUpload(doc.id)}
+                                        className="bg-red-600 hover:bg-red-700 text-white"
+                                    >
+                                        Retry Upload
+                                    </Button>
+                                ) : (
+                                    <>
+                                        <input
+                                            type="file"
+                                            id={`replace-${doc.id}`}
+                                            accept=".pdf,.png,.jpg,.jpeg"
+                                            onChange={(e) => handleFileUpload(doc.id, e)}
+                                            className="hidden"
+                                        />
+                                        <label
+                                            htmlFor={`replace-${doc.id}`}
+                                            className="text-xs text-gray-600 hover:text-gray-900 cursor-pointer underline"
+                                        >
+                                            Replace document
+                                        </label>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
@@ -254,7 +348,7 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                         <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900">{previewDoc.name}</h3>
-                                <p className="text-sm text-gray-600 mt-1">{previewDoc.fileName}</p>
+                                <p className="text-sm text-gray-600 mt-1">{previewDoc.fileName || previewDoc.file?.name}</p>
                             </div>
                             <Button
                                 type="button"
@@ -267,19 +361,19 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                             </Button>
                         </div>
                         <div className="p-6">
-                            {previewDoc.fileUrl ? (
+                            {previewDoc.previewUrl || previewDoc.fileUrl || previewDoc.file ? (
                                 <div className="space-y-4">
                                     {/* Render based on file type */}
-                                    {previewDoc.fileType?.startsWith('image/') ? (
+                                    {(previewDoc.fileType || previewDoc.file?.type)?.startsWith('image/') ? (
                                         <div className="flex justify-center bg-gray-50 rounded-lg p-4">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
-                                                src={previewDoc.fileUrl}
-                                                alt={previewDoc.fileName}
+                                                src={previewDoc.previewUrl || previewDoc.fileUrl}
+                                                alt={previewDoc.fileName || previewDoc.file?.name}
                                                 className="max-w-full max-h-[70vh] object-contain rounded-lg"
                                             />
                                         </div>
-                                    ) : previewDoc.fileType?.includes('pdf') ? (
+                                    ) : (previewDoc.fileType || previewDoc.file?.type)?.includes('pdf') ? (
                                         <div className="relative bg-gray-50 rounded-lg overflow-hidden">
                                             {/* Zoom Controls */}
                                             <div className="absolute top-4 right-4 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg">
@@ -308,9 +402,9 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                             
                                             <div className="overflow-auto h-[70vh]" style={{ zoom: `${zoom}%` }}>
                                                 <iframe
-                                                    src={`${previewDoc.fileUrl}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`}
+                                                    src={`${previewDoc.previewUrl || previewDoc.fileUrl}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`}
                                                     className="w-full h-full border-0"
-                                                    title={previewDoc.fileName}
+                                                    title={previewDoc.fileName || previewDoc.file?.name}
                                                     style={{ minHeight: '70vh' }}
                                                 />
                                             </div>
@@ -339,8 +433,8 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                             type="button"
                                             className="flex-1 bg-theme-green hover:bg-theme-green/90"
                                             onClick={() => {
-                                                if (previewDoc.fileUrl) {
-                                                    window.open(previewDoc.fileUrl, '_blank');
+                                                if (previewDoc.previewUrl || previewDoc.fileUrl) {
+                                                    window.open(previewDoc.previewUrl || previewDoc.fileUrl, '_blank');
                                                 }
                                             }}
                                         >
@@ -351,10 +445,11 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                             variant="outline"
                                             className="flex-1"
                                             onClick={() => {
-                                                if (previewDoc.fileUrl && previewDoc.fileName) {
+                                                const url = previewDoc.previewUrl || previewDoc.fileUrl;
+                                                if (url && (previewDoc.fileName || previewDoc.file?.name)) {
                                                     const link = document.createElement('a');
-                                                    link.href = previewDoc.fileUrl;
-                                                    link.download = previewDoc.fileName;
+                                                    link.href = url;
+                                                    link.download = previewDoc.fileName || previewDoc.file?.name || previewDoc.name;
                                                     link.click();
                                                 }
                                             }}

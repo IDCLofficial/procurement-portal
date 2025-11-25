@@ -6,4 +6,6 @@ export default {
     getProfile: "/vendors/profile",
     getCompanyDetails: "/companies/my-company",
     complete_vendor_registration: "/vendors/register-company",
+    getDocumentsPresets: "/documents/presets",
+    getCategories: "/categories",
 } as const

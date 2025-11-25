@@ -3,14 +3,18 @@ import appReducer from './slices/appSlice';
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import companyReducer from './slices/companySlice';
-import { vendorApi } from './api/vendor.api';
+import documentsReducer from './slices/documentsSlice';
+import categoriesReducer from './slices/categoriesSlice';
+import { apiSlice } from './api';
 
 const rootReducer = combineReducers({
-  [vendorApi.reducerPath]: vendorApi.reducer,
+  [apiSlice.reducerPath]: apiSlice.reducer,
   app: appReducer,
   auth: authReducer,
   user: userReducer,
   company: companyReducer,
+  documents: documentsReducer,
+  categories: categoriesReducer,
   // Add more slices here as needed
 });
 
@@ -20,9 +24,9 @@ export const makeStore = () => {
     middleware: (getDefaultMiddleware) => 
       getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: [vendorApi.util.resetApiState.type],
+        ignoredActions: [apiSlice.util.resetApiState.type],
       },
-    }).concat(vendorApi.middleware),
+    }).concat(apiSlice.middleware),
     devTools: process.env.NODE_ENV !== 'production',
   });
 };

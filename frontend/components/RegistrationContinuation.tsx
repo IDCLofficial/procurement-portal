@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useMemo, useState } from 'react';
-import type { DocumentRequirement } from '@/types/registration';
+import { DocumentStatus, type DocumentRequirement } from '@/types/registration';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FaUser, FaCheckCircle, FaBuilding, FaUsers, FaUniversity, FaFileAlt, FaMoneyBill, FaCreditCard, FaReceipt } from 'react-icons/fa';
@@ -17,12 +17,12 @@ import Step9Receipt from '@/components/registration-steps/Step9Receipt';
 import StepPlaceholder from '@/components/registration-steps/StepPlaceholder';
 import { FaTag } from 'react-icons/fa6';
 import { useAuth } from './providers/public-service/AuthProvider';
+import sirvClient from '@/lib/sirv.class';
 import { VendorSteps } from '@/store/api/enum';
 import { useCompleteVendorRegistrationMutation } from '@/store/api/vendor.api';
 import { Loader2 } from 'lucide-react';
 import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
-import { useSelector } from 'react-redux';
-import { selectCompanyData } from '@/store/slices/companySlice';
+import { deepEqual } from '@/lib';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -38,8 +38,7 @@ const steps = [
 
 
 export default function RegistrationContinuation() {
-    const { user } = useAuth();   
-    const companyData = useSelector(selectCompanyData);
+    const { user, company: companyData, documents: presets, categories: categoriesData } = useAuth();
     const setStartPoint = useMemo(() => {
         if (!user) return 2;
         switch(user.companyForm){
@@ -75,9 +74,9 @@ export default function RegistrationContinuation() {
     });
 
     // Step 3: Directors
-    const [directors, setDirectors] = useState(companyData?.directors ? (companyData.directors).map((director, index) => ({
-        id: (index + 1).toString(),
-        fullName: director.fullName,
+    const [directors, setDirectors] = useState(companyData?.directors ? (companyData.directors).map((director) => ({
+        id: director.id,
+        fullName: director.name,
         phone: String(director.phone),
         email: director.email,
         documentType: director.idType,
@@ -101,88 +100,56 @@ export default function RegistrationContinuation() {
     });
 
     // Step 6: Category & Grade
-    const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
-    const [selectedGrade, setSelectedGrade] = useState<string>('');
+    const [selectedSectors, setSelectedSectors] = useState<string[]>(companyData?.categories.map((category) => category.sector) || []);
+    const [selectedGrade, setSelectedGrade] = useState<string>(companyData?.grade || '');
 
-    // Step 5: Documents (Mock data - will come from API)
-    const [documents, setDocuments] = useState<DocumentRequirement[]>([
-        {
-            id: 'cac',
-            name: 'CAC Incorporation Certificate',
-            required: true,
-            hasValidityPeriod: false,
+    // Step 5: Documents
+    const [documents, setDocuments] = useState<DocumentRequirement[]>(() => {
+        if (!presets) return [];
+
+        const docsFromPresets = presets.map((preset) => ({
+            id: preset.documentName.toLowerCase().replace(/\s+/g, '-'),
+            name: preset.documentName,
+            required: preset.isRequired,
+            validFor: preset.hasExpiry === 'yes' ? '1 year' : undefined,
+            hasValidityPeriod: preset.hasExpiry === 'yes',
             uploaded: false,
+            status: DocumentStatus.IDLE,
             validFrom: '',
             validTo: '',
-        },
-        {
-            id: 'tcc',
-            name: 'Tax Clearance Certificate (TCC)',
-            required: true,
-            validFor: '1 year',
-            hasValidityPeriod: true,
-            uploaded: false,
-            validFrom: '',
-            validTo: '',
-        },
-        {
-            id: 'pencom',
-            name: 'PENCOM Compliance Certificate',
-            required: true,
-            validFor: '1 year',
-            hasValidityPeriod: true,
-            uploaded: false,
-            validFrom: '',
-            validTo: '',
-        },
-        {
-            id: 'itf',
-            name: 'ITF Certificate',
-            required: true,
-            validFor: '1 year',
-            hasValidityPeriod: true,
-            uploaded: false,
-            validFrom: '',
-            validTo: '',
-        },
-        {
-            id: 'nsitf',
-            name: 'NSITF Certificate',
-            required: true,
-            validFor: '1 year',
-            hasValidityPeriod: true,
-            uploaded: false,
-            validFrom: '',
-            validTo: '',
-        },
-        {
-            id: 'sworn-affidavit',
-            name: 'Sworn Affidavit of Authenticity',
-            required: true,
-            hasValidityPeriod: false,
-            uploaded: false,
-            validFrom: '',
-            validTo: '',
-        },
-        {
-            id: 'bank-reference',
-            name: 'Bank Reference Letter',
-            required: false,
-            hasValidityPeriod: false,
-            uploaded: false,
-            validFrom: '',
-            validTo: '',
-        },
-        {
-            id: 'past-projects',
-            name: 'Past Project References',
-            required: false,
-            hasValidityPeriod: false,
-            uploaded: false,
-            validFrom: '',
-            validTo: '',
-        },
-    ]);
+            fileUrl: '',
+            fileName: '',
+            fileSize: '',
+            fileType: '',
+            uploadedDate: '',
+            changed: false,
+        }));
+
+        // Prefill from companyData if available
+        if (companyData?.documents) {
+            companyData.documents.forEach(uploadedDoc => {
+                console.clear()
+                const matchingDoc = docsFromPresets.find(doc => {
+                    const match = doc.id === uploadedDoc.id || doc.name === uploadedDoc.documentType;
+                    return match;
+                });
+                if (matchingDoc) {
+                    matchingDoc.uploaded = true;
+                    matchingDoc.status = DocumentStatus.SUCCESS;
+                    matchingDoc.fileUrl = uploadedDoc.fileUrl;
+                    matchingDoc.fileName = uploadedDoc.fileName;
+                    matchingDoc.fileSize = uploadedDoc.fileSize;
+                    matchingDoc.fileType = uploadedDoc.fileType;
+                    matchingDoc.uploadedDate = uploadedDoc.uploadedDate;
+                    matchingDoc.validFrom = uploadedDoc.validFrom || '';
+                    matchingDoc.validTo = uploadedDoc.validTo || '';
+                    matchingDoc.changed = false;
+                }
+            });
+        }
+
+        return docsFromPresets;
+    });
 
     const handleInputChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -192,15 +159,10 @@ export default function RegistrationContinuation() {
         setBankDetails(prev => ({ ...prev, [field]: value }));
     };
 
-    // Get registration fee based on selected grade
     const getRegistrationFee = () => {
-        const fees: Record<string, number> = {
-            a: 150000,
-            b: 100000,
-            c: 70000,
-            d: 40000,
-        };
-        return fees[selectedGrade] || 0;
+        if (!categoriesData?.grades) return 0;
+        const gradeObj = categoriesData.grades.find(g => g.grade.toLowerCase() === selectedGrade);
+        return gradeObj?.registrationCost || 0;
     };
 
     // Auto-fill helper for simulation mode
@@ -268,6 +230,7 @@ export default function RegistrationContinuation() {
     const [completeVendorRegistration, { isLoading }] = useCompleteVendorRegistrationMutation();
 
     const handleContinue = async () => {
+        if(!presets) return;
         // Validate current step
         if (currentStep === 2) {
             if (!formData.companyName || !formData.cacNumber || !formData.tinNumber || !formData.address || !formData.lga) {
@@ -285,25 +248,41 @@ export default function RegistrationContinuation() {
                     website: formData.website,
                 }
             }
-            try {
-                toast.loading('Saving your company details...', { id: "company" });
-                const response = await completeVendorRegistration(payload);
 
-                console.log({
-                    response,
-                    payload
-                })
-
-                if (response.error) {
-                    throw new Error((response.error as ResponseError["error"]).data.message);
+            const madeAnUpdate = !deepEqual(payload, {
+                [VendorSteps.COMPANY]: {
+                    companyName: companyData?.companyName,
+                    cacNumber: companyData?.cacNumber,
+                    tin: companyData?.tin,
+                    businessAddres: companyData?.address,
+                    lga: companyData?.lga,
+                    website: companyData?.website,
                 }
-                toast.dismiss("company");
-                toast.success('Company details saved successfully');
+            });
+
+            if (madeAnUpdate) {
+                try {
+                    toast.loading('Saving your company details...', { id: "company" });
+                    const response = await completeVendorRegistration(payload);
+    
+                    console.log({
+                        response,
+                        payload
+                    })
+    
+                    if (response.error) {
+                        throw new Error((response.error as ResponseError["error"]).data.message);
+                    }
+                    toast.dismiss("company");
+                    toast.success('Company details saved successfully');
+                    setCurrentStep(currentStep + 1);
+                } catch (error) {
+                    toast.dismiss("company");
+                    console.error('Error saving company details:', error);
+                    toast.error((error as Error).message || 'Failed to save your company details');
+                }
+            } else {
                 setCurrentStep(currentStep + 1);
-            } catch (error) {
-                toast.dismiss("company");
-                console.error('Error saving company details:', error);
-                toast.error((error as Error).message || 'Failed to save your company details');
             }
             return;
         }
@@ -320,13 +299,29 @@ export default function RegistrationContinuation() {
 
             const payload = {
                 [VendorSteps.DIRECTORS]: directors.map((director) => ({
-                    fullName: director.fullName,
+                    name: director.fullName,
                     idType: director.documentType,
                     id: director.documentValue,
-                    phone: Number(director.phone),
+                    phone: director.phone,
                     email: director.email,
                 }))
             }
+
+            const madeAnUpdate = !deepEqual(payload, {
+                [VendorSteps.DIRECTORS]: companyData?.directors?.map((director) => ({
+                    name: director.name,
+                    idType: director.idType,
+                    id: director.id,
+                    phone: director.phone,
+                    email: director.email,
+                }))
+            })
+
+            if (!madeAnUpdate) {
+                setCurrentStep(currentStep + 1);
+                return;
+            }
+
             try {
                 toast.loading('Saving your company directors details...', { id: "directors" });
                 const response = await completeVendorRegistration(payload);
@@ -354,6 +349,19 @@ export default function RegistrationContinuation() {
                     accountNumber: Number(bankDetails.accountNumber),
                 }
             }
+
+            const madeAnUpdate = !deepEqual(payload, {
+                [VendorSteps.BANK_DETAILS]: {
+                    bankName: companyData?.bankName,
+                    accountName: companyData?.accountName,
+                    accountNumber: companyData?.accountNumber,
+                }
+            })
+
+            if (!madeAnUpdate) {
+                setCurrentStep(currentStep + 1);
+                return;
+            }
             try {
                 toast.loading('Saving your company bank details...', { id: "bankDetails" });
                 const response = await completeVendorRegistration(payload);
@@ -374,21 +382,137 @@ export default function RegistrationContinuation() {
         }
 
         if (currentStep === 5) {
-            // Validate all required documents are uploaded
-            const requiredDocs = documents.filter(d => d.required);
-            const missingDocs = requiredDocs.filter(d => !d.uploaded);
-            if (missingDocs.length > 0) {
-                toast.error('Please upload all required documents');
+            // Check if any documents have been changed
+            const documentsChanged = documents.some(doc => doc.changed);
+            if (!documentsChanged) {
+                console.log('No document changes detected, skipping to next step');
+                setCurrentStep(6);
+                toast.success('Progress saved');
                 return;
             }
+
             
-            // Validate validity periods for uploaded documents
-            const docsWithValidity = documents.filter(d => d.uploaded && d.hasValidityPeriod);
-            const missingValidity = docsWithValidity.filter(d => !d.validFrom || !d.validTo);
-            if (missingValidity.length > 0) {
+
+            // Validate required documents
+            const requiredDocs = documents.filter(doc => doc.required);
+            const missingDocs = requiredDocs.filter(doc => !doc.uploaded);
+            if (missingDocs.length > 0) {
+                toast.error(`Please upload all required documents: ${missingDocs.map(d => d.name).join(', ')}`);
+                return;
+            }
+
+            // Validate validity dates for docs that require them
+            const docsNeedingDates = documents.filter(doc => doc.hasValidityPeriod && doc.uploaded);
+            const invalidDates = docsNeedingDates.filter(doc => !doc.validFrom || !doc.validTo);
+            if (invalidDates.length > 0) {
                 toast.error('Please provide validity dates for all applicable documents');
                 return;
             }
+
+            // Check documents to upload
+            const docsToUpload = documents.filter(doc => doc.file && doc.status !== 'success');
+            const allRequiredUploaded = requiredDocs.every(doc => doc.uploaded && doc.status === 'success');
+
+            let updatedDocuments = documents;
+
+            if (docsToUpload.length === 0) {
+                if (!allRequiredUploaded) {
+                    toast.error('Please ensure all required documents are uploaded');
+                    return;
+                }
+                // Submit to API
+            } else {
+                // Upload documents
+                setDocuments(prev => prev.map(doc => 
+                    docsToUpload.some(d => d.id === doc.id) ? { ...doc, status: DocumentStatus.UPLOADING } : doc
+                ));
+
+                const uploadPromises = docsToUpload.map(async (doc) => {
+                    try {
+                        const fileUrl = await sirvClient.uploadAttachment(doc.file!);
+                        return { docId: doc.id, fileUrl, success: true };
+                    } catch (error) {
+                        console.error(`Upload failed for ${doc.name}:`, error);
+                        return { docId: doc.id, error: 'Upload failed', success: false };
+                    }
+                });
+
+                const results = await Promise.allSettled(uploadPromises);
+                const fileUrls: Record<string, string | undefined> = {};
+                const errors: string[] = [];
+
+                results.forEach((result, index) => {
+                    const doc = docsToUpload[index];
+                    if (result.status === 'fulfilled') {
+                        const { success, fileUrl, error } = result.value;
+                        if (success) {
+                            fileUrls[doc.id] = fileUrl;
+                        } else {
+                            errors.push(`${doc.name}: ${error}`);
+                        }
+                    } else {
+                        errors.push(`${doc.name}: ${result.reason}`);
+                    }
+                });
+
+                updatedDocuments = documents.map(doc => {
+                    const fileUrl = fileUrls[doc.id];
+                    if (fileUrl) {
+                        console.log("Successfully set fileUrl for", doc.name);
+                        return { ...doc, status: DocumentStatus.SUCCESS, fileUrl, error: undefined, changed: false };
+                    } else if (errors.some(e => e.startsWith(doc.name))) {
+                        const error = errors.find(e => e.startsWith(doc.name))?.split(': ')[1] || 'Upload failed';
+                        console.log("Failed to set fileUrl for", doc.name);
+                        return { ...doc, status: DocumentStatus.ERROR, error };
+                    }
+                    return doc;
+                });
+
+                setDocuments(updatedDocuments);
+
+                if (errors.length > 0) {
+                    toast.error(`Some uploads failed. Please retry failed documents.`);
+                    return;
+                }
+                // Submit to API after successful uploads
+            }
+            
+            // Submit payload
+            const payload = {
+                [VendorSteps.DOCUMENTS]: updatedDocuments.map((doc) => {
+                    return ({
+                        id: doc.id,
+                        fileUrl: doc.fileUrl ?? '',
+                        validFrom: doc.validFrom,
+                        validTo: doc.validTo,
+                        documentType: doc.name,
+                        uploadedDate: doc.uploadedDate ?? '',
+                        fileName: doc.fileName ?? '',
+                        fileSize: doc.fileSize ?? '',
+                        fileType: doc.fileType ?? '',
+                        validFor: doc.validFor ?? '',
+                        hasValidityPeriod: doc.hasValidityPeriod,
+                    })
+                }),
+            };
+
+            try {
+                toast.loading('Saving your documents...', { id: "documents" });
+                // throw new Error('Test error');
+                const response = await completeVendorRegistration(payload);
+
+                if (response.error) {
+                    throw new Error((response.error as ResponseError["error"]).data.message);
+                }
+                toast.dismiss("documents");
+                toast.success('Documents saved successfully!');
+                setCurrentStep(6);
+            } catch (error) {
+                toast.dismiss("documents");
+                console.error('Error saving documents:', error);
+                toast.error((error as Error).message || 'Failed to save your documents');
+            }
+            return;
         }
 
         if (currentStep === 6) {
@@ -401,6 +525,48 @@ export default function RegistrationContinuation() {
                 toast.error('Please select a grade');
                 return;
             }
+
+            const newCategories = selectedSectors.map(sector => ({ sector, service: '' }));
+
+            const madeAnUpdate = !deepEqual({
+                categories: newCategories,
+                grade: selectedGrade,
+            }, {
+                categories: companyData?.categories?.map(cat => ({ sector: cat.sector, service: cat.service })) || [],
+                grade: companyData?.grade || '',
+            });
+
+            if (!madeAnUpdate) {
+                setCurrentStep(7);
+                toast.success('Progress saved');
+                return;
+            }
+
+            const payload = {
+                [VendorSteps.CATEGORIES_AND_GRADE]: {
+                    categories: newCategories,
+                    grade: selectedGrade,
+                },
+            };
+
+
+            try {
+                toast.loading('Saving your sectors and grade...', { id: "sectorsAndGrade" });
+                // throw new Error('Test error');
+                const response = await completeVendorRegistration(payload);
+
+                if (response.error) {
+                    throw new Error((response.error as ResponseError["error"]).data.message);
+                }
+                toast.dismiss("sectorsAndGrade");
+                toast.success('Sectors and grade saved successfully!');
+                setCurrentStep(7);
+            } catch (error) {
+                toast.dismiss("sectorsAndGrade");
+                console.error('Error saving sectors and grade:', error);
+                toast.error((error as Error).message || 'Failed to save your sectors and grade');
+            }
+            return;
         }
 
         // For other steps, just move to next step
@@ -461,12 +627,26 @@ export default function RegistrationContinuation() {
                 );
             
             case 6:
+                const sectors = categoriesData?.categories?.map(category => ({
+                    id: category.sector,
+                    name: category.sector.toUpperCase(),
+                    description: category.description,
+                })) || [];
+                const grades = categoriesData?.grades?.map(grade => ({
+                    id: grade.grade.toLowerCase(),
+                    name: grade.grade,
+                    label: `Grade ${grade.grade}`,
+                    registrationCost: grade.registrationCost,
+                    financialCapacity: grade.financialCapacity,
+                })) || [];
                 return (
                     <Step6CategoryGrade
                         selectedSectors={selectedSectors}
                         selectedGrade={selectedGrade}
                         onSectorsChange={setSelectedSectors}
                         onGradeChange={setSelectedGrade}
+                        sectors={sectors}
+                        grades={grades}
                     />
                 );
             
@@ -660,7 +840,7 @@ export default function RegistrationContinuation() {
                                         <span className="text-yellow-600 text-lg">⚡</span>
                                         <div>
                                             <p className="text-sm font-semibold text-yellow-900">
-                                                Simulation Mode - Quick Fill ({JSON.stringify(user?.companyForm)})
+                                                Simulation Mode - Quick Fill
                                             </p>
                                             <p className="text-xs text-yellow-700">
                                                 Auto-fill this step with sample data
@@ -694,7 +874,7 @@ export default function RegistrationContinuation() {
                             </Button>
                             <Button
                                 onClick={handleContinue}
-                                disabled={isLoading}
+                                disabled={isLoading || !presets}
                                 className="bg-theme-green hover:bg-theme-green/90 min-w-[100px] cursor-pointer"
                             >
                                 {isLoading

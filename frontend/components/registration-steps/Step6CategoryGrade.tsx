@@ -21,68 +21,17 @@ interface Step6CategoryGradeProps {
     selectedGrade: string;
     onSectorsChange: (sectors: string[]) => void;
     onGradeChange: (grade: string) => void;
+    sectors: Sector[];
+    grades: Grade[];
 }
-
-// Mock data - will be replaced with API response
-const mockSectors: Sector[] = [
-    {
-        id: 'works',
-        name: 'WORKS',
-        description: 'Construction & Engineering',
-    },
-    {
-        id: 'services',
-        name: 'SERVICES',
-        description: 'Professional Services',
-    },
-    {
-        id: 'supplies',
-        name: 'SUPPLIES',
-        description: 'Goods & Materials',
-    },
-    {
-        id: 'ict',
-        name: 'ICT',
-        description: 'Information Technology',
-    },
-];
-
-const mockGrades: Grade[] = [
-    {
-        id: 'a',
-        name: 'A',
-        label: 'Grade A',
-        registrationCost: 150000,
-        financialCapacity: 150000,
-    },
-    {
-        id: 'b',
-        name: 'B',
-        label: 'Grade B',
-        registrationCost: 100000,
-        financialCapacity: 150000,
-    },
-    {
-        id: 'c',
-        name: 'C',
-        label: 'Grade C',
-        registrationCost: 70000,
-        financialCapacity: 150000,
-    },
-    {
-        id: 'd',
-        name: 'D',
-        label: 'Grade D',
-        registrationCost: 40000,
-        financialCapacity: 150000,
-    },
-];
 
 export default function Step6CategoryGrade({
     selectedSectors,
     selectedGrade,
     onSectorsChange,
     onGradeChange,
+    sectors,
+    grades,
 }: Step6CategoryGradeProps) {
     const toggleSector = (sectorId: string) => {
         if (selectedSectors.includes(sectorId)) {
@@ -104,7 +53,7 @@ export default function Step6CategoryGrade({
                     Select Sectors (Multi-select)
                 </h3>
                 <div className="grid sm:grid-cols-2 gap-4">
-                    {mockSectors.map((sector) => {
+                    {sectors.map((sector) => {
                         const isSelected = selectedSectors.includes(sector.id);
                         return (
                             <button
@@ -149,7 +98,7 @@ export default function Step6CategoryGrade({
                     Select Grade
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {mockGrades.map((grade) => {
+                    {grades.map((grade) => {
                         const isSelected = selectedGrade === grade.id;
                         return (
                             <button

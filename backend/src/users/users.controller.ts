@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nes
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { EditUserDto } from './dto/edit-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { Role } from './entities/user.schema';
 import { AdminGuard } from '../guards/admin.guard';
@@ -321,6 +322,150 @@ export class UsersController {
   })
   login(@Body() loginUserDto: LoginUserDto) {
     return this.usersService.login(loginUserDto);
+  }
+
+  /**
+   * Edit user information - name and/or role (Admin only)
+   * 
+   * @param id - User ID (MongoDB ObjectId) to edit
+   * @param editUserDto - User data to update (fullName and/or role)
+   * @returns Updated user object (without password)
+   * @throws {UnauthorizedException} 401 - If token is missing or invalid
+   * @throws {ForbiddenException} 403 - If user is not an Admin
+   * @throws {NotFoundException} 404 - If user not found
+   * @throws {BadRequestException} 400 - If attempting to create a second Registrar
+   * 
+   * @description
+   * Edits a user's name and/or role. Only users with Admin role can perform this action.
+   * The endpoint:
+   * - Validates the JWT token from Authorization header
+   * - Verifies the requesting user has Admin role
+   * - Only allows updating fullName and role fields
+   * - Ensures only one Registrar exists in the system
+   * - Returns the updated user data (without password)
+   * 
+   * @example
+   * PATCH /users/507f1f77bcf86cd799439011
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   * Body: {
+   *   "fullName": "Jane Doe",
+   *   "role": "Auditor"
+   * }
+   */
+  @Patch(':id')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Edit user name and/or role (Admin only)',
+    description: 'Updates a user\'s full name and/or role. Only accessible by users with Admin role. At least one field must be provided.',
+  })
+  @ApiBody({
+    type: EditUserDto,
+    description: 'User data to update (at least one field required)',
+    examples: {
+      updateName: {
+        summary: 'Update Name Only',
+        value: {
+          fullName: 'Jane Doe'
+        }
+      },
+      updateRole: {
+        summary: 'Update Role Only',
+        value: {
+          role: Role.AUDITOR
+        }
+      },
+      updateBoth: {
+        summary: 'Update Both Name and Role',
+        value: {
+          fullName: 'Jane Doe',
+          role: Role.AUDITOR
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        fullName: { type: 'string', example: 'Jane Doe' },
+        email: { type: 'string', example: 'jane.doe@education.gov' },
+        phoneNo: { type: 'string', example: '+2348012345678' },
+        role: { type: 'string', enum: ['Desk officer', 'Auditor', 'Registrar', 'Admin'], example: 'Auditor' },
+        isActive: { type: 'boolean', example: true },
+        assignedApps: { type: 'number', example: 5 },
+        lastLogin: { type: 'string', format: 'date-time' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Missing or invalid token',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 401 },
+        message: { type: 'string', example: 'Authorization header missing' },
+        error: { type: 'string', example: 'Unauthorized' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Forbidden - Admin role required',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 403 },
+        message: { type: 'string', example: 'Access denied. Admin role required.' },
+        error: { type: 'string', example: 'Forbidden' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 404 },
+        message: { type: 'string', example: 'User with ID 507f1f77bcf86cd799439011 not found' },
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Cannot create more than one Registrar',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 400 },
+        message: { type: 'string', example: 'Cannot create more than one Registrar.' },
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
+  })
+  editUser(@Param('id') id: string, @Body() editUserDto: EditUserDto, @Req() req: any) {
+    const token = req.headers.authorization.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      if (!decoded._id || decoded.role !== 'Admin') {
+        throw new UnauthorizedException('Unauthorized');
+      }
+      return this.usersService.editUser(id, editUserDto);
+    } catch (err) {
+      throw new UnauthorizedException('Unauthorized');
+    }
   }
 
   /**

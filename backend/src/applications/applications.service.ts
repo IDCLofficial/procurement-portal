@@ -36,6 +36,7 @@ export class ApplicationsService {
       // Get paginated results
       const applications = await this.applicationModel
         .find(filter)
+        .populate("companyId")
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }) // Sort by newest first
@@ -55,7 +56,7 @@ export class ApplicationsService {
 
   async findOne(id: string): Promise<Application> {
     try {
-      const application = await this.applicationModel.findById(id).exec();
+      const application = await this.applicationModel.findById(id).populate("companyId").exec();
       
       if (!application) {
         throw new NotFoundException('Application not found');
@@ -84,6 +85,7 @@ export class ApplicationsService {
       // Get paginated results
       const applications = await this.applicationModel
         .find(filter)
+        .populate("companyId")
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }) // Sort by newest first

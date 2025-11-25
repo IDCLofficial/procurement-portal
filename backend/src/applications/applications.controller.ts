@@ -273,8 +273,6 @@ export class ApplicationsController {
 
       // Extract the _id from the decoded token
       const userId = decoded._id;
-      console.log('User ID from token:', userId);
-      console.log('Decoded token:', decoded);
       
       if (!userId || !decoded.role) {
         throw new UnauthorizedException('Not a valid user');

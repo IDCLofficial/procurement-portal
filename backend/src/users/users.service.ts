@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { EditUserDto } from './dto/edit-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { User, UserDocument } from './entities/user.schema';
 import TokenHandlers from 'src/lib/generateToken';
@@ -33,9 +34,17 @@ export class UsersService {
     const existingUser = await this.userModel.findOne({
       email: createUserDto.email,
     });
-
-    if (existingUser) {
+    if(existingUser) {
       throw new ConflictException('User with this email already exists');
+    }
+
+    if(createUserDto.role === "Registrar"){
+      const findRegistrar = await this.userModel.findOne({
+        role: "Registrar"
+      })
+      if(findRegistrar){
+        throw new BadRequestException("Cannot create more than one Registrars.")
+      }
     }
 
     // Hash the password
@@ -135,6 +144,55 @@ export class UsersService {
       lastLogin: user.lastLogin,
       assignedApps: user.assignedApps,
     }));
+  }
+
+  /**
+   * Edit user information (name and/or role only)
+   * 
+   * @param id - User ID to update
+   * @param editUserDto - User data to update (fullName and/or role)
+   * @returns Updated user object (without password)
+   * @throws {NotFoundException} If user not found
+   * @throws {BadRequestException} If attempting to change a Registrar role when another Registrar exists
+   * 
+   * @description
+   * - Validates user existence
+   * - Only allows updating fullName and role fields
+   * - Ensures only one Registrar exists in the system
+   * - Returns updated user data without password
+   */
+  async editUser(id: string, editUserDto: EditUserDto): Promise<Omit<User, 'password'>> {
+    const user = await this.userModel.findById(id).exec();
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // If changing role to Registrar, check if another Registrar already exists
+    if (editUserDto.role === 'Registrar' && user.role !== 'Registrar') {
+      const existingRegistrar = await this.userModel.findOne({
+        role: 'Registrar',
+        _id: { $ne: id }
+      }).exec();
+
+      if (existingRegistrar) {
+        throw new BadRequestException('Cannot create more than one Registrar.');
+      }
+    }
+
+    // Update only the provided fields
+    if (editUserDto.fullName !== undefined) {
+      user.fullName = editUserDto.fullName;
+    }
+    if (editUserDto.role !== undefined) {
+      user.role = editUserDto.role;
+    }
+
+    await user.save();
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user.toObject();
+    return userWithoutPassword;
   }
 
   /**

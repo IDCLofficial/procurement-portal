@@ -22,8 +22,7 @@ enum ApplicationType {
 
 enum SLAStatus {
   ON_TIME = 'On Time',
-  AT_RISK = 'At Risk',
-  BREACHED = 'Breached'
+  OVERDUE = 'Overdue',
 }
 
 const applicationSchema = new mongoose.Schema({
@@ -72,7 +71,7 @@ const applications = [
     grade: 'C',
     type: ApplicationType.NEW,
     submissionDate: new Date('2024-11-12'),
-    slaStatus: SLAStatus.ON_TIME,
+    slaStatus: SLAStatus.OVERDUE,
     assignedTo: new mongoose.Types.ObjectId(),
     assignedToName: 'Oluwole Obi',
     applicationStatus: ApplicationStatus.PENDING_DESK_REVIEW
@@ -86,7 +85,7 @@ const applications = [
     grade: 'B',
     type: ApplicationType.RENEWAL,
     submissionDate: new Date('2024-11-11'),
-    slaStatus: SLAStatus.AT_RISK,
+    slaStatus: SLAStatus.OVERDUE,
     assignedTo: new mongoose.Types.ObjectId(),
     assignedToName: 'Chiamaka Okonkwo',
     applicationStatus: ApplicationStatus.FORWARDED_TO_REGISTRAR
@@ -100,7 +99,7 @@ const applications = [
     grade: 'A',
     type: ApplicationType.NEW,
     submissionDate: new Date('2024-11-10'),
-    slaStatus: SLAStatus.ON_TIME,
+    slaStatus: SLAStatus.OVERDUE,
     assignedTo: new mongoose.Types.ObjectId(),
     assignedToName: 'Chiamaka Okonkwo',
     applicationStatus: ApplicationStatus.PENDING_DESK_REVIEW
@@ -128,7 +127,7 @@ const applications = [
     grade: 'B',
     type: ApplicationType.RENEWAL,
     submissionDate: new Date('2024-11-08'),
-    slaStatus: SLAStatus.AT_RISK,
+    slaStatus: SLAStatus.OVERDUE,
     assignedTo: new mongoose.Types.ObjectId(),
     assignedToName: 'Chiamaka Okonkwo',
     applicationStatus: ApplicationStatus.CLARIFICATION_REQUESTED
@@ -142,7 +141,7 @@ const applications = [
     grade: 'C',
     type: ApplicationType.RENEWAL,
     submissionDate: new Date('2024-11-06'),
-    slaStatus: SLAStatus.BREACHED,
+    slaStatus: SLAStatus.OVERDUE,
     assignedTo: new mongoose.Types.ObjectId(),
     assignedToName: 'Oluwole Obi',
     applicationStatus: ApplicationStatus.SLA_BREACH
@@ -184,7 +183,7 @@ const applications = [
     grade: 'B',
     type: ApplicationType.RENEWAL,
     submissionDate: new Date('2024-10-28'),
-    slaStatus: SLAStatus.BREACHED,
+    slaStatus: SLAStatus.OVERDUE,
     assignedTo: new mongoose.Types.ObjectId(),
     assignedToName: 'Oliva Eze',
     applicationStatus: ApplicationStatus.REJECTED

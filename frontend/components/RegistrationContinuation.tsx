@@ -41,7 +41,8 @@ export default function RegistrationContinuation() {
     const { user, company: companyData, documents: presets, categories: categoriesData } = useAuth();
     const setStartPoint = useMemo(() => {
         if (!user) return 2;
-        switch(user.companyForm){
+        const companyForm = user.companyForm.toLowerCase();
+        switch(companyForm){
             case VendorSteps.COMPANY:
                 return 2;
             case VendorSteps.DIRECTORS:
@@ -52,13 +53,14 @@ export default function RegistrationContinuation() {
                 return 5;
             case VendorSteps.CATEGORIES_AND_GRADE:
                 return 6;
-            case VendorSteps.PAYMENT_SUMMARY:
+            case VendorSteps.PAYMENT:
                 return 7;
             case VendorSteps.CONFIRM_PAYMENT:
                 return 8;
             case VendorSteps.RECEIPT:
                 return 9;
             default:
+                console.log("Invalid company form", companyForm);
                 return 2;
         }
     }, [user]);

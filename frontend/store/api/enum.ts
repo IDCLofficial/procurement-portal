@@ -5,7 +5,7 @@ export enum VendorSteps {
     BANK_DETAILS = "bankDetails",
     DOCUMENTS = "documents",
     CATEGORIES_AND_GRADE = "categoriesAndGrade",
-    PAYMENT_SUMMARY = "paymentSummary",
+    PAYMENT = "payment",
     CONFIRM_PAYMENT = "confirmPayment",
     RECEIPT = "receipt",
 }

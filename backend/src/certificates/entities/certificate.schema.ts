@@ -17,6 +17,9 @@ export class Certificate {
     @Prop({ type: Types.ObjectId, ref: 'Vendor', required: true })
     contractorId: Types.ObjectId;
 
+    @Prop({ type: Types.ObjectId, ref:'Company', required:true})
+    company: Types.ObjectId;
+
     @Prop({required:true})
     contractorName: string;
 

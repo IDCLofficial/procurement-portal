@@ -55,20 +55,33 @@ export class CertificatesService {
       
       // Get total count for pagination metadata
       const total = await this.certificateModel.countDocuments(filter).exec();
+
+      // Count certificates by status
+      const approvedCount = await this.certificateModel.countDocuments({ ...filter, status: 'approved' }).exec();
+      const expiredCount = await this.certificateModel.countDocuments({ ...filter, status: 'expired' }).exec();
+      const revokedCount = await this.certificateModel.countDocuments({ ...filter, status: 'revoked' }).exec();
       
       // Get paginated results
       const certificates = await this.certificateModel
         .find(filter)
+        .populate("company")
+        .populate("contractorId")
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }) // Sort by newest first
         .exec();
+      
       
       return {
         total: total,
         page: page,
         limit: limit,
         totalPages: Math.ceil(total / limit),
+        statusCounts: {
+          approved: approvedCount,
+          expired: expiredCount,
+          revoked: revokedCount
+        },
         certificates: certificates
       };
     } catch (err) {

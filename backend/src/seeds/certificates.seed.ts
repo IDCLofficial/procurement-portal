@@ -10,6 +10,7 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/procuremen
 const certificateSchema = new mongoose.Schema({
   certificateId: { type: String, required: true, unique: true },
   contractorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor', required: true },
+  company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
   contractorName: { type: String, required: true },
   rcBnNumber: { type: String, required: true },
   grade: { type: String, required: true },
@@ -25,8 +26,9 @@ const certificatesData = [
   // Approved Certificates
   {
     certificateId: 'CERT-2024-001',
-    contractorName: 'ABC Construction Ltd',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'ABC Construction Ltd',
     rcBnNumber: 'RC123456',
     grade: 'A',
     lga: 'Ikeja',
@@ -35,8 +37,9 @@ const certificatesData = [
   },
   {
     certificateId: 'CERT-2024-002',
-    contractorName: 'Prime Infrastructure Ltd',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'Prime Infrastructure Ltd',
     rcBnNumber: 'RC456789',
     grade: 'C',
     lga: 'Lekki',
@@ -45,8 +48,9 @@ const certificatesData = [
   },
   {
     certificateId: 'CERT-2024-003',
-    contractorName: 'Omega Construction Group',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'Omega Construction Group',
     rcBnNumber: 'RC567890',
     grade: 'B',
     lga: 'Ikoyi',
@@ -55,8 +59,9 @@ const certificatesData = [
   },
   {
     certificateId: 'CERT-2024-004',
-    contractorName: 'Theta Infrastructure Ltd',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'Theta Infrastructure Ltd',
     rcBnNumber: 'RC012345',
     grade: 'A',
     lga: 'Ajah',
@@ -67,8 +72,9 @@ const certificatesData = [
   // Expired Certificates
   {
     certificateId: 'CERT-2024-005',
-    contractorName: 'XYZ Engineering Services',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'XYZ Engineering Services',
     rcBnNumber: 'RC234567',
     grade: 'B',
     lga: 'Victoria Island',
@@ -77,8 +83,9 @@ const certificatesData = [
   },
   {
     certificateId: 'CERT-2024-006',
-    contractorName: 'Beta Contractors Ltd',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'Beta Contractors Ltd',
     rcBnNumber: 'RC789012',
     grade: 'A',
     lga: 'Yaba',
@@ -87,8 +94,9 @@ const certificatesData = [
   },
   {
     certificateId: 'CERT-2024-007',
-    contractorName: 'Alpha Building Solutions',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'Alpha Building Solutions',
     rcBnNumber: 'RC901234',
     grade: 'B',
     lga: 'Maryland',
@@ -99,8 +107,9 @@ const certificatesData = [
   // Revoked Certificates
   {
     certificateId: 'CERT-2024-008',
-    contractorName: 'Delta Builders & Co',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'Delta Builders & Co',
     rcBnNumber: 'RC345678',
     grade: 'A',
     lga: 'Surulere',
@@ -109,8 +118,9 @@ const certificatesData = [
   },
   {
     certificateId: 'CERT-2024-009',
-    contractorName: 'Sigma Engineering Works',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'Sigma Engineering Works',
     rcBnNumber: 'RC678901',
     grade: 'D',
     lga: 'Apapa',
@@ -119,15 +129,16 @@ const certificatesData = [
   },
   {
     certificateId: 'CERT-2024-010',
-    contractorName: 'Gamma Construction Services',
     contractorId: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId('6920d094ef1dc716903fd075'),
+    contractorName: 'Gamma Construction Services',
     rcBnNumber: 'RC890123',
     grade: 'C',
     lga: 'Gbagada',
     status: 'revoked',
     validUntil: new Date('2025-12-31')
   }
-];
+]
 
 async function seedCertificates() {
   try {
@@ -140,10 +151,15 @@ async function seedCertificates() {
     
     if (existingCertificates.length > 0) {
       await Certificate.deleteMany({})
-      console.log(`⚠️  ${existingCertificates.length} certificate(s) already exist. Skipping seed.`);
-      console.log('Existing certificates:', existingCertificates.map(c => c.certificateId));
-    } else {
       // Insert all certificates
+      await Certificate.insertMany(certificatesData);
+      console.log(`✅ Successfully seeded ${certificatesData.length} certificates!`);
+      
+      console.log('\nCertificate Summary:');
+      certificatesData.forEach(cert => {
+        console.log(`  - ${cert.certificateId}: ${cert.contractorName} (Grade ${cert.grade}) - Valid until ${cert.validUntil.toDateString()}`);
+      });
+    }else{
       await Certificate.insertMany(certificatesData);
       console.log(`✅ Successfully seeded ${certificatesData.length} certificates!`);
       

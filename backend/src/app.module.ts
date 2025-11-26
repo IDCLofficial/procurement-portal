@@ -33,13 +33,13 @@ import { SlaModule } from './sla/sla.module';
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '24h' },
     }),
     ThrottlerModule.forRoot([
       {
         name: 'default',
         ttl: 60000,      // Time window in milliseconds (60 seconds)
-        limit: 5,       // Max number of requests per IP within ttl
+        limit: 15,       // Max number of requests per IP within ttl
       },
     ]),
     PassportModule,

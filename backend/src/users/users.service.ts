@@ -47,6 +47,15 @@ export class UsersService {
       }
     }
 
+    if(createUserDto.role === "Auditor"){
+      const auditor = await this.userModel.findOne({
+        role:"Auditor"
+      })
+      if(auditor){
+        throw new BadRequestException("Cannot create more than one Auditor.")
+      }
+    }
+
     // Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
@@ -230,5 +239,55 @@ export class UsersService {
     // Return deleted user without password
     const { password: _, ...userWithoutPassword } = deletedUser.toObject();
     return userWithoutPassword;
+  }
+
+  /**
+   * Get all users with counts by role and status
+   * 
+   * @returns Object containing users array and count statistics
+   * 
+   * @description
+   * Retrieves all users with the following statistics:
+   * - Total count of all users
+   * - Count of Desk Officer role users
+   * - Count of Active users
+   * - Count of Inactive users
+   */
+  async getAllUsersWithCounts(): Promise<{
+    total: number;
+    deskOfficerCount: number;
+    activeCount: number;
+    inactiveCount: number;
+    users: Omit<User, 'password'>[];
+  }> {
+    // Get all users without passwords
+    const users = await this.userModel
+      .find()
+      .select('-password')
+      .sort({ fullName: 1 })
+      .exec();
+
+    // Count Desk Officers
+    const deskOfficerCount = await this.userModel
+      .countDocuments({ role: 'Desk officer' })
+      .exec();
+
+    // Count Active users
+    const activeCount = await this.userModel
+      .countDocuments({ isActive: true })
+      .exec();
+
+    // Count Inactive users
+    const inactiveCount = await this.userModel
+      .countDocuments({ isActive: false })
+      .exec();
+
+    return {
+      total: users.length,
+      deskOfficerCount,
+      activeCount,
+      inactiveCount,
+      users: users.map(user => user.toObject()),
+    };
   }
 }

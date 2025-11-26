@@ -145,7 +145,57 @@ export class UsersController {
     }
   }
 
-  /** */
+  /**
+   * Get all users with role and status counts
+   * 
+   * @returns Object containing all users and count statistics
+   * 
+   * @description
+   * Retrieves all users with the following statistics:
+   * - Total count of all users
+   * - Count of users with Desk Officer role
+   * - Count of Active users
+   * - Count of Inactive users
+   */
+  @Get('all-with-counts')
+  @ApiOperation({ 
+    summary: 'Get all users with counts',
+    description: 'Retrieves all users with statistics for Desk Officers, Active, and Inactive users'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Users and counts retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        total: { type: 'number', description: 'Total number of users' },
+        deskOfficerCount: { type: 'number', description: 'Number of Desk Officer users' },
+        activeCount: { type: 'number', description: 'Number of active users' },
+        inactiveCount: { type: 'number', description: 'Number of inactive users' },
+        users: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              _id: { type: 'string' },
+              fullName: { type: 'string' },
+              email: { type: 'string' },
+              phoneNo: { type: 'string' },
+              role: { type: 'string', enum: ['Desk officer', 'Auditor', 'Registrar', 'Admin'] },
+              isActive: { type: 'boolean' },
+              assignedApps: { type: 'number' },
+              lastLogin: { type: 'string', format: 'date-time' },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' }
+            }
+          }
+        }
+      }
+    }
+  })
+  async getAllUsersWithCounts() {
+    return this.usersService.getAllUsersWithCounts();
+  }
 
   /**
    * Get all users sorted by name (excluding Admin role)

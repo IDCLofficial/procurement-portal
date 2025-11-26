@@ -82,6 +82,25 @@ npm run seed:sla
 - Payment Verification: 2 business days
 - Total Processing Target: 10 business days
 
+### 7. Certificates Seed
+Seeds 10 sample certificates for approved vendors.
+
+```bash
+npm run seed:certificates
+```
+
+**Requirements:**
+- Vendors must exist in the database before running this seed
+- Each certificate is linked to an existing vendor
+
+**Certificates Include:**
+- Unique certificate IDs (CERT-2024-001 to CERT-2024-010)
+- Contractor names and RC/BN numbers
+- Grade classifications (A, B, C, D)
+- LGA assignments
+- Validity dates
+- Approved status
+
 ## What They Do
 
 ### Applications Seed
@@ -124,6 +143,15 @@ npm run seed:sla
 - Automatically creates configuration if none exists
 - Closes the connection when done
 
+### Certificates Seed
+- Connects to MongoDB using `MONGO_URI` from your `.env` file
+- Fetches existing vendors from the database
+- Checks if certificates already exist (prevents duplicates)
+- Creates 10 sample certificates linked to existing vendors
+- Each certificate includes contractor details, grade, LGA, and validity period
+- Displays summary of created certificates
+- Closes the connection when done
+
 ## Running All Seeds
 
 To set up a fresh database with all seed data, run the scripts in this order:
@@ -135,7 +163,10 @@ npm run seed:grades
 npm run seed:documents
 npm run seed:sla
 npm run seed:applications
+npm run seed:certificates
 ```
+
+**Note:** The `seed:certificates` script requires vendors to exist in the database. Make sure vendors are created (either manually or through the application flow) before running this seed.
 
 ## Prerequisites
 

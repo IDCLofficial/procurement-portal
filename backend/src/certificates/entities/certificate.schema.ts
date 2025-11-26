@@ -1,6 +1,12 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document, Types } from "mongoose";
 
+
+export enum certificateStatus{
+    APPROVED="approved",
+    EXPIRED = "expired",
+    REVOKED = "revoked",
+}
 export type CertificateDocument = Certificate & Document;
 
 @Schema({timestamps:true})
@@ -23,8 +29,8 @@ export class Certificate {
     @Prop({required:true})
     lga: string;
 
-    @Prop({required:true, default: "Approved"})
-    status: "Approved";
+    @Prop({required:true, enum: certificateStatus})
+    status: certificateStatus;
 
     @Prop({required:true})
     validUntil: Date;

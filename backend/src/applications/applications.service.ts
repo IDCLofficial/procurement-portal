@@ -37,6 +37,23 @@ export class ApplicationsService {
       
       // Get total count for pagination metadata
       const total = await this.applicationModel.countDocuments(filter).exec();
+
+      // Count applications by status
+      const statusCounts = await this.applicationModel.aggregate([
+        { $match: type ? { type } : {} }, // Apply type filter if provided, but count all statuses
+        {
+          $group: {
+            _id: '$applicationStatus',
+            count: { $sum: 1 }
+          }
+        }
+      ]).exec();
+
+      // Transform status counts into a more readable format
+      const countByStatus = statusCounts.reduce((acc, item) => {
+        acc[item._id] = item.count;
+        return acc;
+      }, {} as Record<string, number>);
       
       // Get paginated results
       const applications = await this.applicationModel
@@ -52,6 +69,7 @@ export class ApplicationsService {
         page: page,
         limit: limit,
         totalPages: Math.ceil(total / limit),
+        countByStatus: countByStatus,
         applications: applications
       };
     } catch (err) {

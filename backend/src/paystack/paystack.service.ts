@@ -1,151 +1,186 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+// src/payments/services/paystack-split.service.ts
+import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-
-export interface PaystackInitiatePaymentDto {
-  amount: number; // Amount in kobo (multiply by 100)
-  email: string;
-  reference: string;
-  callback_url: string;
-  metadata?: Record<string, any>;
-}
-
-export interface PaystackPaymentResponse {
-  status: boolean;
-  message: string;
-  data: {
-    authorization_url: string;
-    access_code: string;
-    reference: string;
-  };
-}
-
-export interface PaystackVerifyPaymentResponse {
-  status: boolean;
-  message: string;
-  data: {
-    id: number;
-    domain: string;
-    amount: number;
-    currency: string;
-    status: string;
-    reference: string;
-    tx_ref: string;
-    channel: string;
-    gateway_response: string;
-    customer: {
-      id: number;
-      email: string;
-      customer_code: string;
-      first_name: string;
-      last_name: string;
-    };
-    paid_at: string;
-    created_at: string;
-    metadata: Record<string, any>;
-  };
-}
+import axios, { AxiosInstance } from 'axios';
+import { 
+  CreateSplitDto,
+  UpdateSplitDto,
+  InitializePaymentWithSplitDto,
+} from 'src/payments/dto/split-payment.dto';
 
 @Injectable()
-export class PaystackService {
-  private readonly secretKey: string;
-  private readonly publicKey: string;
+export class PaystackSplitService {
+  private readonly logger = new Logger(PaystackSplitService.name);
+  private readonly paystackClient: AxiosInstance;
   private readonly baseUrl = 'https://api.paystack.co';
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
-  ) {
-    this.secretKey =
-      this.configService.get<string>('PAYSTACK_SECRET_KEY') || 'sk_test_...';
-    this.publicKey =
-      this.configService.get<string>('PAYSTACK_PUBLIC_KEY') || 'pk_test_...';
+  constructor(private readonly configService: ConfigService) {
+    const secretKey = this.configService.get<string>('PAYSTACK_SECRET_KEY');
+    
+    if (!secretKey) {
+      throw new Error('PAYSTACK_SECRET_KEY is not configured');
+    }
+
+    this.paystackClient = axios.create({
+      baseURL: this.baseUrl,
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
-  async initiatePayment(
-    paymentData: PaystackInitiatePaymentDto,
-  ): Promise<PaystackPaymentResponse> {
+  async createSplit(createSplitDto: CreateSplitDto) {
     try {
-      const { data } = await firstValueFrom(
-        this.httpService.post(
-          `${this.baseUrl}/transaction/initialize`,
-          paymentData,
-          {
-            headers: {
-              Authorization: `Bearer ${this.secretKey}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        ),
-      );
-
-      if (!data.status) {
-        throw new HttpException(
-          data.message || 'Payment initiation failed',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      return data;
+      const response = await this.paystackClient.post('/split', createSplitDto);
+      return response.data;
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      throw new HttpException(
-        'Failed to initiate payment',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.handleError(error, 'Failed to create split');
     }
   }
 
-  async verifyPayment(
-    reference: string,
-  ): Promise<PaystackVerifyPaymentResponse> {
+  async listSplits(page = 1, perPage = 50) {
     try {
-      const { data } = await firstValueFrom(
-        this.httpService.get(
-          `${this.baseUrl}/transaction/verify/${reference}`,
-          {
-            headers: {
-              Authorization: `Bearer ${this.secretKey}`,
-            },
-          },
-        ),
-      );
-
-      if (!data.status) {
-        throw new HttpException(
-          data.message || 'Payment verification failed',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      return data;
+      const response = await this.paystackClient.get('/split', {
+        params: { page, perPage },
+      });
+      return response.data;
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      throw new HttpException(
-        'Failed to verify payment',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.handleError(error, 'Failed to list splits');
     }
   }
 
-  isPaymentSuccessful(
-    paymentData: PaystackVerifyPaymentResponse['data'],
-  ): boolean {
-    return paymentData.status === 'success';
+  async getSplit(id: string) {
+    try {
+      const response = await this.paystackClient.get(`/split/${id}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Failed to get split');
+    }
   }
 
-  getAmountInNaira(amountInKobo: number): number {
-    return amountInKobo / 100;
+  async updateSplit(id: string, updateSplitDto: UpdateSplitDto) {
+    try {
+      const response = await this.paystackClient.put(
+        `/split/${id}`,
+        updateSplitDto,
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Failed to update split');
+    }
   }
 
-  getAmountInKobo(amountInNaira: number): number {
-    return Math.round(amountInNaira * 100);
+  async deleteSplit(id: string) {
+    try {
+      const response = await this.paystackClient.delete(`/split/${id}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Failed to delete split');
+    }
+  }
+
+  async addSubaccountToSplit(id: string, subaccount: string, share: number) {
+    try {
+      const response = await this.paystackClient.post(
+        `/split/${id}/subaccount/add`,
+        { subaccount, share },
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Failed to add subaccount to split');
+    }
+  }
+
+  async removeSubaccountFromSplit(id: string, subaccount: string) {
+    try {
+      const response = await this.paystackClient.post(
+        `/split/${id}/subaccount/remove`,
+        { subaccount },
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Failed to remove subaccount from split');
+    }
+  }
+
+  async initializeTransaction(dto: InitializePaymentWithSplitDto) {
+    try {
+      const payload = {
+        email: dto.email,
+        amount: dto.amount,
+        split_code: dto.split_code,
+        reference: dto.reference,
+        callback_url: dto.callback_url,
+        metadata: dto.metadata,
+      };
+
+      const response = await this.paystackClient.post(
+        '/transaction/initialize',
+        payload,
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Failed to initialize transaction');
+    }
+  }
+
+  async verifyTransaction(reference: string) {
+    try {
+      const response = await this.paystackClient.get(
+        `/transaction/verify/${reference}`,
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Failed to verify transaction');
+    }
+  }
+
+  async listTransactions(page = 1, perPage = 50) {
+    try {
+      const response = await this.paystackClient.get('/transaction', {
+        params: { page, perPage },
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Failed to list transactions');
+    }
+  }
+
+  async getTransaction(id: string) {
+    try {
+      const response = await this.paystackClient.get(`/transaction/${id}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Failed to get transaction');
+    }
+  }
+
+  private handleError(error: any, defaultMessage: string): never {
+    this.logger.error(defaultMessage, error);
+
+    if (axios.isAxiosError(error)) {
+      const message =
+        error.response?.data?.message || error.message || defaultMessage;
+      const statusCode = error.response?.status || HttpStatus.BAD_REQUEST;
+
+      throw new HttpException(
+        {
+          statusCode,
+          message,
+          error: error.response?.data || 'Paystack API Error',
+        },
+        statusCode,
+      );
+    }
+
+    throw new HttpException(
+      {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: defaultMessage,
+        error: error.message,
+      },
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 }

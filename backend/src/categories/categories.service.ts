@@ -5,6 +5,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Category } from './entities/category.schema';
 import { Grade } from './entities/grade.schema';
+import { CreateGradeDto } from './dto/create-grade.dto';
+import { UpdateGradeDto } from './dto/update-grade.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -63,5 +65,79 @@ export class CategoriesService {
       throw new BadRequestException('Category not found')
     }
     return category;
+  }
+
+  async findAllGrades(): Promise<Grade[]> {
+    try {
+      const grades = await this.gradeModel.find();
+      return grades;
+    } catch (err) {
+      this.logger.error(`Failed to retrieve grades: ${err.message}`);
+      throw new BadRequestException('Failed to retrieve grades');
+    }
+  }
+
+  async createGrade(createGradeDto: CreateGradeDto): Promise<Grade> {
+    try {
+      const existingGrade = await this.gradeModel.findOne({ grade: createGradeDto.grade });
+      if (existingGrade) {
+        throw new BadRequestException(`Grade ${createGradeDto.grade} already exists`);
+      }
+      
+      const newGrade = new this.gradeModel(createGradeDto);
+      return await newGrade.save();
+    } catch (err) {
+      if (err instanceof BadRequestException) {
+        throw err;
+      }
+      this.logger.error(`Failed to create grade: ${err.message}`);
+      throw new BadRequestException('Failed to create grade');
+    }
+  }
+
+  async updateGrade(id: string, updateGradeDto: UpdateGradeDto): Promise<Grade> {
+    try {
+      const grade = await this.gradeModel.findById(id);
+      
+      if (!grade) {
+        throw new NotFoundException('Grade not found');
+      }
+
+      if (updateGradeDto.registrationCost !== undefined) {
+        grade.registrationCost = updateGradeDto.registrationCost;
+      }
+      
+      if (updateGradeDto.financialCapacity !== undefined) {
+        grade.financialCapacity = updateGradeDto.financialCapacity;
+      }
+      
+      if (updateGradeDto.effectiveDate !== undefined) {
+        grade.effectiveDate = updateGradeDto.effectiveDate;
+      }
+
+      return await grade.save();
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.logger.error(`Failed to update grade: ${err.message}`);
+      throw new BadRequestException('Failed to update grade');
+    }
+  }
+
+  async removeGrade(id: string): Promise<Grade> {
+    try {
+      const grade = await this.gradeModel.findByIdAndDelete(id);
+      if (!grade) {
+        throw new NotFoundException('Grade not found');
+      }
+      return grade;
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.logger.error(`Failed to delete grade: ${err.message}`);
+      throw new BadRequestException('Failed to delete grade');
+    }
   }
 }

@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiBody } from 
 import { ApplicationsService } from './applications.service';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { AssignApplicationDto } from './dto/assign-application.dto';
-import { ApplicationStatus, CurrentStatus } from './entities/application.schema';
+import { ApplicationStatus, ApplicationType, CurrentStatus } from './entities/application.schema';
 import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('Applications')
@@ -131,6 +131,7 @@ export class ApplicationsController {
   findAll(
     @Req() req:any,
     @Query('status') status?: ApplicationStatus,
+    @Query('type') type?:ApplicationType,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
@@ -144,7 +145,7 @@ export class ApplicationsController {
       if(!decoded._id || decoded.role !== 'Admin'){
         throw new UnauthorizedException('Unauthorized')
       }
-      return this.applicationsService.findAll(status, pageNum, limitNum);
+      return this.applicationsService.findAll(status, type, pageNum, limitNum);
     }catch(err){
       throw new UnauthorizedException('Unauthorized')
     }

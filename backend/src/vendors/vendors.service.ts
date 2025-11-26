@@ -138,16 +138,80 @@ export class VendorsService {
     }
 
   /**
-   * Get all vendor accounts
+   * Get all vendor accounts with pagination and filtering
    * 
-   * @returns Array of all vendors in the database
+   * @param page - Page number (default: 1)
+   * @param limit - Number of records per page (default: 10, max: 100)
+   * @param search - Search term for fullname, email, or phone number
+   * @param isVerified - Filter by verification status
+   * @param companyForm - Filter by company registration step
+   * @returns Paginated array of vendors with metadata
    * 
    * @description
-   * Retrieves all vendor records without filtering
-   * Limited to 1000 records to prevent memory issues
+   * Retrieves vendor records with pagination and optional filtering
    */
-  async findAll(): Promise<Vendor[]> {
-    return this.vendorModel.find().limit(1000).select('-password').exec();
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    isVerified?: boolean,
+    companyForm?: companyForm
+  ): Promise<{
+    data: Vendor[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    // Ensure limit doesn't exceed 100
+    const pageLimit = Math.min(limit, 100);
+    const skip = (page - 1) * pageLimit;
+
+    // Build filter query
+    const filter: any = {};
+
+    // Search across multiple fields
+    if (search) {
+      filter.$or = [
+        { fullname: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phoneNo: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Filter by verification status
+    if (isVerified !== undefined) {
+      filter.isVerified = isVerified;
+    }
+
+    // Filter by company form step
+    if (companyForm) {
+      filter.companyForm = companyForm;
+    }
+
+    // Execute query with pagination
+    const [data, total] = await Promise.all([
+      this.vendorModel
+        .find(filter)
+        .select('-password')
+        .skip(skip)
+        .limit(pageLimit)
+        .sort({ createdAt: -1 })
+        .exec(),
+      this.vendorModel.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        total,
+        page,
+        limit: pageLimit,
+        totalPages: Math.ceil(total / pageLimit),
+      },
+    };
   }
 
   /**

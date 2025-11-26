@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Application, ApplicationDocument, ApplicationStatus } from './entities/application.schema';
+import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } from './entities/application.schema';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { AssignApplicationDto } from './dto/assign-application.dto';
 import { Certificate, CertificateDocument } from '../certificates/entities/certificate.schema';
@@ -18,13 +18,18 @@ export class ApplicationsService {
     @InjectModel(User.name) private userModel: Model<UserDocument>
   ) {}
 
-  async findAll(status?: ApplicationStatus, page: number = 1, limit: number = 10) {
+  async findAll(status?: ApplicationStatus, type?:ApplicationType, page: number = 1, limit: number = 10) {
     try {
       const filter: any = {};
       
       // Add status filter if provided
       if (status) {
         filter.applicationStatus = status;
+      }
+
+      // add type filter if provided
+      if(type){
+        filter.type = type
       }
       
       // Calculate pagination

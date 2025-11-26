@@ -1,18 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, HttpStatus, Req, UnauthorizedException } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/upload-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { UpdateDocumentStatusDto } from './dto/update-document-status.dto';
 import { createDocumentPresetDto } from './dto/create-document-preset.dto';
+import { UpdateDocumentPresetDto } from './dto/update-document-preset.dto';
 import { ApiBody, ApiOperation, ApiProperty, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Status } from './entities/document.schema';
+import { Status, expiryEnum, renewalFreq } from './entities/document.schema';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('Verification Documents')
 @Controller('documents')
 export class DocumentsController {
   constructor(
     private readonly documentsService: DocumentsService,
+    private readonly jwtService: JwtService
   ) {}
 
 
@@ -69,6 +72,175 @@ export class DocumentsController {
   @Get('presets')
   getPresets() {
     return this.documentsService.getPresets();
+  }
+
+  /**
+   * Update a document preset
+   * 
+   * @description
+   * Updates the configuration of a document preset.
+   * This endpoint is restricted to Admin users only.
+   * The user's role is verified through the JWT token provided in the Authorization header.
+   * 
+   * @param id - Preset ID (MongoDB ObjectId)
+   * @param updateDocumentPresetDto - DTO containing the fields to update
+   * @param req - Express request object containing the authorization header
+   * @returns Updated document preset
+   * 
+   * @throws {UnauthorizedException} If token is missing, invalid, or user is not an Admin
+   * @throws {NotFoundException} If preset with given ID is not found
+   * @throws {BadRequestException} If invalid request data
+   * 
+   * @example
+   * PATCH /documents/presets/507f1f77bcf86cd799439011
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   * Body: {
+   *   "isRequired": true,
+   *   "hasExpiry": "yes"
+   * }
+   */
+  @ApiOperation({ 
+    summary: 'Update document preset',
+    description: 'Updates a document preset configuration. Admin only.'
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Document Preset ID (MongoDB ObjectId)',
+    example: '507f1f77bcf86cd799439011'
+  })
+  @ApiBody({ 
+    type: UpdateDocumentPresetDto,
+    examples: {
+      updateAll: {
+        summary: 'Update all fields',
+        value: {
+          documentName: 'Tax Clearance Certificate',
+          isRequired: true,
+          hasExpiry: expiryEnum.yes,
+          renewalFrequency: renewalFreq.annual
+        }
+      },
+      updatePartial: {
+        summary: 'Update specific fields',
+        value: {
+          isRequired: false,
+          hasExpiry: expiryEnum.no
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Document preset updated successfully'
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Document preset not found'
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Admin role required'
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid request data'
+  })
+  @Patch('presets/:id')
+  updatePreset(
+    @Param('id') id: string,
+    @Body() updateDocumentPresetDto: UpdateDocumentPresetDto,
+    @Req() req: any
+  ) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Authorization token required');
+    }
+
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      
+      if (!decoded._id || decoded.role !== 'Admin') {
+        throw new UnauthorizedException('Admin role required');
+      }
+      
+      return this.documentsService.updatePreset(id, updateDocumentPresetDto);
+    } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Unauthorized');
+    }
+  }
+
+  /**
+   * Delete a document preset
+   * 
+   * @description
+   * Deletes a document preset from the system.
+   * This endpoint is restricted to Admin users only.
+   * The user's role is verified through the JWT token provided in the Authorization header.
+   * 
+   * @param id - Preset ID (MongoDB ObjectId)
+   * @param req - Express request object containing the authorization header
+   * @returns Deleted document preset
+   * 
+   * @throws {UnauthorizedException} If token is missing, invalid, or user is not an Admin
+   * @throws {NotFoundException} If preset with given ID is not found
+   * @throws {BadRequestException} If invalid request data
+   * 
+   * @example
+   * DELETE /documents/presets/507f1f77bcf86cd799439011
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   */
+  @ApiOperation({ summary: 'Delete document preset' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Document Preset ID (MongoDB ObjectId)',
+    example: '507f1f77bcf86cd799439011'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Document preset deleted successfully' 
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Document preset not found'
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Admin role required'
+  })
+  @Delete('presets/:id')
+  deletePreset(@Param('id') id: string, @Req() req: any) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Authorization token required');
+    }
+
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      
+      if (!decoded._id || decoded.role !== 'Admin') {
+        throw new UnauthorizedException('Admin role required');
+      }
+      
+      return this.documentsService.deletePreset(id);
+    } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Unauthorized');
+    }
   }
 
   /**

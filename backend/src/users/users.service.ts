@@ -131,7 +131,7 @@ export class UsersService {
     const users = await this.userModel
       .find({ role: { $ne: 'Admin' } })
       .select('-password')
-      .sort({ fullName: 1 })
+      .sort({ fullName: 1, createdAt:-1 })
       .exec();
 
     return users.map(user => ({

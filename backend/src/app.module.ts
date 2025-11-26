@@ -18,6 +18,7 @@ import { JwtStrategy } from './config/jwt.strategy';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PaymentsModule } from './payments/payments.module';
 import { CertificatesModule } from './certificates/certificates.module';
+import { SlaModule } from './sla/sla.module';
 
 @Module({
   imports: [
@@ -51,7 +52,8 @@ import { CertificatesModule } from './certificates/certificates.module';
     ApplicationsModule,
     UsersModule,
     PaymentsModule,
-    CertificatesModule
+    CertificatesModule,
+    SlaModule
   ],
   controllers: [AppController],
   providers: [

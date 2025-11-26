@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException, Req, Headers, UseGuards, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException, Req, Headers, UseGuards, UseInterceptors, UploadedFiles, UnauthorizedException, Query } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
@@ -101,16 +101,45 @@ export class VendorsController {
   }
 
   /**
-   * Get all vendor accounts
+   * Get all vendor accounts with pagination and filtering
    * 
-   * @returns Array of all registered vendors
+   * @param page - Page number (default: 1)
+   * @param limit - Records per page (default: 10, max: 100)
+   * @param search - Search term for fullname, email, or phone
+   * @param isVerified - Filter by verification status (true/false)
+   * @param companyForm - Filter by registration step
+   * @returns Paginated array of vendors with metadata
    * 
    * @example
-   * GET /vendors
+   * GET /vendors?page=1&limit=10&search=john&isVerified=true&companyForm=complete
    */
   @Get()
-  findAll() {
-    return this.vendorsService.findAll();
+  findAll(
+    @Req() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('isVerified') isVerified?: string,
+    @Query('companyForm') companyForm?: string,
+  ) {
+    const authHeader = req.headers.authorization;
+    const user = this.jwtService.decode(authHeader.split(' ')[1]);
+    if (!user._id || !user.role || user.role !== 'Admin') {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    // Parse query parameters
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+    const isVerifiedBool = isVerified === 'true' ? true : isVerified === 'false' ? false : undefined;
+
+    return this.vendorsService.findAll(
+      pageNum,
+      limitNum,
+      search,
+      isVerifiedBool,
+      companyForm as any,
+    );
   }
 
   /**

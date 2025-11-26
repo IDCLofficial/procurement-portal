@@ -20,6 +20,10 @@ export class Grade {
 
     @Prop({ required: true })
     financialCapacity: number;
+
+    @Prop({required:true, type:String})
+    effectiveDate:string
+
 }
 
 export const GradeSchema = SchemaFactory.createForClass(Grade);

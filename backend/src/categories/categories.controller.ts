@@ -4,6 +4,8 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto, UpdateCategoryFieldsDto } from './dto/update-category.dto';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
+import { CreateGradeDto } from './dto/create-grade.dto';
+import { UpdateGradeDto } from './dto/update-grade.dto';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -109,13 +111,12 @@ export class CategoriesController {
    * Update a category
    * 
    * @description
-   * Updates specific fields of a category identified by its ID.
-   * Only fee and effectiveDate fields can be updated.
+   * Updates the sector field of a category identified by its ID.
    * This endpoint is restricted to Admin users only.
    * The user's role is verified through the JWT token provided in the Authorization header.
    * 
    * @param id - Category ID (MongoDB ObjectId)
-   * @param updateCategoryFieldsDto - DTO containing the fields to update (fee and/or effectiveDate)
+   * @param updateCategoryFieldsDto - DTO containing the sector field to update
    * @param req - Express request object containing the authorization header
    * @returns Updated category record
    * 
@@ -129,14 +130,13 @@ export class CategoriesController {
    *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
    * }
    * Body: {
-   *   "fee": 75000,
-   *   "effectiveDate": "2025-02-01"
+   *   "sector": "works"
    * }
    */
   @Patch(':id')
   @ApiOperation({ 
-    summary: 'Update category fee and effective date',
-    description: 'Updates only the fee and/or effectiveDate fields of a category. Admin only.'
+    summary: 'Update category sector',
+    description: 'Updates the sector field of a category. Admin only.'
   })
   @ApiParam({
     name: 'id',
@@ -147,23 +147,10 @@ export class CategoriesController {
   @ApiBody({ 
     type: UpdateCategoryFieldsDto,
     examples: {
-      updateBoth: {
-        summary: 'Update both fee and effective date',
+      updateSector: {
+        summary: 'Update sector',
         value: {
-          fee: 75000,
-          effectiveDate: '2025-02-01'
-        }
-      },
-      updateFeeOnly: {
-        summary: 'Update fee only',
-        value: {
-          fee: 60000
-        }
-      },
-      updateDateOnly: {
-        summary: 'Update effective date only',
-        value: {
-          effectiveDate: '2025-03-01'
+          sector: 'works'
         }
       }
     }
@@ -175,10 +162,8 @@ export class CategoriesController {
       type: 'object',
       properties: {
         _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
-        sector: { type: 'string', example: 'construction' },
-        grade: { type: 'string', enum: ['A', 'B', 'C'], example: 'A' },
-        fee: { type: 'number', example: 75000 },
-        effectiveDate: { type: 'string', example: '2025-02-01' },
+        sector: { type: 'string', example: 'works' },
+        description: { type: 'string', example: 'Construction & Engineering' },
         createdAt: { type: 'string', format: 'date-time' },
         updatedAt: { type: 'string', format: 'date-time' }
       }
@@ -216,6 +201,307 @@ export class CategoriesController {
       }
       
       return this.categoriesService.update(id, updateCategoryFieldsDto);
+    } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Unauthorized');
+    }
+  }
+
+  /**
+   * Add a new grade
+   * 
+   * @description
+   * Creates a new grade with registration cost, financial capacity, and effective date.
+   * This endpoint is restricted to Admin users only.
+   * The user's role is verified through the JWT token provided in the Authorization header.
+   * 
+   * @param createGradeDto - DTO containing the grade details
+   * @param req - Express request object containing the authorization header
+   * @returns Created grade record
+   * 
+   * @throws {UnauthorizedException} If token is missing, invalid, or user is not an Admin
+   * @throws {BadRequestException} If grade already exists or invalid request data
+   * 
+   * @example
+   * POST /categories/grades
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   * Body: {
+   *   "grade": "A",
+   *   "registrationCost": 50000,
+   *   "financialCapacity": 1000000,
+   *   "effectiveDate": "2025-01-01"
+   * }
+   */
+  @ApiOperation({ summary: 'Add a new grade' })
+  @ApiBody({ type: CreateGradeDto })
+  @ApiResponse({ 
+    status: HttpStatus.CREATED, 
+    description: 'Grade created successfully' 
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Grade already exists or invalid data'
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Admin role required'
+  })
+  @Post('grades')
+  createGrade(@Body() createGradeDto: CreateGradeDto, @Req() req: any) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Authorization token required');
+    }
+
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      
+      if (!decoded._id || decoded.role !== 'Admin') {
+        throw new UnauthorizedException('Admin role required');
+      }
+      
+      return this.categoriesService.createGrade(createGradeDto);
+    } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Unauthorized');
+    }
+  }
+
+  /**
+   * Get all grades
+   * 
+   * @description
+   * Retrieves all grades from the system.
+   * This endpoint is accessible to authenticated users.
+   * The user's authentication is verified through the JWT token provided in the Authorization header.
+   * 
+   * @param req - Express request object containing the authorization header
+   * @returns Array of all grade records
+   * 
+   * @throws {UnauthorizedException} If token is missing or invalid
+   * @throws {BadRequestException} If failed to retrieve grades
+   * 
+   * @example
+   * GET /categories/grades
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   */
+  @ApiOperation({ summary: 'Get all grades' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'All grades retrieved successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+          grade: { type: 'string', enum: ['A', 'B', 'C', 'D'], example: 'A' },
+          registrationCost: { type: 'number', example: 50000 },
+          financialCapacity: { type: 'number', example: 1000000 },
+          effectiveDate: { type: 'string', example: '2025-01-01' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Valid token required'
+  })
+  @Get('grades')
+  findAllGrades(@Req() req: any) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Authorization token required');
+    }
+
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      
+      if (!decoded) {
+        throw new UnauthorizedException('Unauthorized');
+      }
+      
+      return this.categoriesService.findAllGrades();
+    } catch (err) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+  }
+
+  /**
+   * Update a grade
+   * 
+   * @description
+   * Updates the registration cost, financial capacity, and/or effective date of a grade.
+   * This endpoint is restricted to Admin users only.
+   * The user's role is verified through the JWT token provided in the Authorization header.
+   * 
+   * @param id - Grade ID (MongoDB ObjectId)
+   * @param updateGradeDto - DTO containing the fields to update
+   * @param req - Express request object containing the authorization header
+   * @returns Updated grade record
+   * 
+   * @throws {UnauthorizedException} If token is missing, invalid, or user is not an Admin
+   * @throws {NotFoundException} If grade with given ID is not found
+   * @throws {BadRequestException} If invalid request data
+   * 
+   * @example
+   * PATCH /categories/grades/507f1f77bcf86cd799439011
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   * Body: {
+   *   "registrationCost": 60000,
+   *   "effectiveDate": "2025-02-01"
+   * }
+   */
+  @ApiOperation({ 
+    summary: 'Update grade details',
+    description: 'Updates the registration cost, financial capacity, and/or effective date. Admin only.'
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Grade ID (MongoDB ObjectId)',
+    example: '507f1f77bcf86cd799439011'
+  })
+  @ApiBody({ 
+    type: UpdateGradeDto,
+    examples: {
+      updateAll: {
+        summary: 'Update all fields',
+        value: {
+          registrationCost: 60000,
+          financialCapacity: 1500000,
+          effectiveDate: '2025-02-01'
+        }
+      },
+      updateCostOnly: {
+        summary: 'Update registration cost only',
+        value: {
+          registrationCost: 55000
+        }
+      },
+      updateDateOnly: {
+        summary: 'Update effective date only',
+        value: {
+          effectiveDate: '2025-03-01'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Grade updated successfully'
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Grade not found'
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Admin role required'
+  })
+  @Patch('grades/:id')
+  updateGrade(
+    @Param('id') id: string,
+    @Body() updateGradeDto: UpdateGradeDto,
+    @Req() req: any
+  ) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Authorization token required');
+    }
+
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      
+      if (!decoded._id || decoded.role !== 'Admin') {
+        throw new UnauthorizedException('Admin role required');
+      }
+      
+      return this.categoriesService.updateGrade(id, updateGradeDto);
+    } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Unauthorized');
+    }
+  }
+
+  /**
+   * Delete a grade
+   * 
+   * @description
+   * Deletes a specific grade identified by its ID.
+   * This endpoint is restricted to Admin users only.
+   * The user's role is verified through the JWT token provided in the Authorization header.
+   * 
+   * @param id - Grade ID (MongoDB ObjectId)
+   * @param req - Express request object containing the authorization header
+   * @returns Deleted grade record
+   * 
+   * @throws {UnauthorizedException} If token is missing, invalid, or user is not an Admin
+   * @throws {NotFoundException} If grade with given ID is not found
+   * @throws {BadRequestException} If invalid request data
+   * 
+   * @example
+   * DELETE /categories/grades/507f1f77bcf86cd799439011
+   * Headers: {
+   *   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   */
+  @ApiOperation({ summary: 'Delete a grade' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Grade ID (MongoDB ObjectId)',
+    example: '507f1f77bcf86cd799439011'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Grade deleted successfully' 
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Grade not found'
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Admin role required'
+  })
+  @Delete('grades/:id')
+  removeGrade(@Param('id') id: string, @Req() req: any) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Authorization token required');
+    }
+
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      
+      if (!decoded._id || decoded.role !== 'Admin') {
+        throw new UnauthorizedException('Admin role required');
+      }
+      
+      return this.categoriesService.removeGrade(id);
     } catch (err) {
       if (err instanceof UnauthorizedException) {
         throw err;

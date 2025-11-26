@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateDocumentDto } from './dto/upload-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { UpdateDocumentStatusDto } from './dto/update-document-status.dto';
 import { createDocumentPresetDto } from './dto/create-document-preset.dto';
+import { UpdateDocumentPresetDto } from './dto/update-document-preset.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { verificationDocPreset, PresetDocument, verificationDocuments, verificationDocument, Status } from './entities/document.schema';
@@ -11,7 +12,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class DocumentsService {
-  
+  private readonly logger = new Logger(DocumentsService.name);
   private s3: S3Client;
   
   constructor(
@@ -130,6 +131,56 @@ export class DocumentsService {
         throw err;
       }
       throw new BadRequestException('Failed to update document status', err.message);
+    }
+  }
+
+  async updatePreset(id: string, updateDocumentPresetDto: UpdateDocumentPresetDto): Promise<verificationDocPreset> {
+    try {
+      const preset = await this.documentPresetModel.findById(id);
+      
+      if (!preset) {
+        throw new NotFoundException('Document preset not found');
+      }
+
+      // Update only the provided fields
+      if (updateDocumentPresetDto.documentName !== undefined) {
+        preset.documentName = updateDocumentPresetDto.documentName;
+      }
+      if (updateDocumentPresetDto.isRequired !== undefined) {
+        preset.isRequired = updateDocumentPresetDto.isRequired;
+      }
+      if (updateDocumentPresetDto.hasExpiry !== undefined) {
+        preset.hasExpiry = updateDocumentPresetDto.hasExpiry;
+      }
+      if (updateDocumentPresetDto.renewalFrequency !== undefined) {
+        preset.renewalFrequency = updateDocumentPresetDto.renewalFrequency;
+      }
+
+      return await preset.save();
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.logger.error(`Failed to update document preset: ${err.message}`);
+      throw new BadRequestException('Failed to update document preset');
+    }
+  }
+
+  async deletePreset(id: string): Promise<verificationDocPreset> {
+    try {
+      const preset = await this.documentPresetModel.findByIdAndDelete(id);
+      
+      if (!preset) {
+        throw new NotFoundException('Document preset not found');
+      }
+      
+      return preset;
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.logger.error(`Failed to delete document preset: ${err.message}`);
+      throw new BadRequestException('Failed to delete document preset');
     }
   }
 }

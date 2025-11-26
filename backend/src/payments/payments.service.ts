@@ -1,66 +1,155 @@
-import { Injectable } from '@nestjs/common';
-import { PaystackService } from '../paystack/paystack.service';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { PaystackSplitService } from 'src/paystack/paystack.service';
+import {
+  CreateSplitDto,
+  UpdateSplitDto,
+  InitializePaymentWithSplitDto,
+} from 'src/payments/dto/split-payment.dto';
 
 @Injectable()
-export class PaymentsService {
-  constructor(private readonly paystackService: PaystackService) {}
+export class SplitPaymentService {
+  private readonly logger = new Logger(SplitPaymentService.name);
 
-  /**
-   * Initialize a payment transaction with Paystack
-   * 
-   * @param email - Customer email address
-   * @param amount - Amount to charge in Naira (will be converted to kobo)
-   * @returns Paystack initialization response with authorization URL and reference
-   * @throws {HttpException} If Paystack API request fails
-   * 
-   * @description
-   * Initiates a payment transaction with Paystack:
-   * - Converts amount from Naira to kobo (multiply by 100)
-   * - Generates a unique reference for the transaction
-   * - Sends request to Paystack API with customer email and amount
-   * - Returns authorization URL for customer to complete payment
-   * - Returns transaction reference for verification
-   * 
-   * @example
-   * const result = await initializePayment('customer@example.com', 5000);
-   * // Returns: { status: true, message: "Authorization URL created", data: { authorization_url: "...", reference: "..." } }
-   */
-  async initializePayment(email: string, amount: number) {
-    // Generate unique reference
-    const reference = `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
-    // Convert amount to kobo
-    const amountInKobo = this.paystackService.getAmountInKobo(amount);
+  constructor(private readonly paystackSplitService: PaystackSplitService) {}
 
-    const paymentData = {
-      email,
-      amount: amountInKobo,
-      reference,
-      callback_url: process.env.PAYSTACK_CALLBACK_URL || 'http://localhost:3000/payments/callback',
-    };
+  async createSplit(createSplitDto: CreateSplitDto) {
+    try {
+      this.logger.log(`Creating split: ${createSplitDto.name}`);
+      
+      // Validate split shares
+      this.validateSplitShares(createSplitDto);
 
-    return await this.paystackService.initiatePayment(paymentData);
+      const result = await this.paystackSplitService.createSplit(createSplitDto);
+      
+      // You can save split details to your database here
+      // await this.saveSplitToDatabase(result.data);
+
+      this.logger.log(`Split created successfully: ${result.data.split_code}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Error creating split: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
   }
 
-  /**
-   * Verify a payment transaction with Paystack
-   * 
-   * @param reference - Transaction reference returned from initialization
-   * @returns Paystack verification response with transaction details
-   * @throws {HttpException} If Paystack API request fails or reference is invalid
-   * 
-   * @description
-   * Verifies a payment transaction with Paystack:
-   * - Queries Paystack API with transaction reference
-   * - Returns transaction status and details
-   * - Confirms if payment was successful
-   * - Provides customer and transaction metadata
-   * 
-   * @example
-   * const result = await verifyPayment('abc123xyz');
-   * // Returns: { status: true, message: "Verification successful", data: { status: "success", amount: 500000, ... } }
-   */
+  async listSplits(page = 1, perPage = 50) {
+    try {
+      return await this.paystackSplitService.listSplits(page, perPage);
+    } catch (error) {
+      this.logger.error(`Error listing splits: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async getSplit(id: string) {
+    try {
+      return await this.paystackSplitService.getSplit(id);
+    } catch (error) {
+      this.logger.error(`Error getting split: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async updateSplit(id: string, updateSplitDto: UpdateSplitDto) {
+    try {
+      this.logger.log(`Updating split: ${id}`);
+      return await this.paystackSplitService.updateSplit(id, updateSplitDto);
+    } catch (error) {
+      this.logger.error(`Error updating split: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async deleteSplit(id: string) {
+    try {
+      this.logger.log(`Deleting split: ${id}`);
+      return await this.paystackSplitService.deleteSplit(id);
+    } catch (error) {
+      this.logger.error(`Error deleting split: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async addSubaccountToSplit(id: string, subaccount: string, share: number) {
+    try {
+      this.logger.log(`Adding subaccount to split: ${id}`);
+      return await this.paystackSplitService.addSubaccountToSplit(
+        id,
+        subaccount,
+        share,
+      );
+    } catch (error) {
+      this.logger.error(`Error adding subaccount: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async removeSubaccountFromSplit(id: string, subaccount: string) {
+    try {
+      this.logger.log(`Removing subaccount from split: ${id}`);
+      return await this.paystackSplitService.removeSubaccountFromSplit(
+        id,
+        subaccount,
+      );
+    } catch (error) {
+      this.logger.error(`Error removing subaccount: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async initializePaymentWithSplit(dto: InitializePaymentWithSplitDto) {
+    try {
+      this.logger.log(`Initializing payment with split: ${dto.split_code}`);
+      
+      // Generate reference if not provided
+      if (!dto.reference) {
+        dto.reference = this.generateReference();
+      }
+
+      const result = await this.paystackSplitService.initializeTransaction(dto);
+
+      // Save transaction to database
+      // await this.saveTransactionToDatabase(result.data);
+
+      this.logger.log(`Payment initialized: ${dto.reference}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Error initializing payment: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
   async verifyPayment(reference: string) {
-    return await this.paystackService.verifyPayment(reference);
+    try {
+      this.logger.log(`Verifying payment: ${reference}`);
+      const result = await this.paystackSplitService.verifyTransaction(reference);
+
+      // Update transaction status in database
+      // await this.updateTransactionStatus(reference, result.data.status);
+
+      return result;
+    } catch (error) {
+      this.logger.error(`Error verifying payment: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  private validateSplitShares(createSplitDto: CreateSplitDto) {
+    if (createSplitDto.type === 'percentage') {
+      const totalShare = createSplitDto.subaccounts.reduce(
+        (sum, sub) => sum + sub.share,
+        0,
+      );
+
+      if (totalShare !== 100) {
+        throw new BadRequestException(
+          `Total percentage must equal 100. Current total: ${totalShare}`,
+        );
+      }
+    }
+  }
+
+  private generateReference(): string {
+    return `split_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   }
 }

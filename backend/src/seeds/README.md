@@ -8,7 +8,7 @@ Scripts to populate the database with sample data for development and testing.
 Seeds 10 sample applications with various statuses.
 
 ```bash
-npm run seed
+npm run seed:applications
 ```
 
 ### 2. Super Admin Seed
@@ -21,7 +21,7 @@ npm run seed:admin
 **Default Credentials:**
 - **Email:** `admin@procurement.gov.ng`
 - **Password:** `Admin@123456`
-- **Role:** Registrar (highest role)
+- **Role:** Admin (highest role)
 
 ⚠️ **Important:** Change the password immediately after first login!
 
@@ -55,6 +55,33 @@ npm run seed:categories
 - ICT
 - Services
 
+### 5. Grades Seed
+Seeds vendor grade classifications with registration costs and financial capacity requirements.
+
+```bash
+npm run seed:grades
+```
+
+**Grades Seeded:**
+- Grade A
+- Grade B
+- Grade C
+- Grade D
+
+### 6. SLA Timer Seed
+Seeds the default SLA (Service Level Agreement) timer configuration for application processing.
+
+```bash
+npm run seed:sla
+```
+
+**Default SLA Configuration:**
+- Desk Officer Review: 5 business days
+- Registrar Review: 3 business days
+- Clarification Response: 7 business days
+- Payment Verification: 2 business days
+- Total Processing Target: 10 business days
+
 ## What They Do
 
 ### Applications Seed
@@ -66,7 +93,7 @@ npm run seed:categories
 - Connects to MongoDB using `MONGO_URI` from your `.env` file
 - Checks if super admin already exists (prevents duplicates)
 - Hashes the password using bcrypt
-- Creates a super admin user with Registrar role
+- Creates a super admin user with Admin role
 - Displays login credentials in the console
 - Closes the connection when done
 
@@ -83,6 +110,20 @@ npm run seed:categories
 - Inserts 4 procurement sector categories
 - Closes the connection when done
 
+### Grades Seed
+- Connects to MongoDB using `MONGO_URI` from your `.env` file
+- Checks if grades already exist (prevents duplicates)
+- Inserts 4 vendor grade classifications (A, B, C, D)
+- Each grade has registration cost and financial capacity requirements
+- Closes the connection when done
+
+### SLA Timer Seed
+- Connects to MongoDB using `MONGO_URI` from your `.env` file
+- Checks if SLA configuration already exists (prevents duplicates)
+- Creates default SLA timer configuration with 5 business day timers
+- Automatically creates configuration if none exists
+- Closes the connection when done
+
 ## Running All Seeds
 
 To set up a fresh database with all seed data, run the scripts in this order:
@@ -90,8 +131,10 @@ To set up a fresh database with all seed data, run the scripts in this order:
 ```bash
 npm run seed:admin
 npm run seed:categories
+npm run seed:grades
 npm run seed:documents
-npm run seed
+npm run seed:sla
+npm run seed:applications
 ```
 
 ## Prerequisites

@@ -58,7 +58,12 @@ export class ApplicationsService {
       // Get paginated results
       const applications = await this.applicationModel
         .find(filter)
-        .populate("companyId")
+        .populate({
+          path: "companyId",
+          populate: {
+            path: "documents"
+          }
+        })
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }) // Sort by newest first
@@ -79,7 +84,12 @@ export class ApplicationsService {
 
   async findOne(id: string): Promise<Application> {
     try {
-      const application = await this.applicationModel.findById(id).populate("companyId").exec();
+      const application = await this.applicationModel.findById(id).populate({
+        path: "companyId",
+        populate: {
+          path: "documents"
+        }
+      }).exec();
       
       if (!application) {
         throw new NotFoundException('Application not found');
@@ -95,7 +105,6 @@ export class ApplicationsService {
   }
 
   async findByAssignedTo(userId: string, page: number = 1, limit: number = 10) {
-    console.log(userId)
     try {
       const filter = { assignedTo: new Types.ObjectId(userId)};
       
@@ -108,7 +117,12 @@ export class ApplicationsService {
       // Get paginated results
       const applications = await this.applicationModel
         .find(filter)
-        .populate("companyId")
+        .populate({
+          path: "companyId",
+          populate: {
+            path: "documents"
+          }
+        })
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }) // Sort by newest first

@@ -142,7 +142,8 @@ export class ApplicationsController {
       const decoded = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
       });
-      if(!decoded._id || decoded.role !== 'Admin' || decoded.role !== 'Registrar'){
+      
+      if(!decoded._id || decoded.role !== 'Admin'){
         throw new UnauthorizedException('Unauthorized')
       }
       return this.applicationsService.findAll(status, type, pageNum, limitNum);

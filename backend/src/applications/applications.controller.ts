@@ -290,6 +290,120 @@ export class ApplicationsController {
   }
 
   /**
+   * Get all applications forwarded to registrar
+   * 
+   * @description
+   * Retrieves all applications with status "Forwarded to Registrar".
+   * This endpoint is specifically for registrars to view applications that require their review.
+   * Supports pagination to handle large datasets efficiently.
+   * Requires JWT authentication - registrar role verification.
+   * 
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @returns Paginated list of applications forwarded to registrar with metadata
+   * 
+   * @throws {UnauthorizedException} If token is invalid or missing
+   * @throws {BadRequestException} If failed to retrieve applications
+   * 
+   * @example
+   * GET /applications/registrar/forwarded?page=1&limit=10
+   */
+  @Get('registrar/forwarded')
+  @ApiOperation({ 
+    summary: 'Get applications forwarded to registrar',
+    description: 'Retrieves all applications with status "Forwarded to Registrar" for registrar review. Requires authentication.'
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number for pagination',
+    example: 1
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page',
+    example: 10
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Applications forwarded to registrar retrieved successfully',
+    schema: {
+      example: {
+        data: [
+          {
+            _id: '507f1f77bcf86cd799439011',
+            applicationId: 'APP-2024-001',
+            contractorName: 'ABC Construction Ltd',
+            rcBnNumber: 'RC123456',
+            sectorAndGrade: 'Works - Grade A',
+            grade: 'A',
+            type: 'New',
+            submissionDate: '2024-01-15T10:30:00.000Z',
+            applicationStatus: 'Forwarded to Registrar',
+            slaStatus: 'On Time'
+          }
+        ],
+        total: 25,
+        page: 1,
+        limit: 10,
+        totalPages: 3
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Invalid or missing token'
+  })
+  async getForwardedToRegistrar(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Req() req?: any
+  ) {
+    try {
+      // Extract and verify JWT token
+      const authHeader = req?.headers?.authorization;
+      if (!authHeader) {
+        throw new UnauthorizedException('Authorization header missing');
+      }
+
+      const token = authHeader.split(' ')[1];
+      if (!token) {
+        throw new UnauthorizedException('Token missing');
+      }
+
+      // Decode and verify token
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+
+      if (!decoded || !decoded._id || decoded.role!=="Registrar") {
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      // Set pagination defaults
+      const pageNum = page ? Number(page) : 1;
+      const limitNum = limit ? Number(limit) : 10;
+
+      // Fetch applications with "Forwarded to Registrar" status
+      return this.applicationsService.findAll(
+        ApplicationStatus.FORWARDED_TO_REGISTRAR,
+        undefined,
+        pageNum,
+        limitNum
+      );
+    } catch (err) {
+      console.error('Error in getForwardedToRegistrar:', err);
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  /**
    * Assign an application to a user
    * 
    * @description

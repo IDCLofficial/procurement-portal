@@ -66,10 +66,10 @@ interface CompleteVendorRegistrationRequest {
         website: string;
     };
     [VendorSteps.DIRECTORS]?: {
-        fullName: string;
+        name: string;
         idType: string;
         id: string;
-        phone: number;
+        phone: string;
         email: string;
     }[];
     [VendorSteps.BANK_DETAILS]?: {
@@ -78,9 +78,17 @@ interface CompleteVendorRegistrationRequest {
         accountName: string;
     };
     [VendorSteps.DOCUMENTS]?: {
-        documentType: string;
+        id: string;
+        fileUrl: string;
         validFrom?: string;
         validTo?: string;
+        documentType: string;
+        uploadedDate: string;
+        fileName: string;
+        fileSize: string;
+        fileType: string;
+        validFor: string;
+        hasValidityPeriod: boolean;
     }[];
     [VendorSteps.CATEGORIES_AND_GRADE]?: {
         categories: {
@@ -96,18 +104,44 @@ interface RegisterCompanyResponse {
     message: string;
     result: {
         userId: string;
-        companyName: string;
-        cacNumber: string;
-        tin: string;
-        address: string;
-        lga: string;
-        grade: string;
-        website: string;
+        companyName?: string;
+        cacNumber?: string;
+        tin?: string;
+        address?: string;
+        lga?: string;
+        grade?: string;
+        website?: string;
         _id: string;
-        categories: string[];
+        categories?: {
+            sector: string;
+            service: string;
+        }[];
         createdAt: string;
         updatedAt: string;
         __v: number;
+        directors?: {
+            name: string;
+            idType: "National Identification Number" | "International Passport" | "Driver's License" | "Voter's Card";
+            id: string;
+            phone: string;
+            email: string;
+        }[];
+        documents?: {
+            id: string;
+            fileUrl: string;
+            validFrom?: string;
+            validTo?: string;
+            documentType: string;
+            uploadedDate: string;
+            fileName: string;
+            fileSize: string;
+            fileType: string;
+            validFor: string;
+            hasValidityPeriod: boolean;
+        }[];
+        bankName?: string;
+        accountNumber?: number;
+        accountName?: string;
     };
     nextStep: string;
 }
@@ -122,20 +156,68 @@ interface CompanyDetailsResponse {
     grade: string;
     website: string;
     _id: string;
-    categories: string[];
+    categories: {
+        sector: string;
+        service: string;
+    }[];
     createdAt: string;
     updatedAt: string;
     __v: number;
     directors?: {
-        fullName: string;
-        idType: string;
+        name: string;
+        idType: "National Identification Number" | "International Passport" | "Driver's License" | "Voter's Card";
         id: string;
-        phone: number;
+        phone: string;
         email: string;
     }[];
+    documents?: {
+        id: string;
+        fileUrl: string;
+        validFrom?: string;
+        validTo?: string;
+        documentType: string;
+        uploadedDate: string;
+        fileName: string;
+        fileSize: string;
+        fileType: string;
+        validFor: string;
+        hasValidityPeriod: boolean;
+    }[];    
     bankName?: string;
     accountNumber?: number;
     accountName?: string;
 }
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse };
+interface DocumentRequirement {
+    documentName: string;
+    isRequired: boolean;
+    hasExpiry: "yes" | "no";
+    renewalFrequency: "annual" | "quarterly" | "monthly" | "never";
+}
+
+interface Category {
+    _id: string;
+    sector: string;
+    description: string;
+    __v: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface Grade {
+    _id: string;
+    grade: string;
+    registrationCost: number;
+    financialCapacity: number;
+    __v: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface CategoriesResponse {
+    categories: Category[];
+    grades: Grade[];
+}
+    
+
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse };

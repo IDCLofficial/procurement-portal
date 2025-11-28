@@ -10,7 +10,7 @@ import { useResendVerificationOtpMutation, useVerifyVendorMutation } from '@/sto
 
 interface EmailVerificationProps {
     email: string;
-    onVerified: () => void;
+    onVerified: (token: string) => void;
     onCancel?: () => void;
 }
 
@@ -43,7 +43,7 @@ export default function EmailVerification({ email, onVerified, onCancel }: Email
         try {
             toast.loading('Verifying your account...', { id: 'verify-vendor' });
             const response = await verifyVendorMutation({ email, otp });
-            console.log(response);
+            console.log(response.data);
 
             // Check if response has an error property (RTK Query error response)
             if ('error' in response) {
@@ -64,7 +64,7 @@ export default function EmailVerification({ email, onVerified, onCancel }: Email
 
             // Success case
             toast.dismiss('verify-vendor');
-            onVerified();
+            onVerified(response.data.token);
         } catch (error) {
             console.error('Error creating vendor:', error);
 

@@ -11,7 +11,7 @@ export const vendorApi = apiSlice.injectEndpoints({
                 body,
             }),
         }),
-        verifyVendor: builder.mutation<unknown, VerifyVendorRequest>({
+        verifyVendor: builder.mutation<{ token: string }, VerifyVendorRequest>({
             query: (body) => ({
                 url: endpoints.verifyVendor,
                 method: 'POST',

@@ -131,6 +131,7 @@ export class VendorsService {
         throw new BadRequestException('Invalid password');
       }
       const { password: _, ...user } = vendor.toObject();
+      console.log(user)
       return {
         message:"Login Successful",
         token: this.tokenHandlers.generateToken(user)
@@ -721,5 +722,15 @@ export class VendorsService {
       success: true, 
       message: 'Verification OTP has been resent to your email.' 
     };
+  }
+
+  async getCompanyIdByUserId(userId: string): Promise<string | null> {
+    try {
+      const vendor = await this.vendorModel.findById(userId).select('companyId').lean();
+      return vendor?.companyId ? vendor.companyId.toString() : null;
+    } catch (error) {
+      this.Logger.error(`Error fetching companyId for userId ${userId}: ${error.message}`);
+      return null;
+    }
   }
 }

@@ -9,7 +9,8 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  UseGuards,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SplitPaymentService } from './payments.service';
@@ -18,13 +19,17 @@ import {
   UpdateSplitDto,
   InitializePaymentWithSplitDto,
  } from './dto/split-payment.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('Split Payments')
 @Controller('split-payments')
 // @UseGuards(JwtAuthGuard) // Uncomment if using authentication
 // @ApiBearerAuth()
 export class SplitPaymentController {
-  constructor(private readonly splitPaymentService: SplitPaymentService) {}
+  constructor(
+    private readonly splitPaymentService: SplitPaymentService,
+    private readonly jwtService:JwtService
+  ) {}
 
   @Post('split')
   @ApiOperation({ summary: 'Create a transaction split' })
@@ -98,14 +103,35 @@ export class SplitPaymentController {
   @Post('initialize')
   @ApiOperation({ summary: 'Initialize payment with split' })
   @ApiResponse({ status: 201, description: 'Payment initialized successfully' })
-  async initializePayment(@Body() dto: InitializePaymentWithSplitDto) {
-    return this.splitPaymentService.initializePaymentWithSplit(dto);
+  async initializePayment(@Body() dto: InitializePaymentWithSplitDto, @Req() req:any) {
+    if(!req.headers.authorization){
+      throw new UnauthorizedException("Header is missing!")
+    }
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = this.jwtService.decode(token);
+
+    if(!decoded){
+      throw new UnauthorizedException("Expired or missing token")
+    }
+    const companyId = decoded.companyId;
+    return this.splitPaymentService.initializePaymentWithSplit(dto, companyId);
   }
 
   @Get('verify/:reference')
   @ApiOperation({ summary: 'Verify split payment transaction' })
   @ApiResponse({ status: 200, description: 'Transaction verified' })
-  async verifyPayment(@Param('reference') reference: string) {
-    return this.splitPaymentService.verifyPayment(reference);
+  async verifyPayment(@Param('reference') reference: string, @Req() req:any) {
+    if(!req.headers.authorization){
+      throw new UnauthorizedException("Header is missing!")
+    }
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = this.jwtService.decode(token);
+
+    if(!decoded){
+      throw new UnauthorizedException("Expired or missing token")
+    }
+    const userId = decoded._id;
+    console.log(decoded)
+    return this.splitPaymentService.verifyPayment(reference, userId);
   }
 }

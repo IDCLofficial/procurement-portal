@@ -1,6 +1,7 @@
-import { IsString, IsEnum, IsNumber, IsArray, ValidateNested, IsOptional, Min, Max } from 'class-validator';
+import { IsString, IsEnum, IsNumber, IsArray, ValidateNested, IsOptional, Min, Max, IsMongoId } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { ApplicationType } from 'src/applications/entities/application.schema';
 
 export enum SplitType {
   PERCENTAGE = 'percentage',
@@ -83,6 +84,29 @@ export class InitializePaymentWithSplitDto {
   @ApiProperty({ description: 'Split code' })
   @IsString()
   split_code: string;
+
+  @ApiProperty({ description: 'Application ID', required: false })
+  @IsOptional()
+  @IsMongoId()
+  applicationId?: string;
+
+  @ApiProperty({ enum: ApplicationType, description: 'Payment type' })
+  @IsEnum(ApplicationType)
+  type: ApplicationType;
+
+  @ApiProperty({ description: 'Payment description', example: 'Initial Registration - Works Grade A' })
+  @IsString()
+  description: string;
+
+  @ApiProperty({ description: 'Category', required: false, example: 'WORKS, ICT' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiProperty({ description: 'Grade', required: false, example: 'Grade A' })
+  @IsOptional()
+  @IsString()
+  grade?: string;
 
   @ApiProperty({ description: 'Reference', required: false })
   @IsOptional()

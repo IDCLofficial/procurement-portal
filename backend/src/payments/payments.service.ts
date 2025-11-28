@@ -1,26 +1,37 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { PaystackSplitService } from 'src/paystack/paystack.service';
 import {
   CreateSplitDto,
   UpdateSplitDto,
   InitializePaymentWithSplitDto,
 } from 'src/payments/dto/split-payment.dto';
+import { Payment, PaymentDocument, PaymentStatus } from './entities/payment.schema';
+import { Company, CompanyDocument } from 'src/companies/entities/company.schema';
+import { NotFound } from '@aws-sdk/client-s3';
+import { Application, ApplicationDocument } from 'src/applications/entities/application.schema';
 
 @Injectable()
 export class SplitPaymentService {
   private readonly logger = new Logger(SplitPaymentService.name);
 
-  constructor(private readonly paystackSplitService: PaystackSplitService) {}
+  constructor(
+    private readonly paystackSplitService: PaystackSplitService,
+    @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
+    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
+  ) { }
 
   async createSplit(createSplitDto: CreateSplitDto) {
     try {
       this.logger.log(`Creating split: ${createSplitDto.name}`);
-      
+
       // Validate split shares
       this.validateSplitShares(createSplitDto);
 
       const result = await this.paystackSplitService.createSplit(createSplitDto);
-      
+
       // You can save split details to your database here
       // await this.saveSplitToDatabase(result.data);
 
@@ -97,10 +108,10 @@ export class SplitPaymentService {
     }
   }
 
-  async initializePaymentWithSplit(dto: InitializePaymentWithSplitDto) {
+  async initializePaymentWithSplit(dto: InitializePaymentWithSplitDto, companyId: any) {
     try {
       this.logger.log(`Initializing payment with split: ${dto.split_code}`);
-      
+
       // Generate reference if not provided
       if (!dto.reference) {
         dto.reference = this.generateReference();
@@ -108,8 +119,24 @@ export class SplitPaymentService {
 
       const result = await this.paystackSplitService.initializeTransaction(dto);
 
-      // Save transaction to database
-      // await this.saveTransactionToDatabase(result.data);
+      // Create payment document and save to database
+      const paymentId = await this.generatePaymentId();
+      const payment = new this.paymentModel({
+        paymentId,
+        companyId: new Types.ObjectId(companyId as Types.ObjectId),
+        applicationId: dto.applicationId ? new Types.ObjectId(dto.applicationId) : undefined,
+        amount: dto.amount / 100, // Convert from kobo to naira
+        status: PaymentStatus.PENDING,
+        type: dto.type,
+        description: dto.description,
+        category: dto.category,
+        grade: dto.grade,
+        transactionReference: dto.reference,
+        paystackReference: result.data.reference,
+      });
+
+      await payment.save();
+      this.logger.log(`Payment document created: ${paymentId}`);
 
       this.logger.log(`Payment initialized: ${dto.reference}`);
       return result;
@@ -119,13 +146,60 @@ export class SplitPaymentService {
     }
   }
 
-  async verifyPayment(reference: string) {
+  async verifyPayment(reference: string, userId: any) {
     try {
       this.logger.log(`Verifying payment: ${reference}`);
       const result = await this.paystackSplitService.verifyTransaction(reference);
 
       // Update transaction status in database
-      // await this.updateTransactionStatus(reference, result.data.status);
+      if (result.data.status === 'success') {
+        // Find the company
+        const company = await this.companyModel.findOne({userId:new Types.ObjectId(userId)});
+        if (!company) {
+          throw new NotFoundException("Company not found");
+        }
+
+        // Get the payment record to extract payment details
+        const payment = await this.paymentModel.findOne({ transactionReference: reference });
+        if (!payment) {
+          throw new NotFoundException("Payment record not found");
+        }
+
+        // Generate unique application ID
+        const applicationId = await this.generateApplicationId();
+
+        // Create new application
+        const newApplication = new this.applicationModel({
+          applicationId,
+          contractorName: company.companyName,
+          companyId: new Types.ObjectId(company._id as Types.ObjectId),
+          rcBnNumber: company.cacNumber,
+          sectorAndGrade: payment.category && payment.grade
+            ? `${payment.category} - ${payment.grade}`
+            : payment.description,
+          grade: payment.grade || 'N/A',
+          type: payment.type as any, // Maps to ApplicationType (Registration, Renewal, Upgrade)
+          submissionDate: new Date(),
+          slaStatus: 'On Time',
+          applicationStatus: 'Pending Desk Review',
+        });
+
+        await newApplication.save();
+        this.logger.log(`Application created: ${applicationId}`);
+
+        // Update payment record with application ID and status
+        await this.paymentModel.findOneAndUpdate(
+          { transactionReference: reference },
+          {
+            status: PaymentStatus.VERIFIED,
+            paymentDate: new Date(),
+            verificationMessage: 'Payment has been confirmed via Paystack gateway',
+            paystackReference: result.data.reference,
+            applicationId: newApplication._id,
+          }
+        );
+        this.logger.log(`Payment verified and updated: ${reference}`);
+      }
 
       return result;
     } catch (error) {
@@ -151,5 +225,19 @@ export class SplitPaymentService {
 
   private generateReference(): string {
     return `split_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  }
+
+  private async generatePaymentId(): Promise<string> {
+    const year = new Date().getFullYear();
+    const count = await this.paymentModel.countDocuments();
+    const paddedCount = String(count + 1).padStart(3, '0');
+    return `PAY-${year}-${paddedCount}`;
+  }
+
+  private async generateApplicationId(): Promise<string> {
+    const year = new Date().getFullYear();
+    const count = await this.applicationModel.countDocuments();
+    const paddedCount = String(count + 1).padStart(3, '0');
+    return `APP-${year}-${paddedCount}`;
   }
 }

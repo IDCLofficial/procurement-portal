@@ -101,12 +101,12 @@ export class InitializePaymentWithSplitDto {
   @ApiProperty({ description: 'Category', required: false, example: 'WORKS, ICT' })
   @IsOptional()
   @IsString()
-  category?: string;
+  category: string;
 
   @ApiProperty({ description: 'Grade', required: false, example: 'Grade A' })
   @IsOptional()
   @IsString()
-  grade?: string;
+  grade: string;
 
   @ApiProperty({ description: 'Reference', required: false })
   @IsOptional()

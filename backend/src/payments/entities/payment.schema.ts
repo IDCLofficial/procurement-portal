@@ -34,11 +34,11 @@ export class Payment {
     @Prop({ required: true })
     description: string; // e.g., "Initial Registration - Works Grade A"
 
-    @Prop({ required: false })
-    category?: string; // e.g., "WORKS, ICT"
+    @Prop({ required: true })
+    category: string; // e.g., "WORKS, ICT"
 
-    @Prop({ required: false })
-    grade?: string; // e.g., "Grade A"
+    @Prop({ required: true })
+    grade: string; // e.g., "Grade A"
 
     @Prop({ required: false })
     transactionReference?: string; // e.g., "PYSTACK-app-2024-009"

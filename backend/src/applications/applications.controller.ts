@@ -143,9 +143,10 @@ export class ApplicationsController {
         secret: process.env.JWT_SECRET,
       });
       
-      if(!decoded._id || decoded.role !== 'Admin'){
+      if(!decoded._id || !decoded.role){
         throw new UnauthorizedException('Unauthorized')
       }
+
       return this.applicationsService.findAll(status, type, pageNum, limitNum);
     }catch(err){
       throw new UnauthorizedException('Unauthorized')

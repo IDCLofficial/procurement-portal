@@ -16,6 +16,11 @@ export enum Status{
     REJECTED="Rejected"
 }
 
+export interface statusObject{
+    status:Status,
+    message?:string
+}
+
 export type PresetDocument = verificationDocPreset & Document;
 export type verificationDocument = verificationDocuments & Document;
 
@@ -69,8 +74,14 @@ export class verificationDocuments{
     @Prop({required:true})
     hasValidityPeriod:boolean;
 
-    @Prop({required:true, default:Status.PENDING})
-    status:Status;
+    @Prop({
+        required: true,
+        type: {
+            status: { type: String, enum: Object.values(Status), default: Status.PENDING },
+            message: { type: String, required: false }
+        }
+    })
+    status: statusObject;
 }
 
 export const VerificationDocumentPresetSchema = SchemaFactory.createForClass(verificationDocPreset);

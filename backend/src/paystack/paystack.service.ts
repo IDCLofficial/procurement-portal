@@ -109,7 +109,7 @@ export class PaystackSplitService {
       const payload = {
         email: dto.email,
         amount: dto.amount,
-        split_code: dto.split_code,
+        split_code:dto.split_code || 'SPL_3yyVlNI9mE',
         reference: dto.reference,
         callback_url: dto.callback_url,
         metadata: dto.metadata,

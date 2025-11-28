@@ -40,13 +40,13 @@ export class CreateSplitDto {
   @Type(() => SubaccountDto)
   subaccounts: SubaccountDto[];
 
-  @ApiProperty({ enum: BearerType, description: 'Who bears Paystack charges' })
-  @IsEnum(BearerType)
-  bearer_type: BearerType;
+  // @ApiProperty({ enum: BearerType, description: 'Who bears Paystack charges' })
+  // @IsEnum(BearerType)
+  // bearer_type: BearerType;
 
-  @ApiProperty({ description: 'Main account subaccount code' })
-  @IsString()
-  bearer_subaccount: string;
+  // @ApiProperty({ description: 'Main account subaccount code' })
+  // @IsString()
+  // bearer_subaccount: string;
 }
 
 export class UpdateSplitDto {

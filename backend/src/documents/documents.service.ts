@@ -124,6 +124,17 @@ export class DocumentsService {
         throw new NotFoundException('Document not found');
       }
 
+      // Validate that NEED_REVIEW or REJECTED status must have a message
+      if (
+        (updateDocumentStatusDto.status.status === Status.NEED_REVIEW || 
+         updateDocumentStatusDto.status.status === Status.REJECTED) &&
+        !updateDocumentStatusDto.status.message
+      ) {
+        throw new BadRequestException(
+          `A message is required when status is "${updateDocumentStatusDto.status.status}"`
+        );
+      }
+
       document.status = updateDocumentStatusDto.status;
       return await document.save();
     } catch (err) {

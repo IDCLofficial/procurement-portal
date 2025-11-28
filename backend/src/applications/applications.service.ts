@@ -119,9 +119,14 @@ export class ApplicationsService {
         .find(filter)
         .populate({
           path: "companyId",
-          populate: {
-            path: "documents"
-          }
+          populate: [
+            {
+              path: "documents",
+            },
+            {
+              path:"directors"
+            }
+          ]
         })
         .skip(skip)
         .limit(limit)

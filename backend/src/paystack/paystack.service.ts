@@ -110,7 +110,7 @@ export class PaystackSplitService {
       const splitCode = this.configService.get<string>('PAYSTACK_SPLIT_CODE');
       const payload = {
         email: email,
-        amount: dto.amount,
+        amount: dto.amount * 100,
         split_code: splitCode || 'SPL_3yyVlNI9mE',
         reference: reference,
         callback_url: this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000/payment-callback',

@@ -83,7 +83,7 @@ export class InitializePaymentWithSplitDto {
 
   @ApiProperty({ description: 'Payment description', example: 'Initial Registration - Works Grade A' })
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty({ description: 'Additional metadata', required: false })
   @IsOptional()

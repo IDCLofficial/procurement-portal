@@ -16,7 +16,7 @@ export enum Status{
     REJECTED="Rejected"
 }
 
-export interface statusObject{
+export type statusObject = {
     status:Status,
     message?:string
 }

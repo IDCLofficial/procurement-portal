@@ -391,6 +391,33 @@ export class VendorsController {
   }
 
   /**
+   * Get registration payment for a vendor
+   * 
+   * @param req - Request object containing JWT token
+   * @returns Registration payment details
+   * 
+   * @example
+   * GET /vendors/registration-payment
+   */
+  @Get('registration-payment')
+  @ApiOperation({ summary: 'Get vendor registration payment' })
+  @ApiResponse({ status: 200, description: 'Registration payment retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'No registration payment found' })
+  async getRegistrationPayment(@Req() req: any) {
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException('Authorization header is missing');
+    }
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = this.jwtService.decode(token);
+
+    if (!decoded) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    return this.vendorsService.getRegistrationPayment(decoded._id);
+  }
+
+  /**
    * Verify vendor email with OTP
    * 
    * @param body - Email and OTP code for verification

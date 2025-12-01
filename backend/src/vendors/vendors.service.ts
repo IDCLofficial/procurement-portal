@@ -12,6 +12,7 @@ import TokenHandlers from 'src/lib/generateToken';
 import { updateRegistrationDto } from './dto/update-registration.dto';
 import { Company, CompanyDocument, Directors, DirectorsDocument, Status } from '../companies/entities/company.schema';
 import { verificationDocuments, verificationDocument, Status as DocumentStatus } from '../documents/entities/document.schema';
+import { Payment, PaymentDocument } from '../payments/entities/payment.schema';
 import { loginDto } from './dto/logn.dto';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ValidationError } from 'class-validator';
@@ -28,6 +29,7 @@ export class VendorsService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Directors.name) private directorsModel: Model<DirectorsDocument>,
     @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>,
+    @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
     private tokenHandlers: TokenHandlers,
@@ -732,5 +734,35 @@ export class VendorsService {
       this.Logger.error(`Error fetching companyId for userId ${userId}: ${error.message}`);
       return null;
     }
+  }
+
+  async getRegistrationPayment(vendorId: string) {
+    // Find vendor
+    const vendor = await this.vendorModel.findById(vendorId);
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    // Find company
+    const company = await this.companyModel.findById(vendor.companyId);
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    // Find registration payment (type = 'new')
+    const registrationPayment = await this.paymentModel
+      .findOne({
+        companyId: company._id,
+        type: 'new'
+      })
+      .populate('companyId', 'companyName cacNumber')
+      .populate('applicationId', 'applicationId applicationStatus')
+      .sort({ createdAt: -1 });
+
+    if (!registrationPayment) {
+      throw new NotFoundException('No registration payment found for this vendor');
+    }
+
+    return registrationPayment;
   }
 }

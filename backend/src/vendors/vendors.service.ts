@@ -347,6 +347,12 @@ export class VendorsService {
             
             result = await company.save();
             
+            // Update vendor form step to directors if still on company step
+            if (vendor.companyForm === companyForm.STEP1) {
+              vendor.companyForm = companyForm.STEP2;
+              await vendor.save();
+            }
+            
             return {
               message: "Company information updated successfully",
               result: result,

@@ -11,7 +11,7 @@ import {
 import { Payment, PaymentDocument, PaymentStatus } from './entities/payment.schema';
 import { Company, CompanyDocument } from 'src/companies/entities/company.schema';
 import { NotFound } from '@aws-sdk/client-s3';
-import { Application, ApplicationDocument } from 'src/applications/entities/application.schema';
+import { Application, ApplicationDocument, ApplicationStatus } from 'src/applications/entities/application.schema';
 import { ApplicationSubmittedEvent } from 'src/notifications/events/application-submitted.event';
 import { companyForm, Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
 
@@ -208,7 +208,12 @@ export class SplitPaymentService {
           type: payment.type as any, // Maps to ApplicationType (Registration, Renewal, Upgrade)
           submissionDate: new Date(),
           slaStatus: 'On Time',
-          applicationStatus: 'Pending Desk Review',
+          applicationStatus: [{
+            status: ApplicationStatus.PENDING_DESK_REVIEW,
+            timestamp: new Date(),
+            notes: 'Application submitted and payment verified'
+          }],
+          currentStatus: ApplicationStatus.PENDING_DESK_REVIEW,
         });
 
         await newApplication.save();

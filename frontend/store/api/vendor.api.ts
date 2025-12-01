@@ -1,6 +1,6 @@
 import { apiSlice } from './';
 import endpoints from './endpoints.const';
-import { CompanyDetailsResponse, CompleteVendorRegistrationRequest, CreateVendorRequest, LoginVendorRequest, LoginVendorResponse, RegisterCompanyResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest } from './types';
+import { CompanyDetailsResponse, CompleteVendorRegistrationRequest, CreateVendorRequest, InitPaymentRequest, LoginVendorRequest, LoginVendorResponse, RegisterCompanyResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest } from './types';
 
 export const vendorApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -48,6 +48,13 @@ export const vendorApi = apiSlice.injectEndpoints({
             query: (body) => ({
                 url: endpoints.complete_vendor_registration,
                 method: 'PATCH',
+                body,
+            }),
+        }),
+        initPayment: builder.mutation<unknown, InitPaymentRequest>({
+            query: (body) => ({
+                url: endpoints.initPayment,
+                method: 'POST',
                 body,
             }),
         }),

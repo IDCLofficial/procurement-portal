@@ -8,4 +8,6 @@ export default {
     complete_vendor_registration: "/vendors/register-company",
     getDocumentsPresets: "/documents/presets",
     getCategories: "/categories",
+    initPayment: "/split-payments/initialize",
+    verifyPayment: (reference: string) => `/split-payments/verify/${reference}`,
 } as const

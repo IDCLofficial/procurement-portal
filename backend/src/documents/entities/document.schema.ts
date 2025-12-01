@@ -74,7 +74,13 @@ export class verificationDocuments{
     @Prop({required:true})
     hasValidityPeriod:boolean;
 
-    @Prop({required: true})
+    @Prop({
+        required: true,
+        type: {
+            status: { type: String, enum: Object.values(Status), default: Status.PENDING },
+            message: { type: String, required: false }
+        }
+    })
     status: statusObject;
 }
 

@@ -32,6 +32,14 @@ export enum ApplicationType {
     UPGRADE = 'upgrade'
 }
 
+export type StatusHistoryObject = {
+    status: ApplicationStatus;
+    timestamp: Date;
+    notes?: string;
+    updatedBy?: Types.ObjectId;
+    updatedByName?: string;
+}
+
 export type ApplicationDocument = Application & Document
 
 @Schema({timestamps:true})
@@ -69,8 +77,24 @@ export class Application {
     @Prop()
     assignedToName: string;
 
+    @Prop({ 
+        required: true, 
+        type: [{
+            status: { type: String, enum: Object.values(ApplicationStatus), required: true },
+            timestamp: { type: Date, required: true },
+            notes: { type: String, required: false },
+            updatedBy: { type: Types.ObjectId, ref: 'User', required: false },
+            updatedByName: { type: String, required: false }
+        }],
+        default: [{
+            status: ApplicationStatus.PENDING_DESK_REVIEW,
+            timestamp: new Date()
+        }]
+    })
+    applicationStatus: StatusHistoryObject[];
+
     @Prop({ required: true, enum: Object.values(ApplicationStatus), default: ApplicationStatus.PENDING_DESK_REVIEW })
-    applicationStatus: ApplicationStatus;
+    currentStatus: ApplicationStatus;
 }
 
 export const ApplicationSchema = SchemaFactory.createForClass(Application);

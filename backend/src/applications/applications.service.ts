@@ -25,7 +25,7 @@ export class ApplicationsService {
       
       // Add status filter if provided
       if (status) {
-        filter.applicationStatus = status;
+        filter.currentStatus = status;
       }
 
       // add type filter if provided
@@ -44,7 +44,7 @@ export class ApplicationsService {
         { $match: type ? { type } : {} }, // Apply type filter if provided, but count all statuses
         {
           $group: {
-            _id: '$applicationStatus',
+            _id: '$currentStatus',
             count: { $sum: 1 }
           }
         }
@@ -200,12 +200,22 @@ export class ApplicationsService {
         throw new NotFoundException('Application not found');
       }
 
-      const oldStatus = application.applicationStatus;
+      const oldStatus = application.currentStatus;
       const newStatus = updateApplicationStatusDto.applicationStatus;
       
-      // Only emit event if status actually changed
+      // Only update if status actually changed
       if (oldStatus !== newStatus) {
-        application.applicationStatus = newStatus;
+        // Add new status to history array
+        const statusHistoryEntry = {
+          status: newStatus,
+          timestamp: new Date(),
+          notes: updateApplicationStatusDto.notes,
+          updatedBy: updateApplicationStatusDto.updatedBy ? new Types.ObjectId(updateApplicationStatusDto.updatedBy) : undefined,
+          updatedByName: updateApplicationStatusDto.updatedByName
+        };
+        
+        application.applicationStatus.push(statusHistoryEntry);
+        application.currentStatus = newStatus;
         
         // Get company details for the event
         const company = application.companyId as any;

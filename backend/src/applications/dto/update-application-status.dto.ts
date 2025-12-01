@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ApplicationStatus } from '../entities/application.schema';
 
@@ -12,4 +12,31 @@ export class UpdateApplicationStatusDto {
   @IsEnum(ApplicationStatus)
   @IsNotEmpty()
   applicationStatus: ApplicationStatus;
+
+  @ApiProperty({
+    description: 'Optional notes about the status change',
+    example: 'Documents verified and approved',
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  notes?: string;
+
+  @ApiProperty({
+    description: 'ID of the user updating the status',
+    example: '507f1f77bcf86cd799439011',
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  updatedBy?: string;
+
+  @ApiProperty({
+    description: 'Name of the user updating the status',
+    example: 'John Doe',
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  updatedByName?: string;
 }

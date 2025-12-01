@@ -159,8 +159,8 @@ export class SplitPaymentService {
       this.logger.log(`Payment document created: ${paymentId}`);
 
       this.logger.log(`Payment initialized: ${payment.paystackReference}`);
-      
-      return result
+
+      return result.data.authorization_url
     
     } catch (error) {
       this.logger.error(`Error initializing payment: ${error.message}`);

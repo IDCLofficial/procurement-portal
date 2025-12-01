@@ -11,7 +11,6 @@ import {
   HttpStatus,
   Req,
   UnauthorizedException,
-  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SplitPaymentService } from './payments.service';
@@ -90,7 +89,7 @@ export class SplitPaymentController {
   @Post('initialize')
   @ApiOperation({ summary: 'Initialize payment with split' })
   @ApiResponse({ status: 201, description: 'Payment initialized successfully' })
-  async initializePayment(@Body() dto: InitializePaymentWithSplitDto, @Req() req:any, @Res() res:any) {
+  async initializePayment(@Body() dto: InitializePaymentWithSplitDto, @Req() req:any) {
     if(!req.headers.authorization){
       throw new UnauthorizedException("Header is missing!")
     }
@@ -101,7 +100,7 @@ export class SplitPaymentController {
       throw new UnauthorizedException("Expired or missing token")
     }
     const user = decoded;
-    return this.splitPaymentService.initializePaymentWithSplit(dto, user, res);
+    return this.splitPaymentService.initializePaymentWithSplit(dto, user);
   }
 
   @Get('verify/:reference')

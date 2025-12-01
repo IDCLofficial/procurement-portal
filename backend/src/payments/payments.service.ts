@@ -113,17 +113,13 @@ export class SplitPaymentService {
     }
   }
 
-  async initializePaymentWithSplit(dto: InitializePaymentWithSplitDto, user: any, res:any) {
+  async initializePaymentWithSplit(dto: InitializePaymentWithSplitDto, user: any) {
     try {
       const splitCode = this.configService.get<string>('PAYSTACK_SPLIT_CODE');
       this.logger.log(`Initializing payment with split: ${splitCode}`);
 
       console.log(user)
-      const vendor = await this.vendorModel.findById(user._id);
-      if(!vendor){
-        throw new NotFoundException("vendor not found");
-      }
-      const company = await this.companyModel.findById(vendor.companyId);
+      const company = await this.companyModel.findOne({userId:new Types.ObjectId(user._id)});
 
       if(!company){
         throw new NotFoundException("company not found")
@@ -163,8 +159,9 @@ export class SplitPaymentService {
       this.logger.log(`Payment document created: ${paymentId}`);
 
       this.logger.log(`Payment initialized: ${payment.paystackReference}`);
-      // return res.redirect(303, result.data.authorization_url);
-      return result;
+      
+      return result
+    
     } catch (error) {
       this.logger.error(`Error initializing payment: ${error.message}`);
       throw new BadRequestException(error.message);

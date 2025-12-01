@@ -23,6 +23,7 @@ export class PaystackSplitService {
 
     this.paystackClient = axios.create({
       baseURL: this.baseUrl,
+      timeout: 30000, // 30 seconds timeout
       headers: {
         Authorization: `Bearer ${secretKey}`,
         'Content-Type': 'application/json',
@@ -110,18 +111,24 @@ export class PaystackSplitService {
       const payload = {
         email: email,
         amount: dto.amount,
-        split_code: splitCode || '',
+        split_code: splitCode || 'SPL_3yyVlNI9mE',
         reference: reference,
-        callback_url: `${this.configService.get<string>('FRONTEND_URL')}/payment-callback` || 'http://localhost:3000/payment-callback',
+        callback_url: this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000/payment-callback',
         metadata: dto.metadata,
       };
+
+      this.logger.log(`Initializing Paystack transaction with reference: ${reference}`);
+      this.logger.debug(`Payload: ${JSON.stringify(payload)}`);
 
       const response = await this.paystackClient.post(
         '/transaction/initialize',
         payload,
       );
+      
+      this.logger.log(`Transaction initialized successfully: ${reference}`);
       return response.data;
     } catch (error) {
+      this.logger.error(`Transaction initialization failed for reference: ${reference}`);
       this.handleError(error, 'Failed to initialize transaction');
     }
   }

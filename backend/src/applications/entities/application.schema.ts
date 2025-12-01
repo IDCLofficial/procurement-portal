@@ -83,8 +83,7 @@ export class Application {
             status: { type: String, enum: Object.values(ApplicationStatus), required: true },
             timestamp: { type: Date, required: true },
             notes: { type: String, required: false },
-            updatedBy: { type: Types.ObjectId, ref: 'User', required: false },
-            updatedByName: { type: String, required: false }
+            _id: false
         }],
         default: [{
             status: ApplicationStatus.PENDING_DESK_REVIEW,

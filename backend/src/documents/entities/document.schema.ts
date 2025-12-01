@@ -78,7 +78,8 @@ export class verificationDocuments{
         required: true,
         type: {
             status: { type: String, enum: Object.values(Status), default: Status.PENDING },
-            message: { type: String, required: false }
+            message: { type: String, required: false },
+            _id: false
         }
     })
     status: statusObject;

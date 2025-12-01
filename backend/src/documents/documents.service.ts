@@ -118,13 +118,6 @@ export class DocumentsService {
 
   async updateDocumentStatus(id: string, updateDocumentStatusDto: UpdateDocumentStatusDto): Promise<verificationDocuments> {
     try {
-      const document = await this.verificationDocumentModel.findById(id);
-      
-      if (!document) {
-        throw new NotFoundException('Document not found');
-      }
-
-      // Validate that NEED_REVIEW or REJECTED status must have a message
       if (
         (updateDocumentStatusDto.status.status === Status.NEED_REVIEW || 
          updateDocumentStatusDto.status.status === Status.REJECTED) &&
@@ -134,9 +127,18 @@ export class DocumentsService {
           `A message is required when status is "${updateDocumentStatusDto.status.status}"`
         );
       }
+      
+      const document = await this.verificationDocumentModel.findByIdAndUpdate(id, {
+        Status: updateDocumentStatusDto.status
+      });
+      
+      if (!document) {
+        throw new NotFoundException('Document not found');
+      }
 
-      document.status = updateDocumentStatusDto.status;
-      return await document.save();
+      // Validate that NEED_REVIEW or REJECTED status must have a message
+     
+      return document
     } catch (err) {
       if (err instanceof NotFoundException) {
         throw err;

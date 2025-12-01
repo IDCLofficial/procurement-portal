@@ -407,6 +407,12 @@ export class VendorsService {
               await company.save()
             }
             
+            // Update vendor form step to bank details if still on directors step
+            if (vendor.companyForm === companyForm.STEP2) {
+              vendor.companyForm = companyForm.STEP3;
+              await vendor.save();
+            }
+            
             return {
               message: "Directors information updated successfully",
               result: result,
@@ -453,26 +459,31 @@ export class VendorsService {
           const company = await this.companyModel.findOne({userId:vendor._id})          
           // Store bank details in company (assuming they're part of company schema or embedded)
           // If bank details need a separate collection, create a new model
-          if(company){
-            Object.assign(company, {
-              bankName: updateRegistrationDto.bankDetails.bankName,
-              accountNumber: updateRegistrationDto.bankDetails.accountNumber,
-              accountName: updateRegistrationDto.bankDetails.accountName
-            });
-            
-            await company.save();
-            
-            vendor.companyForm = companyForm.STEP4;
-            await vendor.save();
-            
-            return {
-              message: "Bank details updated successfully",
-              result: company,
-              nextStep: vendor.companyForm
-            }
+          if(!company){
+            throw new NotFoundException('Company not found. Please complete company registration first.');
           }
+          
+          Object.assign(company, {
+            bankName: updateRegistrationDto.bankDetails.bankName,
+            accountNumber: updateRegistrationDto.bankDetails.accountNumber,
+            accountName: updateRegistrationDto.bankDetails.accountName
+          });
+          
+          await company.save();
+          
+          vendor.companyForm = companyForm.STEP4;
+          await vendor.save();
+          
+          return {
+            message: "Bank details updated successfully",
+            result: company,
+            nextStep: vendor.companyForm
+          };
         }catch(err){
           this.Logger.debug(`${err}`)
+          if (err instanceof NotFoundException) {
+            throw err;
+          }
           throw new ConflictException('Error updating bank details')
         }
       }

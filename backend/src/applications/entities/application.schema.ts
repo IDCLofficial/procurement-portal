@@ -27,9 +27,9 @@ export enum CurrentStatus {
 }
 
 export enum ApplicationType {
-    NEW = 'New',
-    RENEWAL = 'Renewal',
-    UPGRADE = 'Upgrade'
+    NEW = 'new',
+    RENEWAL = 'renewal',
+    UPGRADE = 'upgrade'
 }
 
 export type ApplicationDocument = Application & Document

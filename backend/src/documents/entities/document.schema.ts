@@ -10,10 +10,10 @@ export enum renewalFreq {
     annual="annual"
 }
 export enum Status{
-    PENDING="Pending",
-    NEED_REVIEW="Needs Review",
-    APPROVED="Approved",
-    REJECTED="Rejected"
+    PENDING="pending",
+    NEED_REVIEW="needs_review",
+    APPROVED="approved",
+    REJECTED="rejected"
 }
 
 export type statusObject = {
@@ -74,13 +74,7 @@ export class verificationDocuments{
     @Prop({required:true})
     hasValidityPeriod:boolean;
 
-    @Prop({
-        required: true,
-        type: {
-            status: { type: String, enum: Object.values(Status), default: Status.PENDING },
-            message: { type: String, required: false }
-        }
-    })
+    @Prop({required: true})
     status: statusObject;
 }
 

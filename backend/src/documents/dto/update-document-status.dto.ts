@@ -8,7 +8,6 @@ export class UpdateDocumentStatusDto {
     description: 'Status object containing status and optional message',
     required: true
   })
-  @ValidateNested()
   @IsNotEmpty()
   status: statusObject;
 }

@@ -131,7 +131,11 @@ export class DocumentsService {
         );
       }
       
-      const document = await this.verificationDocumentModel.findByIdAndUpdate(id, updateDocumentStatusDto);
+      const document = await this.verificationDocumentModel.findByIdAndUpdate(
+        id, 
+        updateDocumentStatusDto,
+        { new: true }
+      );
       
       if (!document) {
         throw new NotFoundException('Document not found');

@@ -7,14 +7,16 @@ WORKDIR /app
 # Copy dependency files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (including devDependencies needed for build)
+RUN npm ci
 
 # Copy the rest of the application files
 COPY . .
 
-# Build the NestJS project
-RUN npm run build
+# Build the NestJS project and verify dist folder exists
+RUN npm run build && \
+    ls -la dist/ && \
+    test -f dist/main.js || (echo "Build failed: dist/main.js not found" && exit 1)
 
 
 
@@ -28,12 +30,15 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install only production dependencies
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 # Copy built files from the builder stage
 COPY --from=builder /app/dist ./dist
 
-# Expose the port Railway will use
+# Verify the main.js file exists before starting
+RUN test -f dist/main.js || (echo "ERROR: dist/main.js not found in production image" && exit 1)
+
+# Expose the port
 EXPOSE 3000
 
 # Start the server

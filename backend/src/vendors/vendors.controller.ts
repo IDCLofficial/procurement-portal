@@ -357,6 +357,9 @@ export class VendorsController {
     return this.vendorsService.registerCompany(req, updateRegistrationDto, files);
   }
 
+  /** */
+  
+
   /**
    * Update a vendor profile
    * 

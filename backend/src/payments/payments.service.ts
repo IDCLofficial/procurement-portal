@@ -160,7 +160,9 @@ export class SplitPaymentService {
 
       this.logger.log(`Payment initialized: ${payment.paystackReference}`);
 
-      return result.data.authorization_url
+      return {
+        authorization_url:result.data.authorization_url
+      }
     
     } catch (error) {
       this.logger.error(`Error initializing payment: ${error.message}`);

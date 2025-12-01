@@ -44,9 +44,6 @@ export class Payment {
     transactionReference?: string; // e.g., "PYSTACK-app-2024-009"
 
     @Prop({ required: false })
-    paystackReference?: string; // Paystack transaction reference
-
-    @Prop({ required: false })
     paymentDate?: Date; // Date when payment was verified
 
     @Prop({ required: false })

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -13,7 +13,7 @@ import { Company, CompanyDocument } from 'src/companies/entities/company.schema'
 import { NotFound } from '@aws-sdk/client-s3';
 import { Application, ApplicationDocument } from 'src/applications/entities/application.schema';
 import { ApplicationSubmittedEvent } from 'src/notifications/events/application-submitted.event';
-import { Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
+import { companyForm, Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
 
 @Injectable()
 export class SplitPaymentService {
@@ -152,13 +152,12 @@ export class SplitPaymentService {
         type: dto.type,
         description: dto.description,
         transactionReference: paymentReference,
-        paystackReference: result.data.reference,
       });
 
       await payment.save();
       this.logger.log(`Payment document created: ${paymentId}`);
 
-      this.logger.log(`Payment initialized: ${payment.paystackReference}`);
+      this.logger.log(`Payment initialized: ${payment.transactionReference}`);
 
       return {
         authorization_url:result.data.authorization_url
@@ -236,11 +235,15 @@ export class SplitPaymentService {
             status: PaymentStatus.VERIFIED,
             paymentDate: new Date(),
             verificationMessage: 'Payment has been confirmed via Paystack gateway',
-            paystackReference: result.data.reference,
             applicationId: newApplication._id,
           }
         );
         this.logger.log(`Payment verified and updated: ${reference}`);
+
+        vendor.companyForm = companyForm.COMPLETE
+        await vendor.save()
+      }else{
+        throw new ConflictException('The payment was not successful')
       }
 
       return result;

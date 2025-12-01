@@ -796,7 +796,7 @@ export class VendorsService {
    * Retrieves all applications associated with a vendor's company,
    * including populated company details and documents
    */
-  async getVendorApplication(userId:string): Promise<Application> {
+  async getVendorApplication(userId:string){
     try {
       // Verify company exists
       const vendor = await this.vendorModel.findById(userId);
@@ -810,7 +810,7 @@ export class VendorsService {
         throw new NotFoundException('Company not found');
       }
 
-      // Find all applications for this company
+      // Find the application
       const application = await this.applicationModel
         .findOne({ companyId: company._id})
         .populate({

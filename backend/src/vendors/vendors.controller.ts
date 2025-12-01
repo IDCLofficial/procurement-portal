@@ -418,7 +418,7 @@ export class VendorsController {
   getVendorApplications(@Param('companyId') @Req() req:any) {
    const authHeader = req.headers.authorization;
   const userId = this.jwtService.decode(authHeader.split(' ')[1])._id;
-  return this.vendorsService.getVendorApplications(userId);
+  return this.vendorsService.getVendorApplication(userId);
   }
 
   /**

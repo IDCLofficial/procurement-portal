@@ -178,7 +178,11 @@ export class SplitPaymentService {
       // Update transaction status in database
       if (result.data.status === 'success') {
         // Find the company
-        const company = await this.companyModel.findOne({userId:new Types.ObjectId(userId)});
+        const vendor  = await this.vendorModel.findById(userId);
+        if(!vendor){
+          throw new NotFoundException("Vendor not found") 
+        }
+        const company = await this.companyModel.findById(vendor.companyId);
         if (!company) {
           throw new NotFoundException("Company not found");
         }

@@ -163,7 +163,7 @@ export class SplitPaymentService {
       this.logger.log(`Payment document created: ${paymentId}`);
 
       this.logger.log(`Payment initialized: ${payment.paystackReference}`);
-      return res.redirect(result.data.authorization_url);
+      return res.redirect(301, result.data.authorization_url);
     } catch (error) {
       this.logger.error(`Error initializing payment: ${error.message}`);
       throw new BadRequestException(error.message);

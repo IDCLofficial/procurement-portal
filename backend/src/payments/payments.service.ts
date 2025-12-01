@@ -13,7 +13,7 @@ import { Company, CompanyDocument } from 'src/companies/entities/company.schema'
 import { NotFound } from '@aws-sdk/client-s3';
 import { Application, ApplicationDocument } from 'src/applications/entities/application.schema';
 import { ApplicationSubmittedEvent } from 'src/notifications/events/application-submitted.event';
-import { Vendor } from 'src/vendors/entities/vendor.schema';
+import { Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
 
 @Injectable()
 export class SplitPaymentService {
@@ -24,6 +24,7 @@ export class SplitPaymentService {
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
+    @InjectModel(Vendor.name) private vendorModel:Model<VendorDocument>,
     private readonly configService: ConfigService,
   ) { }
 
@@ -112,29 +113,45 @@ export class SplitPaymentService {
     }
   }
 
-  async initializePaymentWithSplit(dto: InitializePaymentWithSplitDto, user: any) {
+  async initializePaymentWithSplit(dto: InitializePaymentWithSplitDto, user: any, res:any) {
     try {
       const splitCode = this.configService.get<string>('PAYSTACK_SPLIT_CODE');
       this.logger.log(`Initializing payment with split: ${splitCode}`);
 
-      const company = await this.companyModel.findById(user.companyId);
+      console.log(user)
+      const vendor = await this.vendorModel.findById(user._id);
+      if(!vendor){
+        throw new NotFoundException("vendor not found");
+      }
+      const company = await this.companyModel.findById(vendor.companyId);
+
       if(!company){
         throw new NotFoundException("company not found")
       }
       
       const paymentReference = this.generateReference();
+      console.log(paymentReference)
 
-      const result = await this.paystackSplitService.initializeTransaction(dto, paymentReference, user.email);
+      const result = await this.paystackSplitService.initializeTransaction(dto, user.email, paymentReference);
+
+      //
 
       // Create payment document and save to database
       const paymentId = await this.generatePaymentId();
+
+      // Convert categories array to comma-separated string
+      const categoryString = company.categories
+        .map(cat => cat.sector)
+        .filter(Boolean)
+        .join(', ')
+        .toUpperCase();
 
       const payment = new this.paymentModel({
         paymentId,
         companyId: new Types.ObjectId(company._id as Types.ObjectId),
         amount: dto.amount / 100, // Convert from kobo to naira,
-        category:company.categories[0],
-        grade:company.grade,
+        category: categoryString || 'N/A',
+        grade: company.grade,
         status: PaymentStatus.PENDING,
         type: dto.type,
         description: dto.description,
@@ -146,7 +163,7 @@ export class SplitPaymentService {
       this.logger.log(`Payment document created: ${paymentId}`);
 
       this.logger.log(`Payment initialized: ${payment.paystackReference}`);
-      return result;
+      return res.redirect(result.data.authorization_url);
     } catch (error) {
       this.logger.error(`Error initializing payment: ${error.message}`);
       throw new BadRequestException(error.message);
@@ -245,7 +262,10 @@ export class SplitPaymentService {
   }
 
   private generateReference(): string {
-    return `split_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    // Paystack only allows alphanumeric and "-,., =" characters
+    const timestamp = Date.now();
+    const randomNum = Math.floor(Math.random() * 1000000);
+    return `split-${timestamp}-${randomNum}`;
   }
 
   private async generatePaymentId(): Promise<string> {

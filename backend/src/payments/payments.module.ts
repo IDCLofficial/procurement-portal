@@ -10,6 +10,7 @@ import { Payment, PaymentSchema } from './entities/payment.schema';
 import { VendorsModule } from '../vendors/vendors.module';
 import { Company, CompanySchema } from '../companies/entities/company.schema';
 import { Application, ApplicationSchema } from '../applications/entities/application.schema';
+import { Vendor, VendorSchema } from 'src/vendors/entities/vendor.schema';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { Application, ApplicationSchema } from '../applications/entities/applica
     MongooseModule.forFeature([
       { name: Payment.name, schema: PaymentSchema },
       { name: Company.name, schema: CompanySchema },
-      { name: Application.name, schema: ApplicationSchema }
+      { name: Application.name, schema: ApplicationSchema },
+      { name: Vendor.name, schema: VendorSchema }
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

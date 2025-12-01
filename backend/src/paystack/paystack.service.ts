@@ -104,7 +104,7 @@ export class PaystackSplitService {
     }
   }
 
-  async initializeTransaction(dto: InitializePaymentWithSplitDto, email, reference) {
+  async initializeTransaction(dto: InitializePaymentWithSplitDto, email:string, reference:string) {
     try {
       const splitCode = this.configService.get<string>('PAYSTACK_SPLIT_CODE');
       const payload = {

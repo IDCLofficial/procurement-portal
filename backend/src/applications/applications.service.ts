@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } from './entities/application.schema';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { AssignApplicationDto } from './dto/assign-application.dto';
@@ -18,7 +17,6 @@ export class ApplicationsService {
     @InjectModel(Certificate.name) private certificateModel: Model<CertificateDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findAll(status?: ApplicationStatus, type?:ApplicationType, page: number = 1, limit: number = 10) {
@@ -215,17 +213,17 @@ export class ApplicationsService {
         const companyName = application.contractorName || company?.companyName || 'Unknown Company';
         
         // Emit status updated event
-        this.eventEmitter.emit(
-          'application.status.updated',
-          new ApplicationStatusUpdatedEvent(
-            application._id as Types.ObjectId,
-            application.applicationId,
-            companyName,
-            vendorId,
-            oldStatus,
-            newStatus,
-          ),
-        );
+        // this.eventEmitter.emit(
+        //   'application.status.updated',
+        //   new ApplicationStatusUpdatedEvent(
+        //     application._id as Types.ObjectId,
+        //     application.applicationId,
+        //     companyName,
+        //     vendorId,
+        //     oldStatus,
+        //     newStatus,
+        //   ),
+        // );
         
         // If status changed to APPROVED, generate certificate
         if (newStatus === ApplicationStatus.APPROVED) {

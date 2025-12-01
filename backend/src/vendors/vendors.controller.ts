@@ -357,8 +357,69 @@ export class VendorsController {
     return this.vendorsService.registerCompany(req, updateRegistrationDto, files);
   }
 
-  /** */
-  
+  /**
+   * Get all applications for a vendor's company
+   * 
+   * @param companyId - Company ID (MongoDB ObjectId)
+   * @returns Array of applications for the vendor's company
+   * 
+   * @description
+   * Retrieves all applications associated with a vendor's company.
+   * Requires authentication. Returns applications with populated company details.
+   * 
+   * @example
+   * GET /vendors/applications/company/507f1f77bcf86cd799439011
+   */
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('applications/my-company')
+  @ApiOperation({ 
+    summary: 'Get vendor applications by company ID',
+    description: 'Retrieves all applications for a specific company. Requires authentication.'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Applications retrieved successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+          applicationId: { type: 'string', example: 'APP-2025-001' },
+          contractorName: { type: 'string', example: 'Tech Solutions Ltd' },
+          applicationStatus: { 
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                status: { type: 'string', example: 'Pending Desk Review' },
+                timestamp: { type: 'string', format: 'date-time' },
+                notes: { type: 'string', example: 'Application submitted' }
+              }
+            }
+          },
+          currentStatus: { type: 'string', example: 'Pending Desk Review' },
+          submissionDate: { type: 'string', format: 'date-time' },
+          grade: { type: 'string', example: 'A' },
+          type: { type: 'string', example: 'new' }
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: HttpStatus.NOT_FOUND, 
+    description: 'Company not found or no applications exist'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.UNAUTHORIZED, 
+    description: 'Unauthorized - Invalid or missing token'
+  })
+  getVendorApplications(@Param('companyId') @Req() req:any) {
+   const authHeader = req.headers.authorization;
+  const userId = this.jwtService.decode(authHeader.split(' ')[1])._id;
+  return this.vendorsService.getVendorApplications(userId);
+  }
 
   /**
    * Update a vendor profile

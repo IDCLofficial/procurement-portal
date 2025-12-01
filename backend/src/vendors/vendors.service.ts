@@ -13,6 +13,7 @@ import { updateRegistrationDto } from './dto/update-registration.dto';
 import { Company, CompanyDocument, Directors, DirectorsDocument, Status } from '../companies/entities/company.schema';
 import { verificationDocuments, verificationDocument, Status as DocumentStatus } from '../documents/entities/document.schema';
 import { Payment, PaymentDocument } from '../payments/entities/payment.schema';
+import { Application, ApplicationDocument } from '../applications/entities/application.schema';
 import { loginDto } from './dto/logn.dto';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ValidationError } from 'class-validator';
@@ -30,6 +31,7 @@ export class VendorsService {
     @InjectModel(Directors.name) private directorsModel: Model<DirectorsDocument>,
     @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
+    @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
     @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
     private tokenHandlers: TokenHandlers,
@@ -781,5 +783,56 @@ export class VendorsService {
     }
 
     return registrationPayment;
+  }
+
+  /**
+   * Get applications for a vendor by their companyId
+   * 
+   * @param companyId - Company ID (MongoDB ObjectId)
+   * @returns Array of applications for the vendor's company
+   * @throws {NotFoundException} If company not found or no applications exist
+   * 
+   * @description
+   * Retrieves all applications associated with a vendor's company,
+   * including populated company details and documents
+   */
+  async getVendorApplication(userId:string): Promise<Application> {
+    try {
+      // Verify company exists
+      const vendor = await this.vendorModel.findById(userId);
+
+      if(!vendor){
+        throw new NotFoundException("Vendor not found")
+      }
+      
+      const company = await this.companyModel.findById(vendor.companyId);
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+
+      // Find all applications for this company
+      const application = await this.applicationModel
+        .findOne({ companyId: company._id})
+        .populate({
+          path: 'companyId',
+          populate: {
+            path: 'documents'
+          }
+        })
+        .sort({ createdAt: -1 })
+        .exec();
+
+      if (!application) {
+        throw new NotFoundException('No applications found for this company');
+      }
+
+      return application.applicationStatus;
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.Logger.error(`Error fetching vendor applications: ${err.message}`);
+      throw new BadRequestException('Failed to retrieve applications');
+    }
   }
 }

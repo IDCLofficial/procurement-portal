@@ -8,6 +8,7 @@ import TokenHandlers from 'src/lib/generateToken';
 import { Company, CompanySchema, Directors, DirectorsSchema } from 'src/companies/entities/company.schema';
 import { verificationDocuments, VerificationDocumentSchema } from 'src/documents/entities/document.schema';
 import { Payment, PaymentSchema } from 'src/payments/entities/payment.schema';
+import { Application, ApplicationSchema } from 'src/applications/entities/application.schema';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Payment, PaymentSchema } from 'src/payments/entities/payment.schema';
     MongooseModule.forFeature([{ name: Directors.name, schema: DirectorsSchema }]),
     MongooseModule.forFeature([{ name: verificationDocuments.name, schema: VerificationDocumentSchema }]),
     MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
+    MongooseModule.forFeature([{ name: Application.name, schema: ApplicationSchema }]),
   ],
   controllers: [VendorsController],
   providers: [VendorsService, EmailService, TokenHandlers],

@@ -77,19 +77,6 @@ export class InitializePaymentWithSplitDto {
   @Min(1)
   amount: number;
 
-  @ApiProperty({ description: 'Customer email' })
-  @IsString()
-  email: string;
-
-  @ApiProperty({ description: 'Split code' })
-  @IsString()
-  split_code: string;
-
-  @ApiProperty({ description: 'Application ID', required: false })
-  @IsOptional()
-  @IsMongoId()
-  applicationId?: string;
-
   @ApiProperty({ enum: ApplicationType, description: 'Payment type' })
   @IsEnum(ApplicationType)
   type: ApplicationType;
@@ -97,26 +84,6 @@ export class InitializePaymentWithSplitDto {
   @ApiProperty({ description: 'Payment description', example: 'Initial Registration - Works Grade A' })
   @IsString()
   description: string;
-
-  @ApiProperty({ description: 'Category', required: false, example: 'WORKS, ICT' })
-  @IsOptional()
-  @IsString()
-  category: string;
-
-  @ApiProperty({ description: 'Grade', required: false, example: 'Grade A' })
-  @IsOptional()
-  @IsString()
-  grade: string;
-
-  @ApiProperty({ description: 'Reference', required: false })
-  @IsOptional()
-  @IsString()
-  reference?: string;
-
-  @ApiProperty({ description: 'Callback URL', required: false })
-  @IsOptional()
-  @IsString()
-  callback_url?: string;
 
   @ApiProperty({ description: 'Additional metadata', required: false })
   @IsOptional()

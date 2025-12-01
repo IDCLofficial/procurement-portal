@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } from './entities/application.schema';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { AssignApplicationDto } from './dto/assign-application.dto';
@@ -8,6 +9,7 @@ import { Certificate, CertificateDocument } from '../certificates/entities/certi
 import { Company, CompanyDocument } from '../companies/entities/company.schema';
 import { User, UserDocument } from '../users/entities/user.schema';
 import { generateCertificateId } from '../lib/generateCertificateId';
+import { ApplicationStatusUpdatedEvent } from '../notifications/events/application-status-updated.event';
 
 @Injectable()
 export class ApplicationsService {
@@ -15,7 +17,8 @@ export class ApplicationsService {
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
     @InjectModel(Certificate.name) private certificateModel: Model<CertificateDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findAll(status?: ApplicationStatus, type?:ApplicationType, page: number = 1, limit: number = 10) {
@@ -193,18 +196,41 @@ export class ApplicationsService {
 
   async updateApplicationStatus(id: string, updateApplicationStatusDto: UpdateApplicationStatusDto): Promise<Application> {
     try {
-      const application = await this.applicationModel.findById(id);
+      const application = await this.applicationModel.findById(id).populate('companyId');
       
       if (!application) {
         throw new NotFoundException('Application not found');
       }
 
       const oldStatus = application.applicationStatus;
-      application.applicationStatus = updateApplicationStatusDto.applicationStatus;
+      const newStatus = updateApplicationStatusDto.applicationStatus;
       
-      // If status changed to APPROVED, generate certificate
-      if (updateApplicationStatusDto.applicationStatus === ApplicationStatus.APPROVED && oldStatus !== ApplicationStatus.APPROVED) {
-        await this.generateCertificate(application);
+      // Only emit event if status actually changed
+      if (oldStatus !== newStatus) {
+        application.applicationStatus = newStatus;
+        
+        // Get company details for the event
+        const company = application.companyId as any;
+        const vendorId = company?.userId || new Types.ObjectId();
+        const companyName = application.contractorName || company?.companyName || 'Unknown Company';
+        
+        // Emit status updated event
+        this.eventEmitter.emit(
+          'application.status.updated',
+          new ApplicationStatusUpdatedEvent(
+            application._id as Types.ObjectId,
+            application.applicationId,
+            companyName,
+            vendorId,
+            oldStatus,
+            newStatus,
+          ),
+        );
+        
+        // If status changed to APPROVED, generate certificate
+        if (newStatus === ApplicationStatus.APPROVED) {
+          await this.generateCertificate(application);
+        }
       }
       
       return await application.save();

@@ -104,14 +104,15 @@ export class PaystackSplitService {
     }
   }
 
-  async initializeTransaction(dto: InitializePaymentWithSplitDto) {
+  async initializeTransaction(dto: InitializePaymentWithSplitDto, email, reference) {
     try {
+      const splitCode = this.configService.get<string>('PAYSTACK_SPLIT_CODE');
       const payload = {
-        email: dto.email,
+        email: email,
         amount: dto.amount,
-        split_code:dto.split_code || 'SPL_3yyVlNI9mE',
-        reference: dto.reference,
-        callback_url: dto.callback_url,
+        split_code: splitCode || '',
+        reference: reference,
+        callback_url: `${this.configService.get<string>('FRONTEND_URL')}/payment-callback` || 'http://localhost:3000/payment-callback',
         metadata: dto.metadata,
       };
 

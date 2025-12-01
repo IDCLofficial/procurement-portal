@@ -113,8 +113,8 @@ export class SplitPaymentController {
     if(!decoded){
       throw new UnauthorizedException("Expired or missing token")
     }
-    const companyId = decoded.companyId;
-    return this.splitPaymentService.initializePaymentWithSplit(dto, companyId);
+    const user = decoded;
+    return this.splitPaymentService.initializePaymentWithSplit(dto, user);
   }
 
   @Get('verify/:reference')

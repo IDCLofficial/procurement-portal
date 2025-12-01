@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PaystackSplitService } from 'src/paystack/paystack.service';
@@ -11,6 +12,8 @@ import { Payment, PaymentDocument, PaymentStatus } from './entities/payment.sche
 import { Company, CompanyDocument } from 'src/companies/entities/company.schema';
 import { NotFound } from '@aws-sdk/client-s3';
 import { Application, ApplicationDocument } from 'src/applications/entities/application.schema';
+import { ApplicationSubmittedEvent } from 'src/notifications/events/application-submitted.event';
+import { Vendor } from 'src/vendors/entities/vendor.schema';
 
 @Injectable()
 export class SplitPaymentService {
@@ -21,6 +24,7 @@ export class SplitPaymentService {
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
+    private readonly configService: ConfigService,
   ) { }
 
   async createSplit(createSplitDto: CreateSplitDto) {
@@ -108,37 +112,40 @@ export class SplitPaymentService {
     }
   }
 
-  async initializePaymentWithSplit(dto: InitializePaymentWithSplitDto, companyId: any) {
+  async initializePaymentWithSplit(dto: InitializePaymentWithSplitDto, user: any) {
     try {
-      this.logger.log(`Initializing payment with split: ${dto.split_code}`);
+      const splitCode = this.configService.get<string>('PAYSTACK_SPLIT_CODE');
+      this.logger.log(`Initializing payment with split: ${splitCode}`);
 
-      // Generate reference if not provided
-      if (!dto.reference) {
-        dto.reference = this.generateReference();
+      const company = await this.companyModel.findById(user.companyId);
+      if(!company){
+        throw new NotFoundException("company not found")
       }
+      
+      const paymentReference = this.generateReference();
 
-      const result = await this.paystackSplitService.initializeTransaction(dto);
+      const result = await this.paystackSplitService.initializeTransaction(dto, paymentReference, user.email);
 
       // Create payment document and save to database
       const paymentId = await this.generatePaymentId();
+
       const payment = new this.paymentModel({
         paymentId,
-        companyId: new Types.ObjectId(companyId as Types.ObjectId),
-        applicationId: dto.applicationId ? new Types.ObjectId(dto.applicationId) : undefined,
-        amount: dto.amount / 100, // Convert from kobo to naira
+        companyId: new Types.ObjectId(company._id as Types.ObjectId),
+        amount: dto.amount / 100, // Convert from kobo to naira,
+        category:company.categories[0],
+        grade:company.grade,
         status: PaymentStatus.PENDING,
         type: dto.type,
         description: dto.description,
-        category: dto.category,
-        grade: dto.grade,
-        transactionReference: dto.reference,
+        transactionReference: paymentReference,
         paystackReference: result.data.reference,
       });
 
       await payment.save();
       this.logger.log(`Payment document created: ${paymentId}`);
 
-      this.logger.log(`Payment initialized: ${dto.reference}`);
+      this.logger.log(`Payment initialized: ${payment.paystackReference}`);
       return result;
     } catch (error) {
       this.logger.error(`Error initializing payment: ${error.message}`);
@@ -186,6 +193,20 @@ export class SplitPaymentService {
 
         await newApplication.save();
         this.logger.log(`Application created: ${applicationId}`);
+
+        // Emit application submitted event
+        // this.eventEmitter.emit(
+        //   'application.submitted',
+        //   new ApplicationSubmittedEvent(
+        //     newApplication._id as Types.ObjectId,
+        //     applicationId,
+        //     company.companyName,
+        //     company.userId,
+        //     payment.grade || 'N/A',
+        //     payment.type,
+        //   ),
+        // );
+        this.logger.log(`Application submitted event emitted for: ${applicationId}`);
 
         // Update payment record with application ID and status
         await this.paymentModel.findOneAndUpdate(

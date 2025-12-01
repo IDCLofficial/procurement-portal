@@ -22,8 +22,8 @@ import {
  } from './dto/split-payment.dto';
 import { JwtService } from '@nestjs/jwt';
 
-@ApiTags('Split Payments')
-@Controller('split-payments')
+@ApiTags('Vendor Payments')
+@Controller('vendor-payments')
 // @UseGuards(JwtAuthGuard) // Uncomment if using authentication
 // @ApiBearerAuth()
 export class SplitPaymentController {
@@ -33,15 +33,11 @@ export class SplitPaymentController {
   ) {}
 
   @Post('split')
-  @ApiOperation({ summary: 'Create a transaction split' })
-  @ApiResponse({ status: 201, description: 'Split created successfully' })
   async createSplit(@Body() createSplitDto: CreateSplitDto) {
     return this.splitPaymentService.createSplit(createSplitDto);
   }
 
   @Get('split')
-  @ApiOperation({ summary: 'List all splits' })
-  @ApiResponse({ status: 200, description: 'Splits retrieved successfully' })
   async listSplits(
     @Query('page') page?: number,
     @Query('perPage') perPage?: number,
@@ -50,15 +46,11 @@ export class SplitPaymentController {
   }
 
   @Get('split/:id')
-  @ApiOperation({ summary: 'Get split details' })
-  @ApiResponse({ status: 200, description: 'Split details retrieved' })
   async getSplit(@Param('id') id: string) {
     return this.splitPaymentService.getSplit(id);
   }
 
   @Put('split/:id')
-  @ApiOperation({ summary: 'Update split configuration' })
-  @ApiResponse({ status: 200, description: 'Split updated successfully' })
   async updateSplit(
     @Param('id') id: string,
     @Body() updateSplitDto: UpdateSplitDto,
@@ -68,15 +60,11 @@ export class SplitPaymentController {
 
   @Delete('split/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a split' })
-  @ApiResponse({ status: 204, description: 'Split deleted successfully' })
   async deleteSplit(@Param('id') id: string) {
     return this.splitPaymentService.deleteSplit(id);
   }
 
   @Post('split/:id/subaccount/add')
-  @ApiOperation({ summary: 'Add subaccount to split' })
-  @ApiResponse({ status: 200, description: 'Subaccount added successfully' })
   async addSubaccount(
     @Param('id') id: string,
     @Body() body: { subaccount: string; share: number },
@@ -89,8 +77,6 @@ export class SplitPaymentController {
   }
 
   @Delete('split/:id/subaccount/remove')
-  @ApiOperation({ summary: 'Remove subaccount from split' })
-  @ApiResponse({ status: 200, description: 'Subaccount removed successfully' })
   async removeSubaccount(
     @Param('id') id: string,
     @Body() body: { subaccount: string },

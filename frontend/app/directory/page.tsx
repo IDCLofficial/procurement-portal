@@ -1,6 +1,5 @@
 import Header from '@/components/Header';
 import DirectoryClient from '@/components/DirectoryClient';
-import { getContractors } from '@/lib/contractors';
 import { FaQrcode } from 'react-icons/fa6';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -16,9 +15,6 @@ export const metadata: Metadata = {
 };
 
 export default async function DirectoryPage() {
-    // Fetch data on the server
-    const contractors = await getContractors();
-
     return (
         <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
             <Header
@@ -35,7 +31,7 @@ export default async function DirectoryPage() {
                 }
             />
 
-            <DirectoryClient initialContractors={contractors} />
+            <DirectoryClient />
         </div>
     );
 }

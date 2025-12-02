@@ -1,14 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FaCheckCircle, FaDownload, FaExclamationTriangle, FaSearch, FaSpinner } from 'react-icons/fa';
+import { FaCheckCircle, FaDownload, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 import { FaCircleXmark } from 'react-icons/fa6';
 import { getGradeConfig, getSectorConfig, getStatusConfig } from '@/lib/constants';
+import { useAppSelector } from '@/store/hooks';
+import { useGetAllContractorsQuery } from '@/store/api/public.api';
+import { toast } from 'sonner';
 
 export interface Contractor {
     id: string;
@@ -21,28 +24,90 @@ export interface Contractor {
     expiryDate: string;
 }
 
-interface ContractorTableProps {
-    contractors: Contractor[];
-    onExportCSV: () => void;
-    isLoading?: boolean;
-    error?: string | null;
-    isInitialState?: boolean;
-}
-
-export default function ContractorTable({ 
-    contractors, 
-    onExportCSV, 
-    isLoading = false, 
-    error = null,
-    isInitialState = false 
-}: ContractorTableProps) {
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+export default function ContractorTable() {
+    // Get Redux state
+    const { searchQuery, sectorFilter, gradeFilter, lgaFilter, statusFilter, currentPage, itemsPerPage } = useAppSelector((state) => state.public);
     
-    // Pagination logic
-    const totalPages = Math.ceil(contractors.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
+    // Fetch contractors from API
+    const { data: contractorsData, isLoading, error: errorContractors } = useGetAllContractorsQuery({
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchQuery,
+        sector: sectorFilter !== 'all' ? sectorFilter : undefined,
+        grade: gradeFilter !== 'all' ? gradeFilter : undefined,
+        lga: lgaFilter !== 'all' ? lgaFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+    });
+    
+    // Transform API data to match Contractor interface
+    const contractors = useMemo(() => {
+        if (!contractorsData?.certificates) return [];
+        
+        return contractorsData.certificates.map((cert) => ({
+            id: cert.certificateId,
+            name: cert.contractorId.fullname,
+            rcbnNumber: cert.contractorId.companyId || 'N/A',
+            sector: 'Works', // TODO: Get from API
+            grade: 'A', // TODO: Get from API
+            lga: 'Owerri Municipal', // TODO: Get from API
+            status: 'approved' as const, // TODO: Get from API
+            expiryDate: new Date(cert.contractorId.createdAt).toLocaleDateString('en-GB'),
+        }));
+    }, [contractorsData]);
+    
+    const error = errorContractors ? 'Failed to fetch contractors' : null;
+    // CSV Export Handler
+    const handleExportCSV = () => {
+        if (!contractors || contractors.length === 0) {
+            toast.error('No contractors to export', {
+                description: 'Please apply filters to see contractors',
+                duration: 3000,
+            });
+            return;
+        }
+
+        // Create CSV export
+        const csv = [
+            ['S/N', 'Contractor Name', 'RC/BN Number', 'Registration ID', 'Sector', 'Grade', 'LGA', 'Status', 'Expiry Date'],
+            ...contractors.map((c, i) => [
+                i + 1,
+                c.name,
+                c.rcbnNumber,
+                c.id,
+                c.sector,
+                c.grade,
+                c.lga,
+                c.status,
+                c.expiryDate,
+            ]),
+        ]
+            .map((row) => row.map(cell => `"${cell}"`).join(','))
+            .join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Contractors-${new Date().toISOString().split('T')[0]}.csv`;
+        a.style.visibility = 'hidden';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        toast.success('CSV exported successfully', {
+            description: `${contractors.length} contractors exported`,
+            duration: 3000,
+        });
+    };
+    
+    const [localPage, setLocalPage] = useState(1);
+    const localItemsPerPage = 10;
+    
+    // Pagination logic (client-side for display only)
+    const totalPages = Math.ceil(contractors.length / localItemsPerPage);
+    const startIndex = (localPage - 1) * localItemsPerPage;
+    const endIndex = startIndex + localItemsPerPage;
     const paginatedContractors = contractors.slice(startIndex, endIndex);
 
     return (
@@ -55,7 +120,7 @@ export default function ContractorTable({
                     </div>
                     <Button 
                         variant="outline" 
-                        onClick={onExportCSV}
+                        onClick={handleExportCSV}
                         className="cursor-pointer sm:text-base text-xs active:scale-95 transition-transform duration-300"
                     >
                         <FaDownload className="mr-2" />
@@ -85,17 +150,6 @@ export default function ContractorTable({
                         >
                             Try Again
                         </Button>
-                    </div>
-                ) : isInitialState ? (
-                    /* Initial Empty State */
-                    <div className="flex flex-col items-center justify-center py-16">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                            <FaSearch className="text-3xl text-blue-600" />
-                        </div>
-                        <p className="text-gray-900 font-semibold text-lg mb-2">Start Your Search</p>
-                        <p className="text-gray-600 text-center max-w-md">
-                            Use the search and filters above to find contractors in the directory
-                        </p>
                     </div>
                 ) : contractors.length === 0 ? (
                     /* Not Found State */
@@ -177,8 +231,8 @@ export default function ContractorTable({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                        disabled={currentPage === 1}
+                                        onClick={() => setLocalPage(prev => Math.max(1, prev - 1))}
+                                        disabled={localPage === 1}
                                         className="cursor-pointer active:scale-95 transition-transform duration-300"
                                     >
                                         Previous
@@ -187,11 +241,11 @@ export default function ContractorTable({
                                         {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                                             <Button
                                                 key={page}
-                                                variant={currentPage === page ? "default" : "outline"}
+                                                variant={localPage === page ? "default" : "outline"}
                                                 size="sm"
-                                                onClick={() => setCurrentPage(page)}
+                                                onClick={() => setLocalPage(page)}
                                                 className={`w-9 cursor-pointer active:scale-95 transition-transform duration-300 ${
-                                                    currentPage === page ? 'bg-theme-green hover:bg-theme-green/90' : ''
+                                                    localPage === page ? 'bg-theme-green hover:bg-theme-green/90' : ''
                                                 }`}
                                             >
                                                 {page}
@@ -201,8 +255,8 @@ export default function ContractorTable({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                        disabled={currentPage === totalPages}
+                                        onClick={() => setLocalPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={localPage === totalPages}
                                         className="cursor-pointer active:scale-95 transition-transform duration-300"
                                     >
                                         Next

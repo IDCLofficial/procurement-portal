@@ -6,6 +6,7 @@ import companyReducer from './slices/companySlice';
 import documentsReducer from './slices/documentsSlice';
 import categoriesReducer from './slices/categoriesSlice';
 import applicationReducer from './slices/applicationSlice';
+import publicReducer from './slices/publicSlice';
 import { apiSlice } from './api';
 
 const rootReducer = combineReducers({
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   documents: documentsReducer,
   categories: categoriesReducer,
   application: applicationReducer,
+  public: publicReducer,
   // Add more slices here as needed
 });
 

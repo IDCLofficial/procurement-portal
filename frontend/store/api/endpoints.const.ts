@@ -13,4 +13,7 @@ export default {
     getApplication: "/vendors/applications/my-company",
     vendorApplicationTimeline: "vendors/my-application-timeline",
     myPaymentsHistory: "/vendors/my-payment-history",
+
+    // Public Endpoints
+    getAllContractor: "/certificates",
 } as const

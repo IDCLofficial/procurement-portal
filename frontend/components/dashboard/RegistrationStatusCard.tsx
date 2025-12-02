@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FaCheckCircle, FaDownload, FaEdit, FaTimesCircle, FaExclamationCircle, FaBan, FaClock } from 'react-icons/fa';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 interface RegistrationStatusCardProps {
     registrationId: string;
@@ -60,7 +61,7 @@ export default function RegistrationStatusCard({
     return (
         <Card className={`border ${config.cardBg}`}>
             <CardContent className="px-6">
-                <div className="flex items-start justify-between mb-6">
+                <div className={cn("flex items-start justify-between mb-6")}>
                     <div>
                         <h2 className="text-base font-semibold text-gray-900 mb-1">Registration Status</h2>
                         <p className="text-sm text-gray-500">Current status of your contractor registration</p>
@@ -73,7 +74,7 @@ export default function RegistrationStatusCard({
 
                 {/* Decline/Suspension Reason Alert */}
                 {(status === 'declined' && declineReason) && (
-                    <div className="bg-gradient-to-b from-white to-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div className="bg-linear-to-b from-white to-red-50 border border-red-200 rounded-lg p-4 mb-6">
                         <div className="flex items-start gap-3">
                             <FaTimesCircle className="text-red-600 text-lg mt-0.5 shrink-0" />
                             <div className="flex-1">
@@ -85,7 +86,7 @@ export default function RegistrationStatusCard({
                 )}
 
                 {(status === 'suspended' && suspensionReason) && (
-                    <div className="bg-gradient-to-b from-white to-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                    <div className="bg-linear-to-b from-white to-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
                         <div className="flex items-start gap-3">
                             <FaBan className="text-gray-600 text-lg mt-0.5 shrink-0" />
                             <div className="flex-1">
@@ -97,7 +98,7 @@ export default function RegistrationStatusCard({
                 )}
 
                 {status === 'expired' && (
-                    <div className="bg-gradient-to-b from-white to-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                    <div className="bg-linear-to-b from-white to-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
                         <div className="flex items-start gap-3">
                             <FaExclamationCircle className="text-orange-600 text-lg mt-0.5 shrink-0" />
                             <div className="flex-1">
@@ -109,7 +110,7 @@ export default function RegistrationStatusCard({
                 )}
 
                 {status === 'pending' && (
-                    <div className="bg-gradient-to-b from-white to-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <div className="bg-linear-to-b from-white to-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                         <div className="flex items-start gap-3">
                             <FaClock className="text-yellow-600 text-lg mt-0.5 shrink-0" />
                             <div className="flex-1">
@@ -120,14 +121,14 @@ export default function RegistrationStatusCard({
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4", status === 'declined' ? '' : 'mb-6')}>
                     {/* Registration ID */}
                     <div className={`${
-                        status === 'approved' ? 'bg-gradient-to-b from-white to-green-50 border-green-200' :
-                        status === 'declined' ? 'bg-gradient-to-b from-white to-red-50 border-red-200' :
-                        status === 'expired' ? 'bg-gradient-to-b from-white to-orange-50 border-orange-200' :
-                        status === 'suspended' ? 'bg-gradient-to-b from-white to-gray-50 border-gray-200' :
-                        'bg-gradient-to-b from-white to-yellow-50 border-yellow-200'
+                        status === 'approved' ? 'bg-linear-to-b from-white to-green-50 border-green-200' :
+                        status === 'declined' ? 'bg-linear-to-b from-white to-red-50 border-red-200' :
+                        status === 'expired' ? 'bg-linear-to-b from-white to-orange-50 border-orange-200' :
+                        status === 'suspended' ? 'bg-linear-to-b from-white to-gray-50 border-gray-200' :
+                        'bg-linear-to-b from-white to-yellow-50 border-yellow-200'
                     } border rounded-lg p-4`}>
                         <div className="flex items-start gap-2">
                             <StatusIcon className={`${
@@ -158,7 +159,7 @@ export default function RegistrationStatusCard({
 
                     {/* Valid Until - Only show for approved/expired/suspended */}
                     {(status === 'approved' || status === 'expired' || status === 'suspended') && validUntil && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="bg-linear-to-b from-white to-blue-50 border border-blue-200 rounded-lg p-4">
                             <div className="flex items-start gap-2">
                                 <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -199,26 +200,7 @@ export default function RegistrationStatusCard({
                             </Link>
                         </>
                     )}
-
-                    {status === 'declined' && (
-                        <>
-                            <Button
-                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
-                                onClick={onReapply}
-                            >
-                                <FaEdit className="mr-2 text-sm" />
-                                Reapply for Registration
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                onClick={onContactSupport}
-                            >
-                                Contact Support
-                            </Button>
-                        </>
-                    )}
-
+                    
                     {status === 'expired' && (
                         <>
                             <Button

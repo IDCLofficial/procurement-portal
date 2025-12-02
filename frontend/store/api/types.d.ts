@@ -269,4 +269,34 @@ interface PaymentHistoryResponse {
     };
 }
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse };
+interface ContractorsResponse {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  statusCounts: {
+    approved: number;
+    expired: number;
+    revoked: number;
+  };
+  certificates: {
+    _id: string;
+    certificateId: string;
+    contractorId: {
+      _id: string;
+      fullname: string;
+      email: string;
+      phoneNo: string;
+      password: string;
+      isVerified: boolean;
+      certificateId: string;
+      otpFailedAttempts: number;
+      createdAt: string;
+      updatedAt: string;
+      __v: number;
+      companyId: string;
+    };
+  }[];
+}
+
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse };

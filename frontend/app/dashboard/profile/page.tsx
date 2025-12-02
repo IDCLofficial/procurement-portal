@@ -15,6 +15,7 @@ import InfoBanner from '@/components/profile/InfoBanner';
 import { FaBuilding, FaUsers, FaUniversity } from 'react-icons/fa';
 import SubHeader from '@/components/SubHeader';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
+import { lgaObject } from '@/lib/constants.const';
 
 export default function EditProfilePage() {
     const router = useRouter();
@@ -55,35 +56,7 @@ export default function EditProfilePage() {
         },
     ];
 
-    const lgaOptions = [
-        { value: 'Aboh Mbaise', label: 'Aboh Mbaise' },
-        { value: 'Ahiazu Mbaise', label: 'Ahiazu Mbaise' },
-        { value: 'Ehime Mbano', label: 'Ehime Mbano' },
-        { value: 'Ezinihitte', label: 'Ezinihitte' },
-        { value: 'Ideato North', label: 'Ideato North' },
-        { value: 'Ideato South', label: 'Ideato South' },
-        { value: 'Ihedioha/Igbo Etiti', label: 'Ihedioha/Igbo Etiti' },
-        { value: 'Ihitte/Uboma', label: 'Ihitte/Uboma' },
-        { value: 'Ikeduru', label: 'Ikeduru' },
-        { value: 'Isiala Mbano', label: 'Isiala Mbano' },
-        { value: 'Isu', label: 'Isu' },
-        { value: 'Mbaitoli', label: 'Mbaitoli' },
-        { value: 'Ngor Okpala', label: 'Ngor Okpala' },
-        { value: 'Njaba', label: 'Njaba' },
-        { value: 'Nkwerre', label: 'Nkwerre' },
-        { value: 'Nwangele', label: 'Nwangele' },
-        { value: 'Obowo', label: 'Obowo' },
-        { value: 'Oguta', label: 'Oguta' },
-        { value: 'Ohaji/Egbema', label: 'Ohaji/Egbema' },
-        { value: 'Okigwe', label: 'Okigwe' },
-        { value: 'Orlu', label: 'Orlu' },
-        { value: 'Orsu', label: 'Orsu' },
-        { value: 'Oru East', label: 'Oru East' },
-        { value: 'Oru West', label: 'Oru West' },
-        { value: 'Owerri Municipal', label: 'Owerri Municipal' },
-        { value: 'Owerri North', label: 'Owerri North' },
-        { value: 'Owerri West', label: 'Owerri West' },
-    ];
+    const lgaOptions = lgaObject;
 
     const handleFieldChange = (field: string, value: string) => {
         setFormData((prev) => ({

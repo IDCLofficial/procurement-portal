@@ -2,17 +2,20 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FaCheckCircle, FaEye, FaTimes, FaExclamationCircle } from 'react-icons/fa';
-import { DownloadIcon, EyeIcon } from "lucide-react"
+import { FaCheckCircle, FaTimes, FaExclamationCircle } from 'react-icons/fa';
+import { DownloadIcon, EyeIcon, Loader2 } from "lucide-react"
 import AlertBanner from './AlertBanner';
+import useFileDownload from '@useverse/usefiledownload';
 
-type DocumentStatus = 'verified' | 'required' | 'expiring' | 'expired';
+type DocumentStatus = 'verified' | 'required' | 'expiring' | 'expired' | 'pending' | 'review';
 
 interface DocumentCardProps {
     title: string;
     status: DocumentStatus;
     certificateNumber?: string;
+    fileUrl?: string;
     fileSize?: string;
+    fileType?: string;
     uploadDate?: string;
     expiryStatus?: 'Expires Annually' | 'Expired';
     validFrom?: string;
@@ -20,7 +23,6 @@ interface DocumentCardProps {
     errorMessage?: string;
     showReplaceSection?: boolean;
     onView?: () => void;
-    onDownload?: () => void;
     onClose?: () => void;
     onReplace?: () => void;
 }
@@ -29,7 +31,9 @@ export default function DocumentCard({
     title,
     status,
     certificateNumber,
+    fileUrl,
     fileSize,
+    fileType,
     uploadDate,
     expiryStatus,
     validFrom,
@@ -37,10 +41,31 @@ export default function DocumentCard({
     errorMessage,
     showReplaceSection = false,
     onView,
-    onDownload,
     onClose,
     onReplace,
 }: DocumentCardProps) {
+    const [downloadStatus, startDownload] = useFileDownload();
+
+    const getFileExtension = (mimeType?: string): string => {
+        if (!mimeType) return 'pdf';
+        
+        // Handle MIME types (e.g., "image/png" -> "png")
+        if (mimeType.includes('/')) {
+            const extension = mimeType.split('/')[1];
+            // Handle special cases
+            if (extension === 'jpeg') return 'jpg';
+            return extension;
+        }
+        
+        // If it's already just an extension, return it
+        return mimeType;
+    };
+
+    const handleDownload = () => {
+        if (!fileUrl) return;
+        const extension = getFileExtension(fileType);
+        startDownload(fileUrl, `${title}.${extension}`);
+    };
     // Status configuration
     const statusConfig = {
         verified: {
@@ -88,6 +113,32 @@ export default function DocumentCard({
             ),
             cardClass: 'border-red-200 bg-red-50/30',
         },
+        review: {
+            icon: <FaExclamationCircle className="text-sm text-red-600" />,
+            iconBg: 'bg-red-100',
+            badge: (
+                <div className="flex items-center gap-1 text-xs text-red-600">
+                    <FaExclamationCircle className="text-xs" />
+                    <span className="font-medium">Needs Review</span>
+                </div>
+            ),
+            cardClass: 'border-red-200 bg-red-50/30',
+        },
+        pending: {
+            icon: <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>,
+            iconBg: 'bg-blue-100',
+            badge: (
+                <div className="flex items-center gap-1 text-xs text-blue-600">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-medium">Pending Verification</span>
+                </div>
+            ),
+            cardClass: 'border-blue-200 bg-blue-50/30',
+        },
     };
 
     const config = statusConfig[status];
@@ -119,9 +170,14 @@ export default function DocumentCard({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-gray-500 hover:text-gray-900"
-                            onClick={onDownload}
+                            onClick={handleDownload}
+                            disabled={downloadStatus === 'downloading'}
                         >
-                            <DownloadIcon className="text-sm" />
+                            {downloadStatus === 'downloading' ? (
+                                <Loader2 className="text-sm animate-spin" />
+                            ) : (
+                                <DownloadIcon className="text-sm" />
+                            )}
                         </Button>
                         {(status === 'expiring' || status === 'expired') && (
                             <Button
@@ -174,14 +230,14 @@ export default function DocumentCard({
                 )}
 
                 {/* Error Alert for Expired */}
-                {errorMessage && status === 'expired' && (
+                {errorMessage && (status === 'expired' || status === 'review') && (
                     <div className="mb-3">
                         <AlertBanner type="error" message={errorMessage} />
                     </div>
                 )}
 
                 {/* Replace Document Section */}
-                {showReplaceSection && (status === 'expiring' || status === 'expired') && (
+                {showReplaceSection && (status === 'expiring' || status === 'expired' || status === 'review') && (
                     <div className="border-t border-gray-200 pt-3">
                         <p className="text-xs text-gray-600 mb-2">Replace Document</p>
                         <p className="text-xs text-gray-500 mb-2">Accepted formats: PDF, JPG, PNG (Max 10MB)</p>

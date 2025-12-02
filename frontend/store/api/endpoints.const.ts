@@ -8,6 +8,9 @@ export default {
     complete_vendor_registration: "/vendors/register-company",
     getDocumentsPresets: "/documents/presets",
     getCategories: "/categories",
-    initPayment: "/split-payments/initialize",
-    verifyPayment: (reference: string) => `/split-payments/verify/${reference}`,
+    initPayment: "/vendor-payments/initialize",
+    verifyPayment: (reference: string) => `/vendor-payments/verify/${reference}`,
+    getApplication: "/vendors/applications/my-company",
+    vendorApplicationTimeline: "vendors/my-application-timeline",
+    myPaymentsHistory: "/vendors/my-payment-history",
 } as const

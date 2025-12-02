@@ -14,55 +14,22 @@ import BankVerificationBadge from '@/components/profile/BankVerificationBadge';
 import InfoBanner from '@/components/profile/InfoBanner';
 import { FaBuilding, FaUsers, FaUniversity } from 'react-icons/fa';
 import SubHeader from '@/components/SubHeader';
+import { useAuth } from '@/components/providers/public-service/AuthProvider';
 
 export default function EditProfilePage() {
     const router = useRouter();
+    const { company } = useAuth();
     const [activeTab, setActiveTab] = useState('company-info');
 
     // Form state
     const [formData, setFormData] = useState({
-        legalCompanyName: 'ABC Construction Limited',
-        companyType: 'Limited Liability Company (Ltd)',
-        yearEstablished: '2015',
-        cacNumber: 'RC1234567',
-        rcbnNumber: 'RC1234567',
-        tin: 'TIN-12345678',
-        businessAddress: '123 Construction Avenue, GRA Phase 2, Owerri',
-        localGovernmentArea: 'Owerri Municipal',
-        state: 'Imo State',
-        primaryEmail: 'info@abcconstruction.com',
-        primaryPhone: '+234 803 123 4567',
-        companyWebsite: 'www.abcconstruction.com',
-        bankName: 'Guaranty Trust Bank',
-        accountNumber: '0123456789',
-        accountName: 'ABC Construction Limited',
-        companyBvn: '22012345678',
+        businessAddress: company?.address || '',
+        localGovernmentArea: company?.lga || '',
+        companyWebsite: company?.website || '',
+        bankName: company?.bankName || '',
+        accountNumber: company?.accountNumber || '',
+        accountName: company?.accountName || '',
     });
-
-    // Directors state
-    const [directors, setDirectors] = useState([
-        {
-            id: 1,
-            fullName: 'Jane Smith',
-            nin: '12345678901',
-            email: 'jane@abcconstruction.com',
-            phone: '+234 803 111 2222',
-        },
-        {
-            id: 2,
-            fullName: 'Michael Johnson',
-            nin: '98765432109',
-            email: 'michael@abcconstruction.com',
-            phone: '+234 803 333 4444',
-        },
-        {
-            id: 3,
-            fullName: '',
-            nin: '',
-            email: '',
-            phone: '',
-        },
-    ]);
 
     const guidelines = [
         { text: 'Changes to CAC Number, TIN, and company legal name may require additional verification.' },
@@ -88,23 +55,34 @@ export default function EditProfilePage() {
         },
     ];
 
-    const companyTypeOptions = [
-        { value: 'Limited Liability Company (Ltd)', label: 'Limited Liability Company (Ltd)' },
-        { value: 'Public Limited Company (PLC)', label: 'Public Limited Company (PLC)' },
-        { value: 'Partnership', label: 'Partnership' },
-        { value: 'Sole Proprietorship', label: 'Sole Proprietorship' },
-    ];
-
     const lgaOptions = [
+        { value: 'Aboh Mbaise', label: 'Aboh Mbaise' },
+        { value: 'Ahiazu Mbaise', label: 'Ahiazu Mbaise' },
+        { value: 'Ehime Mbano', label: 'Ehime Mbano' },
+        { value: 'Ezinihitte', label: 'Ezinihitte' },
+        { value: 'Ideato North', label: 'Ideato North' },
+        { value: 'Ideato South', label: 'Ideato South' },
+        { value: 'Ihedioha/Igbo Etiti', label: 'Ihedioha/Igbo Etiti' },
+        { value: 'Ihitte/Uboma', label: 'Ihitte/Uboma' },
+        { value: 'Ikeduru', label: 'Ikeduru' },
+        { value: 'Isiala Mbano', label: 'Isiala Mbano' },
+        { value: 'Isu', label: 'Isu' },
+        { value: 'Mbaitoli', label: 'Mbaitoli' },
+        { value: 'Ngor Okpala', label: 'Ngor Okpala' },
+        { value: 'Njaba', label: 'Njaba' },
+        { value: 'Nkwerre', label: 'Nkwerre' },
+        { value: 'Nwangele', label: 'Nwangele' },
+        { value: 'Obowo', label: 'Obowo' },
+        { value: 'Oguta', label: 'Oguta' },
+        { value: 'Ohaji/Egbema', label: 'Ohaji/Egbema' },
+        { value: 'Okigwe', label: 'Okigwe' },
+        { value: 'Orlu', label: 'Orlu' },
+        { value: 'Orsu', label: 'Orsu' },
+        { value: 'Oru East', label: 'Oru East' },
+        { value: 'Oru West', label: 'Oru West' },
         { value: 'Owerri Municipal', label: 'Owerri Municipal' },
         { value: 'Owerri North', label: 'Owerri North' },
         { value: 'Owerri West', label: 'Owerri West' },
-    ];
-
-    const stateOptions = [
-        { value: 'Imo State', label: 'Imo State' },
-        { value: 'Lagos State', label: 'Lagos State' },
-        { value: 'Abuja FCT', label: 'Abuja FCT' },
     ];
 
     const handleFieldChange = (field: string, value: string) => {
@@ -112,16 +90,6 @@ export default function EditProfilePage() {
             ...prev,
             [field]: value,
         }));
-    };
-
-    const handleDirectorFieldChange = (directorId: number, field: string, value: string) => {
-        setDirectors((prev) =>
-            prev.map((director) =>
-                director.id === directorId
-                    ? { ...director, [field]: value }
-                    : director
-            )
-        );
     };
 
     const handleSaveChanges = () => {
@@ -165,50 +133,24 @@ export default function EditProfilePage() {
                                         <FormField
                                             label="Legal Company Name"
                                             name="legalCompanyName"
-                                            value={formData.legalCompanyName}
-                                            onChange={(value) => handleFieldChange('legalCompanyName', value)}
+                                            value={company?.companyName || ""}
+                                            onChange={() => {}}
                                             disabled
                                         />
                                     </FormRow>
                                     <FormRow columns={2}>
                                         <FormField
-                                            label="Company Type"
-                                            name="companyType"
-                                            type="select"
-                                            value={formData.companyType}
-                                            options={companyTypeOptions}
-                                            onChange={(value) => handleFieldChange('companyType', value)}
-                                            disabled
-                                        />
-                                        <FormField
-                                            label="Year Established"
-                                            name="yearEstablished"
-                                            type="number"
-                                            value={formData.yearEstablished}
-                                            onChange={(value) => handleFieldChange('yearEstablished', value)}
-                                            disabled
-                                        />
-                                    </FormRow>
-                                    <FormRow columns={3}>
-                                        <FormField
                                             label="CAC Number"
                                             name="cacNumber"
-                                            value={formData.cacNumber}
-                                            onChange={(value) => handleFieldChange('cacNumber', value)}
-                                            disabled
-                                        />
-                                        <FormField
-                                            label="RC/BN Number"
-                                            name="rcbnNumber"
-                                            value={formData.rcbnNumber}
-                                            onChange={(value) => handleFieldChange('rcbnNumber', value)}
+                                            value={company?.cacNumber || ""}
+                                            onChange={() => {}}
                                             disabled
                                         />
                                         <FormField
                                             label="TIN"
                                             name="tin"
-                                            value={formData.tin}
-                                            onChange={(value) => handleFieldChange('tin', value)}
+                                            value={company?.tin || ""}
+                                            onChange={() => {}}
                                             disabled
                                         />
                                     </FormRow>
@@ -241,26 +183,9 @@ export default function EditProfilePage() {
                                         <FormField
                                             label="State"
                                             name="state"
-                                            type="select"
-                                            value={formData.state}
-                                            options={stateOptions}
-                                            onChange={(value) => handleFieldChange('state', value)}
-                                        />
-                                    </FormRow>
-                                    <FormRow columns={2}>
-                                        <FormField
-                                            label="Primary Email"
-                                            name="primaryEmail"
-                                            type="email"
-                                            value={formData.primaryEmail}
-                                            onChange={(value) => handleFieldChange('primaryEmail', value)}
-                                        />
-                                        <FormField
-                                            label="Primary Phone"
-                                            name="primaryPhone"
-                                            type="tel"
-                                            value={formData.primaryPhone}
-                                            onChange={(value) => handleFieldChange('primaryPhone', value)}
+                                            value={'Imo state'}
+                                            onChange={()=>{}}
+                                            disabled
                                         />
                                     </FormRow>
                                     <FormRow columns={1}>
@@ -309,17 +234,14 @@ export default function EditProfilePage() {
                             </div>
 
                             {/* Director Cards */}
-                            {directors.map((director) => (
+                            {company?.directors && company?.directors.map((director) => (
                                 <DirectorCard
                                     key={director.id}
-                                    directorNumber={director.id}
-                                    fullName={director.fullName}
-                                    nin={director.nin}
+                                    directorNumber={Number(director.phone)}
+                                    fullName={director.name}
+                                    nin={director.id}
                                     email={director.email}
                                     phone={director.phone}
-                                    onFieldChange={(field, value) =>
-                                        handleDirectorFieldChange(director.id, field, value)
-                                    }
                                 />
                             ))}
 
@@ -342,7 +264,8 @@ export default function EditProfilePage() {
                                         label="Bank Name"
                                         name="bankName"
                                         value={formData.bankName}
-                                        onChange={(value) => handleFieldChange('bankName', value)}
+                                        onChange={() => {}}
+                                        disabled
                                     />
                                 </FormRow>
 
@@ -350,32 +273,23 @@ export default function EditProfilePage() {
                                     <FormField
                                         label="Account Number"
                                         name="accountNumber"
-                                        value={formData.accountNumber}
-                                        onChange={(value) => handleFieldChange('accountNumber', value)}
+                                        value={String(formData.accountNumber)}
+                                        onChange={() => {}}
+                                        disabled
                                     />
                                     <FormField
                                         label="Account Name"
                                         name="accountName"
                                         value={formData.accountName}
+                                        onChange={() => {}}
                                         disabled
-                                        onChange={(value) => handleFieldChange('accountName', value)}
-                                    />
-                                </FormRow>
-
-                                <FormRow columns={1}>
-                                    <FormField
-                                        label="Company BVN"
-                                        name="companyBvn"
-                                        value={formData.companyBvn}
-                                        hint="(Optional)"
-                                        onChange={(value) => handleFieldChange('companyBvn', value)}
                                     />
                                 </FormRow>
 
                                 {/* Bank Verification Badge */}
                                 <BankVerificationBadge
-                                    accountName="ABC Construction Limited"
-                                    bankName="Guaranty Trust Bank"
+                                    accountName={formData.accountName}
+                                    bankName={formData.bankName}
                                 />
                             </FormSection>
                         </div>

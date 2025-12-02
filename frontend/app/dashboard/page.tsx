@@ -8,77 +8,15 @@ import ComplianceDocumentsCard from '@/components/dashboard/ComplianceDocumentsC
 import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
+import { useGetApplicationTimelineQuery } from '@/store/api/vendor.api';
+import { format, differenceInDays } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
-    const { user, company } = useAuth();
+    const { user, company, application, isLoading } = useAuth();
+    const { data: timelineData, isLoading: timelineLoading } = useGetApplicationTimelineQuery();
 
     const router = useRouter();
-    // Mock data - will come from API
-    const complianceDocuments = [
-        {
-            id: '1',
-            name: 'CAC Incorporation Certificate',
-            status: 'verified' as const,
-        },
-        {
-            id: '2',
-            name: 'Tax Clearance Certificate (TCC)',
-            validUntil: '31 Dec 2024',
-            status: 'verified' as const,
-        },
-        {
-            id: '3',
-            name: 'PENCOM Compliance Certificate',
-            validUntil: '31 Dec 2024',
-            expiresText: 'Expires soon',
-            status: 'verified' as const,
-        },
-        {
-            id: '4',
-            name: 'ITF Certificate',
-            validUntil: '31 Dec 2024',
-            status: 'verified' as const,
-        },
-        {
-            id: '5',
-            name: 'NSITF Certificate',
-            validUntil: '31 Dec 2024',
-            expiresText: 'Expires soon',
-            status: 'verified' as const,
-        },
-        {
-            id: '6',
-            name: 'Sworn Affidavit of Authenticity',
-            status: 'verified' as const,
-        },
-    ];
-
-    const recentActivities = [
-        {
-            id: '1',
-            title: 'Certificate downloaded',
-            date: '2024-11-08',
-            type: 'success' as const,
-        },
-        {
-            id: '2',
-            title: 'Registration approved by Registrar',
-            date: '2024-10-28',
-            type: 'success' as const,
-        },
-        {
-            id: '3',
-            title: 'Payment confirmed - ₦180,000',
-            date: '2024-10-20',
-            type: 'success' as const,
-        },
-        {
-            id: '4',
-            title: 'Application submitted for review',
-            date: '2024-10-18',
-            type: 'info' as const,
-        },
-    ];
 
     const handleDownloadCertificate = () => {
         console.log('Download certificate');
@@ -92,13 +30,91 @@ export default function DashboardPage() {
         router.push('/dashboard/renewal');
     };
 
-    const handleManageDocuments = () => {
-        router.push('/dashboard/manage-documents');
+    const handleReapply = () => {
+        console.log('Reapply for registration');
+        router.push('/dashboard/register');
     };
 
-    const handleDownloadDocument = (documentId: string) => {
-        console.log('Download document:', documentId);
+    const handleContactSupport = () => {
+        console.log('Contact support');
+        // Add support contact logic
     };
+
+    if (isLoading || timelineLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <DashboardHeader
+                    companyName={company?.companyName || user?.fullname || 'Loading...'}
+                    subtitle={"Vendor Portal"}
+                />
+                <div className="container mx-auto px-4 py-6 flex items-center justify-center min-h-[60vh]">
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
+                        <p className="text-gray-600">Loading dashboard...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Transform company documents to compliance documents format
+    const complianceDocuments = (company?.documents || []).map((doc) => {
+        const docValidUntil = doc.validTo ? format(new Date(doc.validTo), 'dd MMM yyyy') : undefined;
+        const daysUntilExpiry = doc.validTo ? differenceInDays(new Date(doc.validTo), new Date()) : null;
+        const expiresText = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 ? 'Expires soon' : undefined;
+
+        console.log(doc.status.status);
+
+        return {
+            id: doc._id,
+            name: doc.documentType,
+            validUntil: docValidUntil,
+            expiresText,
+            status: (doc.status.status).toLowerCase() === 'approved' ? 'verified' as const : 
+                    (doc.status.status).toLowerCase() === 'rejected' ? 'expired' as const :  
+                    doc.status.status,
+        };
+    });
+
+    // Transform timeline data to recent activities
+    const recentActivities = (timelineData || []).map((item, index) => {
+        const getActivityType = (status: string): 'success' | 'info' | 'warning' => {
+            if (status === 'Approved') return 'success';
+            if (status === 'Rejected' || status === 'Clarification Requested') return 'warning';
+            return 'info';
+        };
+
+        return {
+            id: `${index}`,
+            title: item.status,
+            date: format(new Date(item.timestamp), 'yyyy-MM-dd'),
+            type: getActivityType(item.status),
+        };
+    }).reverse(); // Show most recent first
+
+    // Calculate registration details
+    const registrationId = company?.cacNumber || user?.certificateId || 'N/A';
+    const validUntil = company?.createdAt ? format(new Date(new Date(company.createdAt).setFullYear(new Date(company.createdAt).getFullYear() + 1)), 'dd MMMM yyyy') : 'N/A';
+    const daysRemaining = company?.createdAt ? differenceInDays(new Date(new Date(company.createdAt).setFullYear(new Date(company.createdAt).getFullYear() + 1)), new Date()) : 0;
+    
+    // Map application status to registration status
+    const getRegistrationStatus = (): 'approved' | 'declined' | 'expired' | 'suspended' | 'pending' => {
+        switch (application?.status) {
+            case 'Approved':
+                return 'approved';
+            case 'Rejected':
+                return 'declined';
+            case 'SLA Breach':
+                return 'suspended';
+            default:
+                return 'pending';
+        }
+    };
+    
+    const registrationStatus = getRegistrationStatus();
+    
+    // Get decline/suspension reason from application notes if available
+    const statusReason = application?.notes || undefined;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -113,26 +129,32 @@ export default function DashboardPage() {
                     <div className="lg:col-span-2 space-y-6">
                         {/* Registration Status */}
                         <RegistrationStatusCard
-                            registrationId="IDN-CONT-2024-001"
-                            validUntil="31 December 2024"
-                            daysRemaining={317}
-                            status="approved"
-                            onDownloadCertificate={handleDownloadCertificate}
+                            registrationId={registrationId}
+                            validUntil={registrationStatus !== 'declined' ? validUntil : undefined}
+                            daysRemaining={registrationStatus === 'approved' ? daysRemaining : undefined}
+                            status={registrationStatus}
+                            declineReason={registrationStatus === 'declined' ? statusReason : undefined}
+                            suspensionReason={registrationStatus === 'suspended' ? statusReason : undefined}
+                            onDownloadCertificate={registrationStatus === 'approved' ? handleDownloadCertificate : undefined}
                             onUpdateProfile={handleUpdateProfile}
+                            onReapply={registrationStatus === 'declined' || registrationStatus === 'expired' ? handleReapply : undefined}
+                            onContactSupport={registrationStatus === 'declined' || registrationStatus === 'suspended' ? handleContactSupport : undefined}
                         />
 
-                        {/* Renewal Reminder */}
-                        <RenewalReminderCard
-                            daysRemaining={-317}
-                            onStartRenewal={handleStartRenewal}
-                        />
+                        {/* Renewal Reminder - Only show when approved and days remaining <= 30 */}
+                        {registrationStatus === 'approved' && daysRemaining <= 30 && daysRemaining > 0 && (
+                            <RenewalReminderCard
+                                daysRemaining={daysRemaining}
+                                onStartRenewal={handleStartRenewal}
+                            />
+                        )}
 
-                        {/* Compliance Documents */}
-                        <ComplianceDocumentsCard
-                            documents={complianceDocuments}
-                            onManage={handleManageDocuments}
-                            onDownload={handleDownloadDocument}
-                        />
+                        {/* Compliance Documents - Only show for approved, expired, and suspended */}
+                        {(registrationStatus === 'pending' || registrationStatus === 'expired' || registrationStatus === 'suspended') && (
+                            <ComplianceDocumentsCard
+                                documents={complianceDocuments}
+                            />
+                        )}
 
                         {/* Recent Activity */}
                         <RecentActivityCard activities={recentActivities} />

@@ -19,10 +19,11 @@ import { FaTag } from 'react-icons/fa6';
 import { useAuth } from './providers/public-service/AuthProvider';
 import sirvClient from '@/lib/sirv.class';
 import { VendorSteps } from '@/store/api/enum';
-import { useCompleteVendorRegistrationMutation } from '@/store/api/vendor.api';
+import { useCompleteVendorRegistrationMutation, useInitPaymentMutation } from '@/store/api/vendor.api';
 import { Loader2 } from 'lucide-react';
 import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
 import { deepEqual } from '@/lib';
+import { useRouter } from 'next/navigation';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -39,25 +40,27 @@ const steps = [
 
 export default function RegistrationContinuation() {
     const { user, company: companyData, documents: presets, categories: categoriesData } = useAuth();
+    const router = useRouter();
     const setStartPoint = useMemo(() => {
         if (!user) return 2;
+
         const companyForm = user.companyForm.toLowerCase();
         switch(companyForm){
             case VendorSteps.COMPANY:
                 return 2;
             case VendorSteps.DIRECTORS:
                 return 3;
-            case VendorSteps.BANK_DETAILS:
+            case VendorSteps.BANK_DETAILS.toLowerCase():
                 return 4;
             case VendorSteps.DOCUMENTS:
                 return 5;
-            case VendorSteps.CATEGORIES_AND_GRADE:
+            case VendorSteps.CATEGORIES_AND_GRADE.toLowerCase():
                 return 6;
             case VendorSteps.PAYMENT:
                 return 7;
             case VendorSteps.CONFIRM_PAYMENT:
                 return 8;
-            case VendorSteps.RECEIPT:
+            case VendorSteps.COMPLETE:
                 return 9;
             default:
                 console.log("Invalid company form", companyForm);
@@ -67,12 +70,12 @@ export default function RegistrationContinuation() {
     const [currentStep, setCurrentStep] = useState(setStartPoint); // Start from step 2
     const [formData, setFormData] = useState({
         // Step 2: Company Details
-        companyName: companyData?.companyName || '',
-        cacNumber: companyData?.cacNumber || '',
-        tinNumber: companyData?.tin || '',
-        address: companyData?.address || '',
-        lga: companyData?.lga || '',
-        website: companyData?.website || '',
+        companyName: companyData?.companyName?.trimEnd() || '',
+        cacNumber: companyData?.cacNumber?.trimEnd() || '',
+        tinNumber: companyData?.tin?.trimEnd() || '',
+        address: companyData?.address?.trimEnd() || '',
+        lga: companyData?.lga?.trimEnd() || '',
+        website: companyData?.website?.trimEnd() || '',
     });
 
     // Step 3: Directors
@@ -96,9 +99,9 @@ export default function RegistrationContinuation() {
 
     // Step 4: Bank Details (Optional)
     const [bankDetails, setBankDetails] = useState({
-        bankName: companyData?.bankName || '',
-        accountNumber: String(companyData?.accountNumber) || '',
-        accountName: companyData?.accountName || '',
+        bankName: companyData?.bankName?.trimEnd() || '',
+        accountNumber: String(companyData?.accountNumber || "") || '',
+        accountName: companyData?.accountName?.trimEnd() || '',
     });
 
     // Step 6: Category & Grade
@@ -132,7 +135,7 @@ export default function RegistrationContinuation() {
             companyData.documents.forEach(uploadedDoc => {
                 console.clear()
                 const matchingDoc = docsFromPresets.find(doc => {
-                    const match = doc.id === uploadedDoc.id || doc.name === uploadedDoc.documentType;
+                    const match = doc.id === uploadedDoc._id || doc.name === uploadedDoc.documentType;
                     return match;
                 });
                 if (matchingDoc) {
@@ -231,8 +234,36 @@ export default function RegistrationContinuation() {
 
     const [completeVendorRegistration, { isLoading }] = useCompleteVendorRegistrationMutation();
 
+    const [initPayment, { isLoading: isInitPaymentLoading }] = useInitPaymentMutation();
+
+    const handleConfirmPayment = async () => {
+        if (!formData) return;
+
+        try {
+            toast.loading('Initializing payment...', { id: "payment" });
+            const response = await initPayment({
+                amount: getRegistrationFee() + 5000 + 2500,
+                type: 'new',
+                description: `${formData.companyName}'s registration fee`,
+            });
+            toast.dismiss("payment");
+            console.log(response);
+            if (response.data) {
+                router.push(response.data.authorization_url);
+            }
+        } catch (error) {
+            toast.dismiss("payment");
+            console.error(error);
+            toast.error((error as Error).message || 'Failed to initialize payment');
+            throw new Error((error as Error).message || 'Failed to initialize payment');
+        }
+    };
+
     const handleContinue = async () => {
         if(!presets) return;
+        if (isInitPaymentLoading) return;
+        if (isLoading) return;
+
         // Validate current step
         if (currentStep === 2) {
             if (!formData.companyName || !formData.cacNumber || !formData.tinNumber || !formData.address || !formData.lga) {
@@ -266,11 +297,6 @@ export default function RegistrationContinuation() {
                 try {
                     toast.loading('Saving your company details...', { id: "company" });
                     const response = await completeVendorRegistration(payload);
-    
-                    console.log({
-                        response,
-                        payload
-                    })
     
                     if (response.error) {
                         throw new Error((response.error as ResponseError["error"]).data.message);
@@ -367,10 +393,13 @@ export default function RegistrationContinuation() {
             try {
                 toast.loading('Saving your company bank details...', { id: "bankDetails" });
                 const response = await completeVendorRegistration(payload);
+                console.log(response);
 
                 if (response.error) {
                     throw new Error((response.error as ResponseError["error"]).data.message);
                 }
+
+
                 toast.dismiss("bankDetails");
                 toast.success('Company bank details saved successfully');
                 setCurrentStep(currentStep + 1);
@@ -571,6 +600,11 @@ export default function RegistrationContinuation() {
             return;
         }
 
+        if (currentStep === 8) {
+            handleConfirmPayment();
+            return;
+        }
+
         // For other steps, just move to next step
         if (currentStep < steps.length) {
             setCurrentStep(currentStep + 1);
@@ -667,8 +701,8 @@ export default function RegistrationContinuation() {
                 return (
                     <Step8ConfirmPayment
                         companyName={formData.companyName}
-                        email={directors[0]?.email || ''}
-                        phone={directors[0]?.phone || ''}
+                        email={user?.email || ''}
+                        phone={user?.phoneNo || ''}
                         totalAmount={getRegistrationFee() + 5000 + 2500}
                     />
                 );

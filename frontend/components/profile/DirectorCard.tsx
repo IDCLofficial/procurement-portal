@@ -9,7 +9,6 @@ interface DirectorCardProps {
     nin: string;
     email: string;
     phone: string;
-    onFieldChange: (field: string, value: string) => void;
 }
 
 export default function DirectorCard({
@@ -18,7 +17,6 @@ export default function DirectorCard({
     nin,
     email,
     phone,
-    onFieldChange,
 }: DirectorCardProps) {
     return (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -36,15 +34,16 @@ export default function DirectorCard({
                         name={`director${directorNumber}FullName`}
                         value={fullName}
                         placeholder="Enter full name"
-                        onChange={(value) => onFieldChange('fullName', value)}
+                        onChange={() => {}}
                     />
                     <FormField
                         label="NIN"
                         name={`director${directorNumber}Nin`}
                         value={nin}
+                        type='password'
                         placeholder="11-digit NIN"
                         hint="(Optional, not publicly visible)"
-                        onChange={(value) => onFieldChange('nin', value)}
+                        onChange={() => {}}
                     />
                 </FormRow>
 
@@ -55,7 +54,7 @@ export default function DirectorCard({
                         type="email"
                         value={email}
                         placeholder="director@company.com"
-                        onChange={(value) => onFieldChange('email', value)}
+                        onChange={() => {}}
                     />
                     <FormField
                         label="Phone Number"
@@ -63,7 +62,7 @@ export default function DirectorCard({
                         type="tel"
                         value={phone}
                         placeholder="+234 xxx xxx xxxx"
-                        onChange={(value) => onFieldChange('phone', value)}
+                        onChange={() => {}}
                     />
                 </FormRow>
             </div>

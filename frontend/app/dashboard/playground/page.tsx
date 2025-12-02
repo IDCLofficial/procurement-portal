@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth as useAuthPublic } from '@/components/providers/public-service/AuthProvider';
+import endpoints from '@/store/api/endpoints.const';
 
 interface ApiResponse {
   status: number;
@@ -22,12 +23,21 @@ export default function PlaygroundPage() {
   const [url, setUrl] = useState('');
   const [method, setMethod] = useState('GET');
   const [body, setBody] = useState('');
-  const [useAuth, setUseAuth] = useState(false);
+  const [useAuth, setUseAuth] = useState(true);
   const [response, setResponse] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const loadEndpoint = (endpoint: string, suggestedMethod: string = 'GET', requiresAuth: boolean = false) => {
+    setUrl(endpoint);
+    setMethod(suggestedMethod);
+    setUseAuth(requiresAuth);
+    setBody('');
+    setResponse(null);
+    setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,6 +90,22 @@ export default function PlaygroundPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-6 pb-6 border-b">
+              <h3 className="text-sm font-semibold mb-3">Familiar Endpoints</h3>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(endpoints).map(([key, value]) => (
+                  <Button
+                    key={key}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadEndpoint(String(value))}
+                  >
+                    {key}
+                  </Button>
+                ))}
+              </div>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

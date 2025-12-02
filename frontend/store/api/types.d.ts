@@ -171,7 +171,8 @@ interface CompanyDetailsResponse {
         email: string;
     }[];
     documents?: {
-        id: string;
+        _id: string;
+        vendor: string;
         fileUrl: string;
         validFrom?: string;
         validTo?: string;
@@ -182,6 +183,13 @@ interface CompanyDetailsResponse {
         fileType: string;
         validFor: string;
         hasValidityPeriod: boolean;
+        status: {
+            status: "pending" | "approved" | "needs review";
+            message?: string;
+        };
+        createdAt: string;
+        updatedAt: string;
+        __v: number;
     }[];    
     bankName?: string;
     accountNumber?: number;
@@ -224,6 +232,41 @@ interface InitPaymentRequest {
     type: "new" | "renewal";
     description?: string;
 }
-    
+ 
+interface InitPaymentResponse {
+    authorization_url: string;
+}
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest };
+interface Application {
+    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected";
+    timestamp: string;
+    notes: string;
+}
+
+type ApplicationTimeline = Array<{
+    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected";
+    timestamp: string;
+}>;
+
+interface PaymentHistoryResponse {
+    success: boolean;
+    totalAmountPaid: number;
+    totalThisYear: number;
+    totalTransactions: number;
+    paymentTable: {
+        amount: number;
+        reference: string;
+        status: string;
+        data: string;
+        description: string;
+        type: string;
+    }[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
+}
+
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse };

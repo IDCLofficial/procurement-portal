@@ -1,6 +1,6 @@
 import { apiSlice } from ".";
 import endpoints from "./endpoints.const";
-import { ContractorsResponse } from "./types";
+import { Contractor, ContractorsResponse } from "./types";
 
 export const publicApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -27,9 +27,17 @@ export const publicApi = apiSlice.injectEndpoints({
                 },
             }),
         }),
+        getContractorById: builder.query<Contractor, string>({
+            query: (id) => ({
+                url: endpoints.getContractorById(id),
+                method: 'GET',
+            }),
+        }),
     }),
 });
 
 export const {
-    useGetAllContractorsQuery
+    useGetAllContractorsQuery,
+    useGetContractorByIdQuery,
+    useLazyGetContractorByIdQuery,
 } = publicApi;

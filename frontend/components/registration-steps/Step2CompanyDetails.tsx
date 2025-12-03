@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useDebounce } from '@/hooks/useDebounce';
+import { lgaObject } from '@/lib/constants.const';
 
 interface Step2CompanyDetailsProps {
     formData: {
@@ -20,15 +21,6 @@ interface Step2CompanyDetailsProps {
     onInputChange: (field: string, value: string) => void;
     onContinue?: () => void;
 }
-
-const imoLGAs = [
-    'Aboh Mbaise', 'Ahiazu Mbaise', 'Ehime Mbano', 'Ezinihitte', 'Ideato North',
-    'Ideato South', 'Ihitte/Uboma', 'Ikeduru', 'Isiala Mbano', 'Isu',
-    'Mbaitoli', 'Ngor Okpala', 'Njaba', 'Nkwerre', 'Nwangele',
-    'Obowo', 'Oguta', 'Ohaji/Egbema', 'Okigwe', 'Onuimo',
-    'Orlu', 'Orsu', 'Oru East', 'Oru West', 'Owerri Municipal',
-    'Owerri North', 'Owerri West'
-];
 
 export default function Step2CompanyDetails({ formData, onInputChange }: Step2CompanyDetailsProps) {
     // Track which fields have been touched
@@ -143,9 +135,9 @@ export default function Step2CompanyDetails({ formData, onInputChange }: Step2Co
                             <SelectValue placeholder="Select LGA" />
                         </SelectTrigger>
                         <SelectContent>
-                            {imoLGAs.map((lga) => (
-                                <SelectItem key={lga} value={lga}>
-                                    {lga}
+                            {lgaObject.map((lga) => (
+                                <SelectItem key={lga.value} value={lga.value}>
+                                    {lga.label}
                                 </SelectItem>
                             ))}
                         </SelectContent>

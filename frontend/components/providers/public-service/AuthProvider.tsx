@@ -80,9 +80,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const { refetch: refetchDocumentsPresets } = useGetDocumentsPresetsQuery(undefined, {
         skip: !token || token === 'n/a',
     });
-    const { refetch: refetchCategories } = useGetCategoriesQuery(undefined, {
-        skip: !token || token === 'n/a',
-    });
+    const { refetch: refetchCategories } = useGetCategoriesQuery();
+    
     const { refetch: refetchApplication } = useGetApplicationQuery(undefined, {
         skip: !token || token === 'n/a',
     });

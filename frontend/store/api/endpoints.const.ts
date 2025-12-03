@@ -16,4 +16,5 @@ export default {
 
     // Public Endpoints
     getAllContractor: "/certificates",
+    getContractorById: (id: string) => `/certificates/${id}`,
 } as const

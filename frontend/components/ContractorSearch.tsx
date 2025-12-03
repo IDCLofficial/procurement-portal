@@ -103,29 +103,29 @@ export default function ContractorSearch() {
 
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="max-sm:p-4">
                 <CardTitle className="sm:text-xl text-base">Search Contractors</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 sm:space-y-4 max-sm:p-4">
                 {/* Search Input */}
                 <div className="relative">
-                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 max-sm:text-sm" />
                     <Input
                         type="text"
-                        placeholder="Search by contractor name, RC/BN number, or registration ID..."
+                        placeholder="Search by contractor name, CAC number..."
                         value={filters.query}
                         onChange={(e) => handleFilterChange('query', e.target.value)}
-                        className="pl-10 h-12"
+                        className="pl-10 max-sm:h-10 h-12 max-sm:text-sm"
                     />
                 </div>
 
                 {/* Filter Dropdowns */}
-                <div className="flex gap-4 flex-wrap">
+                <div className="grid max-sm:grid-cols-1 sm:flex gap-3 sm:gap-4 flex-wrap">
                     {/* Sector */}
-                    {categories && categories.categories && <div className="space-y-2 flex-1 min-w-64">
-                        <label className="text-sm font-medium text-gray-700">Sector</label>
+                    {categories && categories.categories && <div className="space-y-2 flex-1 sm:min-w-64">
+                        <label className="text-sm font-medium text-gray-700 max-sm:text-xs">Sector</label>
                         <Select value={filters.sector} onValueChange={(value) => handleFilterChange('sector', value)}>
-                            <SelectTrigger className="h-10 w-full">
+                            <SelectTrigger className="max-sm:h-10 h-10 w-full max-sm:text-sm">
                                 <SelectValue placeholder="All Sectors" />
                             </SelectTrigger>
                             <SelectContent>
@@ -140,10 +140,10 @@ export default function ContractorSearch() {
                     </div>}
 
                     {/* Grade */}
-                    {categories && categories.grades && <div className="space-y-2 flex-1 min-w-64">
-                        <label className="text-sm font-medium text-gray-700">Grade</label>
+                    {categories && categories.grades && <div className="space-y-2 flex-1 sm:min-w-64">
+                        <label className="text-sm font-medium text-gray-700 max-sm:text-xs">Grade</label>
                         <Select value={filters.grade} onValueChange={(value) => handleFilterChange('grade', value)}>
-                            <SelectTrigger className="h-10 w-full">
+                            <SelectTrigger className="max-sm:h-10 h-10 w-full max-sm:text-sm">
                                 <SelectValue placeholder="All Grades" />
                             </SelectTrigger>
                             <SelectContent>
@@ -158,10 +158,10 @@ export default function ContractorSearch() {
                     </div>}
 
                     {/* LGA */}
-                    <div className="space-y-2 flex-1 min-w-64">
-                        <label className="text-sm font-medium text-gray-700">LGA</label>
+                    <div className="space-y-2 flex-1 sm:min-w-64">
+                        <label className="text-sm font-medium text-gray-700 max-sm:text-xs">LGA</label>
                         <Select value={filters.lga} onValueChange={(value) => handleFilterChange('lga', value)}>
-                            <SelectTrigger className="h-10 w-full">
+                            <SelectTrigger className="max-sm:h-10 h-10 w-full max-sm:text-sm">
                                 <SelectValue placeholder="All LGAs" />
                             </SelectTrigger>
                             <SelectContent>
@@ -176,17 +176,17 @@ export default function ContractorSearch() {
                     </div>
 
                     {/* Status */}
-                    <div className="space-y-2 flex-1 min-w-64">
-                        <label className="text-sm font-medium text-gray-700">Status</label>
+                    <div className="space-y-2 flex-1 sm:min-w-64">
+                        <label className="text-sm font-medium text-gray-700 max-sm:text-xs">Status</label>
                         <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-                            <SelectTrigger className="h-10 w-full">
+                            <SelectTrigger className="max-sm:h-10 h-10 w-full max-sm:text-sm">
                                 <SelectValue placeholder="All Status" />
                             </SelectTrigger>
                             <SelectContent className='w-full'>
                                 <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="approved">Active</SelectItem>
                                 <SelectItem value="expired">Expired</SelectItem>
-                                <SelectItem value="suspended">Suspended</SelectItem>
+                                <SelectItem value="revoked">Suspended</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

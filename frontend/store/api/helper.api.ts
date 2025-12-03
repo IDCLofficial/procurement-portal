@@ -21,5 +21,6 @@ export const helperApi = apiSlice.injectEndpoints({
 
 export const { 
     useGetDocumentsPresetsQuery,
-    useGetCategoriesQuery 
+    useGetCategoriesQuery,
+    useLazyGetCategoriesQuery
 } = helperApi;

@@ -1,44 +1,17 @@
+'use client';
+
+import { use } from 'react';
 import Header from '@/components/Header';
 import ContractorDetails from '@/components/ContractorDetails';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { FaSearch } from 'react-icons/fa';
-import { getContractorById, getAllContractorIds } from '@/lib/contractors';
-import type { Metadata } from 'next';
+import { FaSearch, FaSpinner } from 'react-icons/fa';
 import { FaQrcode } from 'react-icons/fa6';
+import { useGetContractorByIdQuery } from '@/store/api/public.api';
 
-// Generate static params for all contractors at build time
-export async function generateStaticParams() {
-    const ids = await getAllContractorIds();
-    return ids.map((id) => ({ id }));
-}
-
-// Generate metadata for each contractor page
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-    const { id } = await params;
-    const contractor = await getContractorById(id);
-    
-    if (!contractor) {
-        return {
-            title: 'Contractor Not Found',
-            description: 'The requested contractor could not be found',
-        };
-    }
-    
-    return {
-        title: `${contractor.name} - Imo State Contractor Directory`,
-        description: `View details for ${contractor.name}, a registered contractor in ${contractor.sector} sector with grade ${contractor.grade}. Registration ID: ${contractor.id}`,
-        openGraph: {
-            title: contractor.name,
-            description: `${contractor.sector} contractor - Grade ${contractor.grade}`,
-        },
-    };
-}
-
-export default async function ContractorPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
-    // Fetch contractor data on the server
-    const contractor = await getContractorById(id);
+export default function ContractorPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
+    const { data: contractor, isLoading, error } = useGetContractorByIdQuery(id);
 
     // Analyze ID format for custom error message
     const analyzeIdFormat = (id: string) => {
@@ -74,7 +47,25 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
         }
     };
 
-    if (!contractor) {
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
+                <Header
+                    title="Public Contractor Directory"
+                    description="Search and verify approved contractors"
+                    hasBackButton
+                />
+                <div className="container mx-auto px-4 py-16">
+                    <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                        <FaSpinner className="w-12 h-12 text-theme-green animate-spin" />
+                        <p className="text-lg text-gray-600">Loading contractor details...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !contractor) {
         const idAnalysis = analyzeIdFormat(id);
         return (
             <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
@@ -238,7 +229,27 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
                 }
             />
 
-            <ContractorDetails contractor={contractor} />
+            <ContractorDetails contractor={{
+                id: contractor.certificateId,
+                name: contractor.contractorName,
+                rcbnNumber: contractor.rcBnNumber,
+                tinNumber: contractor.tin,
+                sector: contractor.approvedSectors[0] || 'N/A',
+                category: contractor.categories.join(', ') || 'N/A',
+                grade: contractor.grade,
+                lga: contractor.lga,
+                status: contractor.status as 'approved' | 'pending' | 'suspended',
+                expiryDate: new Date(contractor.validUntil).toLocaleDateString('en-GB', { 
+                    day: '2-digit', 
+                    month: 'short', 
+                    year: 'numeric' 
+                }),
+                address: contractor.address,
+                phone: contractor.phone,
+                email: contractor.email,
+                website: contractor.website,
+                approvedSectors: contractor.approvedSectors,
+            }} />
         </div>
     );
 }

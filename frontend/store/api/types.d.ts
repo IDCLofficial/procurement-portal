@@ -270,33 +270,61 @@ interface PaymentHistoryResponse {
 }
 
 interface ContractorsResponse {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  statusCounts: {
-    approved: number;
-    expired: number;
-    revoked: number;
-  };
-  certificates: {
-    _id: string;
-    certificateId: string;
-    contractorId: {
-      _id: string;
-      fullname: string;
-      email: string;
-      phoneNo: string;
-      password: string;
-      isVerified: boolean;
-      certificateId: string;
-      otpFailedAttempts: number;
-      createdAt: string;
-      updatedAt: string;
-      __v: number;
-      companyId: string;
-    };
-  }[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    statusCounts: {
+        approved: number;
+        expired: number;
+        revoked: number;
+    },
+    certificates: Array<{
+        _id: string;
+        certificateId: string;
+        contractorId: string;
+        company: string;
+        contractorName: string;
+        rcBnNumber: string;
+        tin: string;
+        address: string;
+        lga: string;
+        phone: string;
+        email: string;
+        website: string;
+        approvedSectors: string[];
+        categories: string[];
+        grade: string;
+        status: string;
+        validUntil: string;
+        createdAt: string;
+        updatedAt: string;
+        __v: number;
+    }>;
 }
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse };
+interface Contractor {
+    _id: string;
+    certificateId: string;
+    contractorId: string;
+    company: string;
+    contractorName: string;
+    companyName: string;
+    rcBnNumber: string;
+    tin: string;
+    address: string;
+    lga: string;
+    phone: string;
+    email: string;
+    website: string;
+    approvedSectors: string[];
+    categories: string[];
+    grade: string;
+    status: string;
+    validUntil: string;
+    __v: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor };

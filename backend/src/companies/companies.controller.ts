@@ -66,10 +66,6 @@ export class CompaniesController {
         summary: 'Get pending companies',
         value: Status.PENDING
       },
-      needsReview: {
-        summary: 'Get companies needing review',
-        value: Status.NEED_REVIEW
-      },
       approved: {
         summary: 'Get approved companies',
         value: Status.APPROVED

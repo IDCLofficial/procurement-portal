@@ -6,6 +6,7 @@ export enum Role {
     AUDITOR = "Auditor",
     REGISTRAR = "Registrar",
     ADMIN = "Admin",
+    MINISTRY="Ministry"
 }
 
 export type UserDocument = User & Document;

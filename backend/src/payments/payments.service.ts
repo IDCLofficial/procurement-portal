@@ -10,10 +10,10 @@ import {
 } from 'src/payments/dto/split-payment.dto';
 import { Payment, PaymentDocument, PaymentStatus } from './entities/payment.schema';
 import { Company, CompanyDocument } from 'src/companies/entities/company.schema';
-import { NotFound } from '@aws-sdk/client-s3';
 import { Application, ApplicationDocument, ApplicationStatus } from 'src/applications/entities/application.schema';
-import { ApplicationSubmittedEvent } from 'src/notifications/events/application-submitted.event';
 import { companyForm, Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
+import { VendorsService } from 'src/vendors/vendors.service';
+import { ActivityType } from 'src/vendors/entities/vendor-activity-log.schema';
 
 @Injectable()
 export class SplitPaymentService {
@@ -21,6 +21,7 @@ export class SplitPaymentService {
 
   constructor(
     private readonly paystackSplitService: PaystackSplitService,
+    private vendorService:VendorsService,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
@@ -208,7 +209,7 @@ export class SplitPaymentService {
           type: payment.type as any, // Maps to ApplicationType (Registration, Renewal, Upgrade)
           submissionDate: new Date(),
           slaStatus: 'On Time',
-          applicationStatus: [{
+          applicationTimeline: [{
             status: ApplicationStatus.PENDING_DESK_REVIEW,
             timestamp: new Date(),
             notes: 'Application submitted and payment verified'
@@ -219,19 +220,34 @@ export class SplitPaymentService {
         await newApplication.save();
         this.logger.log(`Application created: ${applicationId}`);
 
-        // Emit application submitted event
-        // this.eventEmitter.emit(
-        //   'application.submitted',
-        //   new ApplicationSubmittedEvent(
-        //     newApplication._id as Types.ObjectId,
-        //     applicationId,
-        //     company.companyName,
-        //     company.userId,
-        //     payment.grade || 'N/A',
-        //     payment.type,
-        //   ),
-        // );
-        this.logger.log(`Application submitted event emitted for: ${applicationId}`);
+        // Log payment completion activity
+        await this.vendorService.createActivityLog(
+          userId,
+          ActivityType.PAYMENT_COMPLETED,
+          `Payment of ₦${payment.amount.toLocaleString()} completed successfully`,
+          {
+            paymentId: payment.paymentId,
+            amount: payment.amount,
+            reference: reference,
+            grade: payment.grade,
+            type: payment.type
+          }
+        );
+
+        // Log application submission activity
+        await this.vendorService.createActivityLog(
+          userId,
+          ActivityType.APPLICATION_SUBMITTED,
+          `Application ${applicationId} submitted for ${payment.grade} grade`,
+          {
+            applicationId: applicationId,
+            grade: payment.grade,
+            type: payment.type,
+            companyName: company.companyName
+          }
+        );
+
+        this.logger.log(`Activity logs created for payment and application submission`);
 
         // Update payment record with application ID and status
         await this.paymentModel.findOneAndUpdate(
@@ -292,5 +308,40 @@ export class SplitPaymentService {
     const count = await this.applicationModel.countDocuments();
     const paddedCount = String(count + 1).padStart(3, '0');
     return `APP-${year}-${paddedCount}`;
+  }
+
+  async getAllPayments(page = 1, limit = 20, status?: string) {
+    try {
+      this.logger.log(`Fetching all payments - Page: ${page}, Limit: ${limit}, Status: ${status || 'all'}`);
+
+      const skip = (page - 1) * limit;
+      const query = status ? { status } : {};
+
+      const [payments, total] = await Promise.all([
+        this.paymentModel
+          .find(query)
+          .populate('companyId', 'companyName cacNumber email phoneNumber')
+          .populate('applicationId', 'applicationId currentStatus submissionDate')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .exec(),
+        this.paymentModel.countDocuments(query),
+      ]);
+
+      return {
+        success: true,
+        data: payments,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Error fetching all payments: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
   }
 }

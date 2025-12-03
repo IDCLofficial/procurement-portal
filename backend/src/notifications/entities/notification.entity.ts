@@ -7,6 +7,9 @@ export enum NotificationType {
   APPLICATION_APPROVED = 'Application Approved',
   APPLICATION_REJECTED = 'Application Rejected',
   FORWARDED_TO_REGISTRAR = 'Forwarded to Registrar',
+  DOCUMENT_EXPIRED = 'Document Expired',
+  CERTIFICATE_EXPIRED = 'Certificate Expired',
+  SLA_BREACH = 'SLA Breach',
 }
 
 export enum NotificationRecipient {
@@ -35,8 +38,8 @@ export class Notification {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   recipientId?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Application', required: true })
-  applicationId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Application', required: false })
+  applicationId?: Types.ObjectId;
 
   @Prop({ default: false })
   isRead: boolean;

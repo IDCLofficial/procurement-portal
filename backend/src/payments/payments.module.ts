@@ -11,6 +11,8 @@ import { VendorsModule } from '../vendors/vendors.module';
 import { Company, CompanySchema } from '../companies/entities/company.schema';
 import { Application, ApplicationSchema } from '../applications/entities/application.schema';
 import { Vendor, VendorSchema } from 'src/vendors/entities/vendor.schema';
+import { User, UserSchema } from '../users/entities/user.schema';
+import { AdminGuard } from '../guards/admin.guard';
 
 @Module({
   imports: [
@@ -20,7 +22,8 @@ import { Vendor, VendorSchema } from 'src/vendors/entities/vendor.schema';
       { name: Payment.name, schema: PaymentSchema },
       { name: Company.name, schema: CompanySchema },
       { name: Application.name, schema: ApplicationSchema },
-      { name: Vendor.name, schema: VendorSchema }
+      { name: Vendor.name, schema: VendorSchema },
+      { name: User.name, schema: UserSchema }
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -33,7 +36,7 @@ import { Vendor, VendorSchema } from 'src/vendors/entities/vendor.schema';
     VendorsModule
   ],
   controllers: [SplitPaymentController],
-  providers: [SplitPaymentService, PaystackSplitService],
+  providers: [SplitPaymentService, PaystackSplitService, AdminGuard],
   exports: [SplitPaymentService]
 })
 export class PaymentsModule {}

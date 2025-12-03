@@ -1,12 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document, Types } from 'mongoose';
-import { Category } from 'src/categories/entities/category.schema';
+import { ApplicationStatus } from 'src/applications/entities/application.schema';
 import { category } from 'src/vendors/dto/update-registration.dto';
 
 export enum Status{
     PENDING="Pending",
-    NEED_REVIEW="Needs Review",
     APPROVED="Approved",
     REJECTED="Rejected"
 }
@@ -99,7 +98,15 @@ export class Company {
         type:Types.ObjectId,
         ref:"Directors"
     })
-    directors?:Types.ObjectId
+    directors?:Types.ObjectId;
+
+    @Prop({
+        required:true,
+        type:String,
+        enum:Object.values(Status),
+        default:Status.PENDING
+    })
+    status?:Status
 }
 
 @Schema({ timestamps: true })

@@ -4,6 +4,9 @@ import { DocumentsController } from './documents.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { verificationDocPreset, VerificationDocumentPresetSchema, verificationDocuments, VerificationDocumentSchema } from './entities/document.schema';
+import { Application, ApplicationSchema } from 'src/applications/entities/application.schema';
+import { Vendor, VendorSchema } from 'src/vendors/entities/vendor.schema';
+import { Company, CompanySchema } from 'src/companies/entities/company.schema';
 import { MulterModule } from '@nestjs/platform-express';
 import multer from 'multer';
 
@@ -12,6 +15,9 @@ import multer from 'multer';
     MongooseModule.forFeature([
       { name: verificationDocPreset.name, schema: VerificationDocumentPresetSchema },
       { name: verificationDocuments.name, schema: VerificationDocumentSchema },
+      { name: Application.name, schema: ApplicationSchema },
+      { name: Vendor.name, schema: VendorSchema },
+      { name: Company.name, schema: CompanySchema },
     ]),
     MulterModule.register({
       storage: multer.memoryStorage(), // buffer upload

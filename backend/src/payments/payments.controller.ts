@@ -11,6 +11,7 @@ import {
   HttpStatus,
   Req,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SplitPaymentService } from './payments.service';
@@ -20,6 +21,7 @@ import {
   InitializePaymentWithSplitDto,
  } from './dto/split-payment.dto';
 import { JwtService } from '@nestjs/jwt';
+import { AdminGuard } from '../guards/admin.guard';
 
 @ApiTags('Vendor Payments')
 @Controller('vendor-payments')
@@ -119,5 +121,18 @@ export class SplitPaymentController {
     const userId = decoded._id;
     console.log(decoded)
     return this.splitPaymentService.verifyPayment(reference, userId);
+  }
+
+  @Get('all')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all payments (Admin only)' })
+  @ApiResponse({ status: 200, description: 'All payments retrieved successfully' })
+  async getAllPayments(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('status') status?: string,
+  ) {
+    return this.splitPaymentService.getAllPayments(page, limit, status);
   }
 }

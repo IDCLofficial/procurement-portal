@@ -82,8 +82,6 @@ export class Application {
             status: { type: String, enum: Object.values(ApplicationStatus), required: true },
             timestamp: { type: Date, required: true },
             notes: { type: String, required: false },
-            updatedBy: { type: Types.ObjectId, ref: 'User', required: false },
-            updatedByName: { type: String, required: false },
             _id: false
         }],
         default: function() {
@@ -93,7 +91,7 @@ export class Application {
             }];
         }
     })
-    applicationStatus: StatusHistoryObject[];
+    applicationTimeline: StatusHistoryObject[];
 
     @Prop({ required: true, enum: Object.values(ApplicationStatus), default: ApplicationStatus.PENDING_DESK_REVIEW })
     currentStatus: ApplicationStatus;

@@ -24,14 +24,42 @@ export class Certificate {
     contractorName: string;
 
     @Prop({required:true})
+    companyName:string
+
+    // Company Information
+    @Prop({required:true})
     rcBnNumber: string;
 
     @Prop({required:true})
-    grade: string;
+    tin: string;
+
+    // Contact Information
+    @Prop({required:true})
+    address: string;
 
     @Prop({required:true})
     lga: string;
 
+    @Prop({required:true})
+    phone: string;
+
+    @Prop({required:true})
+    email: string;
+
+    @Prop({required:false})
+    website?: string;
+
+    // Sector & Classification
+    @Prop({ type: [String], default: [] })
+    approvedSectors: string[];
+
+    @Prop({ type: [String], default: [] })
+    categories: string[];
+
+    @Prop({required:true})
+    grade: string;
+
+    // Registration Status
     @Prop({required:true, enum: certificateStatus})
     status: certificateStatus;
 

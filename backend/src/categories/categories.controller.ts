@@ -89,18 +89,18 @@ export class CategoriesController {
   @Get()
   findAll(@Req() req:any) {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      throw new UnauthorizedException('Authorization token required');
-    }
+    // if (!token) {
+    //   throw new UnauthorizedException('Authorization token required');
+    // }
 
     try {
-      const decoded = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
-      });
+      // const decoded = this.jwtService.verify(token, {
+      //   secret: process.env.JWT_SECRET,
+      // });
       
-      if (!decoded) {
-        throw new UnauthorizedException('Unauthorized');
-      }
+      // if (!decoded) {
+      //   throw new UnauthorizedException('Unauthorized');
+      // }
       return this.categoriesService.findAll();
     }catch(err){
       throw new UnauthorizedException('Unauthorized')

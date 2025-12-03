@@ -10,7 +10,7 @@ export class CertificatesController {
   @Get()
   @ApiOperation({ 
     summary: 'Search and filter certificates',
-    description: 'Search certificates by contractor name, RC/BN number, registration ID, or certificate ID. Filter by grade, LGA, and status. Supports pagination.'
+    description: 'Search certificates by contractor name, RC/BN number, registration ID, or certificate ID. Filter by category, grade, LGA, and status. Supports pagination.'
   })
   @ApiQuery({
     name: 'search',
@@ -18,6 +18,13 @@ export class CertificatesController {
     type: String,
     description: 'Search by contractor name, RC/BN number, registration ID, or certificate ID',
     example: 'ABC Construction'
+  })  
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    type: String,
+    description: 'Filter by Category',
+    example: 'Works'
   })
   @ApiQuery({
     name: 'grade',
@@ -87,13 +94,19 @@ export class CertificatesController {
             type: 'object',
             properties: {
               _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
-              certificateId: { type: 'string', example: 'CERT-2025-0001' },
+              certificateId: { type: 'string', example: 'IMO-CONT-2025-0001' },
               contractorName: { type: 'string', example: 'ABC Construction Ltd' },
-              registrationId: { type: 'string', example: 'IMO-CONT-2024-001' },
               rcBnNumber: { type: 'string', example: 'RC1234567' },
-              grade: { type: 'string', example: 'Grade A' },
+              tin: { type: 'string', example: 'TIN-98765432' },
+              address: { type: 'string', example: '123 Owerri Road, Owerri' },
               lga: { type: 'string', example: 'Owerri Municipal' },
-              status: { type: 'string', example: 'Approved' },
+              phone: { type: 'string', example: '+234 803 123 4567' },
+              email: { type: 'string', example: 'info@abcconstruction.com' },
+              website: { type: 'string', example: 'www.abcconstruction.com' },
+              approvedSectors: { type: 'array', items: { type: 'string' }, example: ['WORKS'] },
+              categories: { type: 'array', items: { type: 'string' }, example: ['Building Construction'] },
+              grade: { type: 'string', example: 'Grade A' },
+              status: { type: 'string', example: 'approved' },
               validUntil: { type: 'string', format: 'date-time', example: '2025-12-31T00:00:00.000Z' },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' }
@@ -113,11 +126,56 @@ export class CertificatesController {
     @Query('search') search?: string,
     @Query('grade') grade?: string,
     @Query('lga') lga?: string,
-    @Query('status') status?: string
+    @Query('status') status?: string,
+    @Query('category') category?: string
   ) {
     const pageNum = page ? Number(page) : 1;
     const limitNum = limit ? Number(limit) : 10;
-    return this.certificatesService.findAll(pageNum, limitNum, search, grade, lga, status);
+    return this.certificatesService.findAll(pageNum, limitNum, search, grade, lga, status, category);
+  }
+
+  @Get('category/:category')
+  @ApiOperation({
+    summary: 'Get certificates by company category',
+    description: 'Retrieves all certificates for companies in a specific category/sector. Supports pagination.'
+  })
+  @ApiParam({
+    name: 'category',
+    required: true,
+    type: String,
+    description: 'Company category/sector to filter by',
+    example: 'Construction'
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number for pagination (starts from 1)',
+    example: 1
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of results per page',
+    example: 10
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Certificates retrieved successfully'
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Failed to retrieve certificates'
+  })
+  findByCategory(
+    @Param('category') category: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    const pageNum = page ? Number(page) : 1;
+    const limitNum = limit ? Number(limit) : 10;
+    return this.certificatesService.findByCategory(category, pageNum, limitNum);
   }
 
   @Get(':certificateId')
@@ -138,13 +196,20 @@ export class CertificatesController {
       type: 'object',
       properties: {
         _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
-        certificateId: { type: 'string', example: 'CERT-2025-0001' },
+        certificateId: { type: 'string', example: 'IMO-CONT-2025-0001' },
         contractorName: { type: 'string', example: 'ABC Construction Ltd' },
         registrationId: { type: 'string', example: 'IMO-CONT-2024-001' },
         rcBnNumber: { type: 'string', example: 'RC1234567' },
-        grade: { type: 'string', example: 'Grade A' },
+        tin: { type: 'string', example: 'TIN-98765432' },
+        address: { type: 'string', example: '123 Owerri Road, Owerri' },
         lga: { type: 'string', example: 'Owerri Municipal' },
-        status: { type: 'string', example: 'Approved' },
+        phone: { type: 'string', example: '+234 803 123 4567' },
+        email: { type: 'string', example: 'info@abcconstruction.com' },
+        website: { type: 'string', example: 'www.abcconstruction.com' },
+        approvedSectors: { type: 'array', items: { type: 'string' }, example: ['WORKS'] },
+        categories: { type: 'array', items: { type: 'string' }, example: ['Building Construction'] },
+        grade: { type: 'string', example: 'Grade A' },
+        status: { type: 'string', example: 'approved' },
         validUntil: { type: 'string', format: 'date-time', example: '2025-12-31T00:00:00.000Z' },
         createdAt: { type: 'string', format: 'date-time' },
         updatedAt: { type: 'string', format: 'date-time' }
@@ -163,7 +228,7 @@ export class CertificatesController {
     return this.certificatesService.findByCertificateId(certificateId);
   }
 
-  @Get(':certificateId/details')
+  @Get(':certificateId')
   @ApiOperation({ 
     summary: 'Get detailed certificate information',
     description: 'Retrieves comprehensive certificate details including company information, contact details, sector classification, and registration status'

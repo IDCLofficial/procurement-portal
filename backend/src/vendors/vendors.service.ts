@@ -19,6 +19,7 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ValidationError } from 'class-validator';
 import { Logger } from '@nestjs/common';
 import { necessaryDocument } from './dto/update-registration.dto';
+import { VendorActivityLog, VendorActivityLogDocument, ActivityType } from './entities/vendor-activity-log.schema';
 
 @Injectable()
 export class VendorsService {
@@ -32,6 +33,7 @@ export class VendorsService {
     @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
+    @InjectModel(VendorActivityLog.name) private activityLogModel: Model<VendorActivityLogDocument>,
     @Inject(forwardRef(() => EmailService))
     private emailService: EmailService,
     private tokenHandlers: TokenHandlers,
@@ -785,6 +787,113 @@ export class VendorsService {
     return registrationPayment;
   }
 
+  async getPaymentHistory(
+    vendorId: string, 
+    page = 1, 
+    limit = 10,
+    search?: string,
+    year?: number,
+    type?: string
+  ) {
+    // Find vendor
+    const vendor = await this.vendorModel.findById(vendorId);
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    // Find company
+    const company = await this.companyModel.findById(vendor.companyId);
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    const skip = (page - 1) * limit;
+
+    // Build query filter
+    const queryFilter: any = { companyId: company._id };
+
+    // Add search filter (search by ID, description, or reference)
+    if (search) {
+      queryFilter.$or = [
+        { transactionReference: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Add type filter
+    if (type) {
+      queryFilter.type = type;
+    }
+
+    // Add year filter
+    if (year) {
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+      queryFilter.paymentDate = { $gte: startOfYear, $lte: endOfYear };
+    }
+
+    // Get current year date range for totals
+    const currentYear = new Date().getFullYear();
+    const startOfCurrentYear = new Date(currentYear, 0, 1);
+    const endOfCurrentYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+
+    // Find all payments for this company with pagination and totals
+    const [payments, total, allPayments, paymentsThisYear] = await Promise.all([
+      this.paymentModel
+        .find(queryFilter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.paymentModel.countDocuments(queryFilter),
+      this.paymentModel
+        .find({ companyId: company._id, status: 'verified' })
+        .exec(),
+      this.paymentModel
+        .find({ 
+          companyId: company._id, 
+          status: 'verified',
+          paymentDate: { $gte: startOfCurrentYear, $lte: endOfCurrentYear }
+        })
+        .exec(),
+    ]);
+
+    if (!payments || payments.length === 0) {
+      throw new NotFoundException('No payment history found for this vendor');
+    }
+
+    const flatPaymentArray = payments.map((payment)=>{
+      return {
+        amount: payment.amount,
+        reference:payment.transactionReference,
+        status:payment.status,
+        data:payment.paymentDate,
+        description:payment.description,
+        type: payment.type
+      }
+    })
+
+    // Calculate total amount paid of all time (only verified payments)
+    const totalAmountPaid = allPayments.reduce((total, payment) => total + payment.amount, 0);
+
+    // Calculate total amount paid this year (only verified payments)
+    const totalAmountThisYear = paymentsThisYear.reduce((total, payment) => total + payment.amount, 0);
+
+    return {
+      success: true,
+      totalAmountPaid: totalAmountPaid,
+      totalThisYear: totalAmountThisYear,
+      totalTransactions: total,
+      paymentTable: flatPaymentArray,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   /**
    * Get applications for a vendor by their companyId
    * 
@@ -826,13 +935,141 @@ export class VendorsService {
         throw new NotFoundException('No applications found for this company');
       }
 
-      return application.applicationStatus;
+      return {
+        status: application.currentStatus
+      }
+
     } catch (err) {
       if (err instanceof NotFoundException) {
         throw err;
       }
       this.Logger.error(`Error fetching vendor applications: ${err.message}`);
       throw new BadRequestException('Failed to retrieve applications');
+    }
+  }
+
+  /**
+   * Retrieves the complete application timeline for a vendor's company
+   * @param userId - The vendor's user ID
+   * @returns Array of timeline entries with status, timestamp, and notes
+   */
+  async getApplicationTimeline(userId: string) {
+    try {
+      // Verify vendor exists
+      const vendor = await this.vendorModel.findById(userId);
+
+      if (!vendor) {
+        throw new NotFoundException('Vendor not found');
+      }
+      
+      // Verify company exists
+      const company = await this.companyModel.findById(vendor.companyId);
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+
+      // Find the application
+      const application = await this.applicationModel
+        .findOne({ companyId: company._id })
+        .sort({ createdAt: -1 })
+        .exec();
+
+      if (!application) {
+        throw new NotFoundException('No applications found for this company');
+      }
+
+      // Return the complete timeline
+      const timeline = application.applicationTimeline.map((entry) => ({
+        status: entry.status,
+        timestamp: entry.timestamp,
+      }));
+
+      return timeline;
+
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.Logger.error(`Error fetching application timeline: ${err.message}`);
+      throw new BadRequestException('Failed to retrieve application timeline');
+    }
+  }
+
+  /**
+   * Create an activity log entry for a vendor
+   * @param vendorId - Vendor's user ID
+   * @param activityType - Type of activity
+   * @param description - Description of the activity
+   * @param metadata - Optional additional data
+   * @param ipAddress - Optional IP address
+   * @param userAgent - Optional user agent
+   */
+  async createActivityLog(
+    vendorId: string | Types.ObjectId,
+    activityType: ActivityType,
+    description: string,
+    metadata?: Record<string, any>,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<VendorActivityLog> {
+    try {
+      const log = new this.activityLogModel({
+        vendorId: new Types.ObjectId(vendorId),
+        activityType,
+        description,
+        metadata,
+        ipAddress,
+        userAgent
+      });
+
+      return await log.save();
+    } catch (err) {
+      this.Logger.error(`Error creating activity log: ${err.message}`);
+      throw new BadRequestException('Failed to create activity log');
+    }
+  }
+
+  /**
+   * Get the latest 5 activity logs for a vendor
+   * @param userId - Vendor's user ID
+   * @returns Latest 5 activity logs
+   */
+  async getVendorActivityLogs(userId: string) {
+    try {
+      // Verify vendor exists
+      const vendor = await this.vendorModel.findById(userId);
+
+      if (!vendor) {
+        throw new NotFoundException('Vendor not found');
+      }
+
+      // Get latest 5 activity logs
+      const logs = await this.activityLogModel
+        .find({ vendorId: vendor._id })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('activityType description metadata createdAt')
+        .lean<Array<{
+          activityType: ActivityType;
+          description: string;
+          metadata?: Record<string, any>;
+          createdAt: Date;
+        }>>()
+        .exec();
+
+      return logs.map(log => ({
+        activityType: log.activityType,
+        description: log.description,
+        metadata: log.metadata,
+        timestamp: log.createdAt
+      }));
+
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.Logger.error(`Error fetching vendor activity logs: ${err.message}`);
+      throw new BadRequestException('Failed to retrieve activity logs');
     }
   }
 }

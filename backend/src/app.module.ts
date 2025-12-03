@@ -20,6 +20,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { SlaModule } from './sla/sla.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -31,22 +32,6 @@ import { NotificationsModule } from './notifications/notifications.module';
         uri: configService.get<string>('MONGO_URI'),
       }),
     }),
-    // EventEmitterModule.forRoot({
-    //   // Use this instance across the whole app
-    //   wildcard: false,
-    //   // The delimiter used to segment namespaces
-    //   delimiter: '.',
-    //   // Set this to `true` to use wildcards
-    //   newListener: false,
-    //   // Set this to `true` to remove listeners
-    //   removeListener: false,
-    //   // The maximum amount of listeners that can be assigned to an event
-    //   maxListeners: 10,
-    //   // Show event name in memory leak message when more than maximum amount of listeners are assigned
-    //   verboseMemoryLeak: false,
-    //   // Disable throwing uncaughtException if an error event is emitted and it has no listeners
-    //   ignoreErrors: false,
-    // }),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
@@ -59,6 +44,7 @@ import { NotificationsModule } from './notifications/notifications.module';
         limit: 15,       // Max number of requests per IP within ttl
       },
     ]),
+    ScheduleModule.forRoot(),
     PassportModule,
     VendorsModule,
     EmailModule,

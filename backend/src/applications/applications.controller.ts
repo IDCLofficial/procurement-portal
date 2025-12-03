@@ -291,6 +291,8 @@ export class ApplicationsController {
     }
   }
 
+  /** */
+
   /**
    * Get all applications forwarded to registrar
    * 
@@ -604,14 +606,14 @@ export class ApplicationsController {
     @Body() updateApplicationStatusDto: UpdateApplicationStatusDto,
     @Req() req:any
   ) { 
-    const token = req.headers.authorization.split(' ')[1];
+    // const token = req.headers.authorization.split(' ')[1];
     try{
-      const decoded = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
-      });
-      if(!decoded._id || !decoded.role || decoded.role === "Auditor"){
-        throw new UnauthorizedException('Unauthorized')
-      }
+      // const decoded = this.jwtService.verify(token, {
+      //   secret: process.env.JWT_SECRET,
+      // });
+      // if(!decoded._id || !decoded.role || decoded.role === "Auditor"){
+      //   throw new UnauthorizedException('Unauthorized')
+      // }
       return this.applicationsService.updateApplicationStatus(id, updateApplicationStatusDto);
     }catch(err){
       throw new UnauthorizedException('Unauthorized')

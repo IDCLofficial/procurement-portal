@@ -9,6 +9,9 @@ import { Model, Types } from 'mongoose';
 import { verificationDocPreset, PresetDocument, verificationDocuments, verificationDocument, Status } from './entities/document.schema';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Application, ApplicationStatus } from 'src/applications/entities/application.schema';
+import { Vendor } from 'src/vendors/entities/vendor.schema';
+import { Company } from 'src/companies/entities/company.schema';
 
 @Injectable()
 export class DocumentsService {
@@ -17,8 +20,11 @@ export class DocumentsService {
   
   constructor(
     @InjectModel(verificationDocPreset.name) private documentPresetModel: Model<PresetDocument>,
-    @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>) {
-    
+    @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>,
+    @InjectModel(Application.name) private applicationModel: Model<Application>,
+    @InjectModel(Vendor.name) private vendorModel: Model<Vendor>,
+    @InjectModel(Company.name) private companyModel: Model<Company>
+  ) {
     const accessKeyId = process.env.SIRV_S3_ACCESS_KEY;
     const secretAccessKey = process.env.SIRV_S3_SECRET_KEY;
     const endpoint = process.env.SIRV_S3_ENDPOINT;
@@ -122,8 +128,7 @@ export class DocumentsService {
       // Validate that NEED_REVIEW or REJECTED status must have a message
 
       if (
-        (updateDocumentStatusDto.status.status === Status.NEED_REVIEW || 
-         updateDocumentStatusDto.status.status === Status.REJECTED) &&
+        (updateDocumentStatusDto.status.status === Status.NEED_REVIEW) &&
         !updateDocumentStatusDto.status.message
       ) {
         throw new BadRequestException(
@@ -131,6 +136,7 @@ export class DocumentsService {
         );
       }
       
+      // First, get the document to access vendor ID
       const document = await this.verificationDocumentModel.findByIdAndUpdate(
         id, 
         updateDocumentStatusDto,
@@ -139,6 +145,48 @@ export class DocumentsService {
       
       if (!document) {
         throw new NotFoundException('Document not found');
+      }
+
+      // Get the vendor from the document
+      const vendor = await this.vendorModel.findById(document.vendor);
+      if (!vendor) {
+        throw new NotFoundException('Vendor not found');
+      }
+
+      // Get the company from the vendor
+      const company = await this.companyModel.findById(vendor.companyId);
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+
+      // Find the application for this company
+      const application = await this.applicationModel
+        .findOne({ companyId: company._id })
+        .sort({ createdAt: -1 })
+        .exec();
+
+      if (application) {
+        // Check if all documents are approved
+        const allDocuments = await this.verificationDocumentModel.find({ 
+          vendor: document.vendor 
+        });
+
+        // const allApproved = allDocuments.every(doc => doc.status.status === Status.APPROVED);
+        const anyNeedsReview = allDocuments.some(doc => doc.status.status === Status.NEED_REVIEW);
+
+        if(anyNeedsReview) {
+          // Some documents need review - request clarification
+          const statusEntry = {
+            status: ApplicationStatus.CLARIFICATION_REQUESTED,
+            timestamp: new Date(),
+            notes: 'Document verification requires clarification'
+          };
+          application.applicationTimeline.push(statusEntry);
+          application.currentStatus = ApplicationStatus.CLARIFICATION_REQUESTED;
+          await application.save();
+          
+          this.logger.log(`Application ${application.applicationId} requires clarification - document needs review`);
+        }
       }
      
       return document

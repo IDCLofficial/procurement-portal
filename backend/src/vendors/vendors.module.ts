@@ -9,6 +9,7 @@ import { Company, CompanySchema, Directors, DirectorsSchema } from 'src/companie
 import { verificationDocuments, VerificationDocumentSchema } from 'src/documents/entities/document.schema';
 import { Payment, PaymentSchema } from 'src/payments/entities/payment.schema';
 import { Application, ApplicationSchema } from 'src/applications/entities/application.schema';
+import { VendorActivityLog, VendorActivityLogSchema } from './entities/vendor-activity-log.schema';
 
 @Module({
   imports: [
@@ -18,6 +19,8 @@ import { Application, ApplicationSchema } from 'src/applications/entities/applic
     MongooseModule.forFeature([{ name: verificationDocuments.name, schema: VerificationDocumentSchema }]),
     MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
     MongooseModule.forFeature([{ name: Application.name, schema: ApplicationSchema }]),
+    MongooseModule.forFeature([{ name: VendorActivityLog.name, schema: VendorActivityLogSchema }]),
+    
   ],
   controllers: [VendorsController],
   providers: [VendorsService, EmailService, TokenHandlers],

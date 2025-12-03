@@ -19,36 +19,52 @@ export class CertificatesService {
     search?: string,
     grade?: string,
     lga?: string,
-    status?: string
+    status?: string,
+    category?: string
   ) {
     try {
-      // Build filter object
-      const filter: any = {};
+      // Build filter object with $and to properly combine all conditions
+      const conditions: any[] = [];
       
-      // Text search: contractor name, RC/BN number, or registration ID
+      // Text search across multiple fields: contractor name, RC/BN number, registration ID, certificate ID, email, phone, TIN
       if (search) {
-        filter.$or = [
-          { contractorName: { $regex: search, $options: 'i' } },
-          { rcBnNumber: { $regex: search, $options: 'i' } },
-          { registrationId: { $regex: search, $options: 'i' } },
-          { certificateId: { $regex: search, $options: 'i' } }
-        ];
+        conditions.push({
+          $or: [
+            { contractorName: { $regex: search, $options: 'i' } },
+            { companyName: { $regex: search, $options: 'i' } },
+            { rcBnNumber: { $regex: search, $options: 'i' } },
+            { certificateId: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+            { phone: { $regex: search, $options: 'i' } },
+            { tin: { $regex: search, $options: 'i' } },
+            { approvedSectors: { $regex: search, $options: 'i' } },
+            { categories: { $regex: search, $options: 'i' } }
+          ]
+        });
       }
       
-      // Filter by grade
+      // Filter by grade (exact match)
       if (grade) {
-        filter.grade = grade;
+        conditions.push({ grade });
       }
       
-      // Filter by LGA
+      // Filter by LGA - now directly on certificate schema
       if (lga) {
-        filter.lga = lga;
+        conditions.push({ lga: { $regex: lga, $options: 'i' } });
       }
       
-      // Filter by status
+      // Filter by status (exact match)
       if (status) {
-        filter.status = status;
+        conditions.push({ status });
       }
+
+      // Filter by category - search in categories array
+      if (category) {
+        conditions.push({ categories: { $regex: category, $options: 'i' } });
+      }
+      
+      // Build final filter
+      const filter = conditions.length > 0 ? { $and: conditions } : {};
       
       // Calculate pagination
       const skip = (page - 1) * limit;
@@ -64,8 +80,6 @@ export class CertificatesService {
       // Get paginated results
       const certificates = await this.certificateModel
         .find(filter)
-        .populate("company")
-        .populate("contractorId")
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }) // Sort by newest first
@@ -108,65 +122,70 @@ export class CertificatesService {
 
   async getDetailedCertificate(certificateId: string) {
     try {
-      // Get the certificate
-      const certificate = await this.certificateModel.findOne({ certificateId }).exec();
+      // Get the certificate with all data
+      const certificate = await this.certificateModel
+        .findOne({ certificateId })
+        .populate('company')
+        .populate('contractorId')
+        .exec();
       
       if (!certificate) {
         throw new NotFoundException(`Certificate with ID ${certificateId} not found`);
       }
 
-      // Get vendor details using the contractorId from certificate
-      let vendor: VendorDocument | null = null;
-      if (certificate.contractorId) {
-        vendor = await this.vendorModel.findById(certificate.contractorId).exec();
-      }
-
-      // Find the company by vendor/contractor ID
-      let company: CompanyDocument | null = null;
-      if (certificate.contractorId) {
-        company = await this.companyModel.findOne({ userId: certificate.contractorId }).exec();
-      }
-
-      // Build the detailed response
-      const response: any = {
-        certificate: {
-          _id: certificate._id,
-          certificateId: certificate.certificateId,
-          contractorName: certificate.contractorName,
-          rcBnNumber: certificate.rcBnNumber,
-          grade: certificate.grade,
-          lga: certificate.lga,
-          status: certificate.status,
-          validUntil: certificate.validUntil
-        },
-        companyInformation: company && {
-          cacNumber: company.cacNumber,
-          tin: company.tin,
-          address: company.address,
-          lga: company.lga,
-          website: company.website || '',
-          categories: company.categories || [],
-          grade: company.grade || ''
-        }
-      };
-
-      // Add contact information if vendor exists
-      if (vendor) {
-        response.contactInformation = {
-          phone: vendor.phoneNo,
-          email: vendor.email,
-          address: company?.address || '',
-          lga: company?.lga || '',
-          website: company?.website || ''
-        };
-      }
-
-      return response;
+      return certificate;
     } catch (err) {
       if (err instanceof NotFoundException) {
         throw err;
       }
       throw new BadRequestException('Failed to get detailed certificate', err.message);
+    }
+  }
+
+  async findByCategory(
+    category: string,
+    page: number = 1,
+    limit: number = 10
+  ) {
+    try {
+      // Find companies that have the specified category
+      const companies = await this.companyModel.find({
+        'categories.sector': { $regex: category, $options: 'i' }
+      }).select('_id').exec();
+
+      const companyIds = companies.map(c => c._id);
+
+      // Build filter for certificates
+      const filter: any = {
+        company: { $in: companyIds }
+      };
+
+      // Calculate pagination
+      const skip = (page - 1) * limit;
+
+      // Get total count
+      const total = await this.certificateModel.countDocuments(filter).exec();
+
+      // Get paginated results
+      const certificates = await this.certificateModel
+        .find(filter)
+        .populate('company')
+        .populate('contractorId')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .exec();
+
+      return {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        category,
+        certificates
+      };
+    } catch (err) {
+      throw new BadRequestException('Failed to get certificates by category', err.message);
     }
   }
 }

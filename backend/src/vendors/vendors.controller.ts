@@ -374,35 +374,36 @@ export class VendorsController {
   @ApiBearerAuth()
   @Get('applications/my-company')
   @ApiOperation({ 
-    summary: 'Get vendor applications by company ID',
-    description: 'Retrieves all applications for a specific company. Requires authentication.'
+    summary: 'Get vendor application for authenticated user',
+    description: 'Retrieves the most recent application for the authenticated vendor\'s company, including populated company details and documents. Requires authentication.'
   })
   @ApiResponse({ 
     status: HttpStatus.OK, 
-    description: 'Applications retrieved successfully',
+    description: 'Application retrieved successfully',
     schema: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
-          applicationId: { type: 'string', example: 'APP-2025-001' },
-          contractorName: { type: 'string', example: 'Tech Solutions Ltd' },
-          applicationStatus: { 
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                status: { type: 'string', example: 'Pending Desk Review' },
-                timestamp: { type: 'string', format: 'date-time' },
-                notes: { type: 'string', example: 'Application submitted' }
-              }
+      type: 'object',
+      properties: {
+        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        applicationId: { type: 'string', example: 'APP-2025-001' },
+        contractorName: { type: 'string', example: 'Tech Solutions Ltd' },
+        applicationStatus: { 
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', example: 'Pending Desk Review' },
+              timestamp: { type: 'string', format: 'date-time' },
+              notes: { type: 'string', example: 'Application submitted' }
             }
-          },
-          currentStatus: { type: 'string', example: 'Pending Desk Review' },
-          submissionDate: { type: 'string', format: 'date-time' },
-          grade: { type: 'string', example: 'A' },
-          type: { type: 'string', example: 'new' }
+          }
+        },
+        currentStatus: { type: 'string', example: 'Pending Desk Review' },
+        submissionDate: { type: 'string', format: 'date-time' },
+        grade: { type: 'string', example: 'A' },
+        type: { type: 'string', example: 'new' },
+        companyId: { 
+          type: 'object',
+          description: 'Populated company details with documents'
         }
       }
     }
@@ -415,10 +416,268 @@ export class VendorsController {
     status: HttpStatus.UNAUTHORIZED, 
     description: 'Unauthorized - Invalid or missing token'
   })
-  getVendorApplications(@Param('companyId') @Req() req:any) {
-   const authHeader = req.headers.authorization;
-  const userId = this.jwtService.decode(authHeader.split(' ')[1])._id;
-  return this.vendorsService.getVendorApplication(userId);
+  getVendorApplications(@Req() req: any) {
+    if (!req?.headers?.authorization) {
+      throw new UnauthorizedException('Authorization header is required');
+    }
+
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader.split(' ')[1];
+      
+      if (!token) {
+        throw new UnauthorizedException('Invalid authorization token format');
+      }
+
+      const decoded = this.jwtService.decode(token);
+      
+      if (!decoded?._id) {
+        throw new UnauthorizedException('Invalid token payload');
+      }
+
+      return this.vendorsService.getVendorApplication(decoded._id);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  /**
+   * Get application timeline for a vendor's company
+   * 
+   * @returns Complete timeline of application status changes
+   * 
+   * @example
+   * GET /vendors/application/timeline
+   * Headers: { "Authorization": "Bearer <token>" }
+   * 
+   * Response: {
+   *   "applicationId": "APP-2024-001",
+   *   "companyName": "ABC Company Ltd",
+   *   "currentStatus": "APPROVED",
+   *   "timeline": [
+   *     {
+   *       "status": "PENDING_DESK_REVIEW",
+   *       "timestamp": "2024-01-01T10:00:00Z",
+   *       "notes": "Application submitted"
+   *     },
+   *     {
+   *       "status": "APPROVED",
+   *       "timestamp": "2024-01-05T14:30:00Z",
+   *       "notes": "Application approved"
+   *     }
+   *   ]
+   * }
+   */
+  @Get('my-application-timeline')
+  @ApiOperation({ summary: 'Get application timeline for vendor company' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Application timeline retrieved successfully'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.NOT_FOUND, 
+    description: 'Vendor or application not found'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.UNAUTHORIZED, 
+    description: 'Unauthorized - Invalid or missing token'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Application timeline retrieved successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: [
+              'Pending Desk Review',
+              'Forwarded to Registrar',
+              'Pending Payment',
+              'Clarification Requested',
+              'SLA Breach',
+              'Approved',
+              'Rejected'
+            ],
+            example: 'Pending Desk Review'
+          },
+          timestamp: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-12-01T10:30:00.000Z'
+          }
+        }
+      },
+      example: [
+        {
+          status: 'Pending Desk Review',
+          timestamp: '2024-12-01T10:30:00.000Z'
+        },
+        {
+          status: 'Forwarded to Registrar',
+          timestamp: '2024-12-02T14:15:00.000Z'
+        },
+        {
+          status: 'Approved',
+          timestamp: '2024-12-05T09:45:00.000Z'
+        }
+      ]
+    }
+  })
+  getApplicationTimeline(@Req() req: any) {
+    if (!req?.headers?.authorization) {
+      throw new UnauthorizedException('Authorization header is required');
+    }
+
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader.split(' ')[1];
+      
+      if (!token) {
+        throw new UnauthorizedException('Invalid authorization token format');
+      }
+
+      const decoded = this.jwtService.decode(token);
+      
+      if (!decoded?._id) {
+        throw new UnauthorizedException('Invalid token payload');
+      }
+
+      return this.vendorsService.getApplicationTimeline(decoded._id);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  /**
+   * Get vendor activity logs
+   * 
+   * @returns Latest 5 activity logs for the vendor
+   * 
+   * @example
+   * GET /vendors/activity-logs
+   * Headers: { "Authorization": "Bearer <token>" }
+   * 
+   * Response: [
+   *   {
+   *     "activityType": "Account Created",
+   *     "description": "Vendor account successfully created",
+   *     "metadata": { "email": "vendor@example.com" },
+   *     "timestamp": "2024-12-01T10:00:00Z"
+   *   },
+   *   {
+   *     "activityType": "Application Created",
+   *     "description": "New application submitted for Grade A",
+   *     "metadata": { "applicationId": "APP-2024-001", "grade": "A" },
+   *     "timestamp": "2024-12-02T14:30:00Z"
+   *   }
+   * ]
+   */
+  @Get('activity-logs')
+  @ApiOperation({ summary: 'Get vendor activity logs' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Activity logs retrieved successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          activityType: {
+            type: 'string',
+            enum: [
+              'Account Created',
+              'Profile Updated',
+              'Company Registered',
+              'Company Updated',
+              'Application Created',
+              'Application Submitted',
+              'Payment Initiated',
+              'Payment Completed',
+              'Payment Failed',
+              'Document Uploaded',
+              'Document Updated',
+              'Profile Renewal Initiated',
+              'Profile Renewal Completed',
+              'Password Changed',
+              'Login',
+              'Logout'
+            ],
+            example: 'Account Created'
+          },
+          description: {
+            type: 'string',
+            example: 'Vendor account successfully created'
+          },
+          metadata: {
+            type: 'object',
+            example: { email: 'vendor@example.com' }
+          },
+          timestamp: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-12-01T10:00:00.000Z'
+          }
+        }
+      },
+      example: [
+        {
+          activityType: 'Account Created',
+          description: 'Vendor account successfully created',
+          metadata: { email: 'vendor@example.com' },
+          timestamp: '2024-12-01T10:00:00.000Z'
+        },
+        {
+          activityType: 'Application Created',
+          description: 'New application submitted for Grade A',
+          metadata: { applicationId: 'APP-2024-001', grade: 'A' },
+          timestamp: '2024-12-02T14:30:00.000Z'
+        }
+      ]
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Vendor not found'
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - Invalid or missing token'
+  })
+  getVendorActivityLogs(@Req() req: any) {
+    if (!req?.headers?.authorization) {
+      throw new UnauthorizedException('Authorization header is required');
+    }
+
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader.split(' ')[1];
+
+      if (!token) {
+        throw new UnauthorizedException('Invalid authorization token format');
+      }
+
+      const decoded = this.jwtService.decode(token);
+
+      if (!decoded?._id) {
+        throw new UnauthorizedException('Invalid token payload');
+      }
+
+      return this.vendorsService.getVendorActivityLogs(decoded._id);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 
   /**
@@ -479,6 +738,45 @@ export class VendorsController {
     }
 
     return this.vendorsService.getRegistrationPayment(decoded._id);
+  }
+
+  /**
+   * Get payment history for the authenticated vendor
+   * 
+   * @param req - Request object containing JWT token
+   * @param page - Page number for pagination (optional, default: 1)
+   * @param limit - Number of records per page (optional, default: 10)
+   * @param search - Search by transaction reference or description (optional)
+   * @param year - Filter by year (optional)
+   * @param type - Filter by payment type (optional)
+   * @returns Paginated payment history for the vendor
+   * 
+   * @example
+   * GET /vendors/my-payment-history?page=1&limit=10&search=REF123&year=2024&type=registration
+   */
+  @Get('my-payment-history')
+  @ApiOperation({ summary: 'Get vendor payment history' })
+  @ApiResponse({ status: 200, description: 'Payment history retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'No payments found for this vendor' })
+  async getPaymentHistory(
+    @Req() req: any,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('year') year?: number,
+    @Query('type') type?: string,
+  ) {
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException('Authorization header is missing');
+    }
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = this.jwtService.decode(token);
+
+    if (!decoded) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    return this.vendorsService.getPaymentHistory(decoded._id, page, limit, search, year, type);
   }
 
   /**

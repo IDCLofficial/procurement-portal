@@ -322,12 +322,6 @@ export class DocumentsController {
         value: {
           status: Status.APPROVED
         }
-      },
-      rejected: {
-        summary: 'Set status to Rejected',
-        value: {
-          status: Status.REJECTED
-        }
       }
     }
   })

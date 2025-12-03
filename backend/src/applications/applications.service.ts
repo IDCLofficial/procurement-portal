@@ -1,22 +1,31 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } from './entities/application.schema';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { AssignApplicationDto } from './dto/assign-application.dto';
-import { Certificate, CertificateDocument } from '../certificates/entities/certificate.schema';
+import { Certificate, CertificateDocument, certificateStatus } from '../certificates/entities/certificate.schema';
 import { Company, CompanyDocument } from '../companies/entities/company.schema';
 import { User, UserDocument } from '../users/entities/user.schema';
 import { generateCertificateId } from '../lib/generateCertificateId';
-import { ApplicationStatusUpdatedEvent } from '../notifications/events/application-status-updated.event';
+import { VendorsService } from '../vendors/vendors.service';
+import { ActivityType } from '../vendors/entities/vendor-activity-log.schema';
+import { Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditAction, AuditSeverity, EntityType } from '../audit-logs/entities/audit-log.schema';
 
 @Injectable()
 export class ApplicationsService {
+  private readonly logger = new Logger(ApplicationsService.name);
+
   constructor(
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
     @InjectModel(Certificate.name) private certificateModel: Model<CertificateDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
+    private vendorsService: VendorsService,
+    private auditLogsService: AuditLogsService,
   ) {}
 
   async findAll(status?: ApplicationStatus, type?:ApplicationType, page: number = 1, limit: number = 10) {
@@ -146,7 +155,7 @@ export class ApplicationsService {
     }
   }
 
-  async assignApplication(id: string, assignApplicationDto: AssignApplicationDto): Promise<Application> {
+  async assignApplication(id: string, assignApplicationDto: AssignApplicationDto): Promise<Application | any> {
     try {
       // Find the application
       const application = await this.applicationModel.findById(id);
@@ -183,7 +192,30 @@ export class ApplicationsService {
         );
       }
 
-      return await application.save();
+      await application.save();
+
+      // Create audit log for application assignment
+      try {
+        await this.auditLogsService.create({
+          actor: assignApplicationDto.assignedByName || 'System Admin',
+          actorId: assignApplicationDto.assignedBy,
+          role: assignApplicationDto.assignedByRole || 'Admin',
+          action: AuditAction.APPLICATION_REVIEWED,
+          entityType: EntityType.APPLICATION,
+          entityId: application.applicationId,
+          details: `${application.applicationId} has been assigned to ${application.assignedToName}`,
+          severity: AuditSeverity.INFO,
+          ipAddress: assignApplicationDto.ipAddress || '0.0.0.0'
+        });
+      } catch (auditError) {
+        // Log error but don't fail the assignment
+        this.logger.error(`Failed to create audit log for assignment: ${auditError.message}`);
+      }
+
+      return {
+        application: application.applicationId,
+        assignedTo: application.assignedToName
+      }
     } catch (err) {
       if (err instanceof NotFoundException) {
         throw err;
@@ -192,7 +224,7 @@ export class ApplicationsService {
     }
   }
 
-  async updateApplicationStatus(id: string, updateApplicationStatusDto: UpdateApplicationStatusDto): Promise<Application> {
+  async updateApplicationStatus(id: string, updateApplicationStatusDto: UpdateApplicationStatusDto): Promise<Application | any> {
     try {
       const application = await this.applicationModel.findById(id).populate('companyId');
       
@@ -209,43 +241,89 @@ export class ApplicationsService {
         const statusHistoryEntry = {
           status: newStatus,
           timestamp: new Date(),
-          notes: updateApplicationStatusDto.notes,
-          updatedBy: updateApplicationStatusDto.updatedBy ? new Types.ObjectId(updateApplicationStatusDto.updatedBy) : undefined,
-          updatedByName: updateApplicationStatusDto.updatedByName
         };
         
-        application.applicationStatus.push(statusHistoryEntry);
+        application.applicationTimeline.push(statusHistoryEntry);
         application.currentStatus = newStatus;
-        
-        // Get company details for the event
-        const company = application.companyId as any;
-        const vendorId = company?.userId || new Types.ObjectId();
-        const companyName = application.contractorName || company?.companyName || 'Unknown Company';
-        
-        // Emit status updated event
-        // this.eventEmitter.emit(
-        //   'application.status.updated',
-        //   new ApplicationStatusUpdatedEvent(
-        //     application._id as Types.ObjectId,
-        //     application.applicationId,
-        //     companyName,
-        //     vendorId,
-        //     oldStatus,
-        //     newStatus,
-        //   ),
-        // );
         
         // If status changed to APPROVED, generate certificate
         if (newStatus === ApplicationStatus.APPROVED) {
           await this.generateCertificate(application);
+          // Log approval activity
+          await this.vendorsService.createActivityLog(
+            (application.companyId as any).userId,
+            ActivityType.APPROVED,
+            `Application approved by Registrar`
+          );
         }
       }
       
-      return await application.save();
+      await application.save();
+
+      // Create audit log for status update
+      const company = application.companyId as any;
+      const companyName = company?.companyName || 'Unknown Company';
+      
+      // Determine action based on new status
+      let auditAction: AuditAction;
+      let severity: AuditSeverity;
+      
+      switch (newStatus) {
+        case ApplicationStatus.APPROVED:
+          auditAction = AuditAction.APPLICATION_APPROVED;
+          severity = AuditSeverity.SUCCESS;
+          break;
+        case ApplicationStatus.REJECTED:
+          auditAction = AuditAction.APPLICATION_REJECTED;
+          severity = AuditSeverity.ERROR;
+          break;
+        case ApplicationStatus.FORWARDED_TO_REGISTRAR:
+          auditAction = AuditAction.APPLICATION_FORWARDED;
+          severity = AuditSeverity.INFO;
+          break;
+        case ApplicationStatus.CLARIFICATION_REQUESTED:
+          auditAction = AuditAction.CLARIFICATION_REQUESTED;
+          severity = AuditSeverity.WARNING;
+          break;
+        default:
+          auditAction = AuditAction.APPLICATION_REVIEWED;
+          severity = AuditSeverity.INFO;
+      }
+
+      // Create audit log entry
+      try {
+        await this.auditLogsService.create({
+          actor: updateApplicationStatusDto.updatedByName || 'System',
+          actorId: updateApplicationStatusDto.updatedBy,
+          role: updateApplicationStatusDto.updatedByRole || 'desk officer',
+          action: auditAction,
+          entityType: EntityType.APPLICATION,
+          entityId: application.applicationId,
+          details: `${newStatus === ApplicationStatus.APPROVED ? 'Approved' : newStatus === ApplicationStatus.REJECTED ? 'Rejected' : 'Updated'} application for ${companyName}${updateApplicationStatusDto.notes ? ': ' + updateApplicationStatusDto.notes : ''}`,
+          severity: severity,
+          ipAddress: updateApplicationStatusDto.ipAddress || '0.0.0.0',
+          metadata: {
+            oldStatus: oldStatus,
+            newStatus: newStatus,
+            companyId: company?._id?.toString(),
+            companyName: companyName,
+            notes: updateApplicationStatusDto.notes
+          }
+        });
+      } catch (auditError) {
+        // Log error but don't fail the status update
+        this.logger.error(`Failed to create audit log: ${auditError.message}`);
+      }
+
+      return {
+        applicationId: application._id,
+        newStatus: application.currentStatus
+      }
     } catch (err) {
       if (err instanceof NotFoundException) {
         throw err;
       }
+      this.logger.error(err.message);
       throw new BadRequestException('Failed to update application status', err.message);
     }
   }
@@ -258,41 +336,70 @@ export class ApplicationsService {
         throw new BadRequestException('Company not found for this application');
       }
 
-      // Get the latest certificate to determine the next sequence number
-      const currentYear = new Date().getFullYear();
-      const latestCertificate = await this.certificateModel
-        .findOne({ certificateId: new RegExp(`^CERT-${currentYear}-`) })
-        .sort({ certificateId: -1 })
-        .exec();
-
-      let sequenceNumber = 1;
-      if (latestCertificate && latestCertificate.certificateId) {
-        const parts = latestCertificate.certificateId.split('-');
-        if (parts.length === 3) {
-          sequenceNumber = parseInt(parts[2], 10) + 1;
-        }
+      // Get vendor information for contact details
+      const vendor = await this.vendorModel.findById(company.userId);
+      if (!vendor) {
+        throw new BadRequestException('Vendor not found for this company');
       }
 
-      const certificateId = generateCertificateId(sequenceNumber);
+      // Generate unique random alphanumeric certificate ID (e.g., IMO-CONT-2025-A1B2C3)
+      let certificateId: string = '';
+      let isUnique = false;
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      // Keep generating until we get a unique ID (with max attempts to prevent infinite loop)
+      while (!isUnique && attempts < maxAttempts) {
+        certificateId = generateCertificateId();
+        const existingCert = await this.certificateModel.findOne({ certificateId }).exec();
+        if (!existingCert) {
+          isUnique = true;
+        }
+        attempts++;
+      }
+
+      if (!isUnique) {
+        throw new BadRequestException('Failed to generate unique certificate ID. Please try again.');
+      }
 
       // Calculate certificate validity (1 year from now)
       const validUntil = new Date();
       validUntil.setFullYear(validUntil.getFullYear() + 1);
 
-      // Create the certificate
+      // Extract sector names and categories from company
+      const approvedSectors = company.categories?.map(cat => cat.sector) || [];
+
+      // Create the certificate with all required fields
       const certificate = new this.certificateModel({
         certificateId: certificateId,
-        contractorId: company.userId, // Reference to the vendor
-        contractorName: application.contractorName,
-        registrationId: application.applicationId,
-        rcBnNumber: application.rcBnNumber,
-        grade: application.grade,
-        status: 'Approved',
+        company: company._id,
+        contractorId: company.userId,
+        contractorName: vendor.fullname,
+        
+        // Company Information
+        companyName:company.companyName,
+        rcBnNumber: company.cacNumber,
+        tin: company.tin,
+        
+        // Contact Information
+        address: company.address,
+        lga: company.lga,
+        phone: vendor.phoneNo,
+        email: vendor.email,
+        website: company.website || '',
+        
+        // Sector & Classification
+        approvedSectors: approvedSectors,
+        grade: company.grade,
+        
+        // Registration Status
+        status: certificateStatus.APPROVED,
         validUntil: validUntil
       });
 
       return await certificate.save();
     } catch (err) {
+      this.logger.error(err)
       throw new BadRequestException('Failed to generate certificate', err.message);
     }
   }

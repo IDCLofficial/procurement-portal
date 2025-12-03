@@ -39,4 +39,22 @@ export class UpdateApplicationStatusDto {
   @IsString()
   @IsOptional()
   updatedByName?: string;
+
+  @ApiProperty({
+    description: 'Role of the user updating the status',
+    example: 'desk officer',
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  updatedByRole?: string;
+
+  @ApiProperty({
+    description: 'IP address of the user updating the status',
+    example: '192.168.1.1',
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  ipAddress?: string;
 }

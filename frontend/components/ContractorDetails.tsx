@@ -61,7 +61,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
 
     // Generate the verification URL for QR code with verify parameter
     const verificationUrl = typeof window !== 'undefined' 
-        ? `${"192.168.202.71:3000"}/contractor/${contractor.id}?scan=true`
+        ? `${"http://192.168.59.98:3000"}/contractor/${contractor.id}?scan=true`
         : `https://procurement.imostate.gov.ng/contractor/${contractor.id}?scan=true`;
 
     return (

@@ -1,6 +1,6 @@
 import { apiSlice } from './';
 import endpoints from './endpoints.const';
-import { Application, ApplicationTimeline, CompanyDetailsResponse, CompleteVendorRegistrationRequest, CreateVendorRequest, InitPaymentRequest, InitPaymentResponse, LoginVendorRequest, LoginVendorResponse, PaymentHistoryResponse, RegisterCompanyResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest } from './types';
+import { ActivityLogResponse, Application, ApplicationTimeline, CompanyDetailsResponse, CompleteVendorRegistrationRequest, CreateVendorRequest, InitPaymentRequest, InitPaymentResponse, LoginVendorRequest, LoginVendorResponse, PaymentHistoryResponse, RegisterCompanyResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest } from './types';
 
 export const vendorApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -83,6 +83,12 @@ export const vendorApi = apiSlice.injectEndpoints({
                 params: params ? { page: params.page || 1, limit: params.limit || 10, search: params.search || '', year: params.year || '', type: params.type || '' } : { page: 1, limit: 10 },
             }),
         }),
+        getMyActivityLogs: builder.query<ActivityLogResponse[], void>({
+            query: () => ({
+                url: endpoints.myActivityLogs,
+                method: 'GET',
+            }),
+        }),
     })
 })
 
@@ -99,4 +105,5 @@ export const {
     useGetApplicationQuery,
     useGetApplicationTimelineQuery,
     useGetPaymentHistoryQuery,
+    useGetMyActivityLogsQuery,
 } = vendorApi;

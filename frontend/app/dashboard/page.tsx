@@ -8,13 +8,11 @@ import ComplianceDocumentsCard from '@/components/dashboard/ComplianceDocumentsC
 import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
-import { useGetApplicationTimelineQuery } from '@/store/api/vendor.api';
 import { format, differenceInDays } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
     const { user, company, application, isLoading } = useAuth();
-    const { data: timelineData, isLoading: timelineLoading } = useGetApplicationTimelineQuery();
 
     const router = useRouter();
 
@@ -40,7 +38,7 @@ export default function DashboardPage() {
         // Add support contact logic
     };
 
-    if (isLoading || timelineLoading) {
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-50">
                 <DashboardHeader
@@ -63,8 +61,6 @@ export default function DashboardPage() {
         const daysUntilExpiry = doc.validTo ? differenceInDays(new Date(doc.validTo), new Date()) : null;
         const expiresText = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 ? 'Expires soon' : undefined;
 
-        console.log(doc.status.status);
-
         return {
             id: doc._id,
             name: doc.documentType,
@@ -75,22 +71,6 @@ export default function DashboardPage() {
                     doc.status.status,
         };
     });
-
-    // Transform timeline data to recent activities
-    const recentActivities = (timelineData || []).map((item, index) => {
-        const getActivityType = (status: string): 'success' | 'info' | 'warning' => {
-            if (status === 'Approved') return 'success';
-            if (status === 'Rejected' || status === 'Clarification Requested') return 'warning';
-            return 'info';
-        };
-
-        return {
-            id: `${index}`,
-            title: item.status,
-            date: format(new Date(item.timestamp), 'yyyy-MM-dd'),
-            type: getActivityType(item.status),
-        };
-    }).reverse(); // Show most recent first
 
     // Calculate registration details
     const registrationId = company?.cacNumber || user?.certificateId || 'N/A';
@@ -157,7 +137,7 @@ export default function DashboardPage() {
                         )}
 
                         {/* Recent Activity */}
-                        <RecentActivityCard activities={recentActivities} />
+                        <RecentActivityCard />
                     </div>
 
                     {/* Right Column - Quick Actions */}

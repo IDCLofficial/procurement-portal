@@ -13,6 +13,7 @@ export default {
     getApplication: "/vendors/applications/my-company",
     vendorApplicationTimeline: "vendors/my-application-timeline",
     myPaymentsHistory: "/vendors/my-payment-history",
+    myActivityLogs: "/vendors/activity-logs",
 
     // Public Endpoints
     getAllContractor: "/certificates",

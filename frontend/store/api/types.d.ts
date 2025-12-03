@@ -327,4 +327,10 @@ interface Contractor {
     updatedAt: string;
 }
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor };
+interface ActivityLogResponse {
+    activityType: string;
+    description: string;
+    timestamp: string;
+}
+
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor, ActivityLogResponse };

@@ -1,6 +1,7 @@
 'use client';
 
-import { use } from 'react';
+import { use, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import ContractorDetails from '@/components/ContractorDetails';
 import Link from 'next/link';
@@ -11,7 +12,16 @@ import { useGetContractorByIdQuery } from '@/store/api/public.api';
 
 export default function ContractorPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+    const searchParams = useSearchParams();
     const { data: contractor, isLoading, error } = useGetContractorByIdQuery(id);
+
+    // Check if accessed via QR code scan
+    const isFromQR = useMemo(() => {
+        return searchParams.get('verify') === 'true' || 
+               searchParams.get('qr') === 'true' || 
+               searchParams.get('scan') === 'true' ||
+               searchParams.get('v') === '1';
+    }, [searchParams]);
 
     // Analyze ID format for custom error message
     const analyzeIdFormat = (id: string) => {
@@ -58,7 +68,14 @@ export default function ContractorPage({ params }: { params: Promise<{ id: strin
                 <div className="container mx-auto px-4 py-16">
                     <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
                         <FaSpinner className="w-12 h-12 text-theme-green animate-spin" />
-                        <p className="text-lg text-gray-600">Loading contractor details...</p>
+                        {isFromQR ? (
+                            <div className="text-center space-y-2">
+                                <p className="text-lg font-semibold text-gray-900">Verifying Contractor Certificate...</p>
+                                <p className="text-sm text-gray-600">Please wait while we validate the QR code</p>
+                            </div>
+                        ) : (
+                            <p className="text-lg text-gray-600">Loading contractor details...</p>
+                        )}
                     </div>
                 </div>
             </div>

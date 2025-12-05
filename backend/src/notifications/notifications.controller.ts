@@ -28,15 +28,25 @@ export class NotificationsController {
   })
   @Get('vendor-notification')
   async vendorNotifications(@Req() req:any) {
-    const decoded = this.jwtService.decode(req.headers.authorization.split(' ')[1]);
-    if(!decoded){
+    try{
+      const header = req.headers.authorization;
+      if(!header){
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+      const decoded = this.jwtService.decode(header.split(' ')[1]);
+      if(!decoded){
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+      return await this.notificationsService.findVendorNotifications(decoded);
+    }catch(err){
       this.logger.log(`Unauthorized user trying to access the endpoint`);
       throw new UnauthorizedException('Unauthorized');
     }
-    return await this.notificationsService.findVendorNotifications(decoded);
   }
 
-  //
+  //q
   @ApiOperation({
     summary: 'Get admin notifications',
     description: 'Returns all notifications for the currently authenticated admin.',

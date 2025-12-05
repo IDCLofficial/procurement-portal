@@ -13,6 +13,8 @@ export enum Status{
     PENDING="pending",
     NEED_REVIEW="needs_review",
     APPROVED="approved",
+    EXPIRING="Expiring",
+    EXPIRED="Expired"
 }
 
 export type statusObject = {

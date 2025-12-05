@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../users/entities/user.schema';
 import { Notification, NotificationDocument, NotificationType, NotificationRecipient, priority } from './entities/notification.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { verificationDocuments } from 'src/documents/entities/document.schema';
+import { verificationDocuments, Status } from 'src/documents/entities/document.schema';
 
 @Injectable()
 export class NotificationsService {
@@ -33,6 +33,7 @@ export class NotificationsService {
     let notificationsSent = 0;
 
     for (const doc of documents) {
+      //
       // Check if notification already sent for this document
       const existingNotification = await this.notificationModel.findOne({
         type: NotificationType.CERTIFICATE_RENEWAL_DUE_SOON,
@@ -43,6 +44,14 @@ export class NotificationsService {
       if (!existingNotification && doc.validTo) {
         const expiryDate = new Date(doc.validTo).toLocaleDateString();
         
+        // Update the status of the document to expiring
+        if (doc.status) {
+          doc.status.status = Status.EXPIRING;
+        } else {
+          doc.status = { status: Status.EXPIRING } as any;
+        }
+        await doc.save();
+
         // Notify the vendor
         await this.notificationModel.create({
           type: NotificationType.CERTIFICATE_RENEWAL_DUE_SOON,
@@ -78,6 +87,7 @@ export class NotificationsService {
     let notificationsSent = 0;
 
     for (const doc of expiredDocuments) {
+      //
       // Check if notification already sent for this expired document
       const existingExpiredNotification = await this.notificationModel.findOne({
         type: NotificationType.CERTIFICATE_EXPIRED,
@@ -88,6 +98,14 @@ export class NotificationsService {
       if (!existingExpiredNotification && doc.validTo) {
         const expiredDate = new Date(doc.validTo).toLocaleDateString();
         
+        // Update the status of the document to expired
+        if (doc.status) {
+          doc.status.status = Status.EXPIRED;
+        } else {
+          doc.status = { status: Status.EXPIRED } as any;
+        }
+        await doc.save();
+
         // Notify the vendor
         await this.notificationModel.create({
           type: NotificationType.CERTIFICATE_EXPIRED,

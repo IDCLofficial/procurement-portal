@@ -523,6 +523,7 @@ export class VendorsService {
                 }
                 
                 return await existingDoc.save();
+                
               } else {
                 // Create new document record
                 const newDoc = new this.verificationDocumentModel({
@@ -541,7 +542,10 @@ export class VendorsService {
                     status:DocumentStatus.PENDING,
                   }
                 });
-                return await newDoc.save();
+                const response = await newDoc.save();
+                vendor.companyForm = companyForm.STEP5;
+                await vendor.save();
+                return response;
               }
             })
           );
@@ -549,8 +553,6 @@ export class VendorsService {
             company.documents = savedDocs.map(doc=>doc._id as Types.ObjectId)
             await company.save()
           }
-          vendor.companyForm = companyForm.STEP5;
-          await vendor.save();
           
           return {
             message: "Documents uploaded successfully",

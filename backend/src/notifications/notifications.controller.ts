@@ -61,11 +61,21 @@ export class NotificationsController {
   })
   @Get('admin-notification')
   async adminNotification(@Req() req:any){
-    const decoded = this.jwtService.decode(req.headers.authorization.split(' ')[1]);
-    if(decoded.role !== 'Admin'){
+    try{
+      const header = req.headers.authorization;
+      if(!header){
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+      const decoded = this.jwtService.decode(header.split(' ')[1]);
+      if(!decoded || decoded.role !== 'Admin'){
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+      return await this.notificationsService.findAdminNotifications(decoded);
+    }catch(err){
       this.logger.log(`Unauthorized user trying to access the endpoint`);
       throw new UnauthorizedException('Unauthorized');
     }
-    return await this.notificationsService.findAdminNotifications(decoded);
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException, Req, Headers, UseGuards, UseInterceptors, UploadedFiles, UnauthorizedException, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException, Req, Headers, UseGuards, UseInterceptors, UploadedFiles, UnauthorizedException, Query, Logger } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
@@ -12,6 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 @ApiTags('vendors')
 @Controller('vendors')
 export class VendorsController {
+  private readonly logger:Logger = new Logger(VendorsController.name);
   constructor(
     private readonly vendorsService: VendorsService,
     private readonly jwtService: JwtService,
@@ -694,9 +695,24 @@ export class VendorsController {
    *   "phoneNo": "08098765432"
    * }
    */
-  @Patch('profile/:id')
-  update(@Param('id') id: string, @Body() updateVendorDto: UpdateVendorDto) {
-    return this.vendorsService.update(id, updateVendorDto);
+  @Patch('profile')
+  update(@Param('id') id: string, @Body() updateVendorDto: UpdateVendorDto, @Req() req: any) {
+    try{
+      const header = req.headers.authorization;
+      if(!header){
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+      const decoded = this.jwtService.decode(header.split(' ')[1])._id;
+      if(!decoded){
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+      return this.vendorsService.update(id, updateVendorDto);
+    }catch(err){
+      this.logger.log(`Unauthorized user trying to access the endpoint`);
+      throw new UnauthorizedException('Unauthorized');
+    }
   }
 
   /**

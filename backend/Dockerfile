@@ -27,6 +27,6 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 
 # Expose port
-EXPOSE 5001
+EXPOSE 3000
 
 CMD ["node", "dist/main.js"]

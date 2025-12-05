@@ -1,45 +1,32 @@
-# Use a lightweight Node image
+# ---- Build Stage ----
 FROM node:20-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy dependency files
+# Install dependencies (including dev deps)
 COPY package*.json ./
+RUN npm install
 
-# Install only production deps
-RUN npm ci --only=production
-
-# # Install dependencies (including devDependencies needed for build)
-# RUN npm ci
-
-# Copy the rest of the application files
+# Copy the rest of the code
 COPY . .
 
-# Build the NestJS project and verify dist folder exists
-RUN npm run build && \
-    ls -la dist/ && \
-    test -f dist/main.js || (echo "Build failed: dist/main.js not found" && exit 1)
+# Build the project
+RUN npm run build
 
 
-
-# ---- Production image ----
+# ---- Production Stage ----
 FROM node:20-alpine AS production
 
-# Set working directory
 WORKDIR /app
 
-# Copy only necessary files for production
+# Copy only production dependencies
 COPY package*.json ./
+RUN npm install --omit=dev
 
-# Copy built files from the builder stage
+# Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
-# Verify the main.js file exists before starting
-RUN test -f dist/main.js || (echo "ERROR: dist/main.js not found in production image" && exit 1)
-
-# Expose the port
+# Expose port
 EXPOSE 3000
 
-# Start the server
 CMD ["node", "dist/main.js"]

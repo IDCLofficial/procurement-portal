@@ -6,6 +6,7 @@ import { FaSearch } from 'react-icons/fa';
 import { getContractorById, getAllContractorIds } from '@/lib/contractors';
 import type { Metadata } from 'next';
 import { FaQrcode } from 'react-icons/fa6';
+import { Suspense } from 'react';
 
 // Generate static params for all contractors at build time
 export async function generateStaticParams() {
@@ -237,8 +238,10 @@ export default async function ContractorPage({ params }: { params: Promise<{ id:
                     </Link>
                 }
             />
+            <Suspense fallback = {<div>Loading...</div>}>
 
-            <ContractorDetails contractor={contractor} />
+                <ContractorDetails contractor={contractor} />
+            </Suspense>
         </div>
     );
 }

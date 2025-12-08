@@ -174,13 +174,6 @@ export class NotificationsService {
       priority: notification.priority,
       createdAt: notification.createdAt,
     }));
-
-    if(result.length < 1){
-      return {
-        message: "You have no notifications at the moment."
-      }
-    }
-    
     return {
       message: `you have ${result.length} notifications`,
       notifications: result
@@ -205,12 +198,6 @@ export class NotificationsService {
       priority: notification.priority,
       createdAt: notification.createdAt,
     }));
-
-    if(result.length < 1){
-      return {
-        message: "You have no notifications at the moment."
-      }
-    }
     
     return {
       message: `you have ${result.length} notifications`,

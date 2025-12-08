@@ -398,7 +398,7 @@ export class VendorsService {
           // Check if directors already exist for this vendor
           let directors = await this.directorsModel.findOne({userId:vendor._id}).exec()
           
-          let result;
+          let result:any;
           if(directors){
             // Update existing directors
             directors.directors = updateRegistrationDto.directors;

@@ -703,8 +703,8 @@ export class VendorsController {
         this.logger.log(`Unauthorized user trying to access the endpoint`);
         throw new UnauthorizedException('Unauthorized');
       }
-      const decoded = this.jwtService.decode(header.split(' ')[1])._id;
-      if(!decoded){
+      const id = this.jwtService.decode(header.split(' ')[1])._id;
+      if(!id){
         this.logger.log(`Unauthorized user trying to access the endpoint`);
         throw new UnauthorizedException('Unauthorized');
       }

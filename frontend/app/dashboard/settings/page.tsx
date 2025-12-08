@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import TabNavigation from '@/components/profile/TabNavigation';
 import SettingsSection from '@/components/settings/SettingsSection';
@@ -8,20 +8,36 @@ import SettingsField from '@/components/settings/SettingsField';
 import VerifiedBadge from '@/components/settings/VerifiedBadge';
 import NotificationToggle from '@/components/settings/NotificationToggle';
 import NotificationPreference from '@/components/settings/NotificationPreference';
-// import TwoFactorStatus from '@/components/settings/TwoFactorStatus';
 import SecurityPreference from '@/components/settings/SecurityPreference';
 import DangerZone from '@/components/settings/DangerZone';
 import ComingSoonSection from '@/components/settings/ComingSoonSection';
 import SubHeader from '@/components/SubHeader';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
 import { FaUser, FaBell, FaShieldAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useSearchParams } from 'next/navigation';
+import { updateSearchParam } from '@/lib/utils';
+import { Loader, UserPen } from 'lucide-react';
+import { useUpdateVendorProfileMutation } from '@/store/api/vendor.api';
+import { toast } from 'sonner';
 
 export default function AccountSettingsPage() {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('account');
+    const searchParams = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'account';
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const [updateProfileMutation, { isLoading: isUpdatingProfile, isSuccess, isError }] = useUpdateVendorProfileMutation();
+
+    useEffect(()=>{
+        if (isSuccess) {
+            toast.success('Profile updated successfully');
+        }
+        if (isError) {
+            toast.error('Failed to update profile');
+        }
+    }, [isSuccess, isError]);
 
     // Notification preferences state
     const [notifications, setNotifications] = useState({
@@ -111,14 +127,6 @@ export default function AccountSettingsPage() {
         }));
     };
 
-    const handleEnable2FA = () => {
-        console.log('Enabling 2FA...');
-        // Handle 2FA setup logic
-        setSecurity((prev) => ({
-            ...prev,
-            twoFactorEnabled: true,
-        }));
-    };
 
     const handleDeactivateAccount = () => {
         console.log('Deactivating account...');
@@ -128,6 +136,24 @@ export default function AccountSettingsPage() {
     const handleViewLoginHistory = () => {
         console.log('Viewing login history...');
         // Handle view login history logic
+    };
+
+    const isEditted = useMemo(()=>({
+        fullname: formData.fullName !== user?.fullname,
+        phone: formData.phone !== user?.phoneNo,
+    }), [formData, user]);
+
+    const isFormValid = useMemo(()=>{
+        return formData.fullName.length > 3 && formData.phone.length > 9;
+    }, [formData]);
+
+    const handleUpdateProfile = () => {
+        if (!isFormValid) return;
+        if (isUpdatingProfile) return;
+        updateProfileMutation({
+            fullname: formData.fullName,
+            phoneNo: formData.phone,
+        });
     };
 
     return (
@@ -142,7 +168,7 @@ export default function AccountSettingsPage() {
                 <TabNavigation
                     tabs={tabs}
                     activeTab={activeTab}
-                    onTabChange={setActiveTab}
+                    onTabChange={(tabe)=>updateSearchParam('tab', tabe)}
                 />
 
                 {/* Form Content */}
@@ -169,7 +195,8 @@ export default function AccountSettingsPage() {
                                             name="email"
                                             type="email"
                                             value={formData.email}
-                                            onChange={(value: string) => handleFieldChange('email', value)}
+                                            onChange={() => {}}
+                                            disabled
                                             placeholder="john.doe@bobconstruction.com"
                                             helperText="This email is used for account notifications and login"
                                             badge={<VerifiedBadge />}
@@ -185,6 +212,22 @@ export default function AccountSettingsPage() {
                                          />
                                     </div>
                                 </SettingsSection>
+                                {/* Change Password Button */}
+                                {isFormValid && (isEditted.fullname || isEditted.phone) &&<div className="mt-6">
+                                    <Button
+                                        className="bg-teal-700 hover:bg-teal-800 text-white"
+                                        onClick={handleUpdateProfile}
+                                        disabled={isUpdatingProfile}
+                                    >
+                                        {isUpdatingProfile ? <span className='flex items-center gap-2'>
+                                            <Loader className='animate-spin' />
+                                            Updating Profile...
+                                        </span> : <span className='flex items-center gap-2'>
+                                            <UserPen />
+                                            Update Profile
+                                        </span>}
+                                    </Button>
+                                </div>}
                             </div>
 
                             {/* Change Password */}

@@ -14,6 +14,7 @@ export default {
     vendorApplicationTimeline: "vendors/my-application-timeline",
     myPaymentsHistory: "/vendors/my-payment-history",
     myActivityLogs: "/vendors/activity-logs",
+    myNotifications: "/notifications/vendor-notification",
 
     // Public Endpoints
     getAllContractor: "/certificates",

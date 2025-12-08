@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import ProfileUpdateGuidelines from '@/components/profile/ProfileUpdateGuidelines';
 import TabNavigation from '@/components/profile/TabNavigation';
 import FormSection from '@/components/profile/FormSection';
@@ -18,12 +16,11 @@ import { useAuth } from '@/components/providers/public-service/AuthProvider';
 import { lgaObject } from '@/lib/constants.const';
 
 export default function EditProfilePage() {
-    const router = useRouter();
     const { company } = useAuth();
     const [activeTab, setActiveTab] = useState('company-info');
 
     // Form state
-    const [formData, setFormData] = useState({
+    const [formData] = useState({
         businessAddress: company?.address || '',
         localGovernmentArea: company?.lga || '',
         companyWebsite: company?.website || '',
@@ -58,26 +55,10 @@ export default function EditProfilePage() {
 
     const lgaOptions = lgaObject;
 
-    const handleFieldChange = (field: string, value: string) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
-
-    const handleSaveChanges = () => {
-        console.log('Saving changes:', formData);
-        // Handle save logic
-    };
-
-    const handleCancel = () => {
-        router.back();
-    };
-
     return (
         <div className="min-h-screen bg-gray-50">
             <SubHeader
-                title='Edit Company Profile'
+                title='View Company Profile'
                 hasBackButton
             />
 
@@ -141,7 +122,8 @@ export default function EditProfilePage() {
                                             label="Business Address"
                                             name="businessAddress"
                                             value={formData.businessAddress}
-                                            onChange={(value) => handleFieldChange('businessAddress', value)}
+                                            onChange={() => {}}
+                                            disabled
                                         />
                                     </FormRow>
                                     <FormRow columns={2}>
@@ -151,7 +133,8 @@ export default function EditProfilePage() {
                                             type="select"
                                             value={formData.localGovernmentArea}
                                             options={lgaOptions}
-                                            onChange={(value) => handleFieldChange('localGovernmentArea', value)}
+                                            onChange={() => {}}
+                                            disabled
                                         />
                                         <FormField
                                             label="State"
@@ -167,29 +150,11 @@ export default function EditProfilePage() {
                                             name="companyWebsite"
                                             value={formData.companyWebsite}
                                             placeholder="www.yourcompany.com"
-                                            onChange={(value) => handleFieldChange('companyWebsite', value)}
+                                            onChange={() => {}}
+                                            disabled
                                         />
                                     </FormRow>
                                 </FormSection>
-
-                                {/* Action Buttons - Only on Contact & Location */}
-                                <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleCancel}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        className="bg-teal-700 hover:bg-teal-800 text-white"
-                                        onClick={handleSaveChanges}
-                                    >
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Save All Changes
-                                    </Button>
-                                </div>
                             </div>
                         </div>
                     )}

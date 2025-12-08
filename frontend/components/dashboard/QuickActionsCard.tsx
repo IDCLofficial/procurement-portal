@@ -1,14 +1,12 @@
-'use client';
-
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
-import { FaFileAlt, FaEdit, FaCreditCard, FaBell, FaCheckCircle } from 'react-icons/fa';
+import { FaFileAlt, FaCreditCard, FaBell, FaCheckCircle } from 'react-icons/fa';
+import { FaUserLock } from 'react-icons/fa6';
 
 interface QuickAction {
     icon: React.ComponentType<{ className?: string }>;
     label: string;
     url?: string;
-    onClick?: () => void;
 }
 
 interface QuickActionsCardProps {
@@ -27,8 +25,8 @@ const defaultActions: QuickAction[] = [
         url: "/dashboard/manage-documents"
     },
     {
-        icon: FaEdit,
-        label: 'Edit Company Profile',
+        icon: FaUserLock,
+        label: 'View Company Profile',
         url: "/dashboard/profile"
     },
     {
@@ -68,7 +66,6 @@ export default function QuickActionsCard({ actions = defaultActions }: QuickActi
                         return (
                             <button
                                 key={index}
-                                onClick={action.onClick}
                                 className="w-full cursor-pointer border flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all text-left group duration-300 active:scale-95"
                             >
                                 <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">

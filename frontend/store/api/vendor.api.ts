@@ -1,6 +1,6 @@
 import { apiSlice } from './';
 import endpoints from './endpoints.const';
-import { ActivityLogResponse, Application, ApplicationTimeline, CompanyDetailsResponse, CompleteVendorRegistrationRequest, CreateVendorRequest, InitPaymentRequest, InitPaymentResponse, LoginVendorRequest, LoginVendorResponse, PaymentHistoryResponse, RegisterCompanyResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest } from './types';
+import { ActivityLogResponse, Application, ApplicationTimeline, CompanyDetailsResponse, CompleteVendorRegistrationRequest, CreateVendorRequest, InitPaymentRequest, InitPaymentResponse, LoginVendorRequest, LoginVendorResponse, PaymentHistoryResponse, RegisterCompanyResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest, NotificationResponse } from './types';
 
 export const vendorApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -36,6 +36,16 @@ export const vendorApi = apiSlice.injectEndpoints({
             query: () => ({
                 url: endpoints.getProfile,
                 method: 'GET',
+            }),
+        }),
+        updateVendorProfile: builder.mutation<User, {
+            fullname?: string;
+            phoneNo?: string;
+        }>({
+            query: (body) => ({
+                url: endpoints.getProfile,
+                method: 'PATCH',
+                body,
             }),
         }),
         getCompanyDetails: builder.query<CompanyDetailsResponse, void>({
@@ -89,6 +99,13 @@ export const vendorApi = apiSlice.injectEndpoints({
                 method: 'GET',
             }),
         }),
+        getMyNotifications: builder.query<NotificationResponse, { page?: number; limit?: number; search?: string; filter?: string } | void>({
+            query: (params) => ({
+                url: endpoints.myNotifications,
+                method: 'GET',
+                params: params ? { page: params.page || 1, limit: params.limit || 10, search: params.search || '', filter: params.filter || '' } : { page: 1, limit: 10 },
+            }),
+        }),
     })
 })
 
@@ -99,6 +116,7 @@ export const {
     useResendVerificationOtpMutation,
     useCompleteVendorRegistrationMutation,
     useGetProfileQuery,
+    useUpdateVendorProfileMutation,
     useGetCompanyDetailsQuery,
     useInitPaymentMutation,
     useVerifyPaymentQuery,
@@ -106,4 +124,5 @@ export const {
     useGetApplicationTimelineQuery,
     useGetPaymentHistoryQuery,
     useGetMyActivityLogsQuery,
+    useGetMyNotificationsQuery,
 } = vendorApi;

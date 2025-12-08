@@ -30,7 +30,12 @@ const userSlice = createSlice({
         if (state.data) {
           state.data.companyForm = VendorSteps.COMPLETE;
         }
-      });
+      })
+      .addMatcher(vendorApi.endpoints.updateVendorProfile.matchFulfilled, (state, action) => {
+        if (state.data) {
+          state.data = action.payload;
+        }
+      })
   },
 });
 

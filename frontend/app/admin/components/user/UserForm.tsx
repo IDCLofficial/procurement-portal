@@ -30,7 +30,6 @@ export function UserForm({
   onChange,
   onSubmit,
   onClose,
-  isValidNigerianNumber,
 }: UserFormProps) {
   const roleOptions = [
     { value: 'officer', label: 'Desk Officer' },

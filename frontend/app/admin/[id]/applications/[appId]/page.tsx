@@ -6,6 +6,7 @@ import { ApplicationDetailPage } from "@/app/admin/components/general/Applicatio
 import { ConfirmationDialog } from "@/app/admin/components/general/confirmation-dialog";
 import { useGetApplicationByIdQuery, useChangeApplicationStatusMutation } from "@/app/admin/redux/services/appApi";
 import { useAppSelector } from "@/app/admin/redux/hooks";
+import type { CompanyDocument } from "@/app/admin/types";
 
 export default function ApplicationDetails() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function ApplicationDetails() {
 
   const shouldSkipQuery = !applicationId || !initialized;
 
-  const { data: application, isLoading, refetch } = useGetApplicationByIdQuery(applicationId, {
+  const { data: application, isLoading, isFetching, refetch } = useGetApplicationByIdQuery(applicationId, {
     skip: shouldSkipQuery,
   });
                 console.log("application:", application)
@@ -37,19 +38,14 @@ export default function ApplicationDetails() {
 
   const [changeApplicationStatus, { isLoading: isChangingStatus }] = useChangeApplicationStatusMutation();
 
-  const documents = application?.companyId?.documents ?? [];
+  const companyData = application?.companyId;
+  const documents = (typeof companyData === 'object' && companyData !== null) ? companyData.documents ?? [] : [];
 
   const hasUnapprovedDocuments =
     documents.length > 0 &&
-    documents.some((doc: any) => {
-      const rawStatus = doc?.status as any;
-      const statusValue =
-        !rawStatus
-          ? ""
-          : typeof rawStatus === "string"
-          ? rawStatus
-          : rawStatus.status ?? "";
-
+    documents.some((doc: CompanyDocument) => {
+      const rawStatus = doc?.status;
+      const statusValue = rawStatus?.status ?? "";
       return statusValue.toLowerCase() !== "approved";
     });
 
@@ -70,7 +66,7 @@ export default function ApplicationDetails() {
             Back
           </button>
 
-          {isRegistrar ? (
+          {!isFetching && isRegistrar && application?.currentStatus !== 'Approved' ? (
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -82,18 +78,20 @@ export default function ApplicationDetails() {
               >
                 Approve application
               </button>
-              <button
-                type="button"
-                className="inline-flex items-center rounded-md bg-red-600 hover:bg-red-800 px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                onClick={() => {
-                  setIsRejectDialogOpen(true);
-                }}
-                disabled={!applicationId}
-              >
-                Reject application
-              </button>
+              {application?.currentStatus !== 'Rejected' && (
+                <button
+                  type="button"
+                  className="inline-flex items-center rounded-md bg-red-600 hover:bg-red-800 px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  onClick={() => {
+                    setIsRejectDialogOpen(true);
+                  }}
+                  disabled={!applicationId}
+                >
+                  Reject application
+                </button>
+              )}
             </div>
-          ) : (
+          ) : !isFetching && !isRegistrar ? (
             <button
               type="button"
               className={`inline-flex items-center rounded-md ${isForwardDisabled ? "bg-blue-200 hover:bg-blue-200" : 'bg-blue-600 hover:bg-blue-800'} px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
@@ -104,7 +102,7 @@ export default function ApplicationDetails() {
             >
               Forward to registrar
             </button>
-          )}
+          ) : null}
           <ConfirmationDialog
             isOpen={isForwardDialogOpen}
             onClose={() => setIsForwardDialogOpen(false)}
@@ -236,7 +234,7 @@ export default function ApplicationDetails() {
           />
         </div>
 
-        {shouldSkipQuery || isLoading || !application ? (
+        {shouldSkipQuery || isLoading || isFetching || !application ? (
           <div className="flex justify-center items-center h-64">
             <span className="loader"></span>
           </div>
@@ -252,8 +250,8 @@ export default function ApplicationDetails() {
             currentStatus={application.currentStatus}
             showBackButton={false}
             allowDeskOfficerAssignment={false}
-            documents={application.companyId?.documents}
-            company={application.companyId}
+            documents={documents}
+            company={typeof application.companyId === 'object' ? application.companyId : undefined}
             onDocumentsUpdated={refetch}
           />
         )}

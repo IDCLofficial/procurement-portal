@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useGetUsersQuery } from '@/app/admin/redux/services/adminApi';
 import type { User } from '@/app/admin/types/user';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
@@ -21,18 +21,17 @@ export function DeskOfficerTab({
 }: DeskOfficerTabProps) {
   const [selectedDeskOfficer, setSelectedDeskOfficer] = useState('');
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
-  const [assignedOfficerName, setAssignedOfficerName] = useState<string | null>(null);
+  const [localAssignedName, setLocalAssignedName] = useState<string | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [officerToAssign, setOfficerToAssign] = useState<User | null>(null);
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (assignedTo && assignedTo !== 'Unassigned') {
-      setAssignedOfficerName(assignedTo);
-    } else {
-      setAssignedOfficerName(null);
-    }
-  }, [assignedTo]);
+  // Derive assigned officer name from prop or local state (for optimistic updates)
+  const assignedOfficerName = useMemo(() => {
+    if (localAssignedName) return localAssignedName;
+    if (assignedTo && assignedTo !== 'Unassigned') return assignedTo;
+    return null;
+  }, [assignedTo, localAssignedName]);
 
   const normalizedStatus = (currentStatus || '').toUpperCase();
   const isAssignmentLocked = [
@@ -43,7 +42,6 @@ export function DeskOfficerTab({
   ].includes(normalizedStatus);
 
   const { data: users = [], isLoading: isUsersLoading } = useGetUsersQuery();
-  console.log(users);
   const deskOfficers = (users as User[]).filter((user) => user?.role === 'Desk officer');
 
   const [assignApplication, { isLoading: isAssigning }] = useAssignApplicationMutation();
@@ -124,7 +122,7 @@ export function DeskOfficerTab({
                   userId: officerToAssign.id,
                   userName: officerToAssign.fullName,
                 }).unwrap();
-                setAssignedOfficerName(officerToAssign.fullName);
+                setLocalAssignedName(officerToAssign.fullName);
                 setIsConfirmDialogOpen(false);
                 setIsSuccessDialogOpen(true);
               } catch (error) {

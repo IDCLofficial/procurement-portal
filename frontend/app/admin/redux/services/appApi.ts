@@ -1,43 +1,37 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { baseApi } from "./baseApi";
 import type { Application } from "@/app/admin/types";
-import type { RootState } from "../store";
-import { mapApiApplicationToApplication } from "@/app/admin/utils/applicationMapper";
+import { mapApiApplicationToApplication, type ApiApplication } from "@/app/admin/utils/applicationMapper";
+import type {
+    ApplicationsQueryParams,
+    ApplicationsResponse,
+    AssignApplicationRequest,
+    ChangeApplicationStatusRequest,
+} from "@/app/admin/types/api";
 
-export const appApi = createApi({
-    reducerPath: "appApi",
-    baseQuery: fetchBaseQuery({
-        baseUrl: process.env.NEXT_PUBLIC_API_URL,
-        credentials: "include",
-        prepareHeaders: (headers, { getState }) => {
-            const state = getState() as RootState;
-            const token = state.auth.user?.token;
-
-            if (token) {
-                headers.set("authorization", `Bearer ${token}`);
-            }
-
-            return headers;
-        },
-    }),
-
-    tagTypes: ["Applications"],
-
-    // GET APPLICATIONS
+export const appApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        getApplications: builder.query<any, { status?: string; type?: string; page?: number; limit?: number }>({
+        // GET APPLICATIONS
+        getApplications: builder.query<ApplicationsResponse, ApplicationsQueryParams>({
             query: ({ status, type, page, limit } = {}) => {
                 const params = new URLSearchParams();
-                if (status) params.append('status', status);
-                if (type) params.append('type', type);
-                if (page !== undefined) params.append('page', page.toString());
-                if (limit !== undefined) params.append('limit', limit.toString());
+                if (status) params.append("status", status);
+                if (type) params.append("type", type);
+                if (page !== undefined) params.append("page", page.toString());
+                if (limit !== undefined) params.append("limit", limit.toString());
 
                 const queryString = params.toString();
-                return `/applications${queryString ? `?${queryString}` : ''}`;
+                return `/applications${queryString ? `?${queryString}` : ""}`;
             },
-            transformResponse: (response: any) => {
-                console.log('getApplications response here: ', response);
-                const mappedApplications: Application[] = (response.applications ?? []).map(mapApiApplicationToApplication);
+            transformResponse: (response: {
+                total: number;
+                page: number;
+                limit: number;
+                totalPages: number;
+                applications: unknown[];
+            }): ApplicationsResponse => {
+                const mappedApplications: Application[] = (response.applications ?? []).map(
+                    (app) => mapApiApplicationToApplication(app as ApiApplication)
+                );
                 return {
                     total: response.total,
                     page: response.page,
@@ -49,14 +43,15 @@ export const appApi = createApi({
             providesTags: ["Applications"],
         }),
 
+        // GET APPLICATION BY ID
         getApplicationById: builder.query<Application, string>({
             query: (id) => `/applications/${id}`,
-            transformResponse: (app: any) => mapApiApplicationToApplication(app),
+            transformResponse: (app: unknown) => mapApiApplicationToApplication(app as ApiApplication),
             providesTags: ["Applications"],
         }),
 
-// ASSIGN APPLICATION TO USER
-        assignApplication: builder.mutation<any, { applicationId: string; userId: string; userName: string }>({
+        // ASSIGN APPLICATION TO USER
+        assignApplication: builder.mutation<Application, AssignApplicationRequest>({
             query: ({ applicationId, userId, userName }) => ({
                 url: `/applications/assign/${applicationId}`,
                 method: "PATCH",
@@ -64,12 +59,20 @@ export const appApi = createApi({
             }),
             invalidatesTags: ["Applications"],
         }),
-        // get applications assigned to a particular user
-        getApplicationsByUser: builder.query<any, string>({
+
+        // GET APPLICATIONS ASSIGNED TO CURRENT USER
+        getApplicationsByUser: builder.query<ApplicationsResponse, void>({
             query: () => `/applications/my-assignments`,
-            transformResponse: (response: any) => {
-                console.log('getApplicationsByUser response', response);
-                const mappedApplications: Application[] = (response.applications ?? []).map(mapApiApplicationToApplication);
+            transformResponse: (response: {
+                total: number;
+                page: number;
+                limit: number;
+                totalPages: number;
+                applications: unknown[];
+            }): ApplicationsResponse => {
+                const mappedApplications: Application[] = (response.applications ?? []).map(
+                    (app) => mapApiApplicationToApplication(app as ApiApplication)
+                );
                 return {
                     total: response.total,
                     page: response.page,
@@ -80,8 +83,9 @@ export const appApi = createApi({
             },
             providesTags: ["Applications"],
         }),
-        // change application status
-        changeApplicationStatus: builder.mutation<any, { applicationId: string; applicationStatus: string }>({
+
+        // CHANGE APPLICATION STATUS
+        changeApplicationStatus: builder.mutation<Application, ChangeApplicationStatusRequest>({
             query: ({ applicationId, applicationStatus }) => ({
                 url: `/applications/status/${applicationId}`,
                 method: "PATCH",

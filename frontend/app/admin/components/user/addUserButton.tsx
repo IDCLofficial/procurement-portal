@@ -34,20 +34,7 @@ export function AddUserButton() {
     passwordStrength: false,
   });
 
-  const [createUser, { isLoading, error }] = useCreateUserMutation();
-
-  if (error && typeof error === 'object' && 'status' in error) {
-    const fetchError = error as {
-      status: number;
-      data?: {
-        message?: string;
-        error?: string;
-        statusCode?: number;
-      };
-    };
-
-    console.log(fetchError.data?.message);
-  }
+  const [createUser, { isLoading }] = useCreateUserMutation();
 
   const validateForm = () => {
     const passwordMatch = formData.password === formData.confirmPassword;

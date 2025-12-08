@@ -1,28 +1,20 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slice/authSlice';
-import { adminApi } from './services/adminApi';
-import { appApi } from './services/appApi';
-import { certificateApi } from './services/certificateApi';
-import { docsApi } from './services/docsApi';
-import { SettingsApi } from './services/settingsApi';
+import { baseApi } from './services/baseApi';
+// Import injected endpoints to ensure they are registered
+import './services/adminApi';
+import './services/appApi';
+import './services/certificateApi';
+import './services/docsApi';
+import './services/settingsApi';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    [adminApi.reducerPath]: adminApi.reducer,
-    [appApi.reducerPath]: appApi.reducer,
-    [certificateApi.reducerPath]: certificateApi.reducer,
-    [docsApi.reducerPath]: docsApi.reducer,
-    [SettingsApi.reducerPath]: SettingsApi.reducer,
+    [baseApi.reducerPath]: baseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(
-      adminApi.middleware,
-      appApi.middleware,
-      certificateApi.middleware,
-      docsApi.middleware,
-      SettingsApi.middleware,
-    ),
+    getDefaultMiddleware().concat(baseApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

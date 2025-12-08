@@ -1,35 +1,17 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { RootState } from "../store";
-import type { Category } from "../../types/setting";
+import { baseApi } from "./baseApi";
+import type { CategoriesResponse } from "../../types/setting";
+import type { CreateCategoryRequest, CreateCategoryResponse } from "@/app/admin/types/api";
 
-
-export const SettingsApi = createApi({
-    reducerPath: "settingsApi",
-    baseQuery: fetchBaseQuery({
-        baseUrl: process.env.NEXT_PUBLIC_API_URL,
-        credentials: "include",
-        prepareHeaders: (headers, { getState }) => {
-            const state = getState() as RootState;
-            const token = state.auth.user?.token;
-
-            if (token) {
-                headers.set("authorization", `Bearer ${token}`);
-            }
-
-            return headers;
-        },
-    }),
-
-    tagTypes: ["Settings", "Categories"],
-
+export const settingsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        // get all categories
-        getCategories: builder.query<Category[], void>({
+        // GET ALL CATEGORIES
+        getCategories: builder.query<CategoriesResponse, void>({
             query: () => "/categories",
             providesTags: ["Categories"],
         }),
-        // add category
-        addCategory: builder.mutation<Category, Category>({
+
+        // CREATE A NEW CATEGORY
+        createCategory: builder.mutation<CreateCategoryResponse, CreateCategoryRequest>({
             query: (body) => ({
                 url: "/categories",
                 method: "POST",
@@ -37,8 +19,15 @@ export const SettingsApi = createApi({
             }),
             invalidatesTags: ["Categories"],
         }),
-        
+        // DELETE CATEGORY
+        deleteCategory: builder.mutation<void, string>({
+            query: (id) => ({
+                url: `/categories/${id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: ["Categories"],
+        }),
     }),
 });
 
-export const { useGetCategoriesQuery, useAddCategoryMutation } = SettingsApi;
+export const { useGetCategoriesQuery, useCreateCategoryMutation, useDeleteCategoryMutation } = settingsApi;

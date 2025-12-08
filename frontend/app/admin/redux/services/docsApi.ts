@@ -1,46 +1,33 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { RootState } from "../store";
+import { baseApi } from "./baseApi";
+import type {
+    ChangeDocumentStatusRequest,
+    ChangeDocumentStatusResponse,
+} from "@/app/admin/types/api";
 
-export const docsApi = createApi({
-    reducerPath: "docsApi",
-    baseQuery: fetchBaseQuery({
-        baseUrl: process.env.NEXT_PUBLIC_API_URL,
-        credentials: "include",
-        prepareHeaders: (headers, { getState }) => {
-            const state = getState() as RootState;
-            const token = state.auth.user?.token;
-
-            if (token) {
-                headers.set("authorization", `Bearer ${token}`);
-            }
-
-            return headers;
-        },
-    }),
-
-    tagTypes: ["Documents"],
-
-   
+export const docsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-    //   change document status
-    changeDocumentStatus: builder.mutation<any, { documentId: string; documentStatus: string; message?: string }>({
-        query: ({ documentId, documentStatus, message }) => {
-            const body: { status: { status: string; message?: string } } = {
-                status: { status: documentStatus },
-            };
+        // CHANGE DOCUMENT STATUS
+        changeDocumentStatus: builder.mutation<
+            ChangeDocumentStatusResponse,
+            ChangeDocumentStatusRequest
+        >({
+            query: ({ documentId, documentStatus, message }) => {
+                const body: { status: { status: string; message?: string } } = {
+                    status: { status: documentStatus },
+                };
 
-            if (message) {
-                body.status.message = message;
-            }
+                if (message) {
+                    body.status.message = message;
+                }
 
-            return {
-                url: `/documents/status/${documentId}`,
-                method: "PATCH",
-                body,
-            };
-        },
-        invalidatesTags: ["Documents"],
-    }),
+                return {
+                    url: `/documents/status/${documentId}`,
+                    method: "PATCH",
+                    body,
+                };
+            },
+            invalidatesTags: ["Documents"],
+        }),
     }),
 });
 

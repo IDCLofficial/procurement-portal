@@ -1,5 +1,4 @@
 import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { ComponentType } from 'react';
 import Link from 'next/link';
 import { Application } from '../../types';
 import { FormatDate } from '@/app/admin/utils/dateFormateer';
@@ -16,7 +15,7 @@ interface ApplicationsTableProps {
   onPageChange?: (page: number) => void;
 }
 
-export function ApplicationsTable({ applications, isLoading, total, page, limit, onPageChange }: ApplicationsTableProps) {
+export function ApplicationsTable({ applications, total, page, limit, onPageChange }: ApplicationsTableProps) {
   return (
     <div className="mt-8 flex flex-col">
       <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -59,8 +58,6 @@ export function ApplicationsTable({ applications, isLoading, total, page, limit,
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {applications.map((app) => {
-                  console.log(app.applicationTimeline);
-
                   const statusText = app.currentStatus
                     ?? (Array.isArray(app.applicationTimeline) && app.applicationTimeline.length > 0
                       ? app.applicationTimeline[app.applicationTimeline.length - 1]?.status

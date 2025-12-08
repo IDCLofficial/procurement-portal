@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Download, Filter, ChevronDown } from 'lucide-react';
+import { Search, Download, ChevronDown } from 'lucide-react';
 
 interface CertificateDirectoryToolbarProps {
   search: string;

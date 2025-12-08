@@ -35,14 +35,13 @@ export function withProtectedRoute<P extends object>(
       if (!isAuthorized) {
         router.replace(redirectTo);
       }
-    }, [initialized, isAuthorized, router, redirectTo]);
+    }, [initialized, isAuthorized, router]);
 
     if (!isAuthorized) {
       return null;
     }
 
-    const AnyComponent = WrappedComponent as React.ComponentType<any>;
-    return <AnyComponent {...props} />;
+    return <WrappedComponent {...props} />;
   };
 
   ComponentWithAuth.displayName =

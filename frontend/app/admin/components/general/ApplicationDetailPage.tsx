@@ -160,12 +160,7 @@ function ApplicationHeader({
   submissionDate,
   slaDeadline,
 }: ApplicationHeaderProps) {
-  const displayStatus =
-    typeof currentStatus === 'string'
-      ? currentStatus
-      : currentStatus == null
-      ? ''
-      : String(currentStatus as any);
+  const displayStatus = currentStatus ?? '';
 
   return (
     <>

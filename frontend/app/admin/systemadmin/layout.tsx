@@ -2,44 +2,42 @@
 
 import { usePathname } from 'next/navigation';
 import { TopBar } from '../components/general/TopBar';
-import { Sidebar } from '../components/general/Sidebar';
+import { Sidebar } from './_components/Sidebar';
+import { TITLE_MAP } from './_constants';
+import { useGetApplicationsQuery } from '../redux/services/appApi';
 
-export default function SystemAdminLayout({
-  children,
-}: {
+interface SystemAdminLayoutProps {
   children: React.ReactNode;
-}) {
-    const pathname = usePathname();
+}
 
-  // Map of paths to TopBar titles
-  const titleMap: Record<string, string> = {
-    '/admin/dashboard': 'Dashboard',
-    '/admin/systemadmin': 'Applications',
-    '/admin/systemadmin/users': 'User Management',
-    '/admin/settings': 'Settings',
-    '/admin/audit-logs': 'Audit Logs',
-    '/admin/reports': 'Reports',
-  };
+export default function SystemAdminLayout({ children }: SystemAdminLayoutProps) {
+  const pathname = usePathname();
+  const title = TITLE_MAP[pathname] || 'Admin Portal';
 
-  // Find title from map; fallback to a default
-  const title = titleMap[pathname] || 'Admin Portal';
+  // Uses cached data if already fetched elsewhere, no duplicate request
+  const { applicationCount } = useGetApplicationsQuery({}, {
+    selectFromResult: ({ data }) => ({
+      applicationCount: data?.total ?? 0,
+    }),
+  });
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div className="hidden md:flex md:shrink-0">
-        <Sidebar />
+        <Sidebar applicationCount={applicationCount} />
       </div>
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top navigation */}
-        <TopBar 
+        <TopBar
           title={title}
-          userInitials="SA" 
-          onNotificationClick={() => console.log('Notification clicked')}
-          onUserMenuClick={() => console.log('User menu clicked')}
+          userInitials="SA"
+          onNotificationClick={() => {}}
+          onUserMenuClick={() => {}}
         />
-        
+
         {/* Page content */}
         {children}
       </div>

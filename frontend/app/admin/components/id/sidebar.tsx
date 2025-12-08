@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
-import { Home, FileText, FileCheck, Users, Settings, ClipboardList, BarChart3, LogOut } from "lucide-react";
+import { Home, FileText, FileCheck, ClipboardList, LogOut } from "lucide-react";
 import { useLogout } from "@/app/admin/hooks/useLogout";
 import { ConfirmationDialog } from "@/app/admin/components/general/confirmation-dialog";
 import { useAppSelector } from "../../redux/hooks";
@@ -84,12 +84,12 @@ export default function SidebarUser() {
                 href={certificatesHref}
                 active={isCertificatesActive}
               />
-              <NavItem
+              {/* <NavItem
                 icon={ClipboardList}
                 text="Transactions"
                 href={transactionsHref}
                 active={isTransactionsActive}
-              />
+              /> */}
             </>
           )}
         </nav>

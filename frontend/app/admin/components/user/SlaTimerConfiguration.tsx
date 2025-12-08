@@ -46,7 +46,7 @@ export function SlaTimerConfiguration({ stages, onChange }: SlaTimerConfiguratio
               <div className="flex-1 rounded-lg bg-gray-100 px-3 py-2">
                 <input
                   type="number"
-                  value={Number.isFinite(stage.value as any) ? stage.value : ""}
+                  value={Number.isFinite(stage.value) ? stage.value : ""}
                   onChange={(e) =>
                     handleValueChange(stage.id, Number(e.target.value || 0))
                   }

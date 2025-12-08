@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import type { Certificate } from '@/app/admin/types';
 import { ArrowLeft } from 'lucide-react';
 import QRCode from 'qrcode';
 import { FormatDate } from '../../utils/dateFormateer';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
+import Image from 'next/image';
 
 
 interface CertificateDetailsPanelProps {
@@ -24,11 +25,12 @@ export function CertificateDetailsPanel({
 }: CertificateDetailsPanelProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const certificateRef = useRef<HTMLDivElement>(null);
-  // Debug: Log the certificate data to see the structure
-  console.log('Certificate data:', certificate);
-  console.log('Company categories:', certificate.company);
-  // Extract sectors from company categories
-  const sectors = certificate.company?.categories?.map(cat => cat.sector).join(', ') || 'General';
+
+  // Extract sectors - prefer root-level approvedSectors, fallback to categories
+  const sectors = certificate.approvedSectors?.join(', ') 
+    || certificate.categories?.map(cat => cat.sector).join(', ') 
+    || (typeof certificate.company === 'object' && certificate.company?.categories?.map(cat => cat.sector).join(', '))
+    || 'General';
 
   const statusClass =
     certificate.status === 'revoked'
@@ -38,7 +40,10 @@ export function CertificateDetailsPanel({
       : 'border-emerald-100 bg-emerald-50 text-emerald-700';
 
   useEffect(() => {
-    const contractorId = certificate.contractorId?._id;
+    // Handle both populated object and string ID formats
+    const contractorId = typeof certificate.contractorId === 'string' 
+      ? certificate.contractorId 
+      : certificate.contractorId?._id;
 
     if (!contractorId) {
       setQrDataUrl(null);
@@ -62,10 +67,10 @@ export function CertificateDetailsPanel({
         setQrDataUrl(url);
       }
     );
-  }, [certificate.contractorId?._id]);
+  }, [certificate.contractorId]);
 
 
-   const downloadAsImage = async () => {
+   const downloadAsImage = useCallback(async () => {
     if (!certificateRef.current) return;
 
     try {
@@ -82,12 +87,12 @@ export function CertificateDetailsPanel({
       console.error('Error generating image:', error);
       alert('Failed to generate image.');
     }
-  };
+  }, [certificate.certificateId]);
 
   // ===============================
   // DOWNLOAD AS PDF
   // ===============================
-  const downloadAsPDF = async () => {
+  const downloadAsPDF = useCallback(async () => {
     if (!certificateRef.current) return;
 
     try {
@@ -112,7 +117,7 @@ export function CertificateDetailsPanel({
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF.');
     }
-  };
+  }, [certificate.certificateId]);
 
   useEffect(() => {
     if (!autoDownloadFormat) return;
@@ -130,7 +135,7 @@ export function CertificateDetailsPanel({
     };
 
     run();
-  }, [autoDownloadFormat]);
+  }, [autoDownloadFormat, downloadAsImage, downloadAsPDF, onAutoDownloadComplete]);
 
 
   return (
@@ -190,11 +195,19 @@ export function CertificateDetailsPanel({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="space-y-1">
                 <p className="text-[#A0AEC0]">Company Name</p>
+                <p className="text-gray-900 font-medium">{certificate.companyName || certificate.contractorName}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[#A0AEC0]">Contractor Name</p>
                 <p className="text-gray-900 font-medium">{certificate.contractorName}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[#A0AEC0]">RC/BN Number</p>
                 <p className="text-gray-900 font-medium">{certificate.rcBnNumber}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[#A0AEC0]">TIN</p>
+                <p className="text-gray-900 font-medium">{certificate.tin || 'N/A'}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[#A0AEC0]">Sector</p>
@@ -203,9 +216,40 @@ export function CertificateDetailsPanel({
               <div className="space-y-1">
                 <p className="text-[#A0AEC0]">Grade</p>
                 <p className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-800">
-                  {certificate.grade}
+                  {certificate.grade?.toUpperCase()}
                 </p>
               </div>
+              <div className="space-y-1">
+                <p className="text-[#A0AEC0]">LGA</p>
+                <p className="text-gray-900 font-medium">{certificate.lga}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[#A0AEC0]">Address</p>
+                <p className="text-gray-900 font-medium">{certificate.address || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="border border-gray-100 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-semibold text-gray-900">Contact Information</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1">
+                <p className="text-[#A0AEC0]">Email</p>
+                <p className="text-gray-900 font-medium">{certificate.email || 'N/A'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[#A0AEC0]">Phone</p>
+                <p className="text-gray-900 font-medium">{certificate.phone || 'N/A'}</p>
+              </div>
+              {certificate.website && (
+                <div className="space-y-1 sm:col-span-2">
+                  <p className="text-[#A0AEC0]">Website</p>
+                  <a href={certificate.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
+                    {certificate.website}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 
@@ -325,14 +369,7 @@ export function CertificateDetailsPanel({
                 </div>
                 <div className="grid grid-cols-3">
                   <div className="px-2 py-1 border-r border-gray-500">
-                    {(() => {
-                      console.log('Checking categories:', certificate.company?.categories);
-                      const sectors = certificate.company?.categories?.map((cat: { sector: string; service: string }) => cat.sector);
-                      console.log('Mapped sectors:', sectors);
-                      const joined = sectors?.join(', ');
-                      console.log('Joined sectors:', joined);
-                      return joined || 'General';
-                    })()}
+                    {sectors}
                   </div>
                   <div className="px-2 py-1 border-r border-gray-500">
                     {certificate?.grade?.toUpperCase() || 'E'}
@@ -369,14 +406,14 @@ export function CertificateDetailsPanel({
                     </div>
                   </div>
                 </div>
-
-                {/* QR code */}
                 <div className="flex flex-col items-center gap-1">
                   <div className="bg-white p-1 rounded border border-gray-200">
                     {qrDataUrl ? (
-                      <img
+                      <Image
                         src={qrDataUrl}
                         alt="Certificate QR code"
+                        width={64}
+                        height={64}
                         className="h-16 w-16"
                       />
                     ) : (

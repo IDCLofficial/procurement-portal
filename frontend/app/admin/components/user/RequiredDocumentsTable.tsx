@@ -36,7 +36,7 @@ export function RequiredDocumentsTable({
   ) => {
     const next = documents.map((doc) =>
       doc.id === id
-        ? { ...doc, [field]: field === 'required' || field === 'hasExpiry' ? (value as any) : value }
+        ? { ...doc, [field]: value }
         : doc,
     );
 

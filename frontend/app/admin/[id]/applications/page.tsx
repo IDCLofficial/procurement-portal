@@ -1,45 +1,17 @@
 "use client";
 
 import { useState } from 'react';
-import Header from '../../components/id/header';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 
 // Lucide Icons
 import {
-  Home,
   FileText,
-  FileCheck,
-  Users,
-  Settings,
   Clock,
-  AlertTriangle,
   CheckCircle,
-  CheckCircle2,
   XCircle,
-  ArrowUpCircle,
-  DollarSign,
-  Bell,
-  ChevronDown,
-  UserCircle2,
   ArrowUpRight,
-  RefreshCw,
-  Search,
-  FileSearch,
-  ClipboardList,
-  BarChart3,
-  LogOut,
-  FileArchive,
-  AlertCircle,
-  ArrowUp,
   ArrowDownRight,
-  FileQuestion,
-  FileClock,
-  PlusCircle,
-  Upload,
 } from 'lucide-react';
-import SidebarUser from '../../components/id/sidebar';
 import { useAppSelector } from '../../redux/hooks';
 import { useGetApplicationsByUserQuery, useGetApplicationsQuery } from '../../redux/services/appApi';
 import { FormatDate } from '@/app/admin/utils/dateFormateer';
@@ -60,8 +32,7 @@ type RegistrarTab = 'new' | 'approved' | 'rejected';
 export default function AdminApplications() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   console.log("user: ", user)
-  const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
   const [registrarTab, setRegistrarTab] = useState<RegistrarTab>('new');
 
   const isRegistrar = user?.role === 'Registrar';
@@ -85,7 +56,7 @@ export default function AdminApplications() {
     data: userData,
     isLoading: isUserLoading,
     isError: isUserError,
-  } = useGetApplicationsByUserQuery(user?.id || '', {
+  } = useGetApplicationsByUserQuery(undefined, {
     skip: !!isRegistrar,
   });
 
@@ -102,27 +73,7 @@ export default function AdminApplications() {
     return <div>Loading...</div>;
   }
 
-  // Mock data - replace with actual data from your API
-  const stats = [
-    { name: 'Total Contractors', value: '1,234', icon: Users, change: '+12%', changeType: 'increase' },
-    { name: 'In Progress', value: '47', subValue: '18 desk - 12 registrar', icon: Clock, change: '+5%', changeType: 'increase' },
-    { name: 'SLA Compliance', value: '94.2%', icon: ArrowUpCircle, change: '+2.1%', changeType: 'increase' },
-    { name: 'SLA Breaches', value: '1', description: 'Requires immediate attention', icon: AlertTriangle, change: '-1', changeType: 'decrease' },
-  ];
 
-  const metrics = [
-    { name: 'Approved This Month', value: '34', icon: CheckCircle2, change: '+12%', changeType: 'increase' },
-    { name: 'Rejected This Month', value: '2', icon: XCircle, change: '-1', changeType: 'decrease' },
-    { name: 'Avg. Processing Time', value: '6.5 days', icon: Clock, change: '-0.5 days', changeType: 'increase' },
-    { name: 'Revenue (MTD)', value: '₦45.7M', icon: DollarSign, change: '+8.2%', changeType: 'increase' },
-  ];
-
-  const quickActions = [
-    { name: 'Review New Applications', count: 10, icon: FileSearch },
-    { name: 'Clarifications', count: 1, icon: RefreshCw },
-    { name: 'SLA Breaches', count: 1, icon: AlertCircle },
-    { name: 'Audit Logs', icon: FileText },
-  ];
 
   const registrarTabs: { id: RegistrarTab; label: string }[] = [
     { id: 'new', label: 'New' },
@@ -130,7 +81,7 @@ export default function AdminApplications() {
     { id: 'rejected', label: 'Rejected' },
   ];
 
-  // ... rest of the component remains the same until the return statement
+  
 
   return (
     <div className="flex h-screen bg-gray-50">

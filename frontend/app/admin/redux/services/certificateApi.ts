@@ -1,46 +1,11 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { baseApi } from "./baseApi";
 import type { Certificate } from "@/app/admin/types";
+import type { CertificatesQueryParams, CertificatesResponse } from "@/app/admin/types/api";
 
-type RootStateForAuth = {
-    auth: {
-        user: {
-            token?: string;
-        } | null;
-    };
-};
-
-export const certificateApi = createApi({
-    reducerPath: "certificateApi",
-    baseQuery: fetchBaseQuery({
-        baseUrl: process.env.NEXT_PUBLIC_API_URL,
-        credentials: "include",
-        prepareHeaders: (headers, { getState }) => {
-            const state = getState() as RootStateForAuth;
-            const token = state.auth.user?.token;
-
-            if (token) {
-                headers.set("authorization", `Bearer ${token}`);
-            }
-
-            return headers;
-        },
-    }),
-
-    tagTypes: ["Certificates"],
-
-    // GET CERTIFICATES
+export const certificateApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        getCertificates: builder.query<
-            any,
-            {
-                status?: string;
-                page?: number;
-                limit?: number;
-                search?: string;
-                grade?: string;
-                lga?: string;
-            }
-        >({
+        // GET CERTIFICATES
+        getCertificates: builder.query<CertificatesResponse, CertificatesQueryParams>({
             query: ({ status, page, limit, search, grade, lga } = {}) => {
                 const params = new URLSearchParams();
                 if (status) params.append("status", status);
@@ -53,9 +18,10 @@ export const certificateApi = createApi({
                 const queryString = params.toString();
                 return `/certificates${queryString ? `?${queryString}` : ""}`;
             },
-          
             providesTags: ["Certificates"],
         }),
+
+        // GET CERTIFICATE BY ID
         getCertificateById: builder.query<Certificate, string>({
             query: (id) => `/certificates/${id}`,
             providesTags: ["Certificates"],

@@ -6,25 +6,22 @@ import { UserTableProps } from '@/app/admin/types/user';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 import { FormatDate } from '../../utils/dateFormateer';
 
-export function UserTable({ users, onEdit, onResetPassword, onToggleStatus, onDelete }: UserTableProps) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState<string | null>(null);
+export function UserTable({ users, onEdit, onToggleStatus, onDelete }: UserTableProps) {
   const [userToDelete, setUserToDelete] = useState<{id: string, name: string} | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-console.log('delete', users)
+
   const handleDeleteClick = (userId: string, userName: string) => {
-    
     setUserToDelete({ id: userId, name: userName });
   };
 
   const handleConfirmDelete = async () => {
     if (!userToDelete) return;
-    console.log(userToDelete)
     try {
       setIsDeleting(true);
       await onDelete(userToDelete.id);
       setUserToDelete(null);
-    } catch (error) {
-      console.error('Error deleting user:', error);
+    } catch {
+      // Error handled by parent
     } finally {
       setIsDeleting(false);
     }
@@ -49,9 +46,6 @@ console.log('delete', users)
     }
   };
 
-  const toggleDropdown = (userId: string) => {
-    setIsDropdownOpen(isDropdownOpen === userId ? null : userId);
-  };
 
   return (
     <div className="overflow-x-auto bg-white p-2">

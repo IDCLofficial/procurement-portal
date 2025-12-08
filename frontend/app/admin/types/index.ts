@@ -31,6 +31,11 @@ export interface TopBarProps {
   onUserMenuClick?: () => void;
 }
 
+export interface CompanyCategory {
+  sector: string;
+  service: string;
+}
+
 export interface Company {
   _id?: string;
   userId?: string;
@@ -39,7 +44,7 @@ export interface Company {
   tin?: string;
   address?: string;
   lga?: string;
-  categories?: string[];
+  categories?: (string | CompanyCategory)[];
   grade?: string;
   documents?: CompanyDocument[];
   createdAt?: string;
@@ -96,7 +101,7 @@ export interface Application {
   assignedTo: string;
   currentStatus?: string;
   applicationTimeline?: ApplicationStatusEntry[];
-  companyId?: Company;
+  companyId?: string | Company;
   assignedToId?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -107,15 +112,17 @@ export type CertificateStatus = 'approved' | 'expired' | 'revoked';
 export interface Certificate {
   _id: string;
   certificateId: string;
-  contractorId: {
+  // Can be string ID or populated object
+  contractorId: string | {
     _id: string;
     fullname: string;
     email: string;
     phoneNo: string;
     companyId: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
-  company: {
+  // Can be string ID or populated object
+  company: string | {
     _id: string;
     companyName: string;
     cacNumber: string;
@@ -132,10 +139,21 @@ export interface Certificate {
     accountName?: string;
     accountNumber?: number;
     bankName?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   contractorName: string;
+  companyName?: string;
   rcBnNumber: string;
+  tin?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  approvedSectors?: string[];
+  categories?: Array<{
+    sector: string;
+    service: string;
+  }>;
   grade: string;
   lga: string;
   status: CertificateStatus;

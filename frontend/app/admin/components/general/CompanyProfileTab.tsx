@@ -11,7 +11,7 @@ interface CompanyProfileTabProps {
 }
 
 export function CompanyProfileTab({ company, contractorName, rcNumber, sectorAndGrade }: CompanyProfileTabProps) {
-  const rawCategories = Array.isArray(company?.categories) ? (company?.categories as any[]) : [];
+  const rawCategories = company?.categories ?? [];
 
   return (
     <div className="space-y-4">

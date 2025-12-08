@@ -58,29 +58,19 @@ export default function CertificatesPage() {
 
   const isLoadingCertificates = isLoading || isFetching;
 
-  console.log("Certificates API response:", (certificatesData as any)?.certificates ?? certificatesData);
+  console.log("Certificates API response:", certificatesData?.certificates ?? certificatesData);
 
   const certificates: Certificate[] = useMemo(
     () => {
-      const apiCertificates = Array.isArray((certificatesData as any)?.certificates)
-        ? (certificatesData as any).certificates
-        : Array.isArray(certificatesData)
-        ? (certificatesData as any)
-        : [];
+      const apiCertificates = certificatesData?.certificates ?? [];
 
-      return apiCertificates.map((item: any) => ({
+      return apiCertificates.map((item) => ({
+        ...item,
+        // Legacy properties for backward compatibility
         id: item._id,
-        certificateId: item.certificateId,
-        contractorId: item.contractorId,
-        contractorName: item.contractorName,
         rcbn: item.rcBnNumber,
-        grade: item.grade,
-        certId: item.certificateId,
         issueDate: item.createdAt,
         expiryDate: item.validUntil,
-        status: item.status,
-        lga: item.lga,
-        updatedAt: item.updatedAt,
       }));
     },
     [certificatesData],
@@ -135,9 +125,9 @@ export default function CertificatesPage() {
 
           {/* Static stats placeholders for now; to be wired to dedicated stats endpoint later */}
           <CertificateStats
-            active={(certificatesData as any)?.statusCounts?.approved ?? 0}
-            expiring={(certificatesData as any)?.statusCounts?.expired ?? 0}
-            revoked={(certificatesData as any)?.statusCounts?.revoked ?? 0}
+            active={certificatesData?.statusCounts?.approved ?? 0}
+            expiring={certificatesData?.statusCounts?.expired ?? 0}
+            revoked={certificatesData?.statusCounts?.revoked ?? 0}
           />
 
           {selectedCertificate ? (

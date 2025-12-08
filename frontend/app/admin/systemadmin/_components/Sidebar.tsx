@@ -8,7 +8,11 @@ import { Home, FileText, Users, Settings, FileSearch, BarChart2, LogOut } from '
 import { useLogout } from '@/app/admin/hooks/useLogout';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 
-export function Sidebar() {
+interface SidebarProps {
+    applicationCount?: number;
+}
+
+export function Sidebar({ applicationCount }: SidebarProps) {
     const pathname = usePathname();
     const handleLogout = useLogout();
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -24,7 +28,7 @@ export function Sidebar() {
             href: "/admin/systemadmin/applications",
             icon: FileText,
             label: "Applications",
-            badge: 12,
+            badge: applicationCount ?? null,
         },
         {
             href: "/admin/systemadmin/users",
@@ -44,18 +48,18 @@ export function Sidebar() {
             label: "Settings",
             badge: null,
         },
-        {
-            href: "/admin/systemadmin/audit-logs",
-            icon: FileSearch,
-            label: "Audit Logs",
-            badge: null,
-        },
-        {
-            href: "/admin/systemadmin/reports",
-            icon: BarChart2,
-            label: "Reports",
-            badge: null,
-        },
+        // {
+        //     href: "/admin/systemadmin/audit-logs",
+        //     icon: FileSearch,
+        //     label: "Audit Logs",
+        //     badge: null,
+        // },
+        // {
+        //     href: "/admin/systemadmin/reports",
+        //     icon: BarChart2,
+        //     label: "Reports",
+        //     badge: null,
+        // },
     ];
 
     return (

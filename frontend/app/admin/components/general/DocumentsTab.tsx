@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ConfirmationDialog } from './confirmation-dialog';
+import Image from 'next/image';
 
 interface DocumentsTabProps {
   documents?: CompanyDocument[];
@@ -49,8 +50,6 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
       </div>
     );
   }
-
-  console.log("seleted document:", selectedDocument)
 
   const handleConfirmAction = async () => {
     if (!selectedDocument?._id || !pendingAction) {
@@ -97,13 +96,14 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
       setClarificationReason('');
       setClarificationCustomMessage('');
       setShowClarificationForm(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       let message = 'Failed to update document status.';
 
-      if (err?.data?.message && typeof err.data.message === 'string') {
-        message = err.data.message;
-      } else if (err?.error && typeof err.error === 'string') {
-        message = err.error;
+      const error = err as { data?: { message?: string }; error?: string };
+      if (error?.data?.message && typeof error.data.message === 'string') {
+        message = error.data.message;
+      } else if (error?.error && typeof error.error === 'string') {
+        message = error.error;
       }
 
       setResultTitle('Error');
@@ -133,7 +133,6 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
             {documents.map((doc) => {
-              console.log("doc:", doc);
               const statusLabel = getStatusLabel(doc);
               return (
                 <tr key={doc._id ?? doc.fileName} className="hover:bg-gray-50">
@@ -188,20 +187,22 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
               {selectedDocument?.documentType ?? 'Document preview'}
             
             </DialogTitle>
-            <DialogDescription>
-              {selectedDocument && (
-                <div className="mt-2 space-y-1 text-xs text-gray-500">
-                  <p>Name: {selectedDocument.fileName ?? 'N/A'}</p>
-                  <p>Type: {selectedDocument.fileType ?? 'N/A'}</p>
-                  <p>Status: {getStatusLabel(selectedDocument)}</p>
-                  {selectedDocument.uploadedDate && <p>Uploaded: {selectedDocument.uploadedDate}</p>}
-                  {selectedDocument.validFrom && selectedDocument.validTo && (
-                    <p>
-                      Valid: {selectedDocument.validFrom} - {selectedDocument.validTo}
-                    </p>
-                  )}
-                </div>
-              )}
+            <DialogDescription asChild>
+              <div className="text-muted-foreground text-sm">
+                {selectedDocument && (
+                  <div className="mt-2 space-y-1 text-xs text-gray-500">
+                    <p>Name: {selectedDocument.fileName ?? 'N/A'}</p>
+                    <p>Type: {selectedDocument.fileType ?? 'N/A'}</p>
+                    <p>Status: {getStatusLabel(selectedDocument)}</p>
+                    {selectedDocument.uploadedDate && <p>Uploaded: {selectedDocument.uploadedDate}</p>}
+                    {selectedDocument.validFrom && selectedDocument.validTo && (
+                      <p>
+                        Valid: {selectedDocument.validFrom} - {selectedDocument.validTo}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 flex flex-col gap-4 md:flex-row">
@@ -216,11 +217,14 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
                       className="w-full h-[400px] rounded-md border border-gray-200"
                     />
                   ) : (
-                    <img
-                      src={selectedDocument.fileUrl}
-                      alt={selectedDocument.fileName ?? 'Document'}
-                      className="max-h-[400px] w-auto rounded-md border border-gray-200 object-contain"
-                    />
+                    <div className="relative h-[400px] w-full">
+                      <Image
+                        src={selectedDocument.fileUrl}
+                        alt={selectedDocument.fileName ?? 'Document'}
+                        fill
+                        className="rounded-md border border-gray-200 object-contain"
+                      />
+                    </div>
                   )}
                 </div>
               ) : (

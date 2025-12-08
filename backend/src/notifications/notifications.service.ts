@@ -162,18 +162,13 @@ export class NotificationsService {
       vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
     });
 
-    if (!vendorNotifications.length) {
-      return {
-        message: "You have no notifications at the moment"
-      }
-    }
-
     const result = vendorNotifications.map((notification) => ({
       title: notification.title,
       message: notification.message,
       priority: notification.priority,
       createdAt: notification.createdAt,
     }));
+    
     return {
       message: `you have ${result.length} notifications`,
       notifications: result
@@ -185,12 +180,6 @@ export class NotificationsService {
     const adminNotifications = await this.notificationModel.find({
       recipient:NotificationRecipient.ADMIN,
     });
-
-    if (!adminNotifications.length) {
-      return {
-        message: "You have no notifications at the moment"
-      }
-    }
 
     const result = adminNotifications.map((notification) => ({
       title: notification.title,

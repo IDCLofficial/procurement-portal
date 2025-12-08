@@ -3,7 +3,7 @@ import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiBearerAuth, ApiHeader, ApiConsumes } from '@nestjs/swagger';
-import { updateRegistrationDto } from './dto/update-registration.dto';
+import { mode, updateRegistrationDto } from './dto/update-registration.dto';
 import { loginDto } from './dto/logn.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -355,8 +355,33 @@ export class VendorsController {
     @Body() updateRegistrationDto:updateRegistrationDto,
     @UploadedFiles() files: Express.Multer.File[]
   ) {
-    return this.vendorsService.registerCompany(req, updateRegistrationDto, files);
+    // Extract and verify JWT token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header is missing');
+    }  
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      throw new UnauthorizedException('Token is missing');
+    }   
+    let userId: string;
+    try {
+      const decoded = this.jwtService.verify(token);
+      userId = decoded.sub || decoded._id || decoded.id;
+      
+      if (!userId) {
+        throw new UnauthorizedException('Invalid token payload');
+      }
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+    if(updateRegistrationDto.mode==mode.RENEWAL){
+        return this.vendorsService.renewRegistration(userId, updateRegistrationDto);
+    }
+    return this.vendorsService.registerCompany(userId, updateRegistrationDto);
   }
+
+  //
 
   /**
    * Get all applications for a vendor's company

@@ -5,7 +5,7 @@ import { Request } from 'express';
 import * as bcrypt from 'bcrypt';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
-import { companyForm, Vendor, VendorDocument } from './entities/vendor.schema';
+import { companyForm, renewalSteps, Vendor, VendorDocument } from './entities/vendor.schema';
 import { EmailService } from '../email/email.service';
 import { JwtService } from '@nestjs/jwt';
 import TokenHandlers from 'src/lib/generateToken';
@@ -300,30 +300,7 @@ export class VendorsService {
    * - Stores bank details and service categories
    * - Sets company status to PENDING for new registrations
    */
-  async registerCompany(req:Request, updateRegistrationDto:updateRegistrationDto, files?: Express.Multer.File[]): Promise<any> {
-    // Extract and verify JWT token from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      throw new UnauthorizedException('Authorization header is missing');
-    }
-    
-    const token = authHeader.replace('Bearer ', '').trim();
-    if (!token) {
-      throw new UnauthorizedException('Token is missing');
-    }
-    
-    let userId: string;
-    try {
-      const decoded = this.jwtService.verify(token);
-      userId = decoded.sub || decoded._id || decoded.id;
-      
-      if (!userId) {
-        throw new UnauthorizedException('Invalid token payload');
-      }
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
-    
+  async registerCompany(userId:string, updateRegistrationDto:updateRegistrationDto): Promise<any> {
     const vendor = await this.vendorModel.findById(userId).exec();
     if (!vendor) {
       throw new NotFoundException(`Vendor not found`);
@@ -593,6 +570,98 @@ export class VendorsService {
       }
     }catch(error) {
       this.Logger.debug(`${error}`)
+      throw new BadRequestException(`An error occured`);
+    }
+  }
+
+
+  /** */
+  async renewRegistration(userId:string, updateRegistrationDto:updateRegistrationDto){
+    if(!updateRegistrationDto.documents){
+      this.Logger.log('Please upload at least 1 document')
+      throw new BadRequestException('Please upload at least 1 document')
+    }
+    try{
+      const vendor = await this.vendorModel.findById(userId);
+      
+      if(!vendor){
+        this.Logger.log(`Vendor with id ${userId} not found`)
+        throw new NotFoundException(`Vendor with id ${userId} not found`)
+      }
+    
+      const documents = await this.verificationDocumentModel.find({
+        vendor:userId
+      })
+
+      if(!documents){
+        this.Logger.log(`No documents found for vendor with id ${userId}`)
+        throw new NotFoundException(`No documents found for this vendor`)
+      }
+
+      const updatedDocuments = await Promise.all(
+        updateRegistrationDto.documents.map(async (doc) => {
+          const existingDoc = await this.verificationDocumentModel.findOne({
+            vendor: userId,
+            documentType: doc.documentType
+          });
+          
+          if (existingDoc) {
+            existingDoc.fileUrl = doc.fileUrl;
+            existingDoc.validFrom = doc.validFrom;
+            existingDoc.validTo = doc.validTo;
+            existingDoc.uploadedDate = doc.uploadedDate;
+            existingDoc.fileName = doc.fileName;
+            existingDoc.fileSize = doc.fileSize;
+            existingDoc.fileType = doc.fileType;
+            existingDoc.validFor = doc.validFor;
+            existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
+            existingDoc.status = {
+              status:DocumentStatus.PENDING,
+            }
+            await existingDoc.save();
+            
+            vendor.renewalStep = renewalSteps.STEP2;
+            await vendor.save();
+            
+            return {
+              message:'Documents updated successfully',
+              nextStep:vendor.renewalStep
+            }
+            
+          } else {
+            const newDoc = new this.verificationDocumentModel({
+              vendor: userId,
+              fileUrl: doc.fileUrl,
+              validFrom: doc.validFrom,
+              validTo: doc.validTo,
+              documentType: doc.documentType,
+              uploadedDate: doc.uploadedDate,
+              fileName: doc.fileName,
+              fileSize: doc.fileSize,
+              fileType: doc.fileType,
+              validFor: doc.validFor,
+              hasValidityPeriod: doc.hasValidityPeriod,
+              status: {
+                status:DocumentStatus.PENDING,
+              }
+            });
+            const response = await newDoc.save();
+            return response;
+          }
+        })
+      );
+
+      if(!updatedDocuments){
+        throw new ConflictException('Error updating documents')
+      }
+
+      return {
+        message: 'Documents updated successfully',
+        documents: updatedDocuments
+      }
+      
+    }catch(err){
+      this.Logger.debug(`${err}`)
       throw new BadRequestException(`An error occured`);
     }
   }

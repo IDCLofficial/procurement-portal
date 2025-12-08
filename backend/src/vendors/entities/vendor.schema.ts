@@ -13,6 +13,12 @@ export enum companyForm{
   COMPLETE="complete"
 }
 
+export enum renewalSteps{
+  STEP1="documents",
+  STEP2="payment",
+  COMPLETE="complete"
+}
+
 @Schema({ timestamps: true })
 export class Vendor {
   @Prop({ required: true })
@@ -38,6 +44,9 @@ export class Vendor {
 
   @Prop({required:true, enum:companyForm, default:companyForm.STEP1})
   companyForm:companyForm
+
+  @Prop({required:false, enum:renewalSteps})
+  renewalStep?:renewalSteps
 
   @Prop({ default: 0 })
   otpFailedAttempts: number;

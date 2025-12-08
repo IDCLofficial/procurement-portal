@@ -1,4 +1,4 @@
-import { IsArray, IsObject, IsOptional } from "class-validator"
+import { IsArray, IsObject, IsOptional, IsString } from "class-validator"
 import { idType } from "src/companies/entities/company.schema"
 
 export type registerCompany={
@@ -41,6 +41,10 @@ export type categoriesAndGrade={
     categories:category[],
     grade:string
 }
+export enum mode{
+    REGISTRATION="registration",
+    RENEWAL="renewal"
+}
 
 
 export class updateRegistrationDto{
@@ -63,4 +67,8 @@ export class updateRegistrationDto{
     @IsOptional()
     @IsObject()
     categoriesAndGrade:categoriesAndGrade
+
+    @IsOptional()
+    @IsString()
+    mode:mode
 }

@@ -10,7 +10,7 @@ import {
 } from 'src/payments/dto/split-payment.dto';
 import { Payment, PaymentDocument, PaymentStatus } from './entities/payment.schema';
 import { Company, CompanyDocument } from 'src/companies/entities/company.schema';
-import { Application, ApplicationDocument, ApplicationStatus } from 'src/applications/entities/application.schema';
+import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } from 'src/applications/entities/application.schema';
 import { companyForm, Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
 import { VendorsService } from 'src/vendors/vendors.service';
 import { ActivityType } from 'src/vendors/entities/vendor-activity-log.schema';
@@ -261,8 +261,10 @@ export class SplitPaymentService {
         );
         this.logger.log(`Payment verified and updated: ${reference}`);
 
-        vendor.companyForm = companyForm.COMPLETE
-        await vendor.save()
+        if(payment.type === ApplicationType.NEW){
+          vendor.companyForm = companyForm.COMPLETE
+          await vendor.save()
+        }
       }else{
         throw new ConflictException('The payment was not successful')
       }

@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document, Types } from 'mongoose';
-import { ApplicationStatus } from 'src/applications/entities/application.schema';
 import { category } from 'src/vendors/dto/update-registration.dto';
 
 export enum Status{

@@ -11,7 +11,7 @@ import {
 import { Payment, PaymentDocument, PaymentStatus } from './entities/payment.schema';
 import { Company, CompanyDocument } from 'src/companies/entities/company.schema';
 import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } from 'src/applications/entities/application.schema';
-import { companyForm, Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
+import { companyForm, renewalSteps, Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
 import { VendorsService } from 'src/vendors/vendors.service';
 import { ActivityType } from 'src/vendors/entities/vendor-activity-log.schema';
 
@@ -265,6 +265,12 @@ export class SplitPaymentService {
           vendor.companyForm = companyForm.COMPLETE
           await vendor.save()
         }
+
+        if(payment.type === ApplicationType.RENEWAL){
+          vendor.renewalStep = renewalSteps.COMPLETE
+          await vendor.save()
+        }
+        
       }else{
         throw new ConflictException('The payment was not successful')
       }

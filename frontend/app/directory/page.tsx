@@ -5,6 +5,7 @@ import { FaQrcode } from 'react-icons/fa6';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
     title: 'Public Contractor Directory - Imo State',
@@ -34,8 +35,9 @@ export default async function DirectoryPage() {
                     </Link>
                 }
             />
-
-            <DirectoryClient initialContractors={contractors} />
+            <Suspense fallback={<div>Loading...</div>}>
+                <DirectoryClient initialContractors={contractors} />
+            </Suspense>
         </div>
     );
 }

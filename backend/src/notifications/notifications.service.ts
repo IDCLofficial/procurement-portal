@@ -168,12 +168,23 @@ export class NotificationsService {
       }
     }
 
-    return vendorNotifications.map((notification) => ({
+    const result = vendorNotifications.map((notification) => ({
       title: notification.title,
       message: notification.message,
       priority: notification.priority,
       createdAt: notification.createdAt,
     }));
+
+    if(result.length < 1){
+      return {
+        message: "You have no notifications at the moment."
+      }
+    }
+    
+    return {
+      message: `you have ${result.length} notifications`,
+      notifications: result
+    }
   }
 
   async findAdminNotifications(): Promise<any> {
@@ -188,12 +199,23 @@ export class NotificationsService {
       }
     }
 
-    return adminNotifications.map((notification) => ({
+    const result = adminNotifications.map((notification) => ({
       title: notification.title,
       message: notification.message,
       priority: notification.priority,
       createdAt: notification.createdAt,
     }));
+
+    if(result.length < 1){
+      return {
+        message: "You have no notifications at the moment."
+      }
+    }
+    
+    return {
+      message: `you have ${result.length} notifications`,
+      notifications: result
+    }
   }
   
 }

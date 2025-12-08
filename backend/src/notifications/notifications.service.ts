@@ -157,8 +157,7 @@ export class NotificationsService {
   }
 
 
-  async findVendorNotifications(decoded: any): Promise<any> {
-    const vendorId = decoded._id;
+  async findVendorNotifications(vendorId: any): Promise<any> {
     const vendorNotifications = await this.notificationModel.find({
       vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
     });
@@ -177,7 +176,7 @@ export class NotificationsService {
     }));
   }
 
-  async findAdminNotifications(decoded: any): Promise<any> {
+  async findAdminNotifications(): Promise<any> {
     // const adminId = decoded._id;
     const adminNotifications = await this.notificationModel.find({
       recipient:NotificationRecipient.ADMIN,

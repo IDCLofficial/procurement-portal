@@ -31,18 +31,18 @@ export class NotificationsController {
     try{
       const header = req.headers.authorization;
       if(!header){
+        this.logger.log(`Authorization header missing`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+      const vendorId = this.jwtService.decode(header.split(" ")[1])._id;
+      if(!vendorId){
         this.logger.log(`Unauthorized user trying to access the endpoint`);
         throw new UnauthorizedException('Unauthorized');
       }
-      const decoded = this.jwtService.decode(header.split(' ')[1]);
-      if(!decoded){
-        this.logger.log(`Unauthorized user trying to access the endpoint`);
-        throw new UnauthorizedException('Unauthorized');
-      }
-      return await this.notificationsService.findVendorNotifications(decoded);
+      return await this.notificationsService.findVendorNotifications(vendorId);
     }catch(err){
-      this.logger.log(`Unauthorized user trying to access the endpoint`);
-      throw new UnauthorizedException('Unauthorized');
+      this.logger.log(`User is not authorized to access this endpoint`);
+      throw new UnauthorizedException('User is not authorized to access this endpoint');
     }
   }
 
@@ -64,15 +64,15 @@ export class NotificationsController {
     try{
       const header = req.headers.authorization;
       if(!header){
-        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        this.logger.log(`Authorization header is missing`);
         throw new UnauthorizedException('Unauthorized');
       }
-      const decoded = this.jwtService.decode(header.split(' ')[1]);
+      const decoded = this.jwtService.decode(header.split(" ")[1]);
       if(!decoded || decoded.role !== 'Admin'){
-        this.logger.log(`Unauthorized user trying to access the endpoint`);
-        throw new UnauthorizedException('Unauthorized');
+        this.logger.log(`User is not authorized to access this endpoint`);
+        throw new UnauthorizedException('User is not authorized to access this endpoint');
       }
-      return await this.notificationsService.findAdminNotifications(decoded);
+      return await this.notificationsService.findAdminNotifications();
     }catch(err){
       this.logger.log(`Unauthorized user trying to access the endpoint`);
       throw new UnauthorizedException('Unauthorized');

@@ -22,6 +22,8 @@ export default function SystemAdminApplicationDetailRoute() {
     );
   }
 
+  const company = typeof application.companyId === 'string' ? undefined : application.companyId;
+
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -34,8 +36,8 @@ export default function SystemAdminApplicationDetailRoute() {
           slaDeadline={undefined}
           assignedTo={application.assignedTo}
           currentStatus={application.currentStatus}
-          documents={application.companyId?.documents}
-          company={application.companyId}
+          documents={company?.documents}
+          company={company}
         />
       </div>
     </main>

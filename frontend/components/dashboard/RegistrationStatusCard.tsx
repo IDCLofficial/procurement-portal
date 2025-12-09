@@ -189,7 +189,7 @@ export default function RegistrationStatusCard({
                                 <FaDownload className="mr-2 text-sm" />
                                 Download Certificate
                             </Button>
-                            <Link href="/dashboard/profile">
+                            <Link href="/dashboard/settings?tab=account">
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -210,7 +210,7 @@ export default function RegistrationStatusCard({
                                 <FaEdit className="mr-2 text-sm" />
                                 Renew Registration
                             </Button>
-                            <Link href="/dashboard/profile">
+                            <Link href="/dashboard/settings?tab=account">
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -251,7 +251,7 @@ export default function RegistrationStatusCard({
                                     View Application Status
                                 </Button>
                             </Link>
-                            <Link href="/dashboard/profile" className="w-full">
+                            <Link href="/dashboard/settings?tab=account" className="w-full">
                                 <Button
                                     variant="outline"
                                     className="w-full"

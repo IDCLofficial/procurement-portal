@@ -105,7 +105,7 @@ export default function RegistrationContinuation() {
     });
 
     // Step 6: Category & Grade
-    const [selectedSectors, setSelectedSectors] = useState<string[]>(companyData?.categories.map((category) => category.sector) || []);
+    const [selectedSector, setSelectedSector] = useState<string>(companyData?.categories?.[0]?.sector || '');
     const [selectedGrade, setSelectedGrade] = useState<string>(companyData?.grade || '');
 
     // Step 5: Documents
@@ -224,7 +224,7 @@ export default function RegistrationContinuation() {
             setDocuments(autoFilledDocs);
             toast.success('Step 5 auto-filled - All documents marked as uploaded');
         } else if (currentStep === 6) {
-            setSelectedSectors(['services', 'supplies']);
+            setSelectedSector('services');
             setSelectedGrade('b');
             toast.success('Step 6 auto-filled');
         } else {
@@ -548,8 +548,8 @@ export default function RegistrationContinuation() {
 
         if (currentStep === 6) {
             // Validate sectors and grade selection
-            if (selectedSectors.length === 0) {
-                toast.error('Please select at least one sector');
+            if (!selectedSector) {
+                toast.error('Please select a sector');
                 return;
             }
             if (!selectedGrade) {
@@ -557,7 +557,7 @@ export default function RegistrationContinuation() {
                 return;
             }
 
-            const newCategories = selectedSectors.map(sector => ({ sector, service: '' }));
+            const newCategories = [{ sector: selectedSector, service: '' }];
 
             const madeAnUpdate = !deepEqual({
                 categories: newCategories,
@@ -677,9 +677,9 @@ export default function RegistrationContinuation() {
                 })) || [];
                 return (
                     <Step6CategoryGrade
-                        selectedSectors={selectedSectors}
+                        selectedSector={selectedSector}
                         selectedGrade={selectedGrade}
-                        onSectorsChange={setSelectedSectors}
+                        onSectorChange={setSelectedSector}
                         onGradeChange={setSelectedGrade}
                         sectors={sectors}
                         grades={grades}
@@ -691,7 +691,7 @@ export default function RegistrationContinuation() {
                     <Step7PaymentSummary
                         companyName={formData.companyName}
                         cacNumber={formData.cacNumber}
-                        selectedSectors={selectedSectors}
+                        selectedSector={selectedSector}
                         selectedGrade={selectedGrade}
                         registrationFee={getRegistrationFee()}
                     />

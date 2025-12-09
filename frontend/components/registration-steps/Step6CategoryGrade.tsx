@@ -49,11 +49,11 @@ export default function Step6CategoryGrade({
             {/* Sector Selection */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Select Sector
+                    Select Ministry
                 </h3>
-                <Select value={selectedSector} onValueChange={onSectorChange}>
+                <Select value={selectedSector} onValueChange={(value)=>onSectorChange(value)}>
                     <SelectTrigger className="w-full h-auto min-h-12">
-                        <SelectValue placeholder="Select a sector">
+                        <SelectValue placeholder="Select a ministry">
                             {selectedSector && (
                                 <div className="flex flex-col items-start gap-1 py-1">
                                     <span className="font-semibold text-gray-900">

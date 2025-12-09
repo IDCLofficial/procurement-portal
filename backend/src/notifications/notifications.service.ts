@@ -200,6 +200,13 @@ export class NotificationsService {
     }
   }
 
+  async markAllVendorAsRead(vendorId: any): Promise<any> {
+    const filter: any = {
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+    };
+    return await this.notificationModel.updateMany(filter, { isRead: true });
+  }
+
   async findAdminNotifications(query:{
     isRead?:boolean
   }): Promise<any> {
@@ -226,6 +233,7 @@ export class NotificationsService {
     .find(filter)
     .sort({createdAt: -1})
     .exec()
+    
     const result = adminNotifications.map((notification) => ({
       title: notification.title,
       message: notification.message,
@@ -255,6 +263,13 @@ export class NotificationsService {
       totalCriticalNotifications,
       totalHighPriorityNotifications,
     }
+  }
+
+  async markAllAdminAsRead(){
+    const filter: any = {
+      recipient:NotificationRecipient.ADMIN,
+    };
+    return await this.notificationModel.updateMany(filter, { isRead: true });
   }
 
    @Cron(CronExpression.EVERY_DAY_AT_10AM)

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import Loader from '@/components/ui/loader';
 
 export const metadata: Metadata = {
     title: 'Public Contractor Directory - Imo State',
@@ -35,7 +36,7 @@ export default async function DirectoryPage() {
                     </Link>
                 }
             />
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<Loader />}>
                 <DirectoryClient initialContractors={contractors} />
             </Suspense>
         </div>

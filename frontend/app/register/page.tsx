@@ -1,5 +1,6 @@
 import Header from '@/components/Header';
 import RegistrationStepper from '@/components/RegistrationStepper';
+import Loader from '@/components/ui/loader';
 import { Suspense } from 'react';
 
 export const metadata = {
@@ -15,7 +16,7 @@ export default function RegisterPage() {
                 description="Register your company with BPPPI"
                 hasBackButton
             />
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<Loader />}>
                 <RegistrationStepper />
             </Suspense>
         </div>

@@ -14,18 +14,12 @@ export default function SystemAdminLayout({ children }: SystemAdminLayoutProps) 
   const pathname = usePathname();
   const title = TITLE_MAP[pathname] || 'Admin Portal';
 
-  // Uses cached data if already fetched elsewhere, no duplicate request
-  const { applicationCount } = useGetApplicationsQuery({}, {
-    selectFromResult: ({ data }) => ({
-      applicationCount: data?.total ?? 0,
-    }),
-  });
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div className="hidden md:flex md:shrink-0">
-        <Sidebar applicationCount={applicationCount} />
+        <Sidebar />
       </div>
 
       {/* Main content */}

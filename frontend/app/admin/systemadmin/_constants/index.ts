@@ -167,28 +167,7 @@ export const DEFAULT_SLA_STAGES: SlaStageConfig[] = [
   },
 ];
 
-export interface FeeConfigItem {
-  id: string;
-  sector: string;
-  grade: string;
-  fee: number;
-  effectiveDate: string;
-}
 
-export const DEFAULT_FEES: FeeConfigItem[] = [
-  { id: '1', sector: 'WORKS', grade: 'A', fee: 180000, effectiveDate: '23/11/2025' },
-  { id: '2', sector: 'WORKS', grade: 'B', fee: 120000, effectiveDate: '23/11/2025' },
-  { id: '3', sector: 'WORKS', grade: 'C', fee: 90000, effectiveDate: '23/11/2025' },
-  { id: '4', sector: 'SUPPLIES', grade: 'A', fee: 140000, effectiveDate: '23/11/2025' },
-  { id: '5', sector: 'SUPPLIES', grade: 'B', fee: 100000, effectiveDate: '23/11/2025' },
-  { id: '6', sector: 'SUPPLIES', grade: 'C', fee: 80000, effectiveDate: '23/11/2025' },
-  { id: '7', sector: 'SERVICES', grade: 'A', fee: 150000, effectiveDate: '23/11/2025' },
-  { id: '8', sector: 'SERVICES', grade: 'B', fee: 110000, effectiveDate: '23/11/2025' },
-  { id: '9', sector: 'SERVICES', grade: 'C', fee: 85000, effectiveDate: '23/11/2025' },
-  { id: '10', sector: 'ICT', grade: 'A', fee: 160000, effectiveDate: '23/11/2025' },
-  { id: '11', sector: 'ICT', grade: 'B', fee: 120000, effectiveDate: '23/11/2025' },
-  { id: '12', sector: 'ICT', grade: 'C', fee: 95000, effectiveDate: '23/11/2025' },
-];
 
 export interface DocumentConfigItem {
   id: string;

@@ -19,14 +19,10 @@ export default function SystemAdminSettings() {
     sectors,
     grades,
     handleTabChange,
-    handleFeesChange,
     handleSlaStagesChange,
     handleDocumentsChange,
     handleSave,
     handleDialogClose,
-    handleAddFee,
-    handleEditFee,
-    handleDeleteFee,
     handleAddDocument,
     handleEditDocument,
     handleDeleteDocument,
@@ -42,15 +38,7 @@ export default function SystemAdminSettings() {
             onSave={handleSave}
           />
 
-          {activeTab === 'fees' && (
-            <FeeConfigurationTable
-              fees={fees}
-              onChange={handleFeesChange}
-              onAddFee={handleAddFee}
-              onEditFee={handleEditFee}
-              onDeleteFee={handleDeleteFee}
-            />
-          )}
+        
 
           {activeTab === 'sla' && (
             <SlaTimerConfiguration

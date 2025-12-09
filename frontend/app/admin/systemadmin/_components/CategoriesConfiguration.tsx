@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Edit, Trash2, Plus, X } from 'lucide-react';
-import { useCreateCategoryMutation } from '@/app/admin/redux/services/settingsApi';
+import { useCreateCategoryMutation, useCreateGradeMutation } from '@/app/admin/redux/services/settingsApi';
 
 export interface SectorConfig {
   id: string;
@@ -33,8 +33,18 @@ export function CategoriesConfiguration({
   onChangeGrades,
 }: CategoriesConfigurationProps) {
   const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
+  const [createGrade, { isLoading: isCreatingGrade }] = useCreateGradeMutation();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newSector, setNewSector] = useState({ sector: '', description: '' });
+
+  const [isGradeDialogOpen, setIsGradeDialogOpen] = useState(false);
+  const [editingGrade, setEditingGrade] = useState<GradeConfig | null>(null);
+  const [gradeForm, setGradeForm] = useState({
+    code: '',
+    registrationCost: '',
+    financialCapacity: '',
+  });
 
   const updateSectors = (next: SectorConfig[]) => {
     if (onChangeSectors) onChangeSectors(next);
@@ -77,6 +87,49 @@ export function CategoriesConfiguration({
   const handleDeleteSector = (id: string) => {
     const next = sectors.filter((sector) => sector.id !== id);
     updateSectors(next);
+  };
+
+  const handleOpenGradeDialog = (grade: GradeConfig) => {
+    setEditingGrade(grade);
+    setGradeForm({
+      code: grade.code,
+      registrationCost: '',
+      financialCapacity: '',
+    });
+    setIsGradeDialogOpen(true);
+  };
+
+  const handleCloseGradeDialog = () => {
+    setIsGradeDialogOpen(false);
+    setEditingGrade(null);
+    setGradeForm({ code: '', registrationCost: '', financialCapacity: '' });
+  };
+
+  const handleSubmitGrade = async () => {
+    if (!gradeForm.code.trim()) return;
+
+    const registrationCost = Number(
+      gradeForm.registrationCost.toString().replace(/,/g, ''),
+    );
+    const financialCapacity = Number(
+      gradeForm.financialCapacity.toString().replace(/,/g, ''),
+    );
+
+    if (Number.isNaN(registrationCost) || Number.isNaN(financialCapacity)) {
+      console.error('registrationCost and financialCapacity must be numbers');
+      return;
+    }
+
+    try {
+      await createGrade({
+        grade: gradeForm.code.toUpperCase(),
+        registrationCost,
+        financialCapacity,
+      }).unwrap();
+      handleCloseGradeDialog();
+    } catch (error) {
+      console.error('Failed to create grade:', error);
+    }
   };
 
   const handleGradeChange = (
@@ -215,6 +268,7 @@ export function CategoriesConfiguration({
                     <div className="flex items-center justify-end">
                       <button
                         type="button"
+                        onClick={() => handleOpenGradeDialog(grade)}
                         className="p-1.5 rounded-full text-gray-500 hover:text-blue-600 hover:bg-blue-50"
                         aria-label="Edit grade"
                       >
@@ -290,6 +344,114 @@ export function CategoriesConfiguration({
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isCreating ? 'Creating...' : 'Create Sector'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Grade Dialog */}
+      {isGradeDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50" onClick={handleCloseGradeDialog} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingGrade ? 'Edit Grade' : 'Add Grade'}
+              </h3>
+              <button
+                type="button"
+                onClick={handleCloseGradeDialog}
+                className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="grade-code" className="block text-sm font-medium text-gray-700 mb-1">
+                  Grade Code
+                </label>
+                <input
+                  id="grade-code"
+                  type="text"
+                  value={gradeForm.code}
+                  onChange={(e) =>
+                    setGradeForm((prev) => ({ ...prev, code: e.target.value }))
+                  }
+                  placeholder="e.g., A, B, C"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="grade-registration"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Registration Cost (₦)
+                </label>
+                <input
+                  id="grade-registration"
+                  type="number"
+                  min="0"
+                  value={gradeForm.registrationCost}
+                  onChange={(e) =>
+                    setGradeForm((prev) => ({
+                      ...prev,
+                      registrationCost: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g., 100000"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="grade-capacity"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Financial Capacity (₦)
+                </label>
+                <input
+                  id="grade-capacity"
+                  type="number"
+                  min="0"
+                  value={gradeForm.financialCapacity}
+                  onChange={(e) =>
+                    setGradeForm((prev) => ({
+                      ...prev,
+                      financialCapacity: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g., 50000000"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={handleCloseGradeDialog}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitGrade}
+                disabled={
+                  isCreatingGrade ||
+                  !gradeForm.code.trim() ||
+                  !gradeForm.registrationCost.trim() ||
+                  !gradeForm.financialCapacity.trim()
+                }
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCreatingGrade ? 'Saving...' : 'Save Grade'}
               </button>
             </div>
           </div>

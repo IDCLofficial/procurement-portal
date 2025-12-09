@@ -139,3 +139,18 @@ export interface CreateCategoryResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CreateGradeRequest {
+  grade: string;
+  registrationCost: number;
+  financialCapacity: number;
+}
+
+export interface CreateGradeResponse {
+  _id: string;
+  grade: string;
+  registrationCost: number;
+  financialCapacity: number;
+  createdAt: string;
+  updatedAt: string;
+}

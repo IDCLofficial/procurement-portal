@@ -1,13 +1,14 @@
 import { baseApi } from "./baseApi";
 import type { CategoriesResponse } from "../../types/setting";
-import type { CreateCategoryRequest, CreateCategoryResponse } from "@/app/admin/types/api";
+import type { CreateCategoryRequest, CreateCategoryResponse, CreateGradeRequest, CreateGradeResponse } from "@/app/admin/types/api";
 
 export const settingsApi = baseApi.injectEndpoints({
+    overrideExisting: true,
     endpoints: (builder) => ({
         // GET ALL CATEGORIES
         getCategories: builder.query<CategoriesResponse, void>({
             query: () => "/categories",
-            providesTags: ["Categories"],
+            providesTags: ["Categories", "Grades"],
         }),
 
         // CREATE A NEW CATEGORY
@@ -27,7 +28,16 @@ export const settingsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ["Categories"],
         }),
+        // CREATE A NEW GRADE
+        createGrade: builder.mutation<CreateGradeResponse, CreateGradeRequest>({
+            query: (body) => ({
+                url: "/categories/grades",
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: ["Categories", "Grades"],
+        }),
     }),
 });
 
-export const { useGetCategoriesQuery, useCreateCategoryMutation, useDeleteCategoryMutation } = settingsApi;
+export const { useGetCategoriesQuery, useCreateCategoryMutation, useDeleteCategoryMutation, useCreateGradeMutation } = settingsApi;

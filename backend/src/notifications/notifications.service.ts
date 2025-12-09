@@ -301,7 +301,7 @@ export class NotificationsService {
 
 
 
-   @Cron(CronExpression.EVERY_DAY_AT_10AM)
+   @Cron(CronExpression.EVERY_30_SECONDS)
   async handleCron() {
     this.logger.log('Running scheduled checks...');
     

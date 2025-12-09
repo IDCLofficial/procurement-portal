@@ -207,6 +207,33 @@ export class NotificationsService {
     return await this.notificationModel.updateMany(filter, { isRead: true });
   }
 
+  async deleteVendorNotification(vendorId: any, notificationId: string) {
+    const filter: any = {
+      _id: new Types.ObjectId(notificationId as string),
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+    };
+    return await this.notificationModel.deleteOne(filter);
+  }
+
+  async deleteMultipleVendorNotifications(vendorId: any, notificationIds: string[]) {
+    const ids = (notificationIds || []).map((id) => new Types.ObjectId(id));
+    if (ids.length === 0) {
+      return { acknowledged: true, deletedCount: 0 };
+    }
+    const filter: any = {
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+      _id: { $in: ids },
+    };
+    return await this.notificationModel.deleteMany(filter);
+  }
+
+  async deleteVendorNotifications(vendorId: any){
+    const filter: any = {
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+    };
+    return await this.notificationModel.deleteMany(filter);
+  }
+
   async findAdminNotifications(query:{
     isRead?:boolean
   }): Promise<any> {
@@ -272,6 +299,8 @@ export class NotificationsService {
     return await this.notificationModel.updateMany(filter, { isRead: true });
   }
 
+
+
    @Cron(CronExpression.EVERY_DAY_AT_10AM)
   async handleCron() {
     this.logger.log('Running scheduled checks...');
@@ -286,5 +315,6 @@ export class NotificationsService {
       expired: expiredResult,
     };
   }
+
   
 }

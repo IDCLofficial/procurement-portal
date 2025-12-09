@@ -48,7 +48,7 @@ async function seedCategories() {
         description: 'Imo State Ministry of Health'
       },
       {
-        sector: 'Ministry of Mines, Industry',
+        sector: 'Ministry of Industry, Mines and Solid Minerals',
         description: 'Imo State Ministry of Mines, Industry'
       },
       {

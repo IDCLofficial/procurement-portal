@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: moe-backend
+    env: node
+    plan: starter
+    buildCommand: npm ci && npm run build && npm prune --production
+    startCommand: ./render-start.sh
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /

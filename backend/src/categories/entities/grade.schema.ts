@@ -3,17 +3,10 @@ import { Document } from "mongoose";
 
 export type GradeDocument = Grade & Document;
 
-export enum GradeType {
-    A = "A",
-    B = "B",
-    C = "C",
-    D = "D"
-}
-
 @Schema({ timestamps: true })
 export class Grade {
-    @Prop({ required: true, enum: GradeType, unique: true })
-    grade: GradeType;
+    @Prop({ required: true, unique: true })
+    grade: string;
 
     @Prop({ required: true })
     registrationCost: number;

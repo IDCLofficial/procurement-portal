@@ -20,6 +20,7 @@ import { ValidationError } from 'class-validator';
 import { Logger } from '@nestjs/common';
 import { necessaryDocument } from './dto/update-registration.dto';
 import { VendorActivityLog, VendorActivityLogDocument, ActivityType } from './entities/vendor-activity-log.schema';
+import { renewRegistrationDto } from './dto/renew-registration-dto';
 
 @Injectable()
 export class VendorsService {
@@ -576,8 +577,8 @@ export class VendorsService {
 
 
   /** */
-  async renewRegistration(userId:string, updateRegistrationDto:updateRegistrationDto){
-    if(!updateRegistrationDto.documents){
+  async renewRegistration(userId:string, renewRegistrationDto:renewRegistrationDto){
+    if(!renewRegistrationDto.documents){
       this.Logger.log('Please upload at least 1 document')
       throw new BadRequestException('Please upload at least 1 document')
     }
@@ -599,7 +600,7 @@ export class VendorsService {
       }
 
       const updatedDocuments = await Promise.all(
-        updateRegistrationDto.documents.map(async (doc) => {
+        renewRegistrationDto.documents.map(async (doc) => {
           const existingDoc = await this.verificationDocumentModel.findOne({
             vendor: userId,
             documentType: doc.documentType
@@ -1143,4 +1144,26 @@ export class VendorsService {
       throw new BadRequestException('Failed to retrieve activity logs');
     }
   }
+
+  async deactivateMyAccount(id:string){
+    try {
+      const vendor = await this.vendorModel.findById(id);
+      if (!vendor) {
+        throw new NotFoundException('Vendor not found');
+      }
+      vendor.isActive = false;
+      vendor.originalEmail = vendor.email,
+      vendor.email = ""
+      await vendor.save();
+      return vendor;
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.Logger.error(`Error deactivating vendor account: ${err.message}`);
+      throw new BadRequestException('Failed to deactivate vendor account');
+    }
+  }
+
+  
 }

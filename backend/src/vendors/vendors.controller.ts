@@ -376,7 +376,7 @@ export class VendorsController {
       throw new UnauthorizedException('Invalid or expired token');
     }
     if(updateRegistrationDto.mode==mode.RENEWAL){
-        return this.vendorsService.renewRegistration(userId, updateRegistrationDto);
+        return this.vendorsService.renewRegistration(userId, { documents: updateRegistrationDto.documents });
     }
     return this.vendorsService.registerCompany(userId, updateRegistrationDto);
   }
@@ -893,5 +893,26 @@ export class VendorsController {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  @Patch('deactivate-my-account')
+  @ApiOperation({ summary: 'Deactivate vendor account' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Vendor account deactivated successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Vendor not found' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Failed to deactivate vendor account' })
+  async deactivateMyAccount(
+    @Req() req: any
+  ) {
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException('Authorization header is missing');
+    }
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = this.jwtService.decode(token);
+
+    if (!decoded) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    return this.vendorsService.deactivateMyAccount(decoded._id);
   }
 }

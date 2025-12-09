@@ -3,11 +3,12 @@ import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiBearerAuth, ApiHeader, ApiConsumes } from '@nestjs/swagger';
-import { mode, updateRegistrationDto } from './dto/update-registration.dto';
+import { mode, necessaryDocument, updateRegistrationDto } from './dto/update-registration.dto';
 import { loginDto } from './dto/logn.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtService } from '@nestjs/jwt';
+import { replaceDocumentDto } from './dto/replace-document.dto';
 
 @ApiTags('vendors')
 @Controller('vendors')
@@ -895,7 +896,38 @@ export class VendorsController {
     }
   }
 
-  @Patch('deactivate-my-account')
+  @Patch('replace-document/:id')
+  @ApiOperation({ summary: 'Replace document' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Document replaced successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Failed to replace document' })
+  async replaceDocument(
+    @Req() req:any,
+    @Param('id') id: string,
+    @Body() replaceDocumentDto: replaceDocumentDto
+  ) {
+
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException('Authorization header is missing');
+    }
+
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = this.jwtService.decode(token);
+
+    if (!decoded) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    const vendorId = decoded._id
+
+    try {
+      return await this.vendorsService.replaceDocument(id, replaceDocumentDto, vendorId);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Delete('deactivate-my-account')
   @ApiOperation({ summary: 'Deactivate vendor account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Vendor account deactivated successfully' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Vendor not found' })

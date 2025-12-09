@@ -21,6 +21,7 @@ import { Logger } from '@nestjs/common';
 import { necessaryDocument } from './dto/update-registration.dto';
 import { VendorActivityLog, VendorActivityLogDocument, ActivityType } from './entities/vendor-activity-log.schema';
 import { renewRegistrationDto } from './dto/renew-registration-dto';
+import { replaceDocumentDto } from './dto/replace-document.dto';
 
 @Injectable()
 export class VendorsService {
@@ -1165,5 +1166,39 @@ export class VendorsService {
     }
   }
 
-  
+  async replaceDocument(id:string, replaceDocumentDto:replaceDocumentDto, vendorId:string){
+    try {
+      const newDocument = await this.verificationDocumentModel.create(replaceDocumentDto.document)
+      if(!newDocument){
+        throw new ConflictException('there was an error uploading the document')
+      }
+      const vendor = await this.vendorModel.findById(vendorId);
+      if (!vendor) {
+        throw new NotFoundException('Vendor not found');
+      } 
+      const company  = await this.companyModel.findOne({userId:new Types.ObjectId(vendorId)})
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+      if (company.documents) {
+        company.documents = company.documents.map((document) => {
+          if (document.toString() === new Types.ObjectId(id).toString()) {
+            return newDocument._id as Types.ObjectId;
+          }
+          return document;
+        });
+      }
+      await company.save();
+      return {
+        message:"document uploaded successfully",
+        document:newDocument
+      };
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.Logger.error(`Error replacing document: ${err.message}`);
+      throw new BadRequestException('Failed to replace document');
+    }
+  }
 }

@@ -167,6 +167,13 @@ export class CertificatesService {
         throw new NotFoundException(`Certificate with ID ${certificateId} not found`);
       }
 
+      const vendor = await this.vendorModel.findById(certificate.contractorId).exec();
+      if(!vendor){
+        throw new NotFoundException('no vendor exists for this certificate')
+      }else if(vendor.email === " " || !vendor.email){
+        throw new BadRequestException("No valid certificate found")
+      }
+
       return certificate;
     } catch (err) {
       if (err instanceof NotFoundException) {
@@ -189,9 +196,43 @@ export class CertificatesService {
 
       const companyIds = companies.map(c => c._id);
 
-      // Build filter for certificates
+      // If no companies match, return empty result
+      if (companyIds.length === 0) {
+        return {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          category,
+          certificates: [],
+        };
+      }
+
+      // Find vendors with valid (non-blank) email
+      const vendorsWithEmail = await this.vendorModel
+        .find({
+          email: { $exists: true, $nin: ['', ' '] },
+        })
+        .select('_id')
+        .lean();
+
+      const vendorIdsWithEmail = vendorsWithEmail.map(v => v._id);
+
+      if (vendorIdsWithEmail.length === 0) {
+        return {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          category,
+          certificates: [],
+        };
+      }
+
+      // Build filter for certificates, restricting to vendors with valid email
       const filter: any = {
-        company: { $in: companyIds }
+        company: { $in: companyIds },
+        contractorId: { $in: vendorIdsWithEmail },
       };
 
       // Calculate pagination
@@ -216,7 +257,7 @@ export class CertificatesService {
         limit,
         totalPages: Math.ceil(total / limit),
         category,
-        certificates
+        certificates,
       };
     } catch (err) {
       throw new BadRequestException('Failed to get certificates by category', err.message);

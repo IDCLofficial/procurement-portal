@@ -1146,7 +1146,7 @@ export class VendorsService {
     }
   }
 
-  async deactivateMyAccount(id:string){
+  async deactivateMyAccount(id:any){
     try {
       const vendor = await this.vendorModel.findById(id);
       if (!vendor) {
@@ -1154,9 +1154,11 @@ export class VendorsService {
       }
       vendor.isActive = false;
       vendor.originalEmail = vendor.email,
-      vendor.email = ""
+      vendor.email = " "
       await vendor.save();
 
+      // 
+    
       return vendor;
     } catch (err) {
       if (err instanceof NotFoundException) {

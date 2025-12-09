@@ -971,7 +971,7 @@ export class VendorsController {
     const token = req.headers.authorization.split(' ')[1];
     const decoded = this.jwtService.decode(token);
 
-    if (!decoded) {
+    if (!decoded || !decoded._id) {
       throw new UnauthorizedException('Invalid or expired token');
     }
 

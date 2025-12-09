@@ -742,20 +742,6 @@ export class VendorsController {
   }
 
   /**
-   * Delete a vendor account
-   * 
-   * @param id - Vendor ID (MongoDB ObjectId)
-   * @returns Deleted vendor record
-   * 
-   * @example
-   * DELETE /vendors/507f1f77bcf86cd799439011
-   */
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.vendorsService.remove(id);
-  }
-
-  /**
    * Get registration payment for a vendor
    * 
    * @param req - Request object containing JWT token
@@ -990,5 +976,19 @@ export class VendorsController {
     }
 
     return this.vendorsService.deactivateMyAccount(decoded._id);
+  }
+
+  /**
+   * Delete a vendor account
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @returns Deleted vendor record
+   * 
+   * @example
+   * DELETE /vendors/507f1f77bcf86cd799439011
+   */
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.vendorsService.remove(id);
   }
 }

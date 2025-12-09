@@ -97,7 +97,7 @@ export class NotificationsController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized.',
   })
-  @Patch('mark-all-admin-as-read')
+  @Post('mark-all-admin-as-read')
   async markAllAdminAsRead(
     @Req() req:any 
   ){

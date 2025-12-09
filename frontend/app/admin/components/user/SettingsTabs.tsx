@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Save, DollarSign, Clock, Tags, FileText, type LucideIcon } from 'lucide-react';
+import { Save, Clock, Tags, FileText, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type SettingsTabId = 'fees' | 'sla' | 'categories' | 'documents';
+export type SettingsTabId =  'sla' | 'categories' | 'documents';
 
 interface SettingsTabsProps {
   activeTab?: SettingsTabId;
@@ -19,14 +19,13 @@ interface SettingsTabConfig {
 }
 
 const TABS: SettingsTabConfig[] = [
-  { id: 'fees', label: 'Fee Tables', icon: DollarSign },
-  { id: 'sla', label: 'SLA Timers', icon: Clock },
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'documents', label: 'Documents', icon: FileText },
+  { id: 'sla', label: 'SLA Timers', icon: Clock },
 ];
 
 export function SettingsTabs({ activeTab, onTabChange, onSave }: SettingsTabsProps) {
-  const [internalTab, setInternalTab] = useState<SettingsTabId>('fees');
+  const [internalTab, setInternalTab] = useState<SettingsTabId>('categories');
   const currentTab = activeTab ?? internalTab;
 
   const handleTabClick = (id: SettingsTabId) => {
@@ -43,7 +42,7 @@ export function SettingsTabs({ activeTab, onTabChange, onSave }: SettingsTabsPro
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-[#A0AEC0]">
-          Configure system fees, SLA timers, and requirements
+          Configure system SLA timers, and requirements
         </p>
         <button
           type="button"

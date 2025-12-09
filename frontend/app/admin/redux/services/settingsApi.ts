@@ -20,11 +20,21 @@ export const settingsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ["Categories"],
         }),
+     
         // DELETE CATEGORY
         deleteCategory: builder.mutation<void, string>({
             query: (id) => ({
                 url: `/categories/${id}`,
                 method: "DELETE",
+            }),
+            invalidatesTags: ["Categories"],
+        }),
+        // EDIT CATEGORY
+        editCategory: builder.mutation<CreateCategoryResponse, { id: string; data: CreateCategoryRequest}>({
+            query: ({ id, data }) => ({
+                url: `/categories/${id}`,
+                method: "PATCH",
+                body: data,
             }),
             invalidatesTags: ["Categories"],
         }),
@@ -37,7 +47,24 @@ export const settingsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ["Categories", "Grades"],
         }),
+    //   EDIT GRADE
+     editGrade: builder.mutation<CreateGradeResponse, { id: string; data: CreateGradeRequest}>({
+            query: ({ id, data }) => ({
+                url: `/categories/grades/${id}`,
+                method: "PATCH",
+                body: data,
+            }),
+            invalidatesTags: ["Categories", "Grades"],
+        }),
+
     }),
 });
 
-export const { useGetCategoriesQuery, useCreateCategoryMutation, useDeleteCategoryMutation, useCreateGradeMutation } = settingsApi;
+export const {
+  useGetCategoriesQuery,
+  useCreateCategoryMutation,
+  useDeleteCategoryMutation,
+  useEditCategoryMutation,
+  useCreateGradeMutation,
+  useEditGradeMutation,
+} = settingsApi;

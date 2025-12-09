@@ -4,10 +4,10 @@ import { useState, useMemo, useCallback } from 'react';
 import { useGetCategoriesQuery } from '@/app/admin/redux/services/settingsApi';
 import {
   DEFAULT_SLA_STAGES,
-  DEFAULT_FEES,
+  
   DEFAULT_DOCUMENTS,
   type SlaStageConfig,
-  type FeeConfigItem,
+
   type DocumentConfigItem,
 } from '../_constants';
 import type { SettingsTabId } from '@/app/admin/components/user/SettingsTabs';
@@ -23,7 +23,7 @@ export interface DialogState {
 export interface UseSettingsReturn {
   // State
   activeTab: SettingsTabId;
-  fees: FeeConfigItem[];
+  
   slaStages: SlaStageConfig[];
   documents: DocumentConfigItem[];
   saving: boolean;
@@ -35,7 +35,7 @@ export interface UseSettingsReturn {
   
   // Handlers
   handleTabChange: (tab: SettingsTabId) => void;
-  handleFeesChange: (fees: FeeConfigItem[]) => void;
+
   handleSlaStagesChange: (stages: SlaStageConfig[]) => void;
   handleDocumentsChange: (docs: DocumentConfigItem[]) => void;
   handleSave: () => void;
@@ -67,8 +67,7 @@ function loadSlaStagesFromStorage(): SlaStageConfig[] {
 }
 
 export function useSettings(): UseSettingsReturn {
-  const [activeTab, setActiveTab] = useState<SettingsTabId>('fees');
-  const [fees, setFees] = useState<FeeConfigItem[]>(DEFAULT_FEES);
+  const [activeTab, setActiveTab] = useState<SettingsTabId>('categories');
   const [slaStages, setSlaStages] = useState<SlaStageConfig[]>(loadSlaStagesFromStorage);
   const [documents, setDocuments] = useState<DocumentConfigItem[]>(DEFAULT_DOCUMENTS);
   const [saving, setSaving] = useState(false);
@@ -111,9 +110,7 @@ export function useSettings(): UseSettingsReturn {
     setActiveTab(tab);
   }, []);
 
-  const handleFeesChange = useCallback((newFees: FeeConfigItem[]) => {
-    setFees(newFees);
-  }, []);
+
 
   const handleSlaStagesChange = useCallback((stages: SlaStageConfig[]) => {
     setSlaStages(stages);
@@ -187,7 +184,6 @@ export function useSettings(): UseSettingsReturn {
 
   return {
     activeTab,
-    fees,
     slaStages,
     documents,
     saving,
@@ -195,7 +191,6 @@ export function useSettings(): UseSettingsReturn {
     sectors,
     grades,
     handleTabChange,
-    handleFeesChange,
     handleSlaStagesChange,
     handleDocumentsChange,
     handleSave,

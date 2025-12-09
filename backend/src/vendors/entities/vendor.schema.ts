@@ -19,10 +19,6 @@ export enum renewalSteps{
   COMPLETE="complete"
 }
 
-export type settings = {
-
-}
-
 @Schema({ timestamps: true })
 export class Vendor {
   @Prop({ required: true })
@@ -63,9 +59,6 @@ export class Vendor {
 
   @Prop({ required: false, default: true })
   isActive: boolean;
-
-  @Prop({required:false})
-  settings:settings
 }
 
 export const VendorSchema = SchemaFactory.createForClass(Vendor);

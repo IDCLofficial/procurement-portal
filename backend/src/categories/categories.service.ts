@@ -110,10 +110,6 @@ export class CategoriesService {
       if (updateGradeDto.financialCapacity !== undefined) {
         grade.financialCapacity = updateGradeDto.financialCapacity;
       }
-      
-      if (updateGradeDto.effectiveDate !== undefined) {
-        grade.effectiveDate = updateGradeDto.effectiveDate;
-      }
 
       return await grade.save();
     } catch (err) {

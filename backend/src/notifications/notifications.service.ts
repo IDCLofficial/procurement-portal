@@ -141,7 +141,123 @@ export class NotificationsService {
     return { total: expiredDocuments.length, notificationsSent };
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_10AM)
+  async findVendorNotifications(vendorId: any, query:{
+    isRead?:boolean
+  }): Promise<any> {
+    const filter: any = {
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+    };
+    let isReadFilter: boolean | undefined;
+    if (query && typeof query.isRead !== 'undefined') {
+      const raw = (query as any).isRead;
+      if (raw === true || raw === 'true') {
+        isReadFilter = true;
+      } else if (raw === false || raw === 'false') {
+        isReadFilter = false;
+      }
+    }
+
+    if (typeof isReadFilter === 'boolean') {
+      // Only apply isRead filter when explicitly requested
+      filter.isRead = isReadFilter;
+    }
+
+    const vendorNotifications = await this.notificationModel
+      .find(filter)
+      .sort({
+        createdAt: -1
+      })
+      .exec()
+
+    // Aggregate counts for this vendor
+    const baseVendorFilter = { vendorId: new Types.ObjectId(vendorId as Types.ObjectId) };
+    const [
+      totalNotifications,
+      totalUnreadNotifications,
+      totalCriticalNotifications,
+      totalHighPriorityNotifications,
+    ] = await Promise.all([
+      this.notificationModel.countDocuments(baseVendorFilter),
+      this.notificationModel.countDocuments({ ...baseVendorFilter, isRead: false }),
+      this.notificationModel.countDocuments({ ...baseVendorFilter, priority: priority.CRITICAL }),
+      this.notificationModel.countDocuments({ ...baseVendorFilter, priority: priority.HIGH }),
+    ]);
+
+    const result = vendorNotifications.map((notification) => ({
+      title: notification.title,
+      message: notification.message,
+      priority: notification.priority,
+      createdAt: notification.createdAt,
+    }));
+    
+    return {
+      message: `you have ${result.length} notifications`,
+      notifications: result,
+      totalNotifications,
+      totalUnreadNotifications,
+      totalCriticalNotifications,
+      totalHighPriorityNotifications,
+    }
+  }
+
+  async findAdminNotifications(query:{
+    isRead?:boolean
+  }): Promise<any> {
+    // const adminId = decoded._id;
+    const filter: any = {
+      recipient:NotificationRecipient.ADMIN,
+    };
+
+    let isReadFilter: boolean | undefined;
+    if (query && typeof query.isRead !== 'undefined') {
+      const raw = (query as any).isRead;
+      if (raw === true || raw === 'true') {
+        isReadFilter = true;
+      } else if (raw === false || raw === 'false') {
+        isReadFilter = false;
+      }
+    }
+
+    if (typeof isReadFilter === 'boolean') {
+      // Only apply isRead filter when explicitly requested
+      filter.isRead = isReadFilter;
+    }
+    const adminNotifications = await this.notificationModel
+    .find(filter)
+    .sort({createdAt: -1})
+    .exec()
+    const result = adminNotifications.map((notification) => ({
+      title: notification.title,
+      message: notification.message,
+      priority: notification.priority,
+      createdAt: notification.createdAt,
+    }));
+
+    // Aggregate counts for this admin
+    const baseAdminFilter = { recipient: NotificationRecipient.ADMIN };
+    const [
+      totalNotifications,
+      totalUnreadNotifications,
+      totalCriticalNotifications,
+      totalHighPriorityNotifications,
+    ] = await Promise.all([
+      this.notificationModel.countDocuments(baseAdminFilter),
+      this.notificationModel.countDocuments({ ...baseAdminFilter, isRead: false }),
+      this.notificationModel.countDocuments({ ...baseAdminFilter, priority: priority.CRITICAL }),
+      this.notificationModel.countDocuments({ ...baseAdminFilter, priority: priority.HIGH }),
+    ]);
+    
+    return {
+      message: `you have ${result.length} notifications`,
+      notifications: result,
+      totalNotifications,
+      totalUnreadNotifications,
+      totalCriticalNotifications,
+      totalHighPriorityNotifications,
+    }
+  }
+
+   @Cron(CronExpression.EVERY_DAY_AT_10AM)
   async handleCron() {
     this.logger.log('Running scheduled checks...');
     
@@ -154,44 +270,6 @@ export class NotificationsService {
       expiring: expiringResult,
       expired: expiredResult,
     };
-  }
-
-
-  async findVendorNotifications(vendorId: any): Promise<any> {
-    const vendorNotifications = await this.notificationModel.find({
-      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
-    });
-
-    const result = vendorNotifications.map((notification) => ({
-      title: notification.title,
-      message: notification.message,
-      priority: notification.priority,
-      createdAt: notification.createdAt,
-    }));
-    
-    return {
-      message: `you have ${result.length} notifications`,
-      notifications: result
-    }
-  }
-
-  async findAdminNotifications(): Promise<any> {
-    // const adminId = decoded._id;
-    const adminNotifications = await this.notificationModel.find({
-      recipient:NotificationRecipient.ADMIN,
-    });
-
-    const result = adminNotifications.map((notification) => ({
-      title: notification.title,
-      message: notification.message,
-      priority: notification.priority,
-      createdAt: notification.createdAt,
-    }));
-    
-    return {
-      message: `you have ${result.length} notifications`,
-      notifications: result
-    }
   }
   
 }

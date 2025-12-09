@@ -27,7 +27,12 @@ export class NotificationsController {
     description: 'Unauthorized.',
   })
   @Get('vendor-notification')
-  async vendorNotifications(@Req() req:any) {
+  async vendorNotifications(
+    @Req() req:any,
+    @Query() query:{
+      isRead?:boolean
+    } 
+  ) {
     try{
       const header = req.headers.authorization;
       if(!header){
@@ -39,7 +44,7 @@ export class NotificationsController {
         this.logger.log(`Unauthorized user trying to access the endpoint`);
         throw new UnauthorizedException('Unauthorized');
       }
-      return await this.notificationsService.findVendorNotifications(vendorId);
+      return await this.notificationsService.findVendorNotifications(vendorId, query);
     }catch(err){
       this.logger.log(`User is not authorized to access this endpoint`);
       throw new UnauthorizedException('User is not authorized to access this endpoint');
@@ -60,7 +65,11 @@ export class NotificationsController {
     description: 'Unauthorized.',
   })
   @Get('admin-notification')
-  async adminNotification(@Req() req:any){
+  async adminNotification(
+    @Req() req:any,
+    @Query() query:{
+      isRead?:boolean
+    }){
     try{
       const header = req.headers.authorization;
       if(!header){
@@ -72,7 +81,7 @@ export class NotificationsController {
         this.logger.log(`User is not authorized to access this endpoint`);
         throw new UnauthorizedException('User is not authorized to access this endpoint');
       }
-      return await this.notificationsService.findAdminNotifications();
+      return await this.notificationsService.findAdminNotifications(query);
     }catch(err){
       this.logger.log(`Unauthorized user trying to access the endpoint`);
       throw new UnauthorizedException('Unauthorized');

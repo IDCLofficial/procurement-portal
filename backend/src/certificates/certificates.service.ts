@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Certificate, CertificateDocument } from './entities/certificate.schema';
@@ -62,7 +62,34 @@ export class CertificatesService {
       if (category) {
         conditions.push({ categories: { $regex: category, $options: 'i' } });
       }
-      
+
+      // Exclude certificates for vendors whose email is blank or missing
+      const vendorsWithEmail = await this.vendorModel
+        .find({
+          email: { $exists: true, $nin: ['', ' '] },
+        })
+        .select('_id')
+        .lean();
+
+      const vendorIdsWithEmail = vendorsWithEmail.map(v => v._id);
+
+      if (vendorIdsWithEmail.length === 0) {
+        return {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          statusCounts: {
+            approved: 0,
+            expired: 0,
+            revoked: 0,
+          },
+          certificates: [],
+        };
+      }
+
+      conditions.push({ contractorId: { $in: vendorIdsWithEmail } });
+
       // Build final filter
       const filter = conditions.length > 0 ? { $and: conditions } : {};
       
@@ -109,6 +136,13 @@ export class CertificatesService {
       
       if (!certificate) {
         throw new NotFoundException(`Certificate with ID ${certificateId} not found`);
+      }
+      
+      const vendor = await this.vendorModel.findById(certificate.contractorId).exec();
+      if(!vendor){
+        throw new NotFoundException('no vendor exists for this certificate')
+      }else if(vendor.email === " " || !vendor.email){
+        throw new BadRequestException("No valid certificate found")
       }
       
       return certificate;

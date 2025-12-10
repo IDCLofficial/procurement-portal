@@ -16,10 +16,11 @@ import {
     CheckCircle,
     XCircle,
     Search,
-    Check
+    Check,
+    Loader2
 } from 'lucide-react';
 import SubHeader from '@/components/SubHeader';
-import { useGetMyNotificationsQuery } from '@/store/api/vendor.api';
+import { useGetMyNotificationsQuery, useMarkNotificationAsReadMutation } from '@/store/api/vendor.api';
 import { formatDistanceToNow } from 'date-fns';
 import { useSearchParams } from 'next/navigation';
 import { updateSearchParam } from '@/lib/utils';
@@ -59,6 +60,7 @@ const getPriorityConfig = (priority: string) => {
 export default function NotificationsPage() {
     const searchQuery = useSearchParams().get('q') || '';
     const filter = useSearchParams().get('filter') || '';
+    const [markNotificationAsRead, { isLoading: isMarkingNotificationAsRead }] = useMarkNotificationAsReadMutation();
 
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
     
@@ -124,7 +126,8 @@ export default function NotificationsPage() {
     };
 
     const handleMarkAllAsRead = () => {
-        console.log('Mark all as read');
+        if (isMarkingNotificationAsRead) return;
+        markNotificationAsRead();
     };
 
     // Show loading state
@@ -160,10 +163,13 @@ export default function NotificationsPage() {
                     <Button
                         variant="outline"
                         onClick={handleMarkAllAsRead}
+                        disabled={isMarkingNotificationAsRead}
                         className="bg-teal-600 hover:bg-teal-700 text-white hover:text-white"
                     >
-                        <Check className="w-4 h-4 mr-2" />
-                        <span>Mark All as Read</span>
+                        {isMarkingNotificationAsRead ? <span>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
+                            Marking as Read...
+                        </span> : <span><Check className="w-4 h-4 mr-2 inline" /> Mark All as Read</span>}
                     </Button>
                 }
             />

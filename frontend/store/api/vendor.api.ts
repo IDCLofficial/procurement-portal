@@ -106,6 +106,18 @@ export const vendorApi = apiSlice.injectEndpoints({
                 params: params ? { page: params.page || 1, limit: params.limit || 10, search: params.search || '', filter: params.filter || '' } : { page: 1, limit: 10 },
             }),
         }),
+        markNotificationAsRead: builder.mutation<void, void>({
+            query: () => ({
+                url: endpoints.markNotificationAsRead,
+                method: 'POST',
+            }),
+        }),
+        deactivateVendor: builder.mutation<void, void>({
+            query: () => ({
+                url: endpoints.deactivateVendor,
+                method: 'DELETE',
+            }),
+        }),
     })
 })
 
@@ -125,4 +137,6 @@ export const {
     useGetPaymentHistoryQuery,
     useGetMyActivityLogsQuery,
     useGetMyNotificationsQuery,
+    useMarkNotificationAsReadMutation,
+    useDeactivateVendorMutation,
 } = vendorApi;

@@ -17,11 +17,11 @@ import { FaUser, FaBell, FaShieldAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useSearchParams } from 'next/navigation';
 import { updateSearchParam } from '@/lib/utils';
 import { Loader, UserPen } from 'lucide-react';
-import { useUpdateVendorProfileMutation } from '@/store/api/vendor.api';
+import { useUpdateVendorProfileMutation, useDeactivateVendorMutation } from '@/store/api/vendor.api';
 import { toast } from 'sonner';
 
 export default function AccountSettingsPage() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const searchParams = useSearchParams();
     const activeTab = searchParams.get('tab') || 'account';
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -29,6 +29,7 @@ export default function AccountSettingsPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [updateProfileMutation, { isLoading: isUpdatingProfile, isSuccess, isError }] = useUpdateVendorProfileMutation();
+    const [deactivateVendor, { isLoading: isDeactivating }] = useDeactivateVendorMutation();
 
     useEffect(()=>{
         if (isSuccess) {
@@ -128,9 +129,24 @@ export default function AccountSettingsPage() {
     };
 
 
-    const handleDeactivateAccount = () => {
-        console.log('Deactivating account...');
-        // Handle account deactivation logic
+    const handleDeactivateAccount = async () => {
+        try {
+            toast.loading('Deactivating your account...', { id: 'deactivate-account' });
+            const response = await deactivateVendor();
+            
+            if ('error' in response) {
+                throw new Error('Failed to deactivate account');
+            }
+            
+            toast.dismiss('deactivate-account');
+            toast.success('Account deactivated successfully');
+            
+            logout();
+        } catch (error) {
+            console.error('Deactivation error:', error);
+            toast.dismiss('deactivate-account');
+            toast.error('Failed to deactivate account. Please try again.');
+        }
     };
 
     const handleViewLoginHistory = () => {
@@ -464,7 +480,10 @@ export default function AccountSettingsPage() {
                             </div>
 
                             {/* Danger Zone */}
-                            <DangerZone onDeactivate={handleDeactivateAccount} />
+                            <DangerZone 
+                                isLoading={isDeactivating}
+                                onDeactivate={handleDeactivateAccount}
+                            />
                         </div>
                     )}
                 </div>

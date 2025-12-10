@@ -247,7 +247,6 @@ export default function RegistrationContinuation() {
                 description: `${formData.companyName}'s registration fee`,
             });
             toast.dismiss("payment");
-            console.log(response);
             if (response.data) {
                 router.push(response.data.authorization_url);
             }

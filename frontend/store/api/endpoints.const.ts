@@ -15,6 +15,8 @@ export default {
     myPaymentsHistory: "/vendors/my-payment-history",
     myActivityLogs: "/vendors/activity-logs",
     myNotifications: "/notifications/vendor-notification",
+    deactivateVendor: "/vendors/deactivate-my-account",
+    markNotificationAsRead: "/notifications/mark-all-vendor-as-read",
 
     // Public Endpoints
     getAllContractor: "/certificates",

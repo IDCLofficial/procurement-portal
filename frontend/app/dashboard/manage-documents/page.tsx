@@ -165,11 +165,6 @@ export default function CertificatesPage() {
         console.log('More actions:', id);
     };
 
-    const handleReplace = (id: string) => {
-        console.log('Replace document:', id);
-        // TODO: Implement document replacement logic
-    };
-
     // Calculate metrics
     const totalCertificates = documents?.length || 0;
     const activeCertificates = displayCertificates.filter(c => {
@@ -338,10 +333,9 @@ export default function CertificatesPage() {
                             fileSize="-"
                             uploadDate="-"
                             showReplaceSection={true}
-                            onReplace={() => {
-                                // TODO: Implement upload logic
-                                console.log('Upload document:', missing.documentName);
-                            }}
+                            hasValidityPeriod={missing.hasExpiry === 'yes'}
+                            documentId={missing.id}
+                            documentPresetName={missing.documentName}
                         />
                     ))}
                     
@@ -395,7 +389,7 @@ export default function CertificatesPage() {
                                     status={displayStatus}
                                     certificateNumber={certNumber}
                                     fileUrl={cert.fileUrl}
-                                    fileType= {cert.fileType}
+                                    fileType={cert.fileType}
                                     fileSize={certFileSize}
                                     uploadDate={certIssueDate}
                                     expiryStatus={displayStatus === 'expiring' ? 'Expires Annually' : displayStatus === 'expired' ? 'Expired' : undefined}
@@ -403,9 +397,11 @@ export default function CertificatesPage() {
                                     validTo={displayStatus === 'expiring' || displayStatus === 'expired' ? cert.validTo : undefined}
                                     errorMessage={displayStatus === 'expired' || displayStatus === 'expiring' || displayStatus === 'review' ? (certRejection || certMessage) : undefined}
                                     showReplaceSection={displayStatus === 'expired' || displayStatus === 'expiring' || displayStatus === 'review' || certStatus.toLowerCase() === 'needs review'}
+                                    hasValidityPeriod={cert.hasValidityPeriod}
+                                    documentId={cert._id}
+                                    documentPresetName={cert.documentType}
                                     onView={() => handleViewCertificate(certId)}
                                     onClose={() => handleMoreActions(certId)}
-                                    onReplace={() => handleReplace(certId)}
                                 />
                             );
                         })

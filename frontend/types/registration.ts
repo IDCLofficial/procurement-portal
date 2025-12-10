@@ -2,6 +2,7 @@ export enum DocumentStatus {
     IDLE = 'idle',
     UPLOADING = 'uploading',
     SUCCESS = 'success',
+    SAVED = 'saved',
     ERROR = 'error',
 }
 export interface DocumentRequirement {

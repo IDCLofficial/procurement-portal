@@ -3,9 +3,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FaCheckCircle, FaFileAlt } from 'react-icons/fa';
+import { FaCheckCircle, FaExclamationCircle, FaFileAlt } from 'react-icons/fa';
 import Link from 'next/link';
 import { getStatusConfig } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
 interface VerificationResultProps {
     contractorName: string;
@@ -67,14 +68,17 @@ export default function VerificationResult({
                     </div>
                     <div>
                         <p className="text-xs text-gray-600 mb-1">Status</p>
-                        <Badge className={getStatusConfig(status).badgeClass}>
-                            <FaCheckCircle className="mr-1" />
+                        <Badge className={getStatusConfig(status.toLowerCase()).badgeClass}>
+                            {status === "approved" ? <FaCheckCircle className="mr-1" /> : <FaExclamationCircle className="mr-1" />}
                             {status.charAt(0).toUpperCase() + status.slice(1)}
                         </Badge>
                     </div>
                     <div>
                         <p className="text-xs text-gray-600 mb-1">Valid Until</p>
-                        <p className="font-semibold text-gray-900">{validUntil}</p>
+                        <p className={cn(
+                            "font-semibold text-gray-900",
+                            new Date(validUntil) < new Date() ? "text-red-600" : ""
+                        )}>{new Date(validUntil).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                     </div>
                     <div>
                         <p className="text-xs text-gray-600 mb-1">Sector</p>

@@ -2,7 +2,8 @@
 export enum ContractorStatus {
     APPROVED = 'approved',
     PENDING = 'pending',
-    SUSPENDED = 'suspended',
+    EXPIRED = 'expired',
+    REVOKED = 'revoked',
 }
 
 // Contractor Sectors
@@ -17,6 +18,8 @@ export enum ContractorGrade {
     A = 'A',
     B = 'B',
     C = 'C',
+    D = 'D',
+    E = 'E',
 }
 
 // Status Configuration
@@ -43,8 +46,19 @@ export const STATUS_CONFIG = {
         cardBorder: 'border-yellow-200',
         lightBg: 'bg-yellow-200/80',
     },
-    [ContractorStatus.SUSPENDED]: {
-        label: 'Suspended',
+    [ContractorStatus.EXPIRED]: {
+        label: 'Expired',
+        bgColor: 'bg-gray-100',
+        textColor: 'text-gray-800',
+        borderColor: 'border-gray-200',
+        iconColor: '#dc2626',
+        badgeClass: 'bg-gray-100 text-gray-800 border-gray-200',
+        cardBg: 'bg-gray-50',
+        cardBorder: 'border-gray-200',
+        lightBg: 'bg-gray-200/80',
+    },
+    [ContractorStatus.REVOKED]: {
+        label: 'Revoked',
         bgColor: 'bg-red-100',
         textColor: 'text-red-800',
         borderColor: 'border-red-200',
@@ -54,6 +68,7 @@ export const STATUS_CONFIG = {
         cardBorder: 'border-red-200',
         lightBg: 'bg-red-200/80',
     },
+
 } as const;
 
 // Sector Configuration
@@ -85,24 +100,38 @@ export const SECTOR_CONFIG = {
 export const GRADE_CONFIG = {
     [ContractorGrade.A]: {
         label: 'Grade A',
-        bgColor: 'bg-emerald-500',
-        textColor: 'text-white',
-        borderColor: 'border-emerald-600',
-        badgeClass: 'bg-emerald-500 text-white border-emerald-600',
+        bgColor: 'bg-emerald-300',
+        textColor: 'text-emerald-800 uppercase',
+        borderColor: 'border-emerald-400',
+        badgeClass: 'bg-emerald-300 text-emerald-800 border-emerald-400',
     },
     [ContractorGrade.B]: {
         label: 'Grade B',
-        bgColor: 'bg-blue-500',
-        textColor: 'text-white',
-        borderColor: 'border-blue-600',
-        badgeClass: 'bg-blue-500 text-white border-blue-600',
+        bgColor: 'bg-blue-300',
+        textColor: 'text-blue-800 uppercase',
+        borderColor: 'border-blue-400',
+        badgeClass: 'bg-blue-300 text-blue-800 border-blue-400',
     },
     [ContractorGrade.C]: {
         label: 'Grade C',
-        bgColor: 'bg-gray-500',
-        textColor: 'text-white',
-        borderColor: 'border-gray-600',
-        badgeClass: 'bg-gray-500 text-white border-gray-600',
+        bgColor: 'bg-gray-300',
+        textColor: 'text-gray-800 uppercase',
+        borderColor: 'border-gray-400',
+        badgeClass: 'bg-gray-300 text-gray-800 border-gray-400',
+    },
+    [ContractorGrade.D]: {
+        label: 'Grade D',
+        bgColor: 'bg-yellow-300',
+        textColor: 'text-yellow-800 uppercase',
+        borderColor: 'border-yellow-400',
+        badgeClass: 'bg-yellow-300 text-yellow-800 border-yellow-400',
+    },
+    [ContractorGrade.E]: {
+        label: 'Grade E',
+        bgColor: 'bg-red-300',
+        textColor: 'text-red-800 uppercase',
+        borderColor: 'border-red-400',
+        badgeClass: 'bg-red-300 text-red-800 border-red-400',
     },
 } as const;
 
@@ -131,8 +160,13 @@ export const STATUS_MESSAGES = {
         description: 'This contractor registration is currently pending approval by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please check back later for updated status.',
         note: 'Always verify the registration status before engaging in any contract. For additional verification, scan the QR code on the contractor\'s certificate.',
     },
-    [ContractorStatus.SUSPENDED]: {
-        title: 'Suspended Contractor',
+    [ContractorStatus.EXPIRED]: {
+        title: 'Expired Contractor',
+        description: 'This contractor has been suspended by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please contact BPPPI for more information before engaging with this contractor.',
+        note: 'Always verify the registration status before engaging in any contract. For additional verification, scan the QR code on the contractor\'s certificate.',
+    },
+    [ContractorStatus.REVOKED]: {
+        title: 'Revoked Contractor',
         description: 'This contractor has been suspended by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please contact BPPPI for more information before engaging with this contractor.',
         note: 'Always verify the registration status before engaging in any contract. For additional verification, scan the QR code on the contractor\'s certificate.',
     },

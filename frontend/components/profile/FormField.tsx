@@ -9,11 +9,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 
 interface FormFieldProps {
     label: string;
     name: string;
-    type?: 'text' | 'email' | 'tel' | 'select' | 'number';
+    type?: 'text' | 'email' | 'tel' | 'select' | 'number' | "password";
     value: string;
     placeholder?: string;
     disabled?: boolean;
@@ -35,6 +37,7 @@ export default function FormField({
     halfWidth = false,
     hint,
 }: FormFieldProps) {
+    const [showPassword, setShowPassword] = useState(false);
     if (type === 'select') {
         return (
             <div className={halfWidth ? 'w-full' : 'w-full'}>
@@ -64,16 +67,32 @@ export default function FormField({
                 {label}
                 {hint && <span className="ml-2 text-xs font-normal text-gray-500">{hint}</span>}
             </Label>
-            <Input
-                id={name}
-                name={name}
-                type={type}
-                value={value}
-                placeholder={placeholder}
-                disabled={disabled}
-                onChange={(e) => onChange(e.target.value)}
-                className="w-full bg-gray-50 border-gray-200"
-            />
+            <div className="relative">
+                <Input
+                    id={name}
+                    name={name}
+                    type={type === 'password' && !showPassword ? 'password' : type === 'password' ? 'text' : type}
+                    value={value}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="w-full bg-gray-50 border-gray-200 pr-10"
+                />
+                {type === 'password' && value && (
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
+                        disabled={disabled}
+                    >
+                        {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                        ) : (
+                            <Eye className="h-4 w-4" />
+                        )}
+                    </button>
+                )}
+            </div>
         </div>
     );
 }

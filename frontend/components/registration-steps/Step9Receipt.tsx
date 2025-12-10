@@ -3,6 +3,7 @@
 import { FaCheckCircle, FaDownload, FaEnvelope, FaArrowRight } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import jsPDF from 'jspdf';
 
 interface Step9ReceiptProps {
     transactionRef: string;
@@ -38,16 +39,110 @@ export default function Step9Receipt({
         return `₦${amount.toLocaleString()}`;
     };
 
-    const gradeLabels: Record<string, string> = {
-        a: 'A',
-        b: 'B',
-        c: 'C',
-        d: 'D',
-    };
-
     const handleDownloadReceipt = () => {
-        // TODO: Implement PDF download
-        console.log('Download receipt');
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 20;
+        let yPos = 20;
+
+        // Header
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Official Payment Receipt', pageWidth / 2, yPos, { align: 'center' });
+        
+        yPos += 8;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Imo State Bureau of Public Procurement & Infrastructure', pageWidth / 2, yPos, { align: 'center' });
+        
+        // Line separator
+        yPos += 10;
+        doc.setLineWidth(0.5);
+        doc.line(margin, yPos, pageWidth - margin, yPos);
+        
+        // Transaction Details Section
+        yPos += 10;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Transaction Details', margin, yPos);
+        
+        yPos += 8;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        
+        const addRow = (label: string, value: string) => {
+            doc.text(label, margin, yPos);
+            doc.text(value, pageWidth - margin, yPos, { align: 'right' });
+            yPos += 7;
+        };
+        
+        addRow('Transaction Reference:', transactionRef);
+        addRow('Date & Time:', dateTime);
+        addRow('Payment Method:', paymentMethod);
+        addRow('Payment Status:', 'Completed');
+        
+        // Line separator
+        yPos += 3;
+        doc.setLineWidth(0.3);
+        doc.line(margin, yPos, pageWidth - margin, yPos);
+        
+        // Paid By Section
+        yPos += 10;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Paid By', margin, yPos);
+        
+        yPos += 8;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        
+        addRow('Company:', companyName);
+        addRow('CAC Number:', cacNumber);
+        addRow('Contact Person:', contactPerson);
+        addRow('Email:', email);
+        
+        // Line separator
+        yPos += 3;
+        doc.setLineWidth(0.3);
+        doc.line(margin, yPos, pageWidth - margin, yPos);
+        
+        // Payment Details Section
+        yPos += 10;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Payment Details', margin, yPos);
+        
+        yPos += 8;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        
+        addRow(`Registration Fee (Grade ${selectedGrade})`, formatCurrency(registrationFee));
+        addRow('Processing Fee', formatCurrency(processingFee));
+        addRow('Certificate Issuance', formatCurrency(certificateFee));
+        
+        // Total
+        yPos += 5;
+        doc.setLineWidth(0.5);
+        doc.line(margin, yPos, pageWidth - margin, yPos);
+        
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Total Paid', margin, yPos);
+        doc.text(formatCurrency(totalPaid), pageWidth - margin, yPos, { align: 'right' });
+        
+        // Footer
+        yPos += 15;
+        doc.setLineWidth(0.3);
+        doc.line(margin, yPos, pageWidth - margin, yPos);
+        
+        yPos += 8;
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.text('This is a computer-generated receipt and does not require a signature.', pageWidth / 2, yPos, { align: 'center' });
+        
+        // Save the PDF
+        doc.save(`Receipt-${transactionRef}.pdf`);
     };
 
     const handleEmailReceipt = () => {
@@ -136,7 +231,7 @@ export default function Step9Receipt({
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-700">
-                                Registration Fee (Grade {gradeLabels[selectedGrade] || 'B'})
+                                Registration Fee (Grade {selectedGrade})
                             </span>
                             <span className="text-sm font-medium text-gray-900">
                                 {formatCurrency(registrationFee)}

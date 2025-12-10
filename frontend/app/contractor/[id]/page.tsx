@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { FaSearch, FaSpinner } from 'react-icons/fa';
 import { FaQrcode } from 'react-icons/fa6';
 import { useGetContractorByIdQuery } from '@/store/api/public.api';
+import Loader from '@/components/ui/loader';
+import { Suspense } from "react";
 
 export default function ContractorPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -246,27 +248,29 @@ export default function ContractorPage({ params }: { params: Promise<{ id: strin
                 }
             />
 
-            <ContractorDetails contractor={{
-                id: contractor.certificateId,
-                name: contractor.contractorName,
-                rcbnNumber: contractor.rcBnNumber,
-                tinNumber: contractor.tin,
-                sector: contractor.approvedSectors[0] || 'N/A',
-                category: contractor.categories.join(', ') || 'N/A',
-                grade: contractor.grade,
-                lga: contractor.lga,
-                status: contractor.status as 'approved' | 'pending' | 'suspended',
-                expiryDate: new Date(contractor.validUntil).toLocaleDateString('en-GB', { 
-                    day: '2-digit', 
-                    month: 'short', 
-                    year: 'numeric' 
-                }),
-                address: contractor.address,
-                phone: contractor.phone,
-                email: contractor.email,
-                website: contractor.website,
-                approvedSectors: contractor.approvedSectors,
-            }} />
+            <Suspense fallback={<Loader />}>
+                <ContractorDetails contractor={{
+                    id: contractor.certificateId,
+                    name: contractor.contractorName,
+                    rcbnNumber: contractor.rcBnNumber,
+                    tinNumber: contractor.tin,
+                    sector: contractor.approvedSectors[0] || 'N/A',
+                    category: contractor.categories.join(', ') || 'N/A',
+                    grade: contractor.grade,
+                    lga: contractor.lga,
+                    status: contractor.status as 'approved' | 'pending' | 'suspended',
+                    expiryDate: new Date(contractor.validUntil).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    }),
+                    address: contractor.address,
+                    phone: contractor.phone,
+                    email: contractor.email,
+                    website: contractor.website,
+                    approvedSectors: contractor.approvedSectors,
+                }} />
+            </Suspense>
         </div>
     );
 }

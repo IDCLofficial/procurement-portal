@@ -14,6 +14,8 @@ import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } 
 import { companyForm, renewalSteps, Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
 import { VendorsService } from 'src/vendors/vendors.service';
 import { ActivityType } from 'src/vendors/entities/vendor-activity-log.schema';
+import { Notification, NotificationDocument, NotificationRecipient, NotificationType, priority } from 'src/notifications/entities/notification.entity';
+import { User, UserDocument } from 'src/users/entities/user.schema';
 
 @Injectable()
 export class SplitPaymentService {
@@ -26,6 +28,8 @@ export class SplitPaymentService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
     @InjectModel(Vendor.name) private vendorModel:Model<VendorDocument>,
+    @InjectModel(Notification.name) private notificationModel:Model<NotificationDocument>,
+    @InjectModel(User.name) private userModel:Model<UserDocument>,
     private readonly configService: ConfigService,
   ) { }
 
@@ -262,13 +266,66 @@ export class SplitPaymentService {
         this.logger.log(`Payment verified and updated: ${reference}`);
 
         if(payment.type === ApplicationType.NEW){
-          vendor.companyForm = companyForm.COMPLETE
-          await vendor.save()
+          try{
+            vendor.companyForm = companyForm.COMPLETE
+            await vendor.save();
+            //notifiy the vendor
+            await this.notificationModel.create({
+              type: NotificationType.APPLICATION_SUBMITTED,
+              title: 'Application Submitted',
+              message: `Your payment has been recieved and your application has been submitted successfully. It may take around 1-7 working days for your documents to be reviewed.`,
+              recipient: NotificationRecipient.VENDOR,
+              recipientId: vendor._id,
+              priority: priority.LOW,
+              isRead: false,
+            });
+            //notify the Admin
+            const admins = await this.userModel.find({ role: 'Admin' });
+            for (const admin of admins){
+              await this.notificationModel.create({
+                type: NotificationType.APPLICATION_SUBMITTED,
+                title: 'Application Recieved',
+                message: `${vendor.fullname} just submitted an application.`,
+                recipient: NotificationRecipient.ADMIN,
+                recipientId: admin._id,
+                priority: priority.HIGH,
+                isRead: false,
+              });
+            }
+          }catch(err){
+            this.logger.log(err)
+            throw new ConflictException('An Error occured notifying the user')
+          }
+          
         }
 
         if(payment.type === ApplicationType.RENEWAL){
           vendor.renewalStep = renewalSteps.COMPLETE
           await vendor.save()
+          //notify the vendor
+          await this.notificationModel.create({
+            type: NotificationType.APPLICATION_SUBMITTED,
+            title: 'Renewal Application Submitted',
+            message: `Your payment has been recieved and your renewal documents have been submitted successfully. It may take up to 1-7 working days to have your documents reviewed`,
+            recipient: NotificationRecipient.VENDOR,
+            recipientId: vendor._id,
+            priority: priority.LOW,
+            isRead: false,
+          });
+
+          //notify the Admin
+          const admins = await this.userModel.find({ role: 'Admin' });
+          for (const admin of admins){
+            await this.notificationModel.create({
+              type: NotificationType.APPLICATION_SUBMITTED,
+              title: 'Renewal Application Recieved',
+              message: `${vendor.fullname} just submitted a renewal application.`,
+              recipient: NotificationRecipient.ADMIN,
+              recipientId: admin._id,
+              priority: priority.HIGH,
+              isRead: false,
+            });
+          }
         }
         
       }else{

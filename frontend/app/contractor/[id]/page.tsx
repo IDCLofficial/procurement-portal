@@ -247,7 +247,6 @@ export default function ContractorPage({ params }: { params: Promise<{ id: strin
                     </Link>
                 }
             />
-            <Suspense fallback={<Loader />}>
 
             <Suspense fallback={<Loader />}>
                 <ContractorDetails contractor={{

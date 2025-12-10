@@ -228,7 +228,7 @@ export default function DocumentCard({
             // Submit to API
             const payload = {
                 [VendorSteps.DOCUMENTS]: updatedDocuments.map((doc) => ({
-                    id: doc.id || doc._id,
+                    id: 'id' in doc ? doc.id : doc._id,
                     fileUrl: doc.fileUrl,
                     validFrom: doc.validFrom,
                     validTo: doc.validTo,

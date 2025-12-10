@@ -7,17 +7,17 @@ import { getStatusBadge } from '@/components/registration-status/utils';
 import { format } from 'date-fns';
 import Image from 'next/image';
 
-interface Document {
-    _id: string;
-    fileUrl: string;
-    documentType: string;
-    uploadedDate: string;
-    fileType: string;
-    status: {
-        status: 'pending' | 'approved' | 'rejected';
-        message?: string;
-    };
-}
+    export interface Document {
+        _id: string;
+        fileUrl: string;
+        documentType: string;
+        uploadedDate: string;
+        fileType: string;
+        status: {
+            status: 'pending' | 'approved' | 'needs review';
+            message?: string;
+        };
+    }
 
 interface DocumentVerificationCardProps {
     documents: Document[];

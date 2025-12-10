@@ -22,17 +22,6 @@ function stringToBytes(str: string): number[] {
 }
 
 /**
- * Convert byte array to string
- */
-function bytesToString(bytes: number[]): string {
-  let str = '';
-  for (let i = 0; i < bytes.length; i++) {
-    str += String.fromCharCode(bytes[i]);
-  }
-  return str;
-}
-
-/**
  * Generate expanded key stream from secret
  */
 function generateKeyStream(length: number, salt: number): number[] {

@@ -7,7 +7,7 @@ import SubHeader from '@/components/SubHeader';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import StatusBanner from '@/components/registration-status/StatusBanner';
-import DocumentVerificationCard from '@/components/registration-status/DocumentVerificationCard';
+import DocumentVerificationCard, { Document } from '@/components/registration-status/DocumentVerificationCard';
 import ApplicationTimeline from '@/components/registration-status/ApplicationTimeline';
 import ApplicationDetailsCard from '@/components/registration-status/ApplicationDetailsCard';
 import { WhatHappensNextCard, NeedHelpCard } from '@/components/registration-status/HelpCards';
@@ -55,7 +55,14 @@ export default function RegistrationStatusPage() {
     }
 
     const submittedDate = company?.createdAt ? format(new Date(company.createdAt), 'dd MMMM yyyy') : 'N/A';
-    const documents = company?.documents || [];
+    const documents: Document[] = company?.documents?.map(doc => ({
+        _id: doc._id,
+        fileUrl: doc.fileUrl,
+        documentType: doc.documentType,
+        uploadedDate: doc.uploadedDate,
+        fileType: doc.fileType,
+        status: doc.status
+    })) || [];
 
     // Calculate progress based on documents and application status
     const calculateProgress = () => {

@@ -95,12 +95,12 @@ export class EmailService {
       
       const emailHtml = `
         <div style='padding:1rem 2rem; align-items:center; justify-content:center; display:block'> 
-          <div style="padding:1rem">
+          <div style="padding:1rem; display:block">
               <img src="https://images.unsplash.com/photo-1748959504388-9eb3143984e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" style="width:80px; height:60px; border-radius:10px"/>
               <h2 style="font-family: Arial, sans-serif; font-weight:500; text-align:center;">Hi ${userName.split(" ")[0]}, Your Signup verification <br/>Code</h2>
-            <div style="display:flex; align-items:center; gap:1rem">
+            <div style="display:flex; align-items:center; justify-content:center; gap:1rem">
               ${otp.split("").map((str)=>`
-               <div style="height:50px; width:50px; padding:1rem; background-color:red; box-shadow:0px 0px 8px 0px rgba(0,0,0,0.1); background-color:#fff; border-radius:10px; border:1px solid #e8e8e8">
+               <div style="height:50px; width:50px; padding:1rem; background-color:red; box-shadow:0px 0px 8px 0px rgba(0,0,0,0.1); background-color:#fff; border-radius:10px; border:1px solid #e8e8e8; display:flex; align-items:center">
                 ${str}
                </div>
               `)}

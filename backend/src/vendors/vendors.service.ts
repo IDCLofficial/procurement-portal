@@ -541,31 +541,37 @@ export class VendorsService {
                 
               } else {
                 // Create new document record
-                const newDoc = new this.verificationDocumentModel({
-                  vendor: vendor._id,
-                  fileUrl: doc.fileUrl,
-                  validFrom: doc.validFrom,
-                  validTo: doc.validTo,
-                  documentType: doc.documentType,
-                  uploadedDate: doc.uploadedDate,
-                  fileName: doc.fileName,
-                  fileSize: doc.fileSize,
-                  fileType: doc.fileType,
-                  validFor: doc.validFor,
-                  hasValidityPeriod: doc.hasValidityPeriod,
-                  status: {
-                    status:DocumentStatus.PENDING,
+                try{
+                  const newDoc = new this.verificationDocumentModel({
+                    vendor: vendor._id,
+                    fileUrl: doc.fileUrl,
+                    validFrom: doc.validFrom,
+                    validTo: doc.validTo,
+                    documentType: doc.documentType,
+                    uploadedDate: doc.uploadedDate,
+                    fileName: doc.fileName,
+                    fileSize: doc.fileSize,
+                    fileType: doc.fileType,
+                    validFor: doc.validFor,
+                    hasValidityPeriod: doc.hasValidityPeriod,
+                    status: {
+                      status:DocumentStatus.PENDING,
+                    }
+                  });
+                  const response = await newDoc.save();
+                  if(response){
+                    vendor.companyForm = companyForm.STEP5;
+                    await vendor.save();
+                    return response;
                   }
-                });
-                const response = await newDoc.save();
-                vendor.companyForm = companyForm.STEP5;
-                await vendor.save();
-                return response;
+                }catch(e){
+                  throw new ConflictException('there was an error uploading documents')
+                }
               }
             })
           );
           if(company){
-            company.documents = savedDocs.map(doc=>doc._id as Types.ObjectId)
+            company.documents = savedDocs.map(doc=>doc?._id as Types.ObjectId)
             await company.save()
           }
           

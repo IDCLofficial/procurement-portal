@@ -149,10 +149,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         localStorage.setItem('token', enc_token);
         dispatch(login(token));
 
-        if (!user) return;
-        handleRefresh();
-        // User will be fetched automatically by useGetProfileQuery
+        if (user) {
+            handleRefresh();
+        };
+        
         router.replace('/dashboard');
+        // User will be fetched automatically by useGetProfileQuery
     }, [router, dispatch, handleRefresh, user]);
 
     const handleLogout = useCallback(() => {

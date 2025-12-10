@@ -42,13 +42,13 @@ export class Notification {
 
   @Prop({ required: true })
   message: string;
-
-  @Prop({required:true, type:Types.ObjectId, ref:'Vendor'})
-  vendorId: Types.ObjectId;
-
+  
   @Prop({ required: true, enum: Object.values(NotificationRecipient) })
   recipient: NotificationRecipient;
 
+  @Prop({required:false, type:Types.ObjectId, ref:'Vendor'})
+  vendorId?: Types.ObjectId;
+  
   @Prop({ type: Types.ObjectId, ref: 'User' })
   recipientId?: Types.ObjectId;
   

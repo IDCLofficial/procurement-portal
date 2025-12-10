@@ -513,8 +513,8 @@ export default function RegistrationContinuation() {
                     return ({
                         id: doc.id,
                         fileUrl: doc.fileUrl ?? '',
-                        validFrom: doc.validFrom,
-                        validTo: doc.validTo,
+                        validFrom: doc.hasValidityPeriod ? doc.validFrom : undefined,
+                        validTo: doc.hasValidityPeriod ? doc.validTo : undefined,
                         documentType: doc.name,
                         uploadedDate: doc.uploadedDate ?? '',
                         fileName: doc.fileName ?? '',

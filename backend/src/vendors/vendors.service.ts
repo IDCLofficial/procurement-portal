@@ -512,6 +512,7 @@ export class VendorsService {
        * update company registration for documents
        */
       if(updateRegistrationDto.documents){
+        console.log(updateRegistrationDto.documents)
         try{
           const company = await this.companyModel.findOne({userId:vendor._id});
           const verificationDocPresets = await this.verificationDocumentPresetModel.find({});

@@ -275,7 +275,7 @@ export class SplitPaymentService {
               title: 'Application Submitted',
               message: `Your payment has been recieved and your application has been submitted successfully. It may take around 1-7 working days for your documents to be reviewed.`,
               recipient: NotificationRecipient.VENDOR,
-              recipientId: vendor._id,
+              vendorId: vendor._id,
               priority: priority.LOW,
               isRead: false,
             });
@@ -308,7 +308,7 @@ export class SplitPaymentService {
             title: 'Renewal Application Submitted',
             message: `Your payment has been recieved and your renewal documents have been submitted successfully. It may take up to 1-7 working days to have your documents reviewed`,
             recipient: NotificationRecipient.VENDOR,
-            recipientId: vendor._id,
+            vendorId: vendor._id,
             priority: priority.LOW,
             isRead: false,
           });

@@ -52,8 +52,8 @@ export function CertificateDetailsPanel({
 
     const verificationUrl =
       typeof window !== 'undefined'
-        ? `${window.location.origin}/contractor/${contractorId}?scan=true`
-        : `https://procurement.imostate.gov.ng/contractor/${contractorId}?scan=true`;
+        ? `https://procurement-portal-mu.vercel.app/contractor/${contractorId}?scan=true`
+        : `https://procurement-portal-mu.vercel.app/contractor/${contractorId}?scan=true`;
 
     QRCode.toDataURL(
       verificationUrl,

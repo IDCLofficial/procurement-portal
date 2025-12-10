@@ -94,14 +94,51 @@ export class EmailService {
       const emailConfig = this.configService.get('email');
       
       const emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Email Verification</h2>
-          <p>Hello ${userName},</p>
-          <p>Your verification code is: <strong>${otp}</strong></p>
-          <p>This code will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
-          <p>If you didn't request this code, please ignore this email.</p>
-          <p>Best regards,<br>Procurement Bureau</p>
+        <div style='padding:1rem 2rem; display:flex; flex-direction:column; align-items:center; justify-content:center'> 
+          <div style="display:flex; flex-direction:column; align-items:center; padding:1rem">
+              <img src="https://images.unsplash.com/photo-1748959504388-9eb3143984e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" style="width:80px; height:60px; border-radius:10px"/>
+              <h2 style="font-family: Arial, sans-serif; font-weight:500; text-align:center;">Hi ${userName.split(" ")[0]}, Your Signup verification <br/>Code</h2>
+            <div style="display:flex; align-items:center; gap:1rem">
+              ${otp.split("").map((str)=>`
+               <div style="padding:1rem; background-color:red; box-shadow:0px 0px 8px 0px rgba(0,0,0,0.1); background-color:#fff; border-radius:10px; border:1px solid #e8e8e8">
+                ${str}
+               </div>
+              `)}
+            </div>
+            <p style="color:rgba(130,130,130,0.86)">This code will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
+            <p style="color:rgba(130,130,130,0.66); font-family: Arial, sans-serif;">Don't share this code to anyone!</p>
+            <div style="
+          background-color: #faf6eb;
+          padding: 1rem 1.2rem;
+          border-radius: 8px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          font-family: Arial, sans-serif;
+          color: #5c4a24;
+          max-width: 420px;
+          line-height: 1.5;
+          font-size: 14px;
+        ">
+          <div style="font-weight: bold; display: flex; align-items: center;">
+            <span style="margin-right: 6px;">⚠️</span>
+            Was this request not made by you?
+          </div>
+
+          <div style="margin-top: 6px; color:rgba(130,130,130,0.76)">
+            This code was generated from a request made using Chrome browser on 
+            <strong>macOS</strong> on 
+            <strong>12/02/2024 AH</strong>.
+            If you did not initiate this request, you can safely ignore this email.
+          </div>
+              
         </div>
+        <p style="font-family: Arial, sans-serif;">
+          <span style="color:rgba(130,130,130,0.66)">
+            This is an automated message.         
+          </span>
+          Please do not reply.
+        </p>
+      </div>
+  </div>
       `;
 
       const result = await this.resend.emails.send({

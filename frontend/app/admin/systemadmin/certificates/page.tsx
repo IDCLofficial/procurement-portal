@@ -23,6 +23,9 @@ export default function CertificatesPage() {
     stats,
     tabs,
     isLoading,
+    total,
+    page,
+    limit,
     handleTabChange,
     handleSearchChange,
     handleGradeFilterChange,
@@ -32,6 +35,7 @@ export default function CertificatesPage() {
     handleDownload,
     handleDownloadComplete,
     handleExport,
+    handlePageChange,
   } = useCertificates();
 
   return (
@@ -89,6 +93,10 @@ export default function CertificatesPage() {
                   onViewDetails={handleViewDetails}
                   onDownload={(cert) => handleDownload(cert, 'pdf')}
                   isLoading={isLoading}
+                  total={total}
+                  page={page}
+                  limit={limit}
+                  onPageChange={handlePageChange}
                 />
               )}
             </section>

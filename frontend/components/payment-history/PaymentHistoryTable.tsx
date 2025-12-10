@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -33,10 +33,9 @@ interface PaymentTransaction {
 interface PaymentHistoryTableProps {
     transactions: PaymentTransaction[];
     onDownload: (id: string) => void;
-    onViewReceipt: (id: string) => void;
 }
 
-export default function PaymentHistoryTable({ transactions, onDownload, onViewReceipt }: PaymentHistoryTableProps) {
+export default function PaymentHistoryTable({ transactions, onDownload }: PaymentHistoryTableProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
@@ -124,16 +123,9 @@ export default function PaymentHistoryTable({ transactions, onDownload, onViewRe
                                             size="sm"
                                             onClick={() => onDownload(transaction.id)}
                                             className="h-8 w-8 p-0"
+                                            title="Download Receipt"
                                         >
                                             <Download className="w-4 h-4 text-gray-600" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => onViewReceipt(transaction.id)}
-                                            className="h-8 w-8 p-0"
-                                        >
-                                            <FileText className="w-4 h-4 text-gray-600" />
                                         </Button>
                                     </div>
                                 </TableCell>

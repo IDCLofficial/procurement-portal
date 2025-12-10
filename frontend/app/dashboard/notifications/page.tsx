@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,155 +13,103 @@ import {
     Clock, 
     AlertCircle, 
     AlertTriangle,
-    FileText,
-    Calendar,
-    DollarSign,
     CheckCircle,
     XCircle,
-    RefreshCw,
     Search,
-    Filter,
-    Check
+    Check,
+    Loader2
 } from 'lucide-react';
 import SubHeader from '@/components/SubHeader';
+import { useGetMyNotificationsQuery, useMarkNotificationAsReadMutation } from '@/store/api/vendor.api';
+import { formatDistanceToNow } from 'date-fns';
+import { useSearchParams } from 'next/navigation';
+import { updateSearchParam } from '@/lib/utils';
+import { useDebounce } from '@/hooks/useDebounce';
 
-export default function NotificationsPage() {
-    const [activeTab, setActiveTab] = useState('all');
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const notifications = [
-        {
-            id: '1',
-            icon: <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-yellow-600" /></div>,
-            title: 'Document Expiring Soon',
-            message: 'Your Tax Clearance Certificate (TCC) will expire on 31 December 2024. Please submit a renewed certificate to avoid suspension.',
-            timestamp: '2 hours ago',
-            badge: { text: 'High Priority', variant: 'warning' as const },
-            actionLabel: 'Update Document',
-            borderColor: 'border-yellow-500',
-            isRead: false,
-            isPinned: false,
-            category: 'unread',
-        },
-        {
-            id: '2',
+// Helper function to get icon and styling based on priority
+const getPriorityConfig = (priority: string) => {
+    const priorityLower = priority.toLowerCase();
+    
+    if (priorityLower === 'critical' || priorityLower === 'high') {
+        return {
             icon: <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center"><XCircle className="w-5 h-5 text-red-600" /></div>,
-            title: 'Document Expired',
-            message: 'Your PENCOM Compliance Certificate expired on 15 December 2024. Re-submit within 30 days to maintain your registered status.',
-            timestamp: '5 hours ago',
             badge: { text: 'Critical', variant: 'destructive' as const },
-            actionLabel: 'Upload Certificate',
             borderColor: 'border-red-500',
-            isRead: false,
-            isPinned: true,
-            category: 'unread',
-        },
-        {
-            id: '3',
-            icon: <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center"><Calendar className="w-5 h-5 text-yellow-600" /></div>,
-            title: 'Registration Renewal Due Soon',
-            message: 'Your registration will expire on 31 December 2024. Start the renewal process now to ensure uninterrupted service.',
-            timestamp: '1 day ago',
+        };
+    } else if (priorityLower === 'medium' || priorityLower === 'warning') {
+        return {
+            icon: <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-yellow-600" /></div>,
             badge: { text: 'High Priority', variant: 'warning' as const },
-            actionLabel: 'Start Renewal',
             borderColor: 'border-yellow-500',
-            isRead: false,
-            isPinned: false,
-            category: 'unread',
-        },
-        {
-            id: '4',
+        };
+    } else if (priorityLower === 'info' || priorityLower === 'in progress') {
+        return {
             icon: <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><CheckCircle className="w-5 h-5 text-blue-600" /></div>,
-            title: 'Application Under Review',
-            message: 'Your renewal application (ID: REN-2024-001) is currently being reviewed by BPPPI staff. Expected completion: 3-5 business days.',
-            timestamp: '2 days ago',
             badge: { text: 'In Progress', variant: 'default' as const },
-            actionLabel: 'View Status',
             borderColor: 'border-blue-500',
-            isRead: true,
-            isPinned: false,
-            category: 'all',
-        },
-        {
-            id: '5',
-            icon: <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center"><FileText className="w-5 h-5 text-gray-600" /></div>,
-            title: 'Payment Received',
-            message: 'Payment of ₦180,000 for renewal (PAY-2024-001) has been received. Receipt is now available for download.',
-            timestamp: '3 days ago',
-            badge: { text: 'Confirmed', variant: 'success' as const },
-            actionLabel: 'View Receipt',
-            borderColor: 'border-gray-300',
-            isRead: true,
-            isPinned: false,
-            category: 'all',
-        },
-        {
-            id: '6',
-            icon: <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center"><DollarSign className="w-5 h-5 text-yellow-600" /></div>,
-            title: 'PENCOM Compliance Required',
-            message: 'Submit your PENCOM compliance certificate for verification. Failure to comply may result in suspension of your registration.',
-            timestamp: '5 days ago',
-            badge: { text: 'High Priority', variant: 'warning' as const },
-            actionLabel: 'Request Now',
-            borderColor: 'border-yellow-500',
-            isRead: true,
-            isPinned: false,
-            category: 'all',
-        },
-        {
-            id: '7',
-            icon: <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><RefreshCw className="w-5 h-5 text-blue-600" /></div>,
-            title: 'Profile Update Confirmed',
-            message: 'Your company profile changes have been successfully updated and verified by our team.',
-            timestamp: '1 week ago',
-            badge: { text: 'Confirmed', variant: 'success' as const },
-            borderColor: 'border-blue-500',
-            isRead: true,
-            isPinned: false,
-            category: 'all',
-        },
-        {
-            id: '8',
-            icon: <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center"><FileText className="w-5 h-5 text-gray-600" /></div>,
-            title: 'Document Verified',
-            message: 'Your ITF Certificate has been verified. No further action required.',
-            timestamp: '1 week ago',
-            badge: { text: 'Verified', variant: 'success' as const },
-            actionLabel: 'View Document',
-            borderColor: 'border-gray-300',
-            isRead: true,
-            isPinned: false,
-            category: 'all',
-        },
-        {
-            id: '9',
-            icon: <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><CheckCircle className="w-5 h-5 text-blue-600" /></div>,
-            title: 'Profile Update Confirmed',
-            message: 'Your company profile changes have been successfully updated and verified by our team.',
-            timestamp: '2 weeks ago',
-            badge: { text: 'Confirmed', variant: 'success' as const },
-            borderColor: 'border-blue-500',
-            isRead: true,
-            isPinned: false,
-            category: 'team',
-        },
-        {
-            id: '10',
+        };
+    } else {
+        return {
             icon: <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center"><Bell className="w-5 h-5 text-gray-600" /></div>,
-            title: 'Notification Test',
-            message: 'Contact our help center for assistance with your registration or renewal process.',
-            timestamp: '3 weeks ago',
             badge: { text: 'Low Priority', variant: 'default' as const },
             borderColor: 'border-gray-300',
-            isRead: true,
-            isPinned: false,
-            category: 'team',
-        },
-    ];
+        };
+    }
+};
+
+export default function NotificationsPage() {
+    const searchQuery = useSearchParams().get('q') || '';
+    const filter = useSearchParams().get('filter') || '';
+    const [markNotificationAsRead, { isLoading: isMarkingNotificationAsRead }] = useMarkNotificationAsReadMutation();
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 500);
+    
+    // Fetch notifications from API
+    const { data, isLoading, error } = useGetMyNotificationsQuery({
+        filter,
+        search: debouncedSearchQuery,
+    });
+
+    const { notification: apiNotifications } = data || {};
+
+    // Transform API data to match component format
+    const notifications = useMemo(() => {
+        if (!apiNotifications) return [];
+        
+        return apiNotifications.map((notif, index) => {
+            const priorityConfig = getPriorityConfig(notif.priority);
+            const timestamp = formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true });
+            
+            return {
+                id: String(index + 1),
+                icon: priorityConfig.icon,
+                title: notif.title,
+                message: notif.message,
+                timestamp,
+                badge: priorityConfig.badge,
+                actionLabel: notif.priority.toLowerCase() === 'critical' ? 'Take Action' : 'View Details',
+                borderColor: priorityConfig.borderColor,
+                isRead: false, // Default to unread, can be enhanced with backend support
+                isPinned: notif.priority.toLowerCase() === 'critical', // Pin critical notifications
+                category: notif.priority.toLowerCase() === 'critical' ? 'unread' : 'all',
+            };
+        });
+    }, [apiNotifications]);
+
+    // Calculate stats
+    const stats = useMemo(() => {
+        const total = notifications.length;
+        const unread = notifications.filter(n => !n.isRead).length;
+        const critical = notifications.filter(n => n.badge.text === 'Critical').length;
+        const highPriority = notifications.filter(n => n.badge.text === 'High Priority').length;
+        const team = notifications.filter(n => n.category === 'team').length;
+        
+        return { total, unread, critical, highPriority, team };
+    }, [notifications]);
 
     const filteredNotifications = notifications.filter((notif) => {
-        if (activeTab === 'unread') return !notif.isRead;
-        if (activeTab === 'team') return notif.category === 'team';
+        if (filter === 'unread') return !notif.isRead;
+        if (filter === 'team') return notif.category === 'team';
         return true;
     });
 
@@ -178,8 +126,33 @@ export default function NotificationsPage() {
     };
 
     const handleMarkAllAsRead = () => {
-        console.log('Mark all as read');
+        if (isMarkingNotificationAsRead) return;
+        markNotificationAsRead();
     };
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading notifications...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show error state
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Failed to load notifications</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -190,10 +163,13 @@ export default function NotificationsPage() {
                     <Button
                         variant="outline"
                         onClick={handleMarkAllAsRead}
+                        disabled={isMarkingNotificationAsRead}
                         className="bg-teal-600 hover:bg-teal-700 text-white hover:text-white"
                     >
-                        <Check className="w-4 h-4 mr-2" />
-                        <span>Mark All as Read</span>
+                        {isMarkingNotificationAsRead ? <span>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
+                            Marking as Read...
+                        </span> : <span><Check className="w-4 h-4 mr-2 inline" /> Mark All as Read</span>}
                     </Button>
                 }
             />
@@ -203,28 +179,28 @@ export default function NotificationsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <NotificationStatCard
                         label="Total"
-                        count={10}
+                        count={stats.total}
                         icon={Bell}
                         iconColor="text-blue-600"
                         iconBgColor="bg-blue-100"
                     />
                     <NotificationStatCard
                         label="Unread"
-                        count={3}
+                        count={stats.unread}
                         icon={Clock}
                         iconColor="text-orange-600"
                         iconBgColor="bg-orange-100"
                     />
                     <NotificationStatCard
                         label="Critical"
-                        count={1}
+                        count={stats.critical}
                         icon={AlertCircle}
                         iconColor="text-red-600"
                         iconBgColor="bg-red-100"
                     />
                     <NotificationStatCard
                         label="High Priority"
-                        count={2}
+                        count={stats.highPriority}
                         icon={AlertTriangle}
                         iconColor="text-yellow-600"
                         iconBgColor="bg-yellow-100"
@@ -240,26 +216,22 @@ export default function NotificationsPage() {
                                 type="text"
                                 placeholder="Search notifications..."
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => updateSearchParam("q", e.target.value)}
                                 className="pl-10 bg-white border-gray-200"
                             />
                         </div>
-                        <Button variant="outline" size="sm" className="gap-2">
-                            <Filter className="w-4 h-4" />
-                            Filter
-                        </Button>
                     </div>
                 </div>
 
                 {/* Tabs */}
                 <div className="mb-6">
                     <NotificationTabs
-                        activeTab={activeTab}
-                        onTabChange={setActiveTab}
+                        activeTab={filter}
+                        onTabChange={(filter) => updateSearchParam("filter", filter)}
                         counts={{
-                            all: 10,
-                            unread: 3,
-                            team: 2,
+                            all: stats.total,
+                            unread: stats.unread,
+                            team: stats.team,
                         }}
                     />
                 </div>
@@ -269,29 +241,37 @@ export default function NotificationsPage() {
                     className="space-y-4 mb-6"
                     layout
                 >
-                    <AnimatePresence mode="popLayout">
-                        {filteredNotifications.map((notification) => (
-                            <motion.div
-                                key={notification.id}
-                                layout
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, x: -100 }}
-                                transition={{
-                                    type: 'spring',
-                                    stiffness: 500,
-                                    damping: 30,
-                                }}
-                            >
-                                <NotificationCard
-                                    {...notification}
-                                    onMarkAsRead={handleMarkAsRead}
-                                    onDelete={handleDelete}
-                                    onAction={handleAction}
-                                />
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+                    {filteredNotifications.length === 0 ? (
+                        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                            <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
+                            <p className="text-gray-600">You&apos;re all caught up! Check back later for updates.</p>
+                        </div>
+                    ) : (
+                        <AnimatePresence mode="popLayout">
+                            {filteredNotifications.map((notification) => (
+                                <motion.div
+                                    key={notification.id}
+                                    layout
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, x: -100 }}
+                                    transition={{
+                                        type: 'spring',
+                                        stiffness: 500,
+                                        damping: 30,
+                                    }}
+                                >
+                                    <NotificationCard
+                                        {...notification}
+                                        onMarkAsRead={handleMarkAsRead}
+                                        onDelete={handleDelete}
+                                        onAction={handleAction}
+                                    />
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    )}
                 </motion.div>
 
                 {/* Info Box */}

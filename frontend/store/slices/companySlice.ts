@@ -43,8 +43,28 @@ const companySlice = createSlice({
         if (result && typeof (result.accountName) === "string") {
           state.data!.accountName = result.accountName;
         }
-        if (result && typeof (result.documents) === "object") {
-          state.data!.documents = result.documents;
+        if (result && typeof result.documents === "object") {
+          state.data!.documents = result.documents.map(doc => ({
+            _id: doc.id,
+            vendor: '',
+            fileUrl: doc.fileUrl,
+            validFrom: doc.validFrom,
+            validTo: doc.validTo,
+            documentType: doc.documentType,
+            uploadedDate: doc.uploadedDate,
+            fileName: doc.fileName,
+            fileSize: doc.fileSize,
+            fileType: doc.fileType,
+            validFor: doc.validFor,
+            hasValidityPeriod: doc.hasValidityPeriod,
+            status: {
+              status: "pending" as const,
+              message: undefined
+            },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            __v: 0
+          }));
         }
         if (result && typeof (result.companyName) === "string") {
           state.data!.companyName = result.companyName;

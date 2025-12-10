@@ -42,6 +42,9 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
     return typeof doc.status === 'string' ? doc.status : doc.status?.status ?? 'Unknown';
   };
 
+  const isSelectedDocumentApproved =
+    selectedDocument && getStatusLabel(selectedDocument).toLowerCase() === 'approved';
+
   if (!documents || documents.length === 0) {
     return (
       <div className="space-y-3">
@@ -181,7 +184,6 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
       >
         <DialogContent className="sm:max-w-[900px]">
           <DialogHeader>
-
             <DialogTitle>
              
               {selectedDocument?.documentType ?? 'Document preview'}
@@ -233,6 +235,7 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
             </div>
            {user?.role === "Desk officer" && <div className="flex w-full flex-col gap-4 md:w-80">
               <Button
+                disabled={!!isSelectedDocumentApproved}
                 onClick={async () => {
                   if (!selectedDocument?._id) {
                     setIsPreviewOpen(false);

@@ -1,21 +1,48 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { FaFile, FaGear } from 'react-icons/fa6';
+import { FaFile } from 'react-icons/fa6';
 
 interface ComplianceDocumentItemProps {
     name: string;
     validUntil?: string;
     expiresText?: string;
-    onDownload?: () => void;
+    status: 'verified' | 'pending' | string;
 }
 
 export default function ComplianceDocumentItem({
     name,
     validUntil,
     expiresText,
-    onDownload,
+    status,
 }: ComplianceDocumentItemProps) {
+    const getStatusBadge = () => {
+        switch (status) {
+            case 'verified':
+                return (
+                    <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-xl border border-black/5">
+                        Verified
+                    </span>
+                );
+            case 'pending':
+                return (
+                    <span className="px-3 py-1 bg-yellow-50 text-yellow-700 text-xs font-medium rounded-xl border border-black/5">
+                        Pending
+                    </span>
+                );
+            case 'expired':
+                return (
+                    <span className="px-3 py-1 bg-red-50 text-red-700 text-xs font-medium rounded-xl border border-black/5">
+                        Expired
+                    </span>
+                );
+            default:
+                return (
+                    <span className="px-3 py-1 bg-red-50 text-red-700 text-xs font-medium rounded-xl border border-black/5">
+                        {status}
+                    </span>
+                );
+        }
+    };
     return (
         <div className="flex items-center justify-between py-2 px-3 rounded-lg border border-gray-100 transition-colors hover:bg-gray-50 duration-300">
             <div className="flex items-center gap-3 flex-1">
@@ -31,17 +58,7 @@ export default function ComplianceDocumentItem({
                 </div>
             </div>
             <div className="flex items-center gap-3 ml-4">
-                <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-xl border border-black/5">
-                    Verified
-                </span>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-gray-600 hover:text-gray-900"
-                    onClick={onDownload}
-                >
-                    <FaGear className="text-sm" />
-                </Button>
+                {getStatusBadge()}
             </div>
         </div>
     );

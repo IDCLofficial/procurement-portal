@@ -1,12 +1,11 @@
 import Header from '@/components/Header';
 import DirectoryClient from '@/components/DirectoryClient';
-import { getContractors } from '@/lib/contractors';
 import { FaQrcode } from 'react-icons/fa6';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import Loader from '@/components/ui/loader';
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
     title: 'Public Contractor Directory - Imo State',
@@ -18,9 +17,6 @@ export const metadata: Metadata = {
 };
 
 export default async function DirectoryPage() {
-    // Fetch data on the server
-    const contractors = await getContractors();
-
     return (
         <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
             <Header
@@ -29,15 +25,17 @@ export default async function DirectoryPage() {
                 hasBackButton
                 rightButton={
                     <Link href="/verify-certificate">
-                        <Button variant="outline" className="cursor-pointer active:scale-95 transition-transform duration-300 active:rotate-2">
-                            <FaQrcode className="h-4 w-4" />
-                            <span>Verify Certificate</span>
+                        <Button variant="outline" className="cursor-pointer active:scale-95 transition-transform duration-300 active:rotate-2 max-sm:text-xs max-sm:px-3 max-sm:h-9">
+                            <FaQrcode className="max-sm:h-3 max-sm:w-3 h-4 w-4" />
+                            <span className="max-sm:hidden">Verify Certificate</span>
+                            <span className="sm:hidden">Verify</span>
                         </Button>
                     </Link>
                 }
             />
+
             <Suspense fallback={<Loader />}>
-                <DirectoryClient initialContractors={contractors} />
+                <DirectoryClient />
             </Suspense>
         </div>
     );

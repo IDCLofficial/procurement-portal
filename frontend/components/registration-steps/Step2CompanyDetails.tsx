@@ -1,9 +1,13 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { useDebounce } from '@/hooks/useDebounce';
+import { lgaObject } from '@/lib/constants.const';
 
 interface Step2CompanyDetailsProps {
     formData: {
@@ -18,16 +22,31 @@ interface Step2CompanyDetailsProps {
     onContinue?: () => void;
 }
 
-const imoLGAs = [
-    'Aboh Mbaise', 'Ahiazu Mbaise', 'Ehime Mbano', 'Ezinihitte', 'Ideato North',
-    'Ideato South', 'Ihitte/Uboma', 'Ikeduru', 'Isiala Mbano', 'Isu',
-    'Mbaitoli', 'Ngor Okpala', 'Njaba', 'Nkwerre', 'Nwangele',
-    'Obowo', 'Oguta', 'Ohaji/Egbema', 'Okigwe', 'Onuimo',
-    'Orlu', 'Orsu', 'Oru East', 'Oru West', 'Owerri Municipal',
-    'Owerri North', 'Owerri West'
-];
-
 export default function Step2CompanyDetails({ formData, onInputChange }: Step2CompanyDetailsProps) {
+    // Track which fields have been touched
+    const [touched, setTouched] = useState({
+        cacNumber: false,
+        tinNumber: false,
+    });
+
+    // Debounced values for validation
+    const debouncedCAC = useDebounce(formData.cacNumber, 500);
+    const debouncedTIN = useDebounce(formData.tinNumber, 500);
+
+    // CAC Number validation (Format: RC-6digits)
+    const cacError = useMemo(() => {
+        if (!debouncedCAC) return '';
+        const cacRegex = /^RC-\d{6}$/;
+        return !cacRegex.test(debouncedCAC) ? 'CAC format must be RC-XXXXXX (e.g., RC-123456)' : '';
+    }, [debouncedCAC]);
+
+    // TIN validation (Format: 8digits-4digits)
+    const tinError = useMemo(() => {
+        if (!debouncedTIN) return '';
+        const tinRegex = /^\d{8}-\d{4}$/;
+        return !tinRegex.test(debouncedTIN) ? 'TIN format must be XXXXXXXX-XXXX (e.g., 12345678-1234)' : '';
+    }, [debouncedTIN]);
+
     return (
         <div className="space-y-5">
             {/* Legal Company Name */}
@@ -49,23 +68,45 @@ export default function Step2CompanyDetails({ formData, onInputChange }: Step2Co
                     <Label htmlFor="cacNumber">CAC Number <span className="text-red-500">*</span></Label>
                     <Input
                         id="cacNumber"
-                        placeholder="RC1234567"
+                        placeholder="RC-123456"
                         value={formData.cacNumber}
-                        onChange={(e) => onInputChange('cacNumber', e.target.value)}
-                        className="mt-1.5"
+                        onChange={(e) => onInputChange('cacNumber', e.target.value.toUpperCase())}
+                        onBlur={() => setTouched(prev => ({ ...prev, cacNumber: true }))}
+                        className={`mt-1.5 ${touched.cacNumber && cacError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         required
                     />
+                    {touched.cacNumber && cacError && (
+                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                            <FaTimesCircle /> {cacError}
+                        </p>
+                    )}
+                    {touched.cacNumber && !cacError && debouncedCAC && (
+                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                            <FaCheckCircle /> Valid CAC number
+                        </p>
+                    )}
                 </div>
                 <div>
                     <Label htmlFor="tinNumber">TIN <span className="text-red-500">*</span></Label>
                     <Input
                         id="tinNumber"
-                        placeholder="TIN-12345678"
+                        placeholder="12345678-1234"
                         value={formData.tinNumber}
                         onChange={(e) => onInputChange('tinNumber', e.target.value)}
-                        className="mt-1.5"
+                        onBlur={() => setTouched(prev => ({ ...prev, tinNumber: true }))}
+                        className={`mt-1.5 ${touched.tinNumber && tinError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         required
                     />
+                    {touched.tinNumber && tinError && (
+                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                            <FaTimesCircle /> {tinError}
+                        </p>
+                    )}
+                    {touched.tinNumber && !tinError && debouncedTIN && (
+                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                            <FaCheckCircle /> Valid TIN
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -94,9 +135,9 @@ export default function Step2CompanyDetails({ formData, onInputChange }: Step2Co
                             <SelectValue placeholder="Select LGA" />
                         </SelectTrigger>
                         <SelectContent>
-                            {imoLGAs.map((lga) => (
-                                <SelectItem key={lga} value={lga}>
-                                    {lga}
+                            {lgaObject.map((lga) => (
+                                <SelectItem key={lga.value} value={lga.value}>
+                                    {lga.label}
                                 </SelectItem>
                             ))}
                         </SelectContent>

@@ -4,15 +4,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Home, FileText, Users, Settings, FileSearch, BarChart2, LogOut } from 'lucide-react';
+import { Home, FileText, Users, Settings, LogOut } from 'lucide-react';
 import { useLogout } from '@/app/admin/hooks/useLogout';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 
-interface SidebarProps {
-    applicationCount?: number;
-}
-
-export function Sidebar({ applicationCount }: SidebarProps) {
+export function Sidebar() {
     const pathname = usePathname();
     const handleLogout = useLogout();
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -22,43 +18,36 @@ export function Sidebar({ applicationCount }: SidebarProps) {
             href: "/admin/systemadmin",
             icon: Home,
             label: "Dashboard",
-            badge: null,
         },
         {
             href: "/admin/systemadmin/applications",
             icon: FileText,
             label: "Applications",
-            badge: applicationCount ?? null,
         },
         {
             href: "/admin/systemadmin/users",
             icon: Users,
             label: "User Management",
-            badge: null,
         },
          {
             href: "/admin/systemadmin/certificates",
             icon: Users,
             label: "Certificates",
-            badge: null,
         },
         {
             href: "/admin/systemadmin/settings",
             icon: Settings,
             label: "Settings",
-            badge: null,
         },
         // {
         //     href: "/admin/systemadmin/audit-logs",
         //     icon: FileSearch,
         //     label: "Audit Logs",
-        //     badge: null,
         // },
         // {
         //     href: "/admin/systemadmin/reports",
         //     icon: BarChart2,
         //     label: "Reports",
-        //     badge: null,
         // },
     ];
 
@@ -81,7 +70,7 @@ export function Sidebar({ applicationCount }: SidebarProps) {
 
             <nav className="flex-1 px-4 py-2">
                 <ul className="space-y-2">
-                    {NavList.map(({ href, icon: Icon, label, badge }) => {
+                    {NavList.map(({ href, icon: Icon, label }) => {
                         const isActive = pathname === href || 
                                       (href !== '/' && pathname.endsWith(href));
                         
@@ -97,11 +86,6 @@ export function Sidebar({ applicationCount }: SidebarProps) {
                                 >
                                     <Icon className="w-5 h-5 mr-3" />
                                     <span className="flex-1">{label}</span>
-                                    {badge !== null && (
-                                        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                            {badge}
-                                        </span>
-                                    )}
                                 </Link>
                             </li>
                         );

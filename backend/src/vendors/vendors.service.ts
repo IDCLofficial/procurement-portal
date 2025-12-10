@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import TokenHandlers from 'src/lib/generateToken';
 import { updateRegistrationDto } from './dto/update-registration.dto';
 import { Company, CompanyDocument, Directors, DirectorsDocument, Status } from '../companies/entities/company.schema';
-import { verificationDocuments, verificationDocument, Status as DocumentStatus } from '../documents/entities/document.schema';
+import { verificationDocuments, verificationDocument, Status as DocumentStatus, verificationDocPreset } from '../documents/entities/document.schema';
 import { Payment, PaymentDocument } from '../payments/entities/payment.schema';
 import { Application, ApplicationDocument } from '../applications/entities/application.schema';
 import { loginDto } from './dto/logn.dto';
@@ -34,6 +34,7 @@ export class VendorsService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Directors.name) private directorsModel: Model<DirectorsDocument>,
     @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>,
+    @InjectModel(verificationDocPreset.name) private verificationDocumentPresetModel: Model<verificationDocPreset>,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
     @InjectModel(VendorActivityLog.name) private activityLogModel: Model<VendorActivityLogDocument>,
@@ -512,16 +513,35 @@ export class VendorsService {
        */
       if(updateRegistrationDto.documents){
         try{
-          const company = await this.companyModel.findOne({userId:vendor._id})
+          const company = await this.companyModel.findOne({userId:vendor._id});
+          const verificationDocPresets = await this.verificationDocumentPresetModel.find({});
+
+          const hasPresets = verificationDocPresets && verificationDocPresets.length > 0;
+          let documentsToProcess = updateRegistrationDto.documents;
+
+          if (hasPresets) {
+            const validDocTypes = new Set(
+              verificationDocPresets.map((preset) =>
+                preset.documentName.toLowerCase().trim(),
+              ),
+            );
+
+            documentsToProcess = updateRegistrationDto.documents.filter(
+              (doc) =>
+                doc.documentType &&
+                validDocTypes.has(doc.documentType.toLowerCase().trim()),
+            );
+          }
+
           // Process each document - create or update individual document records
           const savedDocs = await Promise.all(
-            updateRegistrationDto.documents.map(async (doc) => {
+            documentsToProcess.map(async (doc) => {
               // Check if document with same type already exists for this vendor
               const existingDoc = await this.verificationDocumentModel.findOne({
                 vendor: vendor._id,
-                documentType: doc.documentType
+                documentType: doc.documentType,
               });
-              
+
               if (existingDoc) {
                 // Update existing document
                 existingDoc.fileUrl = doc.fileUrl;
@@ -534,14 +554,13 @@ export class VendorsService {
                 existingDoc.validFor = doc.validFor;
                 existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
                 existingDoc.status = {
-                  status:DocumentStatus.PENDING,
-                }
-                
+                  status: DocumentStatus.PENDING,
+                };
+
                 return await existingDoc.save();
-                
               } else {
                 // Create new document record
-                try{
+                try {
                   const newDoc = new this.verificationDocumentModel({
                     vendor: vendor._id,
                     fileUrl: doc.fileUrl,
@@ -555,32 +574,71 @@ export class VendorsService {
                     validFor: doc.validFor,
                     hasValidityPeriod: doc.hasValidityPeriod,
                     status: {
-                      status:DocumentStatus.PENDING,
-                    }
+                      status: DocumentStatus.PENDING,
+                    },
                   });
                   const response = await newDoc.save();
-                  if(response){
-                    vendor.companyForm = companyForm.STEP5;
-                    await vendor.save();
+                  if (response) {
                     return response;
                   }
-                }catch(e){
-                  throw new ConflictException('there was an error uploading documents')
+                  return null;
+                } catch (e) {
+                  this.Logger.log(e);
+                  throw new ConflictException('there was an error uploading documents');
                 }
               }
-            })
+            }),
           );
-          if(company){
-            company.documents = savedDocs.map(doc=>doc?._id as Types.ObjectId)
-            await company.save()
+
+          const allVendorDocs = await this.verificationDocumentModel.find({
+            vendor: vendor._id,
+          });
+
+          if (company) {
+            company.documents = allVendorDocs.map(
+              (doc) => doc?._id as Types.ObjectId,
+            );
+            await company.save();
           }
-          
+
+          if (hasPresets) {
+            const requiredPresetNames = verificationDocPresets
+              .filter((preset) => preset.isRequired)
+              .map((preset) => preset.documentName.toLowerCase().trim());
+
+            const existingTypes = allVendorDocs.map((doc) =>
+              doc.documentType.toLowerCase().trim(),
+            );
+
+            const missingRequiredDocuments = requiredPresetNames.filter(
+              (name) => !existingTypes.includes(name),
+            );
+
+            if (missingRequiredDocuments.length > 0) {
+              throw new BadRequestException({
+                message: 'Some required documents are missing',
+                missingDocuments: missingRequiredDocuments,
+              });
+            }
+
+            if (vendor.companyForm !== companyForm.STEP5) {
+              vendor.companyForm = companyForm.STEP5;
+              await vendor.save();
+            }
+          } else if (savedDocs.length > 0) {
+            vendor.companyForm = companyForm.STEP5;
+            await vendor.save();
+          }
+
           return {
             message: "Documents uploaded successfully",
-            documents: savedDocs
+            documents: savedDocs,
           };
         }catch(err){
           this.Logger.debug(`${err}`)
+          if (err instanceof BadRequestException) {
+            throw err;
+          }
           throw new ConflictException('Error updating documents: ' + err.message)
         }
       }
@@ -614,6 +672,9 @@ export class VendorsService {
       }
     }catch(error) {
       this.Logger.debug(`${error}`)
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException(`An error occured`);
     }
   }

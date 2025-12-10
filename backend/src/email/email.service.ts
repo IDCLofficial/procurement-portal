@@ -94,7 +94,7 @@ export class EmailService {
       const emailConfig = this.configService.get('email');
       
       const emailHtml = `
-        <div style='padding:1rem 2rem; display:flex; flex-direction:column; align-items:center; justify-content:center'> 
+        <div style='padding:1rem 2rem; align-items:center; justify-content:center'> 
           <div style="display:flex; flex-direction:column; align-items:center; padding:1rem">
               <img src="https://images.unsplash.com/photo-1748959504388-9eb3143984e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" style="width:80px; height:60px; border-radius:10px"/>
               <h2 style="font-family: Arial, sans-serif; font-weight:500; text-align:center;">Hi ${userName.split(" ")[0]}, Your Signup verification <br/>Code</h2>

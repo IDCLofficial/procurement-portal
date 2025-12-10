@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException, InternalServerErrorException} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Request } from 'express';
@@ -22,6 +22,7 @@ import { necessaryDocument } from './dto/update-registration.dto';
 import { VendorActivityLog, VendorActivityLogDocument, ActivityType } from './entities/vendor-activity-log.schema';
 import { renewRegistrationDto } from './dto/renew-registration-dto';
 import { replaceDocumentDto } from './dto/replace-document.dto';
+import { changePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class VendorsService {
@@ -127,24 +128,59 @@ export class VendorsService {
    * - Generates JWT token for authentication
    */
   async login(body:loginDto): Promise<any> {
-      const vendor = await this.vendorModel.findOne({ email:body.email }).exec();
-      if (!vendor) {
-        throw new NotFoundException('Vendor not found');
-      }
-      if(!vendor.isVerified){
-        throw new UnauthorizedException('Email not verified')
-      }
-      const isPasswordValid = await bcrypt.compare(body.password, vendor.password);
-      if (!isPasswordValid) {
-        throw new BadRequestException('Invalid password');
-      }
-      const { password: _, ...user } = vendor.toObject();
-      console.log(user)
-      return {
-        message:"Login Successful",
-        token: this.tokenHandlers.generateToken(user)
-      };
+    const vendor = await this.vendorModel.findOne({ email:body.email }).exec();
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
     }
+    if(!vendor.isVerified){
+      throw new UnauthorizedException('Email not verified')
+    }
+    const isPasswordValid = await bcrypt.compare(body.password, vendor.password);
+    if (!isPasswordValid) {
+      throw new BadRequestException('Invalid password');
+    }
+    const { password: _, ...user } = vendor.toObject();
+    console.log(user)
+    return {
+      message:"Login Successful",
+      token: this.tokenHandlers.generateToken(user)
+    };
+  }
+
+  /**
+   * change password
+   */
+  async changePassword(id:string, body:changePasswordDto){
+    const vendor = await this.vendorModel.findById(id)
+    if(!vendor){
+      throw new NotFoundException('Vendor not found')
+    }
+
+    const isCurrentPassword = await bcrypt.compare(body.currentPassword, vendor.password);
+    
+    if(!isCurrentPassword){
+      throw new BadRequestException('Current password does not match')
+    }
+
+    if (body.newPassword !== body.currentPassword){
+      throw new BadRequestException('new password and confiirm password do not match')
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashNewPassword = await bcrypt.hash(body.newPassword, salt)
+    try{
+      if(hashNewPassword){
+        vendor.password = hashNewPassword;
+        await vendor.save();
+        return {
+          message:"Password changed successfully"
+        }
+      }
+    }catch(e){
+      this.Logger.log(e)
+      throw new InternalServerErrorException('Failed to change password')
+    }
+  }
 
   /**
    * Get all vendor accounts with pagination and filtering

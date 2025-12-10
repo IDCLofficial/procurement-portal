@@ -9,6 +9,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtService } from '@nestjs/jwt';
 import { replaceDocumentDto } from './dto/replace-document.dto';
+import { changePasswordDto } from './dto/change-password.dto';
 
 @ApiTags('vendors')
 @Controller('vendors')
@@ -100,6 +101,25 @@ export class VendorsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   login(@Body() body: loginDto) {
     return this.vendorsService.login(body);
+  }
+
+  /** 
+   * Change Password for vendor
+  */
+  @Patch('change-password')
+  changePassword(@Body() body:changePasswordDto, @Req() req:any){
+    const authToken = req.headers?.authorization?.replace("Bearer ", "")
+    if(!authToken){
+      throw new UnauthorizedException('Could not find your authorization token')
+    }
+
+    const decodedId = this.jwtService.decode(authToken)._id
+    if(!decodedId){
+      throw new UnauthorizedException('You are not authorized to access this resource')
+    }
+
+    return this.vendorsService.changePassword(decodedId, body)
+    
   }
 
   /**

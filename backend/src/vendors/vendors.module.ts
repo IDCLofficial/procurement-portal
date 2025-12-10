@@ -10,6 +10,7 @@ import { verificationDocuments, VerificationDocumentSchema } from 'src/documents
 import { Payment, PaymentSchema } from 'src/payments/entities/payment.schema';
 import { Application, ApplicationSchema } from 'src/applications/entities/application.schema';
 import { VendorActivityLog, VendorActivityLogSchema } from './entities/vendor-activity-log.schema';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [

@@ -131,20 +131,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         }
     }, [user, router]);
 
-    const handleLogin = useCallback((token: string) => {
-        const enc_token = encrypt(token);
-        setToken(token);
-        localStorage.setItem('token', enc_token);
-        dispatch(login(token));
-        // User will be fetched automatically by useGetProfileQuery
-        router.replace('/dashboard');
-    }, [router, dispatch]);
-
-    const handleLogout = useCallback(() => {
-        dispatch(logout());
-        handleClearToken();
-        router.replace('/vendor-login');
-    }, [router, handleClearToken, dispatch]);
 
     const handleRefresh = useCallback(() => {
         dispatch(refresh());
@@ -156,6 +142,24 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             refetchApplication();
         }
     }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, refetchApplication, dispatch]);
+
+    const handleLogin = useCallback((token: string) => {
+        const enc_token = encrypt(token);
+        setToken(token);
+        localStorage.setItem('token', enc_token);
+        dispatch(login(token));
+
+        if (!user) return;
+        handleRefresh();
+        // User will be fetched automatically by useGetProfileQuery
+        router.replace('/dashboard');
+    }, [router, dispatch, handleRefresh, user]);
+
+    const handleLogout = useCallback(() => {
+        dispatch(logout());
+        handleClearToken();
+        router.replace('/vendor-login');
+    }, [router, handleClearToken, dispatch]);
 
     const value = useMemo(() => ({
         user,

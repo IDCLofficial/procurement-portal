@@ -1,7 +1,6 @@
 'use client';
 
 import { SettingsTabs } from '@/app/admin/components/user/SettingsTabs';
-import { FeeConfigurationTable } from '@/app/admin/components/user/FeeConfigurationTable';
 import { SlaTimerConfiguration } from '@/app/admin/components/user/SlaTimerConfiguration';
 import { CategoriesConfiguration } from '@/app/admin/systemadmin/_components/CategoriesConfiguration';
 import { RequiredDocumentsTable } from '@/app/admin/components/user/RequiredDocumentsTable';
@@ -11,7 +10,7 @@ import { useSettings } from '../_hooks';
 export default function SystemAdminSettings() {
   const {
     activeTab,
-    fees,
+   
     slaStages,
     documents,
     saving,
@@ -19,14 +18,10 @@ export default function SystemAdminSettings() {
     sectors,
     grades,
     handleTabChange,
-    handleFeesChange,
     handleSlaStagesChange,
     handleDocumentsChange,
     handleSave,
     handleDialogClose,
-    handleAddFee,
-    handleEditFee,
-    handleDeleteFee,
     handleAddDocument,
     handleEditDocument,
     handleDeleteDocument,
@@ -42,15 +37,7 @@ export default function SystemAdminSettings() {
             onSave={handleSave}
           />
 
-          {activeTab === 'fees' && (
-            <FeeConfigurationTable
-              fees={fees}
-              onChange={handleFeesChange}
-              onAddFee={handleAddFee}
-              onEditFee={handleEditFee}
-              onDeleteFee={handleDeleteFee}
-            />
-          )}
+        
 
           {activeTab === 'sla' && (
             <SlaTimerConfiguration

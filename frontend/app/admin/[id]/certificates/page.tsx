@@ -25,6 +25,9 @@ export default function CertificatesPage() {
   const [search, setSearch] = useState("");
   const [gradeFilter, setGradeFilter] = useState("All Grades");
   const [statusFilter, setStatusFilter] = useState("All Status");
+  const [page, setPage] = useState(1);
+  const limit = 20;
+
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const [downloadCertificate, setDownloadCertificate] = useState<Certificate | null>(null);
   const [downloadFormat, setDownloadFormat] = useState<"image" | "pdf" | null>(null);
@@ -51,8 +54,8 @@ export default function CertificatesPage() {
     isLoading,
     isFetching,
   } = useGetCertificatesQuery({
-    page: 1,
-    limit: 20,
+    page,
+    limit,
     status: statusQuery,
   });
 
@@ -169,6 +172,10 @@ export default function CertificatesPage() {
                       setDownloadFormat("pdf");
                     }}
                     isLoading={isLoadingCertificates}
+                    total={certificatesData?.total ?? filteredCertificates.length}
+                    page={certificatesData?.page ?? page}
+                    limit={certificatesData?.limit ?? limit}
+                    onPageChange={setPage}
                   />
                 )}
               </section>

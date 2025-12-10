@@ -234,7 +234,7 @@ export default function ApplicationDetails() {
           />
         </div>
 
-        {shouldSkipQuery || isLoading || isFetching || !application ? (
+        {shouldSkipQuery || isLoading || !application ? (
           <div className="flex justify-center items-center h-64">
             <span className="loader"></span>
           </div>

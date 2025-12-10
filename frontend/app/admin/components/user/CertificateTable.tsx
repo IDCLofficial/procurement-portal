@@ -1,6 +1,8 @@
-'use client';
+"use client";
 
 import type { Certificate, CertificateStatus } from '@/app/admin/types';
+import { FormatDate } from '../../utils/dateFormateer';
+import { Pagination } from '../general/Pagination';
 
 const statusClasses: Record<CertificateStatus, string> = {
   approved: 'border-emerald-100 bg-emerald-50 text-emerald-700',
@@ -13,9 +15,22 @@ interface CertificateTableProps {
   onViewDetails?: (certificate: Certificate) => void;
   onDownload?: (certificate: Certificate) => void;
   isLoading?: boolean;
+  total?: number;
+  page?: number;
+  limit?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export function CertificateTable({ certificates, onViewDetails, onDownload, isLoading }: CertificateTableProps) {
+export function CertificateTable({
+  certificates,
+  onViewDetails,
+  onDownload,
+  isLoading,
+  total,
+  page,
+  limit,
+  onPageChange,
+}: CertificateTableProps) {
   return (
     <div className="px-4 pb-4">
       <div className="overflow-x-auto rounded-xl border border-gray-100">
@@ -58,10 +73,10 @@ export function CertificateTable({ certificates, onViewDetails, onDownload, isLo
                     {cert.certificateId}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-gray-700">
-                    {cert.issueDate}
+                    {FormatDate(cert.issueDate)}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-gray-700">
-                    {cert.expiryDate}
+                    {FormatDate(cert.expiryDate)}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span
@@ -101,7 +116,18 @@ export function CertificateTable({ certificates, onViewDetails, onDownload, isLo
               </tr>
             )}
           </tbody>
-      </table>
+        </table>
+        {total !== undefined &&
+          page !== undefined &&
+          limit !== undefined &&
+          onPageChange && (
+            <Pagination
+              total={total}
+              page={page}
+              limit={limit}
+              onPageChange={onPageChange}
+            />
+          )}
       </div>
     </div>
   );

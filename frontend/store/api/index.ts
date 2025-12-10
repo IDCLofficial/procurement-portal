@@ -14,7 +14,7 @@ export const apiSlice = createApi({
             const token = decrypt(enc_token);
 
             // Add ngrok header for external API calls
-            const skipAuthEndpoints = ["createVendor", "verifyVendor", "loginVendor", "resendVerificationOtp"]
+            const skipAuthEndpoints = ["createVendor", "verifyVendor", "loginVendor", "resendVerificationOtp", "getDocumentsPresets", "getCategories"]
             // headers.set('ngrok-skip-browser-warning', 'true')
             if (!skipAuthEndpoints.includes(endpoint)) {
                 if (!token) {

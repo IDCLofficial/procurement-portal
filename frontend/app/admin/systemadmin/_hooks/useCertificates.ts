@@ -27,6 +27,9 @@ interface CertificatesApiResponse {
     expired?: number;
     revoked?: number;
   };
+  total?: number;
+  page?: number;
+  limit?: number;
 }
 
 export interface CertificateStats {
@@ -51,6 +54,9 @@ export interface UseCertificatesReturn {
   grades: string[];
   stats: CertificateStats;
   tabs: typeof CERTIFICATE_TABS;
+  total: number;
+  page: number;
+  limit: number;
   
   // Loading states
   isLoading: boolean;
@@ -65,6 +71,7 @@ export interface UseCertificatesReturn {
   handleDownload: (cert: Certificate, format: 'image' | 'pdf') => void;
   handleDownloadComplete: () => void;
   handleExport: () => void;
+  handlePageChange: (page: number) => void;
 }
 
 export function useCertificates(): UseCertificatesReturn {
@@ -75,6 +82,8 @@ export function useCertificates(): UseCertificatesReturn {
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const [downloadCertificate, setDownloadCertificate] = useState<Certificate | null>(null);
   const [downloadFormat, setDownloadFormat] = useState<'image' | 'pdf' | null>(null);
+  const [page, setPage] = useState(1);
+  const limit = 20;
 
   // Determine status query based on filters and tab
   const statusQuery = useMemo(() => {
@@ -96,8 +105,8 @@ export function useCertificates(): UseCertificatesReturn {
     isLoading: isLoadingQuery,
     isFetching,
   } = useGetCertificatesQuery({
-    page: 1,
-    limit: 20,
+    page,
+    limit,
     status: statusQuery,
   });
 
@@ -208,6 +217,14 @@ export function useCertificates(): UseCertificatesReturn {
     // For now, this is a placeholder
   }, []);
 
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  const total =
+    (certificatesData as CertificatesApiResponse | undefined)?.total ??
+    certificates.length;
+
   return {
     activeTab,
     search,
@@ -221,6 +238,9 @@ export function useCertificates(): UseCertificatesReturn {
     grades,
     stats,
     tabs: CERTIFICATE_TABS,
+    total,
+    page,
+    limit,
     isLoading,
     handleTabChange,
     handleSearchChange,
@@ -231,5 +251,6 @@ export function useCertificates(): UseCertificatesReturn {
     handleDownload,
     handleDownloadComplete,
     handleExport,
+    handlePageChange,
   };
 }

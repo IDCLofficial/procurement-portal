@@ -1,6 +1,6 @@
 "use client"
 import { decrypt, encrypt } from '@/lib/crypto';
-import { CompanyDetailsResponse, User } from '@/store/api/types';
+import { Application, CompanyDetailsResponse, User } from '@/store/api/types';
 import { useGetCompanyDetailsQuery, useGetProfileQuery } from '@/store/api/vendor.api';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useContext, useMemo, useState } from 'react'
@@ -10,12 +10,15 @@ import { selectUserData } from '@/store/slices/userSlice';
 import { selectCompanyData, selectCompanyLoading } from '@/store/slices/companySlice';
 import { selectDocumentsLoading, selectDocumentsPresets } from '@/store/slices/documentsSlice';
 import { selectCategoriesData, selectCategoriesLoading } from '@/store/slices/categoriesSlice';
+import { selectApplicationData, selectApplicationLoading } from '@/store/slices/applicationSlice';
 import { DocumentRequirement, CategoriesResponse } from '@/store/api/types.d';
 import { useGetDocumentsPresetsQuery, useGetCategoriesQuery } from '@/store/api/helper.api';
+import { useGetApplicationQuery } from '@/store/api/vendor.api';
 
 interface AuthContextType {
     user: User | null;
     company: CompanyDetailsResponse | null;
+    application: Application | null;
     token: string | null;
     isLoading: boolean;
     isAuthenticated: boolean;
@@ -77,7 +80,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const { refetch: refetchDocumentsPresets } = useGetDocumentsPresetsQuery(undefined, {
         skip: !token || token === 'n/a',
     });
-    const { refetch: refetchCategories } = useGetCategoriesQuery(undefined, {
+    const { refetch: refetchCategories } = useGetCategoriesQuery();
+    
+    const { refetch: refetchApplication } = useGetApplicationQuery(undefined, {
         skip: !token || token === 'n/a',
     });
 
@@ -92,8 +97,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const documents = useSelector(selectDocumentsPresets);
     const categoriesLoading = useSelector(selectCategoriesLoading);
     const categories = useSelector(selectCategoriesData);
+    const application = useSelector(selectApplicationData);
+    const applicationLoading = useSelector(selectApplicationLoading);
 
-    const isLoading = React.useMemo(() => profileLoading || companyLoading || documentsLoading || categoriesLoading, [profileLoading, companyLoading, documentsLoading, categoriesLoading]);
+    const isLoading = React.useMemo(() => profileLoading || companyLoading || documentsLoading || categoriesLoading || applicationLoading, [profileLoading, companyLoading, documentsLoading, categoriesLoading, applicationLoading]);
 
 
     // Sync local token with slice token
@@ -146,12 +153,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             refetchCompanyDetails();
             refetchDocumentsPresets();
             refetchCategories();
+            refetchApplication();
         }
-    }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, dispatch]);
+    }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, refetchApplication, dispatch]);
 
     const value = useMemo(() => ({
         user,
         company,
+        application,
         token,
         isLoading,
         isAuthenticated,
@@ -162,7 +171,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         login: handleLogin,
         logout: handleLogout,
         clearToken: handleClearToken,
-    }), [user, token, isLoading, isAuthenticated, isLoggingOut, documents, categories, handleRefresh, handleLogin, handleLogout, handleClearToken, company]);
+    }), [user, token, isLoading, isAuthenticated, isLoggingOut, documents, categories, handleRefresh, handleLogin, handleLogout, handleClearToken, company, application]);
 
     return (
         <AuthContext.Provider value={value}>

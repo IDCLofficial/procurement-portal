@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FaCheckCircle, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
+import { FaClock } from 'react-icons/fa6';
 
 interface VerificationModalProps {
     contractor: {
@@ -63,7 +64,7 @@ export default function VerificationModal({ contractor, isOpen, onClose }: Verif
                 };
             case 'pending':
                 return {
-                    icon: <FaExclamationTriangle className="h-16 w-16 text-yellow-600" />,
+                    icon: <FaClock className="h-16 w-16 text-yellow-600" />,
                     bgColor: 'bg-yellow-50',
                     borderColor: 'border-yellow-200',
                     textColor: 'text-yellow-900',
@@ -71,15 +72,25 @@ export default function VerificationModal({ contractor, isOpen, onClose }: Verif
                     title: 'Pending Verification',
                     message: 'This contractor registration is currently pending approval.',
                 };
-            case 'suspended':
+            case 'revoked':
+                return {
+                    icon: <FaExclamationTriangle className="h-16 w-16 text-red-600" />,
+                    bgColor: 'bg-red-50',
+                    borderColor: 'border-red-200',
+                    textColor: 'text-red-900',
+                    badgeClass: 'bg-red-100 text-red-800 border-red-200',
+                    title: 'Revoked Contractor',
+                    message: 'This contractor has been revoked. Please contact BPPPI for more information.',
+                };
+            case 'expired':
                 return {
                     icon: <FaTimes className="h-16 w-16 text-red-600" />,
                     bgColor: 'bg-red-50',
                     borderColor: 'border-red-200',
                     textColor: 'text-red-900',
                     badgeClass: 'bg-red-100 text-red-800 border-red-200',
-                    title: 'Suspended Contractor',
-                    message: 'This contractor has been suspended. Please contact BPPPI for more information.',
+                    title: 'Expired Contractor',
+                    message: 'This contractor has expired. Please contact BPPPI for more information.',
                 };
             default:
                 return {

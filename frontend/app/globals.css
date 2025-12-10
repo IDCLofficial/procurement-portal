@@ -231,29 +231,46 @@
     }
 }
 
+@keyframes slideDown {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 /* admin loading state */
 .loader {
-  width: 48px;
-  height: 48px;
-  color: #047857;
-  border: 5px dotted #047857;
-  border-radius: 50%;
-  display: inline-block;
-  position: relative;
-  box-sizing: border-box;
-  animation: rotation 2s linear infinite;
+    width: 48px;
+    height: 48px;
+    color: #047857;
+    border: 5px dotted #047857;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    animation: rotation 2s linear infinite;
 }
 
 @keyframes rotation {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-} 
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
 
 .certificate-container * {
-  color: initial !important;
-  background-color: initial !important;
+    color: initial !important;
+    background-color: initial !important;
 }

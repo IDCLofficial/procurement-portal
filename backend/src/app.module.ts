@@ -21,6 +21,7 @@ import { CertificatesModule } from './certificates/certificates.module';
 import { SlaModule } from './sla/sla.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { MdaModule } from './mda/mda.module';
 
 @Module({
   imports: [
@@ -57,7 +58,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     PaymentsModule,
     CertificatesModule,
     SlaModule,
-    NotificationsModule
+    NotificationsModule,
+    MdaModule
   ],
   controllers: [AppController],
   providers: [

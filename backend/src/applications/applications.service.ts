@@ -410,7 +410,7 @@ export class ApplicationsService {
       validUntil.setFullYear(validUntil.getFullYear() + 1);
 
       // Extract sector names and categories from company
-      const approvedSectors = company.categories?.map(cat => cat.sector) || [];
+      const approvedSector = company.category;
 
       // Create the certificate with all required fields
       const certificate = new this.certificateModel({
@@ -432,8 +432,9 @@ export class ApplicationsService {
         website: company.website || '',
         
         // Sector & Classification
-        approvedSectors: approvedSectors,
+        approvedSector: approvedSector,
         grade: company.grade,
+        mda:company.mda,
         
         // Registration Status
         status: certificateStatus.APPROVED,

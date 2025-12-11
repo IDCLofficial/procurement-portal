@@ -5,6 +5,9 @@ export type GradeDocument = Grade & Document;
 
 @Schema({ timestamps: true })
 export class Grade {
+    @Prop({required:true})
+    category:string;
+
     @Prop({ required: true, unique: true })
     grade: string;
 

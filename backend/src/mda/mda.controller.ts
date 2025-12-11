@@ -64,7 +64,7 @@ export class MdaController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'MDA not found' })
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateMdaDto: UpdateMdaDto) {
-    return this.mdaService.update(+id, updateMdaDto);
+    return this.mdaService.update(id, updateMdaDto);
   }
 
   @ApiOperation({ summary: 'Delete MDA' })
@@ -73,6 +73,6 @@ export class MdaController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'MDA not found' })
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.mdaService.remove(+id);
+    return this.mdaService.remove(id);
   }
 }

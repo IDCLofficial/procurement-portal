@@ -52,11 +52,11 @@ export class MdaService {
     return this.MdaModel.findById(id);
   }
 
-  update(id: number, updateMdaDto: UpdateMdaDto) {
+  update(id: string, updateMdaDto: UpdateMdaDto) {
     return this.MdaModel.findByIdAndUpdate(id, updateMdaDto);
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return this.MdaModel.findByIdAndDelete(id);
   }
 }

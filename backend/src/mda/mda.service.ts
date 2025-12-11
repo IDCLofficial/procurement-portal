@@ -23,6 +23,7 @@ export class MdaService {
 
     const [mdas, total] = await Promise.all([
       this.MdaModel.find({})
+        .sort({createdAt:-1})
         .skip(skip)
         .limit(limitNum)
         .exec(),
@@ -38,7 +39,7 @@ export class MdaService {
     };
   }
 
-  async findAllByNames() {
+  async findAllByNames(){
     const Mdas = await this.MdaModel.find({})
 
     const MdaNames = Mdas.map((mda)=>({

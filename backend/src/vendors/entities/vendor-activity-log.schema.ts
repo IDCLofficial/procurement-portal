@@ -7,6 +7,7 @@ export enum ActivityType {
   PROFILE_UPDATED = 'Profile Updated',
   COMPANY_REGISTERED = 'Company Registered',
   COMPANY_UPDATED = 'Company Updated',
+  CERTIFICATE_ISSUED = 'Certificate Issued',
   APPLICATION_CREATED = 'Application Created',
   APPLICATION_SUBMITTED = 'Application Submitted',
   PAYMENT_INITIATED = 'Payment Initiated',

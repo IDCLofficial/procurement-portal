@@ -14,6 +14,8 @@ import { Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction, AuditSeverity, EntityType } from '../audit-logs/entities/audit-log.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { PaymentDocument } from 'src/payments/entities/payment.schema';
+import { SplitPaymentService } from 'src/payments/payments.service';
 
 @Injectable()
 export class ApplicationsService {
@@ -27,6 +29,7 @@ export class ApplicationsService {
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
     private vendorsService: VendorsService,
     private auditLogsService: AuditLogsService,
+    private paymentService:SplitPaymentService 
   ) {}
 
   async findAll(status?: ApplicationStatus, type?:ApplicationType, page: number = 1, limit: number = 10) {
@@ -249,27 +252,10 @@ export class ApplicationsService {
         
         // If status changed to APPROVED, generate certificate
         if (newStatus === ApplicationStatus.APPROVED) {
-          const certificate = await this.generateCertificate(application);
-          if(!certificate){
-            throw new ConflictException("failed to generate certificate")
-          }
-          try{
-            await this.vendorModel.findOneAndUpdate({
-              _id:certificate.contractorId
-            }, {
-              $set: {
-                certificateId:certificate.certificateId
-              }
-            })
-          }catch(e){
-            this.logger.error(e)
-            throw new ConflictException("failed to update vendor document")
-          }
-          // Log approval activity
           await this.vendorsService.createActivityLog(
             (application.companyId as any).userId,
             ActivityType.APPROVED,
-            `Application approved by Registrar`
+            `Application approved by Registrar, you can proceed to make payments for certicate issuance`
           );
         }
       }
@@ -344,10 +330,51 @@ export class ApplicationsService {
     }
   }
 
-  private async generateCertificate(application: ApplicationDocument): Promise<Certificate> {
+  private async generateApplicationId(): Promise<string> {
+    const year = new Date().getFullYear();
+    const count = await this.applicationModel.countDocuments();
+    const paddedCount = String(count + 1).padStart(3, '0');
+    return `APP-${year}-${paddedCount}`;
+  }
+
+  async createApplicationDoc(
+    type:ApplicationType,
+    company:CompanyDocument,
+    payment:PaymentDocument
+  ){
+    // Generate unique application ID
+        const applicationId = await this.generateApplicationId()
+
+    // Create new application
+        const newApplication = new this.applicationModel({
+          applicationId,
+          contractorName: company.companyName,
+          companyId: new Types.ObjectId(company._id as Types.ObjectId),
+          rcBnNumber: company.cacNumber,
+          sectorAndGrade: payment.category && payment.grade
+            ? `${payment.category} - ${payment.grade}`
+            : payment.description,
+          grade: payment.grade || 'N/A',
+          type, // Maps to ApplicationType (Registration, Renewal, Upgrade)
+          submissionDate: new Date(),
+          slaStatus: 'On Time',
+          applicationTimeline: [{
+            status: ApplicationStatus.PENDING_DESK_REVIEW,
+            timestamp: new Date(),
+            notes: 'Application submitted and payment verified'
+          }],
+          currentStatus: ApplicationStatus.PENDING_DESK_REVIEW,
+        });
+
+        const newApp = await newApplication.save();
+        this.logger.log(`Application created: ${applicationId}`);
+        return newApp;
+  }
+
+  async generateCertificate(companyId:any): Promise<Certificate> {
     try {
       // Get the company to retrieve the vendor/contractor ID
-      const company = await this.companyModel.findById(application.companyId).exec();
+      const company = await this.companyModel.findById(companyId).exec();
       if (!company) {
         throw new BadRequestException('Company not found for this application');
       }

@@ -9,6 +9,12 @@ export enum PaymentStatus {
     FAILED = 'failed'
 }
 
+export enum paymentType {
+    PROCESSINGFEE="processing fee",
+    CERTIFICATEFEE="certificate fee",
+    RENEWAL="renewal"
+}
+
 export type PaymentDocument = Payment & Document;
 
 @Schema({ timestamps: true })
@@ -29,7 +35,7 @@ export class Payment {
     status: PaymentStatus;
 
     @Prop({ required: true, enum: Object.values(ApplicationType) })
-    type: ApplicationType;
+    type: paymentType;
 
     @Prop({ required: true })
     description: string; // e.g., "Initial Registration - Works Grade A"

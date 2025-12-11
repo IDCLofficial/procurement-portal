@@ -647,22 +647,23 @@ export class VendorsService {
       /**
        * update company registration for categories and grade
        */
-      if(updateRegistrationDto.categoriesAndGrade){
+      if(updateRegistrationDto.categoryAndGrade){
         try{
           const company = await this.companyModel.findOne({userId:vendor._id})
           if(!company){
             new Logger.error("company not found")
             throw new NotFoundException("Company not found. Please register company first.")
           }
-          company.categories = updateRegistrationDto.categoriesAndGrade.categories;
-          company.grade = updateRegistrationDto.categoriesAndGrade.grade;
+          company.category = updateRegistrationDto.categoryAndGrade.category;
+          company.mda = updateRegistrationDto.categoryAndGrade.mda;
+          company.grade = updateRegistrationDto.categoryAndGrade.grade;
           await company.save();
 
           vendor.companyForm = companyForm.STEP6;
           await vendor.save();
 
           return {
-            message: "Categories and grade updated successfully. Proceed to payment",
+            message: "Category, mda and grade updated successfully. Proceed to payment",
             result: company,
             nextStep: vendor.companyForm
           }

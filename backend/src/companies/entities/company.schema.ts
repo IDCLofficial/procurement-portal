@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document, Types } from 'mongoose';
-import { category } from 'src/vendors/dto/update-registration.dto';
+import type { category } from 'src/vendors/dto/update-registration.dto';
 
 export enum Status{
     PENDING="Pending",
@@ -57,10 +57,18 @@ export class Company {
 
     @Prop({ 
         required: false, 
-        type: Array,
-        default:[]
+        type: Object,
+        default:{sector:"", service:" "}
     })
-    categories: category[]
+    category?: category
+
+    @Prop({
+        required:false,
+        type:String,
+        default:""
+    })
+    mda?: string
+
     
     @Prop({ 
         required: false, 
@@ -105,7 +113,7 @@ export class Company {
         enum:Object.values(Status),
         default:Status.PENDING
     })
-    status?:Status
+    status:Status
 }
 
 @Schema({ timestamps: true })

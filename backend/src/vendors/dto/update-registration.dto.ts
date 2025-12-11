@@ -37,8 +37,9 @@ export type category={
     sector:string,
     service:string
 }
-export type categoriesAndGrade={
-    categories:category[],
+export type categoryAndGrade={
+    category:category,
+    mda:string,
     grade:string
 }
 export enum mode{
@@ -66,7 +67,7 @@ export class updateRegistrationDto{
 
     @IsOptional()
     @IsObject()
-    categoriesAndGrade:categoriesAndGrade
+    categoryAndGrade:categoryAndGrade
 
     @IsOptional()
     @IsString()

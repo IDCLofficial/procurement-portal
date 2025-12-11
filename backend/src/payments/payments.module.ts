@@ -14,6 +14,7 @@ import { Vendor, VendorSchema } from 'src/vendors/entities/vendor.schema';
 import { User, UserSchema } from '../users/entities/user.schema';
 import { AdminGuard } from '../guards/admin.guard';
 import { Notification, NotificationSchema } from 'src/notifications/entities/notification.entity';
+import { ApplicationsModule } from '../applications/applications.module';
 
 @Module({
   imports: [
@@ -35,10 +36,11 @@ import { Notification, NotificationSchema } from 'src/notifications/entities/not
       }),
       inject: [ConfigService],
     }),
-    VendorsModule
+    VendorsModule,
+    ApplicationsModule
   ],
   controllers: [SplitPaymentController],
   providers: [SplitPaymentService, PaystackSplitService, AdminGuard],
-  exports: [SplitPaymentService]
+  exports: [SplitPaymentService, ApplicationsModule]
 })
 export class PaymentsModule {}

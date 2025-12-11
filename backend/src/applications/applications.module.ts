@@ -17,12 +17,13 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
       { name: Certificate.name, schema: CertificateSchema },
       { name: Company.name, schema: CompanySchema },
       { name: User.name, schema: UserSchema },
-      {name:Vendor.name, schema:VendorSchema}
+      { name: Vendor.name, schema: VendorSchema }
     ]),
     VendorsModule,
     AuditLogsModule
   ],
   controllers: [ApplicationsController],
   providers: [ApplicationsService],
+  exports: [ApplicationsService],
 })
 export class ApplicationsModule {}

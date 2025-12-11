@@ -25,6 +25,7 @@ export class SplitPaymentService {
   constructor(
     private readonly paystackSplitService: PaystackSplitService,
     private vendorService:VendorsService,
+    private applicationService: ApplicationsService,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
@@ -32,7 +33,6 @@ export class SplitPaymentService {
     @InjectModel(Notification.name) private notificationModel:Model<NotificationDocument>,
     @InjectModel(User.name) private userModel:Model<UserDocument>,
     private readonly configService: ConfigService,
-    private readonly applicationService: ApplicationsService
   ) { }
 
   async createSplit(createSplitDto: CreateSplitDto) {

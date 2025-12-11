@@ -15,7 +15,6 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction, AuditSeverity, EntityType } from '../audit-logs/entities/audit-log.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PaymentDocument } from 'src/payments/entities/payment.schema';
-import { SplitPaymentService } from 'src/payments/payments.service';
 
 @Injectable()
 export class ApplicationsService {
@@ -29,7 +28,6 @@ export class ApplicationsService {
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
     private vendorsService: VendorsService,
     private auditLogsService: AuditLogsService,
-    private paymentService:SplitPaymentService 
   ) {}
 
   async findAll(status?: ApplicationStatus, type?:ApplicationType, page: number = 1, limit: number = 10) {

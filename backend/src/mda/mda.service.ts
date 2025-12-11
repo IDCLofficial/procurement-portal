@@ -48,7 +48,7 @@ export class MdaService {
     return MdaNames;
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return this.MdaModel.findById(id);
   }
 

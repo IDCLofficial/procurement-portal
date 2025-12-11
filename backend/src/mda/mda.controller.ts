@@ -54,7 +54,7 @@ export class MdaController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'MDA not found' })
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.mdaService.findOne(+id);
+    return this.mdaService.findOne(id);
   }
 
   @ApiOperation({ summary: 'Update MDA' })

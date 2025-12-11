@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } from './entities/application.schema';
@@ -249,7 +249,22 @@ export class ApplicationsService {
         
         // If status changed to APPROVED, generate certificate
         if (newStatus === ApplicationStatus.APPROVED) {
-          await this.generateCertificate(application);
+          const certificate = await this.generateCertificate(application);
+          if(!certificate){
+            throw new ConflictException("failed to generate certificate")
+          }
+          try{
+            await this.vendorModel.findOneAndUpdate({
+              _id:certificate.contractorId
+            }, {
+              $set: {
+                certificateId:certificate.certificateId
+              }
+            })
+          }catch(e){
+            this.logger.error(e)
+            throw new ConflictException("failed to update vendor document")
+          }
           // Log approval activity
           await this.vendorsService.createActivityLog(
             (application.companyId as any).userId,

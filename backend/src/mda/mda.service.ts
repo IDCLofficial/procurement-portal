@@ -16,9 +16,37 @@ export class MdaService {
     return newMda;
   }
 
-  async findAll() {
+  async findAll(page: number = 1, limit: number = 10) {
+    const pageNum = page && page > 0 ? page : 1;
+    const limitNum = limit && limit > 0 ? limit : 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [mdas, total] = await Promise.all([
+      this.MdaModel.find({})
+        .skip(skip)
+        .limit(limitNum)
+        .exec(),
+      this.MdaModel.countDocuments().exec(),
+    ]);
+
+    return {
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum) || 1,
+      mdas,
+    };
+  }
+
+  async findAllByNames() {
     const Mdas = await this.MdaModel.find({})
-    return Mdas;
+
+    const MdaNames = Mdas.map((mda)=>{
+      return {
+        name:mda.name
+      }
+    })
+    return MdaNames;
   }
 
   findOne(id: number) {

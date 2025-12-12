@@ -19,6 +19,59 @@ export class NotificationsService {
   /**
    * Check and notify for documents expiring within 7 days
    */
+  async getVendorNotifications(
+    vendorId: string,
+    filters: { filter: 'all' | 'read' | 'unread'; search: string },
+    pagination: { page: number; limit: number; skip: number }
+  ) {
+    const { filter, search } = filters;
+    const { limit, skip } = pagination;
+
+    // Build the query
+    const query: any = { 
+      $or: [
+        { vendorId: new Types.ObjectId(vendorId) },
+        { recipientId: new Types.ObjectId(vendorId) }
+      ]
+    };
+
+    // Apply read/unread filter
+    if (filter === 'read') {
+      query.isRead = true;
+    } else if (filter === 'unread') {
+      query.isRead = false;
+    }
+
+    // Apply search if provided
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { message: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Get total count for pagination
+    const total = await this.notificationModel.countDocuments(query);
+
+    // Get paginated results
+    const notifications = await this.notificationModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    return {
+      data: notifications,
+      pagination: {
+        total,
+        page: pagination.page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      }
+    };
+  }
+
   async checkExpiringDocuments() {
     const now = new Date();
     const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -76,11 +129,12 @@ export class NotificationsService {
    */
   async checkExpiredDocuments() {
     const now = new Date();
+    console.log(now.toLocaleDateString())
     
     const expiredDocuments = await this.documentModel.find({
       $or: [
-        { validTo: { $eq: now } },
-        { validTo: { $lt: now } }
+        { validTo: { $eq: now.toLocaleDateString() } },
+        { validTo: { $lt: now.toLocaleDateString() } }
       ]
     }).populate('vendor');
 

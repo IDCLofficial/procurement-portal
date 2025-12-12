@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UnauthorizedException, HttpStatus, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { NotificationsService } from './notifications.service';
+import { Controller, Get, HttpStatus, Req, UseGuards, Query, UnauthorizedException, Delete, Param, Post, Body, Patch } from '@nestjs/common';
+import { ApiBearerAuth, ApiResponse, ApiTags, ApiQuery, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
+import { NotificationsService } from './notifications.service';
+import { Logger } from '@nestjs/common';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
@@ -27,28 +28,44 @@ export class NotificationsController {
     description: 'Unauthorized.',
   })
   @Get('vendor-notification')
+  @ApiQuery({ name: 'filter', required: false, enum: ['all', 'read', 'unread'], description: 'Filter notifications by read status' })
+  @ApiQuery({ name: 'search', required: false, description: 'Search term to filter notifications' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (starts from 1)', type: Number })
+  @ApiQuery({ name: 'limit', required: false, description: 'Number of items per page (max 100)', type: Number })
   async vendorNotifications(
-    @Req() req:any,
-    @Query() query:{
-      isRead?:boolean
-    } 
-  ) {
-    try{
-      const header = req.headers.authorization;
-      if(!header){
-        this.logger.log(`Authorization header missing`);
-        throw new UnauthorizedException('Unauthorized');
-      }
-      const vendorId = this.jwtService.decode(header.split(" ")[1])._id;
-      if(!vendorId){
-        this.logger.log(`Unauthorized user trying to access the endpoint`);
-        throw new UnauthorizedException('Unauthorized');
-      }
-      return await this.notificationsService.findVendorNotifications(vendorId, query);
-    }catch(err){
-      this.logger.log(`User is not authorized to access this endpoint`);
-      throw new UnauthorizedException('User is not authorized to access this endpoint');
+    @Req() req: any,
+    @Query() query: {
+      filter?: 'all' | 'read' | 'unread';
+      search?: string;
+      page?: number;
+      limit?: number;
     }
+  ) {
+    const filter = query.filter || 'all';
+    const search = query.search || '';
+    const page = query.page ? Math.max(1, parseInt(query.page.toString())) : 1;
+    const limit = query.limit ? Math.min(100, Math.max(1, parseInt(query.limit.toString()))) : 10;
+    const skip = (page - 1) * limit;
+
+    const header = req.headers.authorization;
+    if (!header) {
+      this.logger.log(`Authorization header missing`);
+      throw new UnauthorizedException('Unauthorized');
+    }
+    
+    const decoded = this.jwtService.decode(header.split(" ")[1]);
+    const vendorId = decoded?.['_id'];
+    
+    if (!vendorId) {
+      this.logger.log(`Unauthorized user trying to access the endpoint`);
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    return this.notificationsService.getVendorNotifications(
+      vendorId,
+      { filter, search },
+      { page, limit, skip }
+    );
   }
 
   /**

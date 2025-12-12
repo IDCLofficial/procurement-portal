@@ -79,7 +79,7 @@ export class InitializePaymentWithSplitDto {
   amount: number;
 
   @ApiProperty({ enum: ApplicationType, description: 'Payment type' })
-  @IsEnum(ApplicationType)
+  @IsEnum(paymentType)
   type: paymentType;
 
   @ApiProperty({ description: 'Payment description', example: 'Initial Registration - Works Grade A' })

@@ -42,10 +42,7 @@ export class MdaService {
   async findAllByNames(){
     const Mdas = await this.MdaModel.find({})
 
-    const MdaNames = Mdas.map((mda)=>({
-      name:mda.name
-    }))
-    return MdaNames;
+    return Mdas;
   }
 
   findOne(id: string) {

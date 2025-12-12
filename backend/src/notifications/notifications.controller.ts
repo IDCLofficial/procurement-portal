@@ -248,6 +248,65 @@ export class NotificationsController {
     }
   }
 
+  /**
+   * Mark a single notification as read
+   * 
+   * @param notificationId - ID of the notification to mark as read
+   * @returns Success message
+   * 
+   * @example
+   * PATCH /notifications/mark-as-read/507f1f77bcf86cd799439011
+   */
+  @Patch('mark-as-read/:notificationId')
+  @ApiOperation({ 
+    summary: 'Mark notification as read', 
+    description: 'Marks a single notification as read for the currently authenticated user.'
+  })
+  @ApiParam({
+    name: 'notificationId',
+    description: 'ID of the notification to mark as read',
+    required: true
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Notification marked as read successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Notification marked as read' }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: HttpStatus.NOT_FOUND, 
+    description: 'Notification not found' 
+  })
+  @ApiResponse({ 
+    status: HttpStatus.UNAUTHORIZED, 
+    description: 'Unauthorized' 
+  })
+  async markAsRead(
+    @Req() req: any,
+    @Param('notificationId') notificationId: string
+  ) {
+    const header = req.headers.authorization;
+    if (!header) {
+      this.logger.log(`Authorization header missing`);
+      throw new UnauthorizedException('Unauthorized');
+    }
+    
+    const decoded = this.jwtService.decode(header.split(' ')[1]);
+    const userId = decoded?.['_id'];
+    
+    if (!userId) {
+      this.logger.log(`Unauthorized user trying to access the endpoint`);
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    await this.notificationsService.markAsRead(notificationId, userId);
+    return { message: 'Notification marked as read' };
+  }
+
   @ApiOperation({
     summary: 'Mark all admin notifications as read',
     description: 'Marks all admin notifications as read for the currently authenticated admin user.'

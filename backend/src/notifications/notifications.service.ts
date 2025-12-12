@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../users/entities/user.schema';
@@ -50,8 +50,12 @@ export class NotificationsService {
       ];
     }
 
-    // Get total count for pagination
-    const total = await this.notificationModel.countDocuments(query);
+    // Get counts for all, read, and unread notifications
+    const [total, readCount, unreadCount] = await Promise.all([
+      this.notificationModel.countDocuments(query),
+      this.notificationModel.countDocuments({ ...query, isRead: true }),
+      this.notificationModel.countDocuments({ ...query, isRead: false })
+    ]);
 
     // Get paginated results
     const notifications = await this.notificationModel
@@ -62,7 +66,10 @@ export class NotificationsService {
       .lean();
 
     return {
-      data: notifications,
+      notifications: notifications,
+      total: total,
+      totalRead: readCount,
+      totalUnread: unreadCount,
       pagination: {
         total,
         page: pagination.page,
@@ -70,6 +77,30 @@ export class NotificationsService {
         totalPages: Math.ceil(total / limit),
       }
     };
+  }
+
+  /**
+   * Mark a single notification as read
+   * @param notificationId - ID of the notification to mark as read
+   * @param userId - ID of the user making the request
+   * @throws {NotFoundException} If notification is not found or doesn't belong to user
+   */
+  async markAsRead(notificationId: string, userId: string): Promise<void> {
+    const notification = await this.notificationModel.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(notificationId),
+        $or: [
+          { vendorId: new Types.ObjectId(userId) },
+          { recipientId: new Types.ObjectId(userId) }
+        ]
+      },
+      { $set: { isRead: true } },
+      { new: true }
+    );
+
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
   }
 
   async checkExpiringDocuments() {

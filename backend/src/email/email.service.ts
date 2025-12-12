@@ -25,7 +25,7 @@ export class EmailService {
       throw new Error('RESEND_API_KEY is required');
     }
     this.resend = new Resend(emailConfig.apiKey);
-    
+
     // Cleanup expired OTPs every 5 minutes to prevent memory leaks
     setInterval(() => this.cleanupExpiredOtps(), 5 * 60 * 1000);
   }
@@ -50,7 +50,7 @@ export class EmailService {
       code,
       expiresAt,
       verified: false,
-      attempts: 0
+      attempts: 0,
     });
 
     // Clean up expired OTPs
@@ -60,15 +60,21 @@ export class EmailService {
   }
 
   // Verify an OTP code for an email
-  verifyOtp(email: string, code: string): { isValid: boolean; message?: string } {
+  verifyOtp(
+    email: string,
+    code: string,
+  ): { isValid: boolean; message?: string } {
     const otpRecord = this.otpStore.get(email);
-    
+
     if (!otpRecord) {
       return { isValid: false, message: 'No OTP found for this email' };
     }
 
     if (otpRecord.attempts >= MAX_OTP_ATTEMPTS) {
-      return { isValid: false, message: 'Maximum verification attempts exceeded' };
+      return {
+        isValid: false,
+        message: 'Maximum verification attempts exceeded',
+      };
     }
 
     if (new Date() > otpRecord.expiresAt) {
@@ -77,9 +83,9 @@ export class EmailService {
 
     if (otpRecord.code !== code) {
       otpRecord.attempts += 1;
-      return { 
-        isValid: false, 
-        message: `Invalid OTP. ${MAX_OTP_ATTEMPTS - otpRecord.attempts} attempts remaining.` 
+      return {
+        isValid: false,
+        message: `Invalid OTP. ${MAX_OTP_ATTEMPTS - otpRecord.attempts} attempts remaining.`,
       };
     }
 
@@ -92,18 +98,20 @@ export class EmailService {
     try {
       const otp = this.createOtp(email);
       const emailConfig = this.configService.get('email');
-      
+
       const emailHtml = `
         <div style='padding:1rem 2rem; align-items:center; justify-content:center; display:block'> 
           <div style="padding:1rem; display:block">
               <img src="https://images.unsplash.com/photo-1748959504388-9eb3143984e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" style="width:80px; height:60px; border-radius:10px"/>
-              <h2 style="font-family: Arial, sans-serif; font-weight:500; text-align:center;">Hi ${userName.split(" ")[0]}, Your Signup verification <br/>Code</h2>
+              <h2 style="font-family: Arial, sans-serif; font-weight:500; text-align:center;">Hi ${userName.split(' ')[0]}, Your Signup verification <br/>Code</h2>
             <div style="display:flex; align-items:center; justify-content:center; gap:1rem">
-              ${otp.split("").map((str)=>`
+              ${otp.split('').map(
+                (str) => `
                <div style="height:50px; width:50px; padding:1rem; background-color:red; box-shadow:0px 0px 8px 0px rgba(0,0,0,0.1); background-color:#fff; border-radius:10px; border:1px solid #e8e8e8; display:flex; align-items:center">
                 ${str}
                </div>
-              `)}
+              `,
+              )}
             </div>
             <p style="color:rgba(130,130,130,0.86)">This code will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
             <p style="color:rgba(130,130,130,0.66); font-family: Arial, sans-serif;">Don't share this code to anyone!</p>
@@ -149,22 +157,59 @@ export class EmailService {
       });
 
       if (result.error) {
-        this.logger.error('Failed to send OTP email:', result.error);        
-        throw new ConflictException(`Failed to send email`)
+        this.logger.error('Failed to send OTP email:', result.error);
+        throw new ConflictException(`Failed to send email`);
       }
 
       this.logger.log(`OTP sent successfully to ${email}`);
       return true;
     } catch (error) {
       this.logger.error('Error sending OTP email:', error);
-      
+
       // Don't hide the actual error in development
       if (error instanceof ConflictException) {
         throw error;
       }
-      
-      throw new ConflictException('Failed to send verification email. Please try again.')
+
+      throw new ConflictException(
+        'Failed to send verification email. Please try again.',
+      );
     }
+  }
+
+  async sendResetPasswordLink(resetLink: string, email: string) {
+    const emailConfig = this.configService.get('email');
+    const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2>Password Reset Request</h2>
+              <p>You requested to reset your password. Click the button below to set a new password:</p>
+              <a href="${resetLink}" style="
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #4CAF50;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                margin: 20px 0;
+              ">Reset Password</a>
+              <p>Or copy and paste this link into your browser:</p>
+              <p>${resetLink}</p>
+              <p>This link will expire in 1 hour.</p>
+              <p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>
+            </div>
+          `;
+
+    await this.resend.emails.send({
+      from: emailConfig?.from || 'noreply@procurement.gov.ng',
+      to: [email],
+      subject: 'Password Reset Request',
+      html: emailHtml,
+    });
+
+    return {
+      message:
+        'If an account with this email exists, a password reset link has been sent',
+    };
   }
 
   // Clean up expired OTPs from the store

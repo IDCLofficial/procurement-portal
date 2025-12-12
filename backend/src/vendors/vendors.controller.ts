@@ -10,6 +10,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtService } from '@nestjs/jwt';
 import { replaceDocumentDto } from './dto/replace-document.dto';
 import { changePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('vendors')
 @Controller('vendors')
@@ -120,6 +122,96 @@ export class VendorsController {
 
     return this.vendorsService.changePassword(decodedId, body)
     
+  }
+
+  /**
+   * Request a password reset link
+   * 
+   * @param body - Email address for password reset
+   * @returns Success message
+   * 
+   * @example
+   * POST /vendors/forgot-password
+   * Body: {
+   *   "email": "user@example.com"
+   * }
+   */
+  @Post('forgot-password')
+  @ApiOperation({ 
+    summary: 'Request password reset', 
+    description: 'Sends a password reset link to the provided email address if an account exists'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'If the email exists, a password reset link has been sent',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'If an account with this email exists, a password reset link has been sent'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: 'Failed to send password reset email' 
+  })
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    return this.vendorsService.forgotPassword(body.email);
+  }
+
+  /**
+   * Reset password using a valid reset token
+   * 
+   * @param body - Reset password data including token and new password
+   * @returns Success message
+   * 
+   * @example
+   * POST /vendors/reset-password
+   * Body: {
+   *   "token": "valid-jwt-token",
+   *   "password": "NewSecurePassword123!",
+   *   "confirmPassword": "NewSecurePassword123!"
+   * }
+   */
+  @Post('reset-password')
+  @ApiOperation({ 
+    summary: 'Reset password', 
+    description: 'Reset password using a valid reset token'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Password has been reset successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Password has been reset successfully'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'Invalid/expired token or passwords do not match' 
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'User not found' 
+  })
+  async resetPassword(@Body() body: ResetPasswordDto, @Req() req:any) {
+    const authHeader =  req.headers.authorization;
+    const decodedToken = this.jwtService.decode(authHeader.split(' ')[1]);
+    if (!authHeader || !decodedToken) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    const vendorId = decodedToken._id;
+   
+    
+    return this.vendorsService.resetPassword(vendorId, body);
   }
 
   /**

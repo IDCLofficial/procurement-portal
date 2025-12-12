@@ -23,6 +23,7 @@ import { VendorActivityLog, VendorActivityLogDocument, ActivityType } from './en
 import { renewRegistrationDto } from './dto/renew-registration-dto';
 import { replaceDocumentDto } from './dto/replace-document.dto';
 import { changePasswordDto } from './dto/change-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class VendorsService {
@@ -1310,6 +1311,87 @@ export class VendorsService {
       }
       this.Logger.error(`Error replacing document: ${err.message}`);
       throw new BadRequestException('Failed to replace document');
+    }
+  }
+
+  /**
+   * Initiate password reset process
+   * 
+   * @param email - User's email address
+   * @returns Success message
+   * @throws {NotFoundException} If no vendor found with the email
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const vendor = await this.vendorModel.findOne({ email });
+    if (!vendor) {
+      // For security, don't reveal if the email exists or not
+      return { message: 'If an account with this email exists, a password reset link has been sent' };
+    }
+
+    try {
+      // Generate a password reset token (valid for 1 hour)
+      const resetToken = this.tokenHandlers.generateToken({
+        id: vendor._id, 
+        email: vendor.email,
+        expiresIn: '1h' // Token expires in 1 hour
+      });
+
+      // Send password reset email
+      const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+      
+      await this.emailService.sendResetPasswordLink(resetLink, email);
+      return { message: 'If an account with this email exists, a password reset link has been sent' };
+    } catch (error) {
+      this.Logger.error('Error sending password reset email:', error);
+      throw new InternalServerErrorException('Failed to send password reset email');
+    }
+  }
+
+  /**
+   * Reset user's password using a valid reset token
+   * 
+   * @param token - Password reset token
+   * @param newPassword - New password
+   * @returns Success message
+   * @throws {BadRequestException} If token is invalid or expired
+   * @throws {NotFoundException} If user not found
+   */
+  async resetPassword(vendorId:string, body:ResetPasswordDto): Promise<{ message: string }> {
+    try {
+      // Find the user
+      const vendor = await this.vendorModel.findById(vendorId);
+      if (!vendor) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Verify the token
+      if (body.password !== body.confirmPassword) {
+        throw new BadRequestException('Passwords do not match');
+      }
+      
+      // Hash the new password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(body.password, salt);
+
+      // Update the password
+      vendor.password = hashedPassword;
+      await vendor.save();
+
+      // Log the password reset activity
+      await this.createActivityLog(
+        vendor._id as Types.ObjectId,
+        ActivityType.PASSWORD_CHANGED,
+        'Password was reset using password reset link',
+        { resetVia: 'forgot-password' }
+      );
+
+      return { message: 'Password has been reset successfully' };
+    } catch (error) {
+      if (error.name === 'JsonWebTokenError') {
+        throw new BadRequestException('Invalid token');
+      }
+      this.Logger.error(error.message)
+      throw new ConflictException('An error occured');
     }
   }
 }

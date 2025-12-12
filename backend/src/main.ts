@@ -35,7 +35,8 @@ async function bootstrap() {
         'http://192.168.64.98:3000',
         'http://192.168.59.98:3000',
         'https://procurement-portal-2.onrender.com',
-        'https://procurement-portal-mu.vercel.app'
+        'https://procurement-portal-mu.vercel.app',
+        'https://procurement-portal-git-main-free-trials-4ef1693e.vercel.app'
       ];
 
       // Allow ngrok URLs

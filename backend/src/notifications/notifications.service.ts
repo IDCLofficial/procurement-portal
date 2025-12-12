@@ -51,10 +51,12 @@ export class NotificationsService {
     }
 
     // Get counts for all, read, and unread notifications
-    const [total, readCount, unreadCount] = await Promise.all([
+    const [total, readCount, unreadCount, critical, highPriority] = await Promise.all([
       this.notificationModel.countDocuments(query),
       this.notificationModel.countDocuments({ ...query, isRead: true }),
-      this.notificationModel.countDocuments({ ...query, isRead: false })
+      this.notificationModel.countDocuments({ ...query, isRead: false }),
+      this.notificationModel.countDocuments({ ...query, priority: priority.CRITICAL }),
+      this.notificationModel.countDocuments({ ...query, priority: priority.HIGH }),
     ]);
 
     // Get paginated results
@@ -70,6 +72,8 @@ export class NotificationsService {
       total: total,
       totalRead: readCount,
       totalUnread: unreadCount,
+      totalHigh: highPriority,
+      totalCritical: critical,
       pagination: {
         total,
         page: pagination.page,

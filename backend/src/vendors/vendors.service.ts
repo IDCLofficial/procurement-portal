@@ -866,7 +866,10 @@ export class VendorsService {
       tin:" ",
       address:" ",
       lga:" ",
-      categories:[],
+      category:{
+        sector:"",
+        service:""
+      },
       userId:vendor._id
     })
     const savedCompany = await newCompany.save();

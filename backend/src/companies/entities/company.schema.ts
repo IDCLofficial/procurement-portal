@@ -57,10 +57,10 @@ export class Company {
 
     @Prop({ 
         required: false, 
-        type: Object,
-        default:{sector:"", service:" "}
+        type: String,
+        default:""
     })
-    category?: category
+    category?: string
 
     @Prop({
         required:false,

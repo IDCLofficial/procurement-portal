@@ -143,7 +143,7 @@ export class SplitPaymentService {
       const paymentId = await this.generatePaymentId();
 
       // Convert categories array to comma-separated string
-      const categoryString = company.category
+      const categoryString = company.category?.sector
 
       const payment = new this.paymentModel({
         paymentId,

@@ -109,7 +109,7 @@ export class NotificationsService {
     
     const documents = await this.documentModel.find({
       validTo: {
-        $gte: now,
+        $gte: now.toISOString().split('T')[0],
         $lte: sevenDaysFromNow,
       },
     }).populate('vendor');
@@ -160,13 +160,12 @@ export class NotificationsService {
    */
   async checkExpiredDocuments() {
     const now = new Date();
-    console.log(now.toLocaleDateString())
     
     const expiredDocuments = await this.documentModel.find({
-      $or: [
-        { validTo: { $eq: now.toLocaleDateString() } },
-        { validTo: { $lt: now.toLocaleDateString() } }
-      ]
+      validTo: {
+        $lt: now.toISOString().split('T')[0], // Gets today's date in YYYY-MM-DD format
+        $ne: ''
+      },
     }).populate('vendor');
 
     let notificationsSent = 0;

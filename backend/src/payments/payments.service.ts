@@ -238,35 +238,29 @@ export class SplitPaymentService {
               applicationId: createApplication.applicationId,
             }
           );
-          try{
-            vendor.companyForm = companyForm.COMPLETE
-            await vendor.save();
-            //notifiy the vendor
+          vendor.companyForm = companyForm.COMPLETE
+          await vendor.save();
+          //notifiy the vendor
+          await this.notificationModel.create({
+            type: NotificationType.APPLICATION_SUBMITTED,
+            title: 'Application Submitted',
+            message: `Your payment has been recieved and your application has been submitted successfully. It may take around 1-7 working days for your documents to be reviewed.`,
+            recipient: NotificationRecipient.VENDOR,
+            vendorId: vendor._id,
+            priority: priority.LOW,
+            isRead: false,
+          });
+          const admins = await this.userModel.find({ role: 'Admin' });
+          for (const admin of admins){
             await this.notificationModel.create({
               type: NotificationType.APPLICATION_SUBMITTED,
-              title: 'Application Submitted',
-              message: `Your payment has been recieved and your application has been submitted successfully. It may take around 1-7 working days for your documents to be reviewed.`,
-              recipient: NotificationRecipient.VENDOR,
-              vendorId: vendor._id,
-              priority: priority.LOW,
+              title: 'Application Recieved',
+              message: `${vendor.fullname} just submitted an application.`,
+              recipient: NotificationRecipient.ADMIN,
+              recipientId: admin._id,
+              priority: priority.HIGH,
               isRead: false,
             });
-            //notify the Admin
-            const admins = await this.userModel.find({ role: 'Admin' });
-            for (const admin of admins){
-              await this.notificationModel.create({
-                type: NotificationType.APPLICATION_SUBMITTED,
-                title: 'Application Recieved',
-                message: `${vendor.fullname} just submitted an application.`,
-                recipient: NotificationRecipient.ADMIN,
-                recipientId: admin._id,
-                priority: priority.HIGH,
-                isRead: false,
-              });
-            }
-          }catch(err){
-            this.logger.log(err)
-            throw new ConflictException('An Error occured notifying the user')
           }
         } else if(payment.type === paymentType.RENEWAL){
           const submitRenewalApp = await this.applicationService.createApplicationDoc(

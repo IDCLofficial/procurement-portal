@@ -38,7 +38,7 @@ export type category={
     service:string
 }
 export type categoryAndGrade={
-    category:category,
+    category:string,
     mda:string,
     grade:string
 }

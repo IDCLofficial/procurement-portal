@@ -80,7 +80,7 @@ export class NotificationsService {
     const expiredDocuments = await this.documentModel.find({
       $or: [
         { validTo: { $eq: now } },
-        { validTo: { $gt: now } }
+        { validTo: { $lt: now } }
       ]
     }).populate('vendor');
 
@@ -188,6 +188,7 @@ export class NotificationsService {
       message: notification.message,
       priority: notification.priority,
       createdAt: notification.createdAt,
+      isRead: notification.isRead
     }));
     
     return {

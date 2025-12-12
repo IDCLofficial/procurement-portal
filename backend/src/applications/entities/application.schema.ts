@@ -8,7 +8,8 @@ export enum ApplicationStatus {
     CLARIFICATION_REQUESTED = 'Clarification Requested',
     SLA_BREACH = 'SLA Breach',
     APPROVED = 'Approved',
-    REJECTED = 'Rejected'
+    REJECTED = 'Rejected',
+    VERIFIED='Verified'
 }
 
 export enum SLAStatus {

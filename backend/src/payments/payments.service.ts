@@ -324,6 +324,8 @@ export class SplitPaymentService {
             throw new ConflictException("failed to generate certificate")
           }
           try{
+            application.currentStatus = ApplicationStatus.VERIFIED
+            await application.save()
             await this.vendorModel.findOneAndUpdate({
               _id:certificate.contractorId
             }, {

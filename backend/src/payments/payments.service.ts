@@ -210,6 +210,10 @@ export class SplitPaymentService {
         );
 
         if(payment.type === paymentType.PROCESSINGFEE){
+          
+          vendor.companyForm = companyForm.COMPLETE
+          await vendor.save();
+          
           const createApplication = await this.applicationService.createApplicationDoc(
             ApplicationType.NEW,
             company,
@@ -238,8 +242,7 @@ export class SplitPaymentService {
               applicationId: createApplication.applicationId,
             }
           );
-          vendor.companyForm = companyForm.COMPLETE
-          await vendor.save();
+          
           //notifiy the vendor
           await this.notificationModel.create({
             type: NotificationType.APPLICATION_SUBMITTED,

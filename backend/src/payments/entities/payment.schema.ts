@@ -1,7 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { ApplicationType } from 'src/applications/entities/application.schema';
-import { category } from 'src/vendors/dto/update-registration.dto';
 
 export enum PaymentStatus {
     PENDING = 'pending',
@@ -35,7 +33,7 @@ export class Payment {
     @Prop({ required: true, enum: Object.values(PaymentStatus), default: PaymentStatus.PENDING })
     status: PaymentStatus;
 
-    @Prop({ required: true, enum: Object.values(ApplicationType) })
+    @Prop({ required: true, enum: Object.values(paymentType) })
     type: paymentType;
 
     @Prop({ required: true })

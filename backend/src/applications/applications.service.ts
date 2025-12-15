@@ -15,6 +15,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction, AuditSeverity, EntityType } from '../audit-logs/entities/audit-log.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PaymentDocument } from 'src/payments/entities/payment.schema';
+import { NotificationDocument, NotificationRecipient, NotificationType, priority } from 'src/notifications/entities/notification.entity';
 
 @Injectable()
 export class ApplicationsService {
@@ -26,6 +27,7 @@ export class ApplicationsService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
+    @InjectModel(Notification.name) private notificationModel:Model<NotificationDocument>,
     private vendorsService: VendorsService,
     private auditLogsService: AuditLogsService,
   ) {}
@@ -248,13 +250,31 @@ export class ApplicationsService {
         application.applicationTimeline.push(statusHistoryEntry);
         application.currentStatus = newStatus;
         
-        // If status changed to APPROVED, generate certificate
+        // If status changed to APPROVED, proceed to payment
         if (newStatus === ApplicationStatus.APPROVED) {
           await this.vendorsService.createActivityLog(
             (application.companyId as any).userId,
             ActivityType.APPROVED,
             `Application approved by Registrar, you can proceed to make payments for certicate issuance`
           );
+
+          const vendor = await this.vendorModel.findOne({
+            companyId:application.companyId
+          })
+
+          if(!vendor){
+            throw new NotFoundException("could not find a vendor")
+          }
+
+          await this.notificationModel.create({
+            type: NotificationType.APPLICATION_APPROVED,
+            title: 'Application approved',
+            message: `Your Application has been approved, please proceed to payment for certificate issuance.`,
+            recipient: NotificationRecipient.VENDOR,
+            vendorId: vendor._id,
+            priority: priority.LOW,
+            isRead: false,
+          });
         }
       }
       

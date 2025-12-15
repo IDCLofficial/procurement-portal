@@ -1353,15 +1353,15 @@ export class VendorsService {
    * @throws {BadRequestException} If token is invalid or expired
    * @throws {NotFoundException} If user not found
    */
-  async resetPassword(vendorId:string, body:ResetPasswordDto, token:string): Promise<{ message: string }> {
+  async resetPassword(body:ResetPasswordDto, token:string): Promise<{ message: string }> {
     try {
       //decode token
       const decodeToken = await this.jwtService.decode(token);
-      if(!decodeToken || !decodeToken.type || decodeToken.type !== 'password_reset'){
+      if(!decodeToken || decodeToken.type !== 'password_reset'){
         throw new UnauthorizedException('You are unauthorized to access this resource');
       }
       // Find the user
-      const vendor = await this.vendorModel.findById(vendorId);
+      const vendor = await this.vendorModel.findById(decodeToken.id);
       if (!vendor) {
         throw new NotFoundException('User not found');
       }

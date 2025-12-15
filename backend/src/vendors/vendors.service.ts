@@ -1392,6 +1392,7 @@ export class VendorsService {
         { resetVia: 'forgot-password' }
       );
 
+      this.Logger.log(`${vendor.fullname} has reset his password successfully`)
       return { message: 'Password has been reset successfully' };
     } catch (error) {
       if (error.name === 'JsonWebTokenError') {

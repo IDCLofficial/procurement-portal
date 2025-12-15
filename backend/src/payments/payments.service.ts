@@ -195,6 +195,12 @@ export class SplitPaymentService {
           throw new NotFoundException("Payment record not found");
         } 
 
+        // Find application using applicationId field instead of _id
+        const application = await this.applicationModel.findOne({ applicationId: payment.applicationId });
+        if (!application) {
+          throw new NotFoundException("Application not found for this payment");
+        }
+
         // Log payment completion activity
         await this.vendorService.createActivityLog(
           userId,
@@ -427,7 +433,6 @@ export class SplitPaymentService {
         this.paymentModel
           .find(query)
           .populate('companyId', 'companyName cacNumber email phoneNumber')
-          .populate('applicationId', 'applicationId currentStatus submissionDate')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)

@@ -15,7 +15,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction, AuditSeverity, EntityType } from '../audit-logs/entities/audit-log.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PaymentDocument } from 'src/payments/entities/payment.schema';
-import { NotificationDocument, NotificationRecipient, NotificationType, priority } from 'src/notifications/entities/notification.entity';
+import { Notification, NotificationDocument, NotificationRecipient, NotificationType, priority } from 'src/notifications/entities/notification.entity';
 
 @Injectable()
 export class ApplicationsService {

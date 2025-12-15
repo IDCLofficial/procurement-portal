@@ -47,6 +47,7 @@ export class SplitPaymentController {
   }
 
   @Get('all')
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all payments (Admin only)' })
   @ApiResponse({ status: 200, description: 'All payments retrieved successfully' })

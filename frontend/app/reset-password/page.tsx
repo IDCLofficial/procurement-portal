@@ -233,7 +233,6 @@ export default function ResetPasswordPage() {
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* New Password */}
-                            {/* Password */}
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>

@@ -25,10 +25,10 @@ export const vendorApi = apiSlice.injectEndpoints({
                 body,
             }),
         }),
-        changePassword: builder.mutation<unknown, { currentPassword: string, newPassword: string }>({
+        changePassword: builder.mutation<unknown, { currentPassword: string, newPassword: string, confirmPassword: string }>({
             query: (body) => ({
                 url: endpoints.changePassword,
-                method: 'POST',
+                method: 'PATCH',
                 body,
             }),
         }),

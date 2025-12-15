@@ -9,6 +9,7 @@ interface SettingsFieldProps {
     helperText?: string;
     badge?: React.ReactNode;
     icon?: React.ReactNode;
+    helperComponent?: React.ReactNode;
 }
 
 export default function SettingsField({
@@ -22,12 +23,16 @@ export default function SettingsField({
     helperText,
     badge,
     icon,
+    helperComponent,
 }: SettingsFieldProps) {
     return (
         <div>
-            <label htmlFor={name} className="block text-sm font-medium text-gray-900 mb-2">
-                {label}
-            </label>
+            <div className="flex items-center justify-between">
+                <label htmlFor={name} className="block text-sm font-medium text-gray-900 mb-2">
+                    {label}
+                </label>
+                {helperComponent}
+            </div>
             <div className="relative">
                 <input
                     id={name}

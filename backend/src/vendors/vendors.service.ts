@@ -1318,7 +1318,9 @@ export class VendorsService {
    * @throws {NotFoundException} If no vendor found with the email
    */
   async forgotPassword(email: string): Promise<{ message: string }> {
-    const vendor = await this.vendorModel.findOne({ email });
+    const vendor = await this.vendorModel.findOne({ 
+      email:email
+    });
     if (!vendor) {
       // For security, don't reveal if the email exists or not
       return { message: 'If an account with this email exists, a password reset link has been sent' };
@@ -1356,7 +1358,10 @@ export class VendorsService {
   async resetPassword(body:ResetPasswordDto, token:string): Promise<{ message: string }> {
     try {
       //decode token
-      const decodeToken = await this.jwtService.decode(token);
+      const decodeToken = await this.tokenHandlers.validateToken(token);
+
+      console.log(decodeToken)
+
       if(!decodeToken || decodeToken.type !== 'password_reset'){
         throw new UnauthorizedException('You are unauthorized to access this resource');
       }

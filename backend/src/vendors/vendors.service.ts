@@ -1332,7 +1332,9 @@ export class VendorsService {
         id: vendor._id, 
         email: vendor.email,
         type: 'password_reset',
-        expiresIn: '1h' // Token expires in 1 hour
+        expiresIn:'15 minutes'
+      },{
+        expiresIn:'15m'
       });
 
       // Send password reset email

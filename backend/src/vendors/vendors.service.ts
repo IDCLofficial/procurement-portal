@@ -1329,6 +1329,7 @@ export class VendorsService {
       const resetToken = this.tokenHandlers.generateToken({
         id: vendor._id, 
         email: vendor.email,
+        type: 'password_reset',
         expiresIn: '1h' // Token expires in 1 hour
       });
 
@@ -1352,8 +1353,13 @@ export class VendorsService {
    * @throws {BadRequestException} If token is invalid or expired
    * @throws {NotFoundException} If user not found
    */
-  async resetPassword(vendorId:string, body:ResetPasswordDto): Promise<{ message: string }> {
+  async resetPassword(vendorId:string, body:ResetPasswordDto, token:string): Promise<{ message: string }> {
     try {
+      //decode token
+      const decodeToken = await this.jwtService.decode(token);
+      if(!decodeToken || !decodeToken.type || decodeToken.type !== 'password_reset'){
+        throw new UnauthorizedException('You are unauthorized to access this resource');
+      }
       // Find the user
       const vendor = await this.vendorModel.findById(vendorId);
       if (!vendor) {
@@ -1361,13 +1367,13 @@ export class VendorsService {
       }
 
       // Verify the token
-      if (body.password !== body.confirmPassword) {
+      if (body.newPassword !== body.confirmPassword) {
         throw new BadRequestException('Passwords do not match');
       }
       
       // Hash the new password
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(body.password, salt);
+      const hashedPassword = await bcrypt.hash(body.newPassword, salt);
 
       // Update the password
       vendor.password = hashedPassword;

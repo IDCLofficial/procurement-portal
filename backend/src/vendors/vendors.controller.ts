@@ -202,7 +202,7 @@ export class VendorsController {
     status: 404, 
     description: 'User not found' 
   })
-  async resetPassword(@Body() body: ResetPasswordDto, @Req() req:any) {
+  async resetPassword(@Body() body: ResetPasswordDto, @Req() req:any, @Query('token') token:string) {
     const authHeader =  req.headers.authorization;
     const decodedToken = this.jwtService.decode(authHeader.split(' ')[1]);
     if (!authHeader || !decodedToken) {
@@ -211,7 +211,7 @@ export class VendorsController {
     const vendorId = decodedToken._id;
    
     
-    return this.vendorsService.resetPassword(vendorId, body);
+    return this.vendorsService.resetPassword(vendorId, body, token);
   }
 
   /**

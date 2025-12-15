@@ -318,20 +318,20 @@ export class SplitPaymentService {
             });
           }
         }else if(payment.type === paymentType.CERTIFICATEFEE){
-          const application = await this.applicationModel.findOne({
-            companyId:company._id,
-            applicationId:payment.applicationId
-          })
-          if(!application){
-            throw new NotFoundException("Application not found")
-          }
-          const certificate = await this.applicationService.generateCertificate(company._id);
-          if(!certificate){
-            throw new ConflictException("failed to generate certificate")
-          }
           try{
+            const application = await this.applicationModel.findOne({
+              companyId:company._id,
+              applicationId:payment.applicationId
+            })
+            if(!application){
+              throw new NotFoundException("Application not found")
+            }
+            const certificate = await this.applicationService.generateCertificate(company._id);
+            if(!certificate){
+              throw new ConflictException("failed to generate certificate")
+            }
             application.currentStatus = ApplicationStatus.VERIFIED
-            await application.save()
+            await application.save();
             await this.vendorModel.findOneAndUpdate({
               _id:certificate.contractorId
             }, {

@@ -164,7 +164,12 @@ export class VendorsService {
       throw new BadRequestException('Current password does not match')
     }
 
-    if (body.newPassword !== body.currentPassword){
+    const isCurrentPasswordAndNewSame = await bcrypt.compare(body.newPassword, vendor.password)
+    if(isCurrentPasswordAndNewSame){
+      throw new BadRequestException('New password cannot be thesame as current password')
+    }
+
+    if (body.newPassword !== body.confirmPassword){
       throw new BadRequestException('new password and confiirm password do not match')
     }
 
@@ -1362,8 +1367,6 @@ export class VendorsService {
       //decode token
       const decodeToken = await this.jwtService.verify(token);
 
-      console.log(decodeToken)
-
       if(!decodeToken || decodeToken.type !== 'password_reset'){
         throw new UnauthorizedException('You are unauthorized to access this resource');
       }
@@ -1401,7 +1404,7 @@ export class VendorsService {
         throw new BadRequestException('Invalid token');
       }
       this.Logger.error(error.message)
-      throw new ConflictException('An error occured');
+      throw new ConflictException(`An error occured: ${error.message}`);
     }
   }
 }

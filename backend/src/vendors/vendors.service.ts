@@ -1328,7 +1328,7 @@ export class VendorsService {
 
     try {
       // Generate a password reset token (valid for 1 hour)
-      const resetToken = this.tokenHandlers.generateToken({
+      const resetToken = this.jwtService.sign({
         id: vendor._id, 
         email: vendor.email,
         type: 'password_reset',
@@ -1358,7 +1358,7 @@ export class VendorsService {
   async resetPassword(body:ResetPasswordDto, token:string): Promise<{ message: string }> {
     try {
       //decode token
-      const decodeToken = await this.tokenHandlers.validateToken(token);
+      const decodeToken = await this.jwtService.verify(token);
 
       console.log(decodeToken)
 

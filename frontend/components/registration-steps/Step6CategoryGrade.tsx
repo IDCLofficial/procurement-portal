@@ -7,6 +7,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { MDAResponse } from '@/store/api/types';
 
 interface Sector {
     id: string;
@@ -25,18 +26,24 @@ interface Grade {
 interface Step6CategoryGradeProps {
     selectedSector: string;
     selectedGrade: string;
+    selectedMDA: string;
+    onMDAChange: (mda: string) => void;
     onSectorChange: (sector: string) => void;
     onGradeChange: (grade: string) => void;
     sectors: Sector[];
     grades: Grade[];
+    mdas: MDAResponse["mdas"];
 }
 
 export default function Step6CategoryGrade({
     selectedSector,
     selectedGrade,
+    selectedMDA,
+    onMDAChange,
     onSectorChange,
     onGradeChange,
     sectors,
+    mdas,
     grades,
 }: Step6CategoryGradeProps) {
 
@@ -49,7 +56,7 @@ export default function Step6CategoryGrade({
             {/* Sector Selection */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Select Ministry
+                    Select <span>Your Category <span className="text-red-500 text-lg">*</span></span>
                 </h3>
                 <Select value={selectedSector} onValueChange={(value)=>onSectorChange(value)}>
                     <SelectTrigger className="w-full h-auto min-h-12">
@@ -82,11 +89,40 @@ export default function Step6CategoryGrade({
                     </SelectContent>
                 </Select>
             </div>
+            <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Select <abbr title="Ministries, Departments, and Agencies (government bodies)">MDA</abbr> <span className="text-red-500 text-lg">*</span>
+                </h3>
+                {mdas && <Select value={selectedMDA} onValueChange={(value)=>onMDAChange(value)}>
+                    <SelectTrigger className="w-full h-auto min-h-12">
+                        <SelectValue placeholder="Select a ministry">
+                            {selectedMDA && (
+                                <div className="flex flex-col items-start gap-1 py-1">
+                                    <span className="font-semibold text-gray-900">
+                                        {mdas.find(s => s.name === selectedMDA)?.name}
+                                    </span>
+                                </div>
+                            )}
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {mdas.map((mda) => (
+                            <SelectItem key={mda.name} value={mda.name}>
+                                <div className="flex flex-col items-start gap-1 py-1">
+                                    <span className="font-semibold text-gray-900">
+                                        {mda.name}
+                                    </span>
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>}
+            </div>
 
             {/* Grade Selection */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Select Grade
+                    Select Grade <span className="text-red-500 text-lg">*</span>
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {grades.map((grade) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,16 +8,17 @@ import NotificationStatCard from '@/components/notifications/NotificationStatCar
 import NotificationTabs from '@/components/notifications/NotificationTabs';
 import NotificationCard from '@/components/notifications/NotificationCard';
 import NotificationInfoBox from '@/components/notifications/NotificationInfoBox';
-import { 
-    Bell, 
-    Clock, 
-    AlertCircle, 
+import {
+    Bell,
+    Clock,
+    AlertCircle,
     AlertTriangle,
     CheckCircle,
     XCircle,
     Search,
     Check,
-    Loader2
+    Loader2,
+    Loader
 } from 'lucide-react';
 import SubHeader from '@/components/SubHeader';
 import { useGetMyNotificationsQuery, useMarkNotificationAsReadMutation } from '@/store/api/vendor.api';
@@ -25,6 +26,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { useSearchParams } from 'next/navigation';
 import { updateSearchParam } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useSelector } from 'react-redux';
+import { selectNotificationData, selectNotificationError, selectNotificationLoading } from '@/store/slices/notificationsSlice';
 
 // Helper function to get icon and styling based on priority
 const getPriorityConfig = (priority: string) => {
@@ -58,30 +61,35 @@ const getPriorityConfig = (priority: string) => {
 };
 
 export default function NotificationsPage() {
+    const data = useSelector(selectNotificationData);
+    const isLoading = useSelector(selectNotificationLoading);
+    const error = useSelector(selectNotificationError);
     const searchQuery = useSearchParams().get('q') || '';
     const filter = useSearchParams().get('filter') || '';
-    const [markNotificationAsRead, { isLoading: isMarkingNotificationAsRead }] = useMarkNotificationAsReadMutation();
+    const [page, setPage] = useState(1);
+    const notificationsRef = useRef<HTMLDivElement>(null);
 
+    const [markNotificationAsRead, { isLoading: isMarkingNotificationAsRead }] = useMarkNotificationAsReadMutation();
+    
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
     
     // Fetch notifications from API
-    const { data, isLoading, error } = useGetMyNotificationsQuery({
+    const { refetch } = useGetMyNotificationsQuery({
         filter,
+        limit: 10 * page,
         search: debouncedSearchQuery,
     });
 
-    const { notification: apiNotifications } = data || {};
-
     // Transform API data to match component format
     const notifications = useMemo(() => {
-        if (!apiNotifications) return [];
+        if (!data?.notifications) return [];
         
-        return apiNotifications.map((notif, index) => {
+        return data.notifications.map((notif) => {
             const priorityConfig = getPriorityConfig(notif.priority);
             const timestamp = formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true });
             
             return {
-                id: String(index + 1),
+                id: notif._id,
                 icon: priorityConfig.icon,
                 title: notif.title,
                 message: notif.message,
@@ -89,49 +97,32 @@ export default function NotificationsPage() {
                 badge: priorityConfig.badge,
                 actionLabel: notif.priority.toLowerCase() === 'critical' ? 'Take Action' : 'View Details',
                 borderColor: priorityConfig.borderColor,
-                isRead: false, // Default to unread, can be enhanced with backend support
+                isRead: notif.isRead,
                 isPinned: notif.priority.toLowerCase() === 'critical', // Pin critical notifications
                 category: notif.priority.toLowerCase() === 'critical' ? 'unread' : 'all',
             };
         });
-    }, [apiNotifications]);
+    }, [data]);
 
     // Calculate stats
     const stats = useMemo(() => {
-        const total = notifications.length;
-        const unread = notifications.filter(n => !n.isRead).length;
-        const critical = notifications.filter(n => n.badge.text === 'Critical').length;
-        const highPriority = notifications.filter(n => n.badge.text === 'High Priority').length;
-        const team = notifications.filter(n => n.category === 'team').length;
+        const total = data?.total || 0;
+        const unread = data?.totalRead || 0;
+        const critical = data?.totalCritical || 0;
+        const highPriority = data?.totalHigh || 0;
+        const read = data?.totalUnread || 0;
         
-        return { total, unread, critical, highPriority, team };
-    }, [notifications]);
-
-    const filteredNotifications = notifications.filter((notif) => {
-        if (filter === 'unread') return !notif.isRead;
-        if (filter === 'team') return notif.category === 'team';
-        return true;
-    });
-
-    const handleMarkAsRead = (id: string) => {
-        console.log('Mark as read:', id);
-    };
-
-    const handleDelete = (id: string) => {
-        console.log('Delete notification:', id);
-    };
-
-    const handleAction = (id: string) => {
-        console.log('Action clicked:', id);
-    };
+        return { total, unread, critical, highPriority, read };
+    }, [data]);
 
     const handleMarkAllAsRead = () => {
         if (isMarkingNotificationAsRead) return;
         markNotificationAsRead();
+        refetch();
     };
 
     // Show loading state
-    if (isLoading) {
+    if (isLoading && !data) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
@@ -155,7 +146,7 @@ export default function NotificationsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div ref={notificationsRef} className="max-h-screen overflow-y-auto bg-gray-50">
             <SubHeader
                 title='Notifications'
                 hasBackButton
@@ -164,7 +155,7 @@ export default function NotificationsPage() {
                         variant="outline"
                         onClick={handleMarkAllAsRead}
                         disabled={isMarkingNotificationAsRead}
-                        className="bg-teal-600 hover:bg-teal-700 text-white hover:text-white"
+                        className="bg-teal-600 hover:bg-teal-700 text-white hover:text-white cursor-pointer"
                     >
                         {isMarkingNotificationAsRead ? <span>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
@@ -174,7 +165,7 @@ export default function NotificationsPage() {
                 }
             />
 
-            <div className="container mx-auto px-4 py-8 max-w-5xl">
+            <div className="container mx-auto px-4 py-8 max-w-5xl h-fit">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <NotificationStatCard
@@ -219,6 +210,13 @@ export default function NotificationsPage() {
                                 onChange={(e) => updateSearchParam("q", e.target.value)}
                                 className="pl-10 bg-white border-gray-200"
                             />
+                            {searchQuery && isLoading && <Button
+                                variant="ghost"
+                                onClick={() => updateSearchParam("q", "")}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                            >
+                                <Loader className="w-4 h-4 animate-spin inline" />
+                            </Button>}
                         </div>
                     </div>
                 </div>
@@ -231,7 +229,7 @@ export default function NotificationsPage() {
                         counts={{
                             all: stats.total,
                             unread: stats.unread,
-                            team: stats.team,
+                            read: stats.read,
                         }}
                     />
                 </div>
@@ -241,7 +239,7 @@ export default function NotificationsPage() {
                     className="space-y-4 mb-6"
                     layout
                 >
-                    {filteredNotifications.length === 0 ? (
+                    {notifications.length === 0 ? (
                         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
                             <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
@@ -249,7 +247,7 @@ export default function NotificationsPage() {
                         </div>
                     ) : (
                         <AnimatePresence mode="popLayout">
-                            {filteredNotifications.map((notification) => (
+                            {notifications.map((notification) => (
                                 <motion.div
                                     key={notification.id}
                                     layout
@@ -264,15 +262,34 @@ export default function NotificationsPage() {
                                 >
                                     <NotificationCard
                                         {...notification}
-                                        onMarkAsRead={handleMarkAsRead}
-                                        onDelete={handleDelete}
-                                        onAction={handleAction}
                                     />
                                 </motion.div>
                             ))}
                         </AnimatePresence>
                     )}
                 </motion.div>
+
+                <div className="flex justify-center">
+                    {
+                        isLoading ? (
+                            <Button
+                                variant="ghost"
+                                disabled
+                                className="my-6 cursor-pointer"
+                            >
+                                <Loader className="w-4 h-4 animate-spin inline" />
+                            </Button>
+                        ) : (
+                            data?.pagination?.totalPages ? <Button
+                                variant="outline"
+                                onClick={() => setPage(page + 1)}
+                                className="my-6 cursor-pointer"
+                            >
+                                Load More
+                            </Button> : <></>
+                        )
+                    }
+                </div>
 
                 {/* Info Box */}
                 <NotificationInfoBox

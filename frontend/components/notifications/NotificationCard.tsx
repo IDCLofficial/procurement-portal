@@ -1,8 +1,9 @@
 'use client';
 
-import { Check, CheckCheck, Trash2 } from 'lucide-react';
+import { Check, CheckCheck, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useMarkNotificationAsReadByIdMutation, useDeleteNotificationByIdMutation, useGetMyNotificationsQuery } from '@/store/api/vendor.api';
 
 interface NotificationCardProps {
     id: string;
@@ -14,12 +15,8 @@ interface NotificationCardProps {
         text: string;
         variant: 'default' | 'warning' | 'success' | 'destructive';
     };
-    actionLabel?: string;
     borderColor: string;
     isRead: boolean;
-    onMarkAsRead: (id: string) => void;
-    onDelete: (id: string) => void;
-    onAction?: (id: string) => void;
 }
 
 export default function NotificationCard({
@@ -29,12 +26,8 @@ export default function NotificationCard({
     message,
     timestamp,
     badge,
-    actionLabel,
     borderColor,
     isRead,
-    onMarkAsRead,
-    onDelete,
-    onAction,
 }: NotificationCardProps) {
     const getBadgeVariant = (variant: string) => {
         switch (variant) {
@@ -47,6 +40,21 @@ export default function NotificationCard({
             default:
                 return 'bg-blue-100 text-blue-700 hover:bg-blue-100';
         }
+    };
+
+    const [markNotificationAsReadById, { isLoading: isMarkingNotificationAsReadById }] = useMarkNotificationAsReadByIdMutation();
+    const [deleteNotificationById, { isLoading: isDeletingNotificationById }] = useDeleteNotificationByIdMutation();
+
+    const { isLoading, refetch } = useGetMyNotificationsQuery();
+
+    const handleMarkAsRead = (id: string) => {
+        markNotificationAsReadById(id);
+        refetch();
+    };
+
+    const handleDelete = (id: string) => {
+        deleteNotificationById(id);
+        refetch();
     };
 
     return (
@@ -66,11 +74,12 @@ export default function NotificationCard({
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => onMarkAsRead(id)}
-                                    className="h-8 w-8 p-0"
+                                    onClick={() => handleMarkAsRead(id)}
+                                    disabled={isMarkingNotificationAsReadById || isLoading}
+                                    className="h-8 w-8 p-0 cursor-pointer"
                                     title="Mark as read"
                                 >
-                                    <Check className="w-4 h-4 text-gray-600" />
+                                    {(isMarkingNotificationAsReadById || isLoading) ? <Loader2 className="w-4 h-4 animate-spin text-gray-600" /> : <Check className="w-4 h-4 text-gray-600" />}
                                 </Button>
                                 : 
                                 <CheckCheck className="w-4 h-4 text-gray-600" />
@@ -78,11 +87,12 @@ export default function NotificationCard({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onDelete(id)}
-                                className="h-8 w-8 p-0"
+                                onClick={() => handleDelete(id)}
+                                disabled={isDeletingNotificationById || isLoading}
+                                className="h-8 w-8 p-0 cursor-pointer"
                                 title="Delete"
                             >
-                                <Trash2 className={`w-4 h-4 text-gray-600`} />
+                                {(isDeletingNotificationById || isLoading) ? <Loader2 className="w-4 h-4 animate-spin text-gray-600" /> : <Trash2 className={`w-4 h-4 text-gray-600`} />}
                             </Button>
                         </div>
                     </div>
@@ -97,17 +107,6 @@ export default function NotificationCard({
                             </Badge>
                         )}
                     </div>
-
-                    {actionLabel && onAction && (
-                        <Button
-                            variant="link"
-                            size="sm"
-                            onClick={() => onAction(id)}
-                            className="mt-3 p-0 h-auto text-teal-600 hover:text-teal-700"
-                        >
-                            {actionLabel}
-                        </Button>
-                    )}
                 </div>
             </div>
         </div>

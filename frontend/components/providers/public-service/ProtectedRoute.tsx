@@ -58,6 +58,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     }
     
     if (!isAuthenticated || !user || !user.isVerified) {
+        console.log("User not authenticated or not verified", {
+            isAuthenticated,
+            user,
+            isVerified: user?.isVerified
+        });
         return null;
     }
 

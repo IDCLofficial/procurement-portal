@@ -244,7 +244,7 @@ export default function ContractorTable() {
                                         <TableHead className="w-12">S/N</TableHead>
                                         <TableHead>Contractor Name</TableHead>
                                         <TableHead>CAC Number</TableHead>
-                                        <TableHead>Ministry/Ministries</TableHead>
+                                        <TableHead><abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></TableHead>
                                         <TableHead>Grade</TableHead>
                                         <TableHead>LGA</TableHead>
                                         <TableHead>Status</TableHead>

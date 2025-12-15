@@ -16,7 +16,12 @@ const initialState: CompanyState = {
 const companySlice = createSlice({
   name: 'company',
   initialState,
-  reducers: {},
+  reducers: {
+    clearCompany: (state) => {
+      state.data = null;
+      state.isLoading = false;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addMatcher(vendorApi.endpoints.getCompanyDetails.matchFulfilled, (state, action) => {
@@ -24,12 +29,14 @@ const companySlice = createSlice({
         state.isLoading = false;
       })
       .addMatcher(vendorApi.endpoints.completeVendorRegistration.matchFulfilled, (state, action) => {
+        console.log(action.payload);
+
         const result = action.payload.result;
         if (result && typeof (result.directors) === "object") {
           state.data!.directors = result.directors;
         }
         if (result && typeof (result.categories) === "object") {
-          state.data!.categories = result.categories;
+          state.data!.category = result.categories;
         }
         if (result && typeof (result.grade) === "string") {
           state.data!.grade = result.grade;
@@ -97,4 +104,6 @@ const companySlice = createSlice({
 // Selectors
 export const selectCompanyData = (state: RootState) => state.company.data;
 export const selectCompanyLoading = (state: RootState) => state.company.isLoading;
+
+export const { clearCompany } = companySlice.actions;
 export default companySlice.reducer;

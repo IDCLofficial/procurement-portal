@@ -89,7 +89,6 @@ export default function EditProfilePage() {
                                             name="legalCompanyName"
                                             value={company?.companyName || ""}
                                             onChange={() => {}}
-                                            disabled
                                         />
                                     </FormRow>
                                     <FormRow columns={2}>
@@ -98,14 +97,32 @@ export default function EditProfilePage() {
                                             name="cacNumber"
                                             value={company?.cacNumber || ""}
                                             onChange={() => {}}
-                                            disabled
                                         />
                                         <FormField
                                             label="TIN"
                                             name="tin"
                                             value={company?.tin || ""}
                                             onChange={() => {}}
-                                            disabled
+                                        />
+                                    </FormRow>
+                                    <FormRow columns={3}>
+                                        <FormField
+                                            label="MDA"
+                                            name="mda"
+                                            value={company?.mda || ""}
+                                            onChange={() => {}}
+                                        />
+                                        <FormField
+                                            label="Category"
+                                            name="category"
+                                            value={company?.category || ""}
+                                            onChange={() => {}}
+                                        />
+                                        <FormField
+                                            label="Grade"
+                                            name="grade"
+                                            value={company?.grade.toUpperCase() || ""}
+                                            onChange={() => {}}
                                         />
                                     </FormRow>
                                 </FormSection>
@@ -123,7 +140,6 @@ export default function EditProfilePage() {
                                             name="businessAddress"
                                             value={formData.businessAddress}
                                             onChange={() => {}}
-                                            disabled
                                         />
                                     </FormRow>
                                     <FormRow columns={2}>
@@ -134,14 +150,12 @@ export default function EditProfilePage() {
                                             value={formData.localGovernmentArea}
                                             options={lgaOptions}
                                             onChange={() => {}}
-                                            disabled
                                         />
                                         <FormField
                                             label="State"
                                             name="state"
                                             value={'Imo state'}
                                             onChange={()=>{}}
-                                            disabled
                                         />
                                     </FormRow>
                                     <FormRow columns={1}>
@@ -151,7 +165,6 @@ export default function EditProfilePage() {
                                             value={formData.companyWebsite}
                                             placeholder="www.yourcompany.com"
                                             onChange={() => {}}
-                                            disabled
                                         />
                                     </FormRow>
                                 </FormSection>
@@ -203,7 +216,6 @@ export default function EditProfilePage() {
                                         name="bankName"
                                         value={formData.bankName}
                                         onChange={() => {}}
-                                        disabled
                                     />
                                 </FormRow>
 
@@ -213,14 +225,12 @@ export default function EditProfilePage() {
                                         name="accountNumber"
                                         value={String(formData.accountNumber)}
                                         onChange={() => {}}
-                                        disabled
                                     />
                                     <FormField
                                         label="Account Name"
                                         name="accountName"
                                         value={formData.accountName}
                                         onChange={() => {}}
-                                        disabled
                                     />
                                 </FormRow>
 

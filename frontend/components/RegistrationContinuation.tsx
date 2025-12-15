@@ -18,7 +18,7 @@ import StepPlaceholder from '@/components/registration-steps/StepPlaceholder';
 import { FaTag } from 'react-icons/fa6';
 import { useAuth } from './providers/public-service/AuthProvider';
 import sirvClient from '@/lib/sirv.class';
-import { VendorSteps } from '@/store/api/enum';
+import { PaymentType, VendorSteps } from '@/store/api/enum';
 import { useCompleteVendorRegistrationMutation, useInitPaymentMutation } from '@/store/api/vendor.api';
 import { Loader2 } from 'lucide-react';
 import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
@@ -39,7 +39,7 @@ const steps = [
 
 
 export default function RegistrationContinuation() {
-    const { user, company: companyData, documents: presets, categories: categoriesData } = useAuth();
+    const { user, company: companyData, documents: presets, categories: categoriesData, mdas } = useAuth();
     const [isUploadingDocuments, setIsUploadingDocuments] = useState(false);
     const router = useRouter();
     const setStartPoint = useMemo(() => {
@@ -106,8 +106,9 @@ export default function RegistrationContinuation() {
     });
 
     // Step 6: Category & Grade
-    const [selectedSector, setSelectedSector] = useState<string>(companyData?.categories?.[0]?.sector || '');
+    const [selectedSector, setSelectedSector] = useState<string>(companyData?.category || '');
     const [selectedGrade, setSelectedGrade] = useState<string>(companyData?.grade || '');
+    const [selectedMDA, setSelectedMDA] = useState<string>(companyData?.mda || '');
 
     // Step 5: Documents
     const [documents, setDocuments] = useState<DocumentRequirement[]>(() => {
@@ -240,13 +241,15 @@ export default function RegistrationContinuation() {
     const handleConfirmPayment = async () => {
         if (!formData) return;
 
+        const payload = {
+            amount: getRegistrationFee() + 5000 + 2500,
+            type: PaymentType.PROCESSINGFEE,
+            description: `${formData.companyName}'s registration fee`,
+        }
+
         try {
             toast.loading('Initializing payment...', { id: "payment" });
-            const response = await initPayment({
-                amount: getRegistrationFee() + 5000 + 2500,
-                type: 'new',
-                description: `${formData.companyName}'s registration fee`,
-            });
+            const response = await initPayment(payload);
             toast.dismiss("payment");
             if (response.data) {
                 router.push(response.data.authorization_url);
@@ -621,14 +624,16 @@ export default function RegistrationContinuation() {
                 toast.error('Please select a grade');
                 return;
             }
-
-            const newCategories = [{ sector: selectedSector, service: '' }];
+            if (!selectedMDA) {
+                toast.error('Please select an MDA');
+                return;
+            }
 
             const madeAnUpdate = !deepEqual({
-                categories: newCategories,
+                category: selectedSector,
                 grade: selectedGrade,
             }, {
-                categories: companyData?.categories?.map(cat => ({ sector: cat.sector, service: cat.service })) || [],
+                category: companyData?.category,
                 grade: companyData?.grade || '',
             });
 
@@ -640,11 +645,11 @@ export default function RegistrationContinuation() {
 
             const payload = {
                 [VendorSteps.CATEGORIES_AND_GRADE]: {
-                    categories: newCategories,
+                    category: selectedSector,
                     grade: selectedGrade,
+                    mda: selectedMDA,
                 },
             };
-
 
             try {
                 toast.loading('Saving your sectors and grade...', { id: "sectorsAndGrade" });
@@ -746,6 +751,9 @@ export default function RegistrationContinuation() {
                         onSectorChange={setSelectedSector}
                         onGradeChange={setSelectedGrade}
                         sectors={sectors}
+                        mdas={mdas || []}
+                        selectedMDA={selectedMDA}
+                        onMDAChange={setSelectedMDA}
                         grades={grades}
                     />
                 );

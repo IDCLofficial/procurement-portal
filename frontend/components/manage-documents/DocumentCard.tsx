@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FaCheckCircle, FaTimes, FaExclamationCircle, FaUpload, FaFilePdf, FaFileImage, FaFileAlt, FaTrash } from 'react-icons/fa';
+import { FaCheckCircle, FaExclamationCircle, FaUpload, FaFilePdf, FaFileImage, FaFileAlt, FaTrash } from 'react-icons/fa';
 import { DownloadIcon, EyeIcon, Loader2 } from "lucide-react";
 import AlertBanner from './AlertBanner';
 import useFileDownload from '@useverse/usefiledownload';
@@ -35,7 +35,6 @@ interface DocumentCardProps {
     documentId?: string;
     documentPresetName?: string;
     onView?: () => void;
-    onClose?: () => void;
 }
 
 export default function DocumentCard({
@@ -55,7 +54,6 @@ export default function DocumentCard({
     documentId,
     documentPresetName,
     onView,
-    onClose,
 }: DocumentCardProps) {
     const { company, documents: docPresets } = useAuth();
     const [downloadStatus, startDownload] = useFileDownload();
@@ -167,6 +165,10 @@ export default function DocumentCard({
     };
 
     const handleUpload = useCallback(async () => {
+        if (status !== 'review') {
+            toast.error('Document is not in review status');
+            return;
+        }
         if (!selectedFile) {
             toast.error('Please select a file');
             return;
@@ -269,7 +271,7 @@ export default function DocumentCard({
         } finally {
             setIsUploading(false);
         }
-    }, [selectedFile, localValidFrom, localValidTo, company, documentId, title, docPresets, completeVendorRegistration, refetch, previewUrl, documentPresetName, hasValidityPeriod]);
+    }, [selectedFile, localValidFrom, localValidTo, company, documentId, title, docPresets, completeVendorRegistration, refetch, previewUrl, documentPresetName, hasValidityPeriod, status]);
 
     const config = statusConfig[status];
 
@@ -309,16 +311,6 @@ export default function DocumentCard({
                                 <DownloadIcon className="text-sm" />
                             )}
                         </Button>
-                        {(status === 'expiring' || status === 'expired') && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-gray-500 hover:text-gray-900"
-                                onClick={onClose}
-                            >
-                                <FaTimes className="text-sm" />
-                            </Button>
-                        )}
                     </div>
                 </div>
 
@@ -367,7 +359,7 @@ export default function DocumentCard({
                 )}
 
                 {/* Replace Document Section */}
-                {showReplaceSection && (status === 'expiring' || status === 'expired' || status === 'review' || status === 'required') && (
+                {showReplaceSection && (status === 'review' || status === 'required') && (
                     <div className="border-t border-gray-200 pt-3">
                         {!isReplacing && !selectedFile ? (
                             <>

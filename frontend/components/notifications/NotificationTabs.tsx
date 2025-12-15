@@ -8,7 +8,7 @@ interface NotificationTabsProps {
     counts: {
         all: number;
         unread: number;
-        team: number;
+        read: number;
     };
 }
 
@@ -16,7 +16,7 @@ export default function NotificationTabs({ activeTab, onTabChange, counts }: Not
     const tabs = [
         { value: 'all', label: `All (${counts.all})` },
         { value: 'unread', label: `Unread (${counts.unread})` },
-        { value: 'team', label: `Team (${counts.team})` },
+        { value: 'read', label: `Read (${counts.read})` },
     ];
 
     return (

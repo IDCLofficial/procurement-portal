@@ -161,10 +161,6 @@ export default function CertificatesPage() {
         }
     };
 
-    const handleMoreActions = (id: string) => {
-        console.log('More actions:', id);
-    };
-
     // Calculate metrics
     const totalCertificates = documents?.length || 0;
     const activeCertificates = displayCertificates.filter(c => {
@@ -401,7 +397,6 @@ export default function CertificatesPage() {
                                     documentId={cert._id}
                                     documentPresetName={cert.documentType}
                                     onView={() => handleViewCertificate(certId)}
-                                    onClose={() => handleMoreActions(certId)}
                                 />
                             );
                         })

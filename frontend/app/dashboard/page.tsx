@@ -73,7 +73,7 @@ export default function DashboardPage() {
     });
 
     // Calculate registration details
-    const registrationId = company?.cacNumber || user?.certificateId || 'N/A';
+    const registrationId = user?.certificateId || user?.certificateId || 'N/A';
     const validUntil = company?.createdAt ? format(new Date(new Date(company.createdAt).setFullYear(new Date(company.createdAt).getFullYear() + 1)), 'dd MMMM yyyy') : 'N/A';
     const daysRemaining = company?.createdAt ? differenceInDays(new Date(new Date(company.createdAt).setFullYear(new Date(company.createdAt).getFullYear() + 1)), new Date()) : 0;
     

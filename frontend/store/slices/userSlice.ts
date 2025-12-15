@@ -15,10 +15,15 @@ const initialState: UserState = {
 const userSlice = createSlice({
   name: 'user',
   initialState,
-  reducers: {},
+  reducers: {
+    clearUser: (state) => {
+      state.data = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addMatcher(vendorApi.endpoints.getProfile.matchFulfilled, (state, action) => {
+        console.log("Fired getProfile",action.payload);
         state.data = action.payload;
       })
       .addMatcher(vendorApi.endpoints.loginVendor.matchFulfilled, (state, action) => {
@@ -42,4 +47,5 @@ const userSlice = createSlice({
 // Selectors
 export const selectUserData = (state: RootState) => state.user.data;
 
+export const { clearUser } = userSlice.actions;
 export default userSlice.reducer;

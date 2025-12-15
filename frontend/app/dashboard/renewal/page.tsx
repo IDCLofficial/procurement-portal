@@ -11,10 +11,15 @@ import DocumentsRequiringUpdateSection from '@/components/renewal/DocumentsRequi
 import { FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 import { FaCreditCard } from 'react-icons/fa6';
 import SubHeader from '@/components/SubHeader';
+import { useAuth } from '@/components/providers/public-service/AuthProvider';
+import { formatDate } from 'date-fns';
 
 export default function RegistrationRenewalPage() {
+    const { company, user, application } = useAuth();
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(1);
+
+    if (!company || !user || !application) return null;
 
     const getStepStatus = (stepNumber: number): 'completed' | 'active' | 'pending' => {
         if (stepNumber < currentStep) return 'completed';
@@ -43,14 +48,13 @@ export default function RegistrationRenewalPage() {
         },
     ];
 
-    const categories = [
-        { category: 'WORKS', grade: 'Grade A' },
-        { category: 'ICT', grade: 'Grade A' },
-    ];
+    const categories = company.categories;
+    const grade = company.grade.toUpperCase();
+    const mda = company.mda;
 
     const verificationItems = [
-        { label: 'CAC Number', value: 'RC1234567' },
-        { label: 'TIN', value: 'TIN-12345678' },
+        { label: 'CAC Number', value: company.cacNumber },
+        { label: 'TIN', value: company.tin },
     ];
 
     const documentsRequiringUpdate = [
@@ -115,12 +119,18 @@ export default function RegistrationRenewalPage() {
                 {/* Step 1: Review Information */}
                 {currentStep === 1 && (
                     <>
+                        {/* <pre>{JSON.stringify({
+                            user,
+                            company,
+                            application
+                        }, null, 2)}</pre> */}
                         <Step1ReviewInformation
-                            registrationId="IMO-CONT-2024-001"
-                            companyName="ABC Construction Limited"
-                            currentExpiryDate="31 December 2024"
-                            newExpiryDate="31 December 2025"
+                            registrationId={"IMO-CONT-2024-001"}
+                            companyName={company.companyName}
+                            currentExpiryDate={formatDate(company.createdAt, 'dd MMMM yyyy')}
+                            newExpiryDate={formatDate(company.createdAt, 'dd MMMM yyyy')}
                             categories={categories}
+                            grade={grade}
                             verificationItems={verificationItems}
                             onUpdateCompanyInfo={handleUpdateCompanyInfo}
                         />

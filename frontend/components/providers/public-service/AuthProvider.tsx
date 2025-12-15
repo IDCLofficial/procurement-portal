@@ -1,6 +1,6 @@
 "use client"
 import { decrypt, encrypt } from '@/lib/crypto';
-import { Application, CompanyDetailsResponse, User } from '@/store/api/types';
+import { Application, CompanyDetailsResponse, MDAResponse, User } from '@/store/api/types';
 import { useGetCompanyDetailsQuery, useGetProfileQuery } from '@/store/api/vendor.api';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useContext, useMemo, useState } from 'react'
@@ -12,7 +12,7 @@ import { selectDocumentsLoading, selectDocumentsPresets } from '@/store/slices/d
 import { selectCategoriesData, selectCategoriesLoading } from '@/store/slices/categoriesSlice';
 import { selectApplicationData, selectApplicationLoading } from '@/store/slices/applicationSlice';
 import { DocumentRequirement, CategoriesResponse } from '@/store/api/types.d';
-import { useGetDocumentsPresetsQuery, useGetCategoriesQuery } from '@/store/api/helper.api';
+import { useGetDocumentsPresetsQuery, useGetCategoriesQuery, useGetMDAQuery } from '@/store/api/helper.api';
 import { useGetApplicationQuery } from '@/store/api/vendor.api';
 
 interface AuthContextType {
@@ -24,6 +24,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     documents: DocumentRequirement[] | null;
     categories: CategoriesResponse | null;
+    mdas: MDAResponse["mdas"] | undefined;
     isLoggingOut: boolean;
     clearToken: () => void;
     refresh: () => void;
@@ -81,6 +82,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         skip: !token || token === 'n/a',
     });
     const { refetch: refetchCategories } = useGetCategoriesQuery();
+    const { data: mdas, refetch: refetchMDA } = useGetMDAQuery();
     
     const { refetch: refetchApplication } = useGetApplicationQuery(undefined, {
         skip: !token || token === 'n/a',
@@ -106,9 +108,19 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Sync local token with slice token
     React.useEffect(() => {
         if (isLoading) return;
+
         if (tokenFromSlice === "n/a") {
-            setToken(null);
+            setToken((prev) => {
+                if (prev === null) {
+                    return null;
+                }
+                return prev;
+            });
+            return;
         }
+
+        // Only update if current token is null
+        setToken((prev) => prev === null ? tokenFromSlice : prev);
     }, [tokenFromSlice, isLoading]);
 
     const handleClearToken = useCallback(() => {
@@ -139,23 +151,32 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             refetchCompanyDetails();
             refetchDocumentsPresets();
             refetchCategories();
+            refetchMDA();
             refetchApplication();
         }
-    }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, refetchApplication, dispatch]);
+    }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, refetchMDA, refetchApplication, dispatch]);
+
+
+    React.useEffect(() => {
+        if (token && token !== 'n/a') {
+            refetchProfile();
+            refetchCompanyDetails();
+            refetchDocumentsPresets();
+            refetchCategories();
+            refetchMDA();
+            refetchApplication();
+        }
+    }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, refetchMDA, refetchApplication]); 
 
     const handleLogin = useCallback((token: string) => {
         const enc_token = encrypt(token);
         setToken(token);
         localStorage.setItem('token', enc_token);
         dispatch(login(token));
-
-        if (user) {
-            handleRefresh();
-        };
         
         router.replace('/dashboard');
         // User will be fetched automatically by useGetProfileQuery
-    }, [router, dispatch, handleRefresh, user]);
+    }, [router, dispatch]);
 
     const handleLogout = useCallback(() => {
         dispatch(logout());
@@ -173,11 +194,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         isLoggingOut,
         documents,
         categories,
+        mdas: mdas ? mdas.mdas : [],
         refresh: handleRefresh,
         login: handleLogin,
         logout: handleLogout,
         clearToken: handleClearToken,
-    }), [user, token, isLoading, isAuthenticated, isLoggingOut, documents, categories, handleRefresh, handleLogin, handleLogout, handleClearToken, company, application]);
+    }), [user, token, isLoading, isAuthenticated, isLoggingOut, documents, categories, mdas, handleRefresh, handleLogin, handleLogout, handleClearToken, company, application]);
 
     return (
         <AuthContext.Provider value={value}>

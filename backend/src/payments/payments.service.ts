@@ -133,9 +133,15 @@ export class SplitPaymentService {
       }
       
       const paymentReference = this.generateReference();
-      console.log(paymentReference)
+      console.log(paymentReference);
 
-      const result = await this.paystackSplitService.initializeTransaction(dto, user.email, paymentReference);
+      let result:any;
+
+      if(dto.type=paymentType.CERTIFICATEFEE){
+        result = await this.paystackSplitService.initializeTransaction(dto, user.email, paymentReference, '/dashboard');
+      }
+
+      result = await this.paystackSplitService.initializeTransaction(dto, user.email, paymentReference);
 
       //
 

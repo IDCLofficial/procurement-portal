@@ -10,6 +10,7 @@ import { VendorsModule } from '../vendors/vendors.module';
 import { Vendor, VendorSchema } from 'src/vendors/entities/vendor.schema';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { Notification, NotificationSchema } from 'src/notifications/entities/notification.entity';
+import { EmailService } from 'src/email/email.service';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { Notification, NotificationSchema } from 'src/notifications/entities/not
     AuditLogsModule
   ],
   controllers: [ApplicationsController],
-  providers: [ApplicationsService],
+  providers: [ApplicationsService, EmailService],
   exports: [ApplicationsService],
 })
 export class ApplicationsModule {}

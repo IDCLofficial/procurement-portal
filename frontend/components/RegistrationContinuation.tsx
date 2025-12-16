@@ -18,11 +18,12 @@ import StepPlaceholder from '@/components/registration-steps/StepPlaceholder';
 import { FaTag } from 'react-icons/fa6';
 import { useAuth } from './providers/public-service/AuthProvider';
 import sirvClient from '@/lib/sirv.class';
-import { VendorSteps } from '@/store/api/enum';
-import { useCompleteVendorRegistrationMutation } from '@/store/api/vendor.api';
+import { PaymentType, VendorSteps } from '@/store/api/enum';
+import { useCompleteVendorRegistrationMutation, useInitPaymentMutation } from '@/store/api/vendor.api';
 import { Loader2 } from 'lucide-react';
 import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
 import { deepEqual } from '@/lib';
+import { useRouter } from 'next/navigation';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -38,26 +39,29 @@ const steps = [
 
 
 export default function RegistrationContinuation() {
-    const { user, company: companyData, documents: presets, categories: categoriesData } = useAuth();
+    const { user, company: companyData, documents: presets, categories: categoriesData, mdas } = useAuth();
+    const [isUploadingDocuments, setIsUploadingDocuments] = useState(false);
+    const router = useRouter();
     const setStartPoint = useMemo(() => {
         if (!user) return 2;
+
         const companyForm = user.companyForm.toLowerCase();
         switch(companyForm){
             case VendorSteps.COMPANY:
                 return 2;
             case VendorSteps.DIRECTORS:
                 return 3;
-            case VendorSteps.BANK_DETAILS:
+            case VendorSteps.BANK_DETAILS.toLowerCase():
                 return 4;
             case VendorSteps.DOCUMENTS:
                 return 5;
-            case VendorSteps.CATEGORIES_AND_GRADE:
+            case VendorSteps.CATEGORIES_AND_GRADE.toLowerCase():
                 return 6;
             case VendorSteps.PAYMENT:
                 return 7;
             case VendorSteps.CONFIRM_PAYMENT:
                 return 8;
-            case VendorSteps.RECEIPT:
+            case VendorSteps.COMPLETE:
                 return 9;
             default:
                 console.log("Invalid company form", companyForm);
@@ -67,12 +71,12 @@ export default function RegistrationContinuation() {
     const [currentStep, setCurrentStep] = useState(setStartPoint); // Start from step 2
     const [formData, setFormData] = useState({
         // Step 2: Company Details
-        companyName: companyData?.companyName || '',
-        cacNumber: companyData?.cacNumber || '',
-        tinNumber: companyData?.tin || '',
-        address: companyData?.address || '',
-        lga: companyData?.lga || '',
-        website: companyData?.website || '',
+        companyName: companyData?.companyName?.trimEnd() || '',
+        cacNumber: companyData?.cacNumber?.trimEnd() || '',
+        tinNumber: companyData?.tin?.trimEnd() || '',
+        address: companyData?.address?.trimEnd() || '',
+        lga: companyData?.lga?.trimEnd() || '',
+        website: companyData?.website?.trimEnd() || '',
     });
 
     // Step 3: Directors
@@ -96,14 +100,15 @@ export default function RegistrationContinuation() {
 
     // Step 4: Bank Details (Optional)
     const [bankDetails, setBankDetails] = useState({
-        bankName: companyData?.bankName || '',
-        accountNumber: String(companyData?.accountNumber) || '',
-        accountName: companyData?.accountName || '',
+        bankName: companyData?.bankName?.trimEnd() || '',
+        accountNumber: String(companyData?.accountNumber || "") || '',
+        accountName: companyData?.accountName?.trimEnd() || '',
     });
 
     // Step 6: Category & Grade
-    const [selectedSectors, setSelectedSectors] = useState<string[]>(companyData?.categories.map((category) => category.sector) || []);
+    const [selectedSector, setSelectedSector] = useState<string>(companyData?.category || '');
     const [selectedGrade, setSelectedGrade] = useState<string>(companyData?.grade || '');
+    const [selectedMDA, setSelectedMDA] = useState<string>(companyData?.mda || '');
 
     // Step 5: Documents
     const [documents, setDocuments] = useState<DocumentRequirement[]>(() => {
@@ -132,12 +137,12 @@ export default function RegistrationContinuation() {
             companyData.documents.forEach(uploadedDoc => {
                 console.clear()
                 const matchingDoc = docsFromPresets.find(doc => {
-                    const match = doc.id === uploadedDoc.id || doc.name === uploadedDoc.documentType;
+                    const match = doc.id === uploadedDoc._id || doc.name === uploadedDoc.documentType;
                     return match;
                 });
                 if (matchingDoc) {
                     matchingDoc.uploaded = true;
-                    matchingDoc.status = DocumentStatus.SUCCESS;
+                    matchingDoc.status = DocumentStatus.SAVED;
                     matchingDoc.fileUrl = uploadedDoc.fileUrl;
                     matchingDoc.fileName = uploadedDoc.fileName;
                     matchingDoc.fileSize = uploadedDoc.fileSize;
@@ -221,7 +226,7 @@ export default function RegistrationContinuation() {
             setDocuments(autoFilledDocs);
             toast.success('Step 5 auto-filled - All documents marked as uploaded');
         } else if (currentStep === 6) {
-            setSelectedSectors(['services', 'supplies']);
+            setSelectedSector('services');
             setSelectedGrade('b');
             toast.success('Step 6 auto-filled');
         } else {
@@ -231,8 +236,38 @@ export default function RegistrationContinuation() {
 
     const [completeVendorRegistration, { isLoading }] = useCompleteVendorRegistrationMutation();
 
+    const [initPayment, { isLoading: isInitPaymentLoading }] = useInitPaymentMutation();
+
+    const handleConfirmPayment = async () => {
+        if (!formData) return;
+
+        const payload = {
+            amount: getRegistrationFee() + 5000 + 2500,
+            type: PaymentType.PROCESSINGFEE,
+            description: `${formData.companyName}'s registration fee`,
+        }
+
+        try {
+            toast.loading('Initializing payment...', { id: "payment" });
+            const response = await initPayment(payload);
+            toast.dismiss("payment");
+            if (response.data) {
+                router.push(response.data.authorization_url);
+            }
+        } catch (error) {
+            toast.dismiss("payment");
+            console.error(error);
+            toast.error((error as Error).message || 'Failed to initialize payment');
+            throw new Error((error as Error).message || 'Failed to initialize payment');
+        }
+    };
+
     const handleContinue = async () => {
         if(!presets) return;
+        if (isInitPaymentLoading) return;
+        if (isUploadingDocuments) return;
+        if (isLoading) return;
+
         // Validate current step
         if (currentStep === 2) {
             if (!formData.companyName || !formData.cacNumber || !formData.tinNumber || !formData.address || !formData.lga) {
@@ -266,11 +301,6 @@ export default function RegistrationContinuation() {
                 try {
                     toast.loading('Saving your company details...', { id: "company" });
                     const response = await completeVendorRegistration(payload);
-    
-                    console.log({
-                        response,
-                        payload
-                    })
     
                     if (response.error) {
                         throw new Error((response.error as ResponseError["error"]).data.message);
@@ -367,10 +397,13 @@ export default function RegistrationContinuation() {
             try {
                 toast.loading('Saving your company bank details...', { id: "bankDetails" });
                 const response = await completeVendorRegistration(payload);
+                console.log(response);
 
                 if (response.error) {
                     throw new Error((response.error as ResponseError["error"]).data.message);
                 }
+
+
                 toast.dismiss("bankDetails");
                 toast.success('Company bank details saved successfully');
                 setCurrentStep(currentStep + 1);
@@ -384,50 +417,66 @@ export default function RegistrationContinuation() {
         }
 
         if (currentStep === 5) {
-            // Check if any documents have been changed
+            // Detect document changes + saved state
             const documentsChanged = documents.some(doc => doc.changed);
-            if (!documentsChanged) {
-                console.log('No document changes detected, skipping to next step');
-                setCurrentStep(6);
-                toast.success('Progress saved');
+            const allDocsAlreadySaved = documents
+                .filter(doc => doc.required || doc.fileName)
+                .every(doc => doc.status === DocumentStatus.SAVED);
+
+
+            // Only skip uploads if:
+            // 1) Nothing changed
+            // 2) All docs are already saved
+            if (!documentsChanged && allDocsAlreadySaved) {
+                setCurrentStep(currentStep + 1);
                 return;
             }
-
-            
 
             // Validate required documents
             const requiredDocs = documents.filter(doc => doc.required);
             const missingDocs = requiredDocs.filter(doc => !doc.uploaded);
             if (missingDocs.length > 0) {
-                toast.error(`Please upload all required documents: ${missingDocs.map(d => d.name).join(', ')}`);
+                toast.error(
+                    `Please upload all required documents: ${missingDocs
+                        .map(d => d.name)
+                        .join(", ")}`
+                );
                 return;
             }
 
-            // Validate validity dates for docs that require them
-            const docsNeedingDates = documents.filter(doc => doc.hasValidityPeriod && doc.uploaded);
-            const invalidDates = docsNeedingDates.filter(doc => !doc.validFrom || !doc.validTo);
+            // Validate validity-period documents
+            const docsNeedingDates = documents.filter(
+                doc => doc.hasValidityPeriod && doc.uploaded
+            );
+            const invalidDates = docsNeedingDates.filter(
+                doc => !doc.validFrom || !doc.validTo
+            );
             if (invalidDates.length > 0) {
-                toast.error('Please provide validity dates for all applicable documents');
+                toast.error("Please provide validity dates for all applicable documents");
                 return;
             }
 
-            // Check documents to upload
-            const docsToUpload = documents.filter(doc => doc.file && doc.status !== 'success');
-            const allRequiredUploaded = requiredDocs.every(doc => doc.uploaded && doc.status === 'success');
+            // Determine upload queue
+            const docsToUpload = documents.filter(
+                doc => doc.file && doc.status !== DocumentStatus.SUCCESS
+            );
 
             let updatedDocuments = documents;
 
-            if (docsToUpload.length === 0) {
-                if (!allRequiredUploaded) {
-                    toast.error('Please ensure all required documents are uploaded');
-                    return;
-                }
-                // Submit to API
-            } else {
-                // Upload documents
-                setDocuments(prev => prev.map(doc => 
-                    docsToUpload.some(d => d.id === doc.id) ? { ...doc, status: DocumentStatus.UPLOADING } : doc
-                ));
+            // ------------------------
+            // UPLOAD SECTION
+            // ------------------------
+            if (docsToUpload.length > 0) {
+                setIsUploadingDocuments(true);
+
+                // Mark docs as uploading
+                setDocuments((prev) =>
+                    prev.map((doc) =>
+                        docsToUpload.some((d) => d.id === doc.id)
+                            ? { ...doc, status: DocumentStatus.UPLOADING }
+                            : doc
+                    )
+                );
 
                 const uploadPromises = docsToUpload.map(async (doc) => {
                     try {
@@ -435,7 +484,7 @@ export default function RegistrationContinuation() {
                         return { docId: doc.id, fileUrl, success: true };
                     } catch (error) {
                         console.error(`Upload failed for ${doc.name}:`, error);
-                        return { docId: doc.id, error: 'Upload failed', success: false };
+                        return { docId: doc.id, success: false, error: "Upload failed" };
                     }
                 });
 
@@ -443,30 +492,41 @@ export default function RegistrationContinuation() {
                 const fileUrls: Record<string, string | undefined> = {};
                 const errors: string[] = [];
 
-                results.forEach((result, index) => {
-                    const doc = docsToUpload[index];
-                    if (result.status === 'fulfilled') {
-                        const { success, fileUrl, error } = result.value;
-                        if (success) {
-                            fileUrls[doc.id] = fileUrl;
+                results.forEach((result, idx) => {
+                    const doc = docsToUpload[idx];
+                    if (result.status === "fulfilled") {
+                        if (result.value.success) {
+                            fileUrls[doc.id] = result.value.fileUrl;
                         } else {
-                            errors.push(`${doc.name}: ${error}`);
+                            errors.push(`${doc.name}: ${result.value.error}`);
                         }
                     } else {
                         errors.push(`${doc.name}: ${result.reason}`);
                     }
                 });
 
-                updatedDocuments = documents.map(doc => {
+                // Apply upload results
+                updatedDocuments = documents.map((doc) => {
                     const fileUrl = fileUrls[doc.id];
                     if (fileUrl) {
-                        console.log("Successfully set fileUrl for", doc.name);
-                        return { ...doc, status: DocumentStatus.SUCCESS, fileUrl, error: undefined, changed: false };
-                    } else if (errors.some(e => e.startsWith(doc.name))) {
-                        const error = errors.find(e => e.startsWith(doc.name))?.split(': ')[1] || 'Upload failed';
-                        console.log("Failed to set fileUrl for", doc.name);
-                        return { ...doc, status: DocumentStatus.ERROR, error };
+                        return {
+                            ...doc,
+                            status: DocumentStatus.SUCCESS,
+                            fileUrl,
+                            error: undefined,
+                            changed: false,
+                            uploaded: true,
+                        };
                     }
+
+                    if (errors.some((e) => e.startsWith(doc.name))) {
+                        return {
+                            ...doc,
+                            status: DocumentStatus.ERROR,
+                            error: errors.find((e) => e.startsWith(doc.name))?.split(": ")[1],
+                        };
+                    }
+
                     return doc;
                 });
 
@@ -476,65 +536,104 @@ export default function RegistrationContinuation() {
                     toast.error(`Some uploads failed. Please retry failed documents.`);
                     return;
                 }
-                // Submit to API after successful uploads
+
+                setIsUploadingDocuments(false);
             }
-            
-            // Submit payload
+
+            // FINAL VALIDATION
+            const allDocsValid = updatedDocuments.filter(doc => doc.fileName).every(
+                (doc) =>
+                    (!doc.required || doc.uploaded) &&
+                    (doc.status === DocumentStatus.SUCCESS || doc.status === DocumentStatus.SAVED) &&
+                    !!doc.fileUrl
+            );
+
+            if (!allDocsValid) {
+                toast.error(
+                    "All documents must be successfully uploaded before continuing."
+                );
+                return;
+            }
+
+            // ------------------------
+            // PAYLOAD GENERATION
+            // ------------------------
             const payload = {
-                [VendorSteps.DOCUMENTS]: updatedDocuments.map((doc) => {
-                    return ({
+                [VendorSteps.DOCUMENTS]: updatedDocuments
+                    .filter(doc => doc.fileName)
+                    .map(doc => ({
                         id: doc.id,
-                        fileUrl: doc.fileUrl ?? '',
-                        validFrom: doc.validFrom,
-                        validTo: doc.validTo,
+                        fileUrl: doc.fileUrl ?? "",
+                        validFrom: doc.hasValidityPeriod ? doc.validFrom : undefined,
+                        validTo: doc.hasValidityPeriod ? doc.validTo : undefined,
                         documentType: doc.name,
-                        uploadedDate: doc.uploadedDate ?? '',
-                        fileName: doc.fileName ?? '',
-                        fileSize: doc.fileSize ?? '',
-                        fileType: doc.fileType ?? '',
-                        validFor: doc.validFor ?? '',
+                        uploadedDate: doc.uploadedDate ?? "",
+                        fileName: doc.fileName ?? "",
+                        fileSize: doc.fileSize ?? "",
+                        fileType: doc.fileType ?? "",
+                        validFor: doc.validFor ?? "",
                         hasValidityPeriod: doc.hasValidityPeriod,
-                    })
-                }),
+                    })),
             };
 
+            // ------------------------
+            // SAVE DOCUMENTS
+            // ------------------------
             try {
-                toast.loading('Saving your documents...', { id: "documents" });
-                // throw new Error('Test error');
+                toast.loading("Saving your documents...", { id: "documents" });
+
                 const response = await completeVendorRegistration(payload);
 
                 if (response.error) {
-                    throw new Error((response.error as ResponseError["error"]).data.message);
+                    throw new Error(
+                        (response.error as ResponseError["error"]).data.message
+                    );
                 }
+
                 toast.dismiss("documents");
-                toast.success('Documents saved successfully!');
+                toast.success("Documents saved successfully!");
+
+                // Mark docs as fully saved
+                setDocuments(prev =>
+                    prev.map(doc => ({
+                        ...doc,
+                        status: DocumentStatus.SAVED,
+                        changed: false,
+                    }))
+                );
+
                 setCurrentStep(6);
             } catch (error) {
                 toast.dismiss("documents");
-                console.error('Error saving documents:', error);
-                toast.error((error as Error).message || 'Failed to save your documents');
+                console.error("Error saving documents:", error);
+                toast.error(
+                    (error as Error).message || "Failed to save your documents"
+                );
             }
+
             return;
         }
 
         if (currentStep === 6) {
             // Validate sectors and grade selection
-            if (selectedSectors.length === 0) {
-                toast.error('Please select at least one sector');
+            if (!selectedSector) {
+                toast.error('Please select a sector');
                 return;
             }
             if (!selectedGrade) {
                 toast.error('Please select a grade');
                 return;
             }
-
-            const newCategories = selectedSectors.map(sector => ({ sector, service: '' }));
+            if (!selectedMDA) {
+                toast.error('Please select an MDA');
+                return;
+            }
 
             const madeAnUpdate = !deepEqual({
-                categories: newCategories,
+                category: selectedSector,
                 grade: selectedGrade,
             }, {
-                categories: companyData?.categories?.map(cat => ({ sector: cat.sector, service: cat.service })) || [],
+                category: companyData?.category,
                 grade: companyData?.grade || '',
             });
 
@@ -546,11 +645,11 @@ export default function RegistrationContinuation() {
 
             const payload = {
                 [VendorSteps.CATEGORIES_AND_GRADE]: {
-                    categories: newCategories,
+                    category: selectedSector,
                     grade: selectedGrade,
+                    mda: selectedMDA,
                 },
             };
-
 
             try {
                 toast.loading('Saving your sectors and grade...', { id: "sectorsAndGrade" });
@@ -571,10 +670,14 @@ export default function RegistrationContinuation() {
             return;
         }
 
+        if (currentStep === 8) {
+            handleConfirmPayment();
+            return;
+        }
+
         // For other steps, just move to next step
         if (currentStep < steps.length) {
             setCurrentStep(currentStep + 1);
-            toast.success('Progress saved');
         } else {
             toast.success('Registration completed!');
             // TODO: Submit final registration
@@ -643,11 +746,14 @@ export default function RegistrationContinuation() {
                 })) || [];
                 return (
                     <Step6CategoryGrade
-                        selectedSectors={selectedSectors}
+                        selectedSector={selectedSector}
                         selectedGrade={selectedGrade}
-                        onSectorsChange={setSelectedSectors}
+                        onSectorChange={setSelectedSector}
                         onGradeChange={setSelectedGrade}
                         sectors={sectors}
+                        mdas={mdas || []}
+                        selectedMDA={selectedMDA}
+                        onMDAChange={setSelectedMDA}
                         grades={grades}
                     />
                 );
@@ -657,7 +763,7 @@ export default function RegistrationContinuation() {
                     <Step7PaymentSummary
                         companyName={formData.companyName}
                         cacNumber={formData.cacNumber}
-                        selectedSectors={selectedSectors}
+                        selectedSector={selectedSector}
                         selectedGrade={selectedGrade}
                         registrationFee={getRegistrationFee()}
                     />
@@ -667,8 +773,8 @@ export default function RegistrationContinuation() {
                 return (
                     <Step8ConfirmPayment
                         companyName={formData.companyName}
-                        email={directors[0]?.email || ''}
-                        phone={directors[0]?.phone || ''}
+                        email={user?.email || ''}
+                        phone={user?.phoneNo || ''}
                         totalAmount={getRegistrationFee() + 5000 + 2500}
                     />
                 );
@@ -876,10 +982,10 @@ export default function RegistrationContinuation() {
                             </Button>
                             <Button
                                 onClick={handleContinue}
-                                disabled={isLoading || !presets}
+                                disabled={isLoading || !presets || isUploadingDocuments || isInitPaymentLoading}
                                 className="bg-theme-green hover:bg-theme-green/90 min-w-[100px] cursor-pointer"
                             >
-                                {isLoading
+                                {isLoading || isUploadingDocuments || isInitPaymentLoading
                                     ?
                                     <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                                     :

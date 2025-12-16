@@ -1,6 +1,13 @@
 'use client';
 
-import { FaCheck } from 'react-icons/fa';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { MDAResponse } from '@/store/api/types';
 
 interface Sector {
     id: string;
@@ -17,29 +24,28 @@ interface Grade {
 }
 
 interface Step6CategoryGradeProps {
-    selectedSectors: string[];
+    selectedSector: string;
     selectedGrade: string;
-    onSectorsChange: (sectors: string[]) => void;
+    selectedMDA: string;
+    onMDAChange: (mda: string) => void;
+    onSectorChange: (sector: string) => void;
     onGradeChange: (grade: string) => void;
     sectors: Sector[];
     grades: Grade[];
+    mdas: MDAResponse["mdas"];
 }
 
 export default function Step6CategoryGrade({
-    selectedSectors,
+    selectedSector,
     selectedGrade,
-    onSectorsChange,
+    selectedMDA,
+    onMDAChange,
+    onSectorChange,
     onGradeChange,
     sectors,
+    mdas,
     grades,
 }: Step6CategoryGradeProps) {
-    const toggleSector = (sectorId: string) => {
-        if (selectedSectors.includes(sectorId)) {
-            onSectorsChange(selectedSectors.filter(id => id !== sectorId));
-        } else {
-            onSectorsChange([...selectedSectors, sectorId]);
-        }
-    };
 
     const formatCurrency = (amount: number) => {
         return `₦${amount.toLocaleString()}`;
@@ -47,55 +53,76 @@ export default function Step6CategoryGrade({
 
     return (
         <div className="space-y-8">
-            {/* Sectors Selection */}
+            {/* Sector Selection */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Select Sectors (Multi-select)
+                    Select <span>Your Category <span className="text-red-500 text-lg">*</span></span>
                 </h3>
-                <div className="grid sm:grid-cols-2 gap-4">
-                    {sectors.map((sector) => {
-                        const isSelected = selectedSectors.includes(sector.id);
-                        return (
-                            <button
-                                key={sector.id}
-                                type="button"
-                                onClick={() => toggleSector(sector.id)}
-                                className={`relative p-6 rounded-lg border-2 text-left transition-all cursor-pointer active:scale-[0.98] ${
-                                    isSelected
-                                        ? 'border-theme-green bg-green-50'
-                                        : 'border-gray-300 bg-white hover:border-gray-400'
-                                }`}
-                            >
-                                {/* Checkbox */}
-                                <div
-                                    className={`absolute top-4 left-4 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
-                                        isSelected
-                                            ? 'bg-theme-green border-theme-green'
-                                            : 'bg-white border-gray-300'
-                                    }`}
-                                >
-                                    {isSelected && <FaCheck className="text-white text-xs" />}
+                <Select value={selectedSector} onValueChange={(value)=>onSectorChange(value)}>
+                    <SelectTrigger className="w-full h-auto min-h-12">
+                        <SelectValue placeholder="Select a ministry">
+                            {selectedSector && (
+                                <div className="flex flex-col items-start gap-1 py-1">
+                                    <span className="font-semibold text-gray-900">
+                                        {sectors.find(s => s.id === selectedSector)?.name}
+                                    </span>
+                                    <span className="text-sm text-gray-600">
+                                        {sectors.find(s => s.id === selectedSector)?.description}
+                                    </span>
                                 </div>
-
-                                {/* Content */}
-                                <div className="ml-8">
-                                    <h4 className="font-bold text-gray-900 text-lg mb-1">
+                            )}
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {sectors.map((sector) => (
+                            <SelectItem key={sector.id} value={sector.id}>
+                                <div className="flex flex-col items-start gap-1 py-1">
+                                    <span className="font-semibold text-gray-900">
                                         {sector.name}
-                                    </h4>
-                                    <p className="text-sm text-gray-600">
+                                    </span>
+                                    <span className="text-sm text-gray-600">
                                         {sector.description}
-                                    </p>
+                                    </span>
                                 </div>
-                            </button>
-                        );
-                    })}
-                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Select <abbr title="Ministries, Departments, and Agencies (government bodies)">MDA</abbr> <span className="text-red-500 text-lg">*</span>
+                </h3>
+                {mdas && <Select value={selectedMDA} onValueChange={(value)=>onMDAChange(value)}>
+                    <SelectTrigger className="w-full h-auto min-h-12">
+                        <SelectValue placeholder="Select a ministry">
+                            {selectedMDA && (
+                                <div className="flex flex-col items-start gap-1 py-1">
+                                    <span className="font-semibold text-gray-900">
+                                        {mdas.find(s => s.name === selectedMDA)?.name}
+                                    </span>
+                                </div>
+                            )}
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {mdas.map((mda) => (
+                            <SelectItem key={mda.name} value={mda.name}>
+                                <div className="flex flex-col items-start gap-1 py-1">
+                                    <span className="font-semibold text-gray-900">
+                                        {mda.name}
+                                    </span>
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>}
             </div>
 
             {/* Grade Selection */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Select Grade
+                    Select Grade <span className="text-red-500 text-lg">*</span>
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {grades.map((grade) => {

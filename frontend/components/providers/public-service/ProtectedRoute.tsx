@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useAuth } from "./AuthProvider";
-import { notFound, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { VendorSteps } from "@/store/api/enum";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -58,6 +58,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     }
     
     if (!isAuthenticated || !user || !user.isVerified) {
+        console.log("User not authenticated or not verified", {
+            isAuthenticated,
+            user,
+            isVerified: user?.isVerified
+        });
         return null;
     }
 
@@ -70,10 +75,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
                 </div>
             </div>
         )
-    }
-
-    if (pathname === "/dashboard/complete-registration" && user.companyForm === VendorSteps.COMPLETE) {
-        return notFound()
     }
 
     return (

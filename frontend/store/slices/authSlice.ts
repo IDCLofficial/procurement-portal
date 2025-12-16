@@ -25,10 +25,11 @@ const authSlice = createSlice({
             state.isAuthenticated = false;
         },
         login: (state, action: PayloadAction<string>) => {
-            // console.log("Login", action.payload);
+            console.log("Login", action.payload);
             state.token = action.payload;
             state.isAuthenticated = true;
             state.isLoading = false;
+            console.log(state.isAuthenticated)
         },
         logout: (state) => {
             state.token = null;
@@ -56,12 +57,14 @@ const authSlice = createSlice({
                 }
             })
             .addMatcher(vendorApi.endpoints.getProfile.matchFulfilled, (state) => {
+                state.isAuthenticated = true;
                 state.isLoading = false;
             })
             .addMatcher(vendorApi.endpoints.loginVendor.matchPending, (state) => {
                 state.isLoading = true;
             })
             .addMatcher(vendorApi.endpoints.loginVendor.matchRejected, (state) => {
+                state.isAuthenticated = false;
                 state.isLoading = false;
             })
             .addMatcher(vendorApi.endpoints.getProfile.matchPending, (state) => {

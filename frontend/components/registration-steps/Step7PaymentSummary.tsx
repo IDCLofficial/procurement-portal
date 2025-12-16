@@ -3,7 +3,7 @@
 interface Step7PaymentSummaryProps {
     companyName: string;
     cacNumber: string;
-    selectedSectors: string[];
+    selectedSector: string;
     selectedGrade: string;
     registrationFee: number;
 }
@@ -26,7 +26,7 @@ const gradeLabels: Record<string, string> = {
 export default function Step7PaymentSummary({
     companyName,
     cacNumber,
-    selectedSectors,
+    selectedSector,
     selectedGrade,
     registrationFee,
 }: Step7PaymentSummaryProps) {
@@ -38,8 +38,8 @@ export default function Step7PaymentSummary({
         return `₦${amount.toLocaleString()}`;
     };
 
-    const getSectorNames = () => {
-        return selectedSectors.map(id => sectorNames[id] || id).join(', ');
+    const getSectorName = () => {
+        return sectorNames[selectedSector] || selectedSector;
     };
 
     return (
@@ -63,9 +63,9 @@ export default function Step7PaymentSummary({
                         </span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Selected Sectors:</span>
+                        <span className="text-sm text-gray-600">Selected Ministry:</span>
                         <span className="text-sm font-medium text-gray-900">
-                            {selectedSectors.length > 0 ? getSectorNames() : 'Placeholder'}
+                            {selectedSector ? getSectorName() : 'Placeholder'}
                         </span>
                     </div>
                     <div className="flex justify-between items-center">

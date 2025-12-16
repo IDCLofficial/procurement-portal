@@ -1,4 +1,4 @@
-import { VendorSteps } from "./enum";
+import { PaymentType, VendorSteps } from "./enum";
 
 interface CreateVendorRequest {
     fullname: string;
@@ -91,10 +91,8 @@ interface CompleteVendorRegistrationRequest {
         hasValidityPeriod: boolean;
     }[];
     [VendorSteps.CATEGORIES_AND_GRADE]?: {
-        categories: {
-            sector: string;
-            service: string;
-        }[];
+        category: string;
+        mda: string;
         grade: string;
     };
 }
@@ -112,10 +110,8 @@ interface RegisterCompanyResponse {
         grade?: string;
         website?: string;
         _id: string;
-        categories?: {
-            sector: string;
-            service: string;
-        }[];
+        categories?: string;
+        mda?: string;
         createdAt: string;
         updatedAt: string;
         __v: number;
@@ -156,10 +152,8 @@ interface CompanyDetailsResponse {
     grade: string;
     website: string;
     _id: string;
-    categories: {
-        sector: string;
-        service: string;
-    }[];
+    category: string;
+    mda: string;
     createdAt: string;
     updatedAt: string;
     __v: number;
@@ -171,7 +165,8 @@ interface CompanyDetailsResponse {
         email: string;
     }[];
     documents?: {
-        id: string;
+        _id: string;
+        vendor: string;
         fileUrl: string;
         validFrom?: string;
         validTo?: string;
@@ -182,6 +177,13 @@ interface CompanyDetailsResponse {
         fileType: string;
         validFor: string;
         hasValidityPeriod: boolean;
+        status: {
+            status: "pending" | "approved" | "needs review";
+            message?: string;
+        };
+        createdAt: string;
+        updatedAt: string;
+        __v: number;
     }[];    
     bankName?: string;
     accountNumber?: number;
@@ -195,6 +197,22 @@ interface DocumentRequirement {
     renewalFrequency: "annual" | "quarterly" | "monthly" | "never";
 }
 
+interface MDA {
+    _id: string;
+    name: string;
+    code: string;
+    __v: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface MDAResponse {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    mdas: MDA[];
+}
 interface Category {
     _id: string;
     sector: string;
@@ -218,6 +236,142 @@ interface CategoriesResponse {
     categories: Category[];
     grades: Grade[];
 }
-    
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse };
+interface InitPaymentRequest {
+    amount: number;
+    type: PaymentType;
+    description?: string;
+}
+ 
+interface InitPaymentResponse {
+    authorization_url: string;
+}
+
+interface Application {
+    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected";
+    timestamp: string;
+    notes: string;
+}
+
+type ApplicationTimeline = Array<{
+    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected";
+    timestamp: string;
+}>;
+
+interface PaymentHistoryResponse {
+    success: boolean;
+    totalAmountPaid: number;
+    totalThisYear: number;
+    totalTransactions: number;
+    paymentTable: {
+        amount: number;
+        reference: string;
+        status: string;
+        data: string;
+        description: string;
+        type: string;
+    }[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
+}
+
+interface ContractorsResponse {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    statusCounts: {
+        approved: number;
+        expired: number;
+        revoked: number;
+    },
+    certificates: Array<{
+        _id: string;
+        certificateId: string;
+        contractorId: string;
+        company: string;
+        contractorName: string;
+        rcBnNumber: string;
+        tin: string;
+        address: string;
+        lga: string;
+        phone: string;
+        email: string;
+        website: string;
+        approvedSectors: string[];
+        categories: string[];
+        grade: string;
+        status: string;
+        validUntil: string;
+        createdAt: string;
+        updatedAt: string;
+        __v: number;
+    }>;
+}
+
+interface Contractor {
+    _id: string;
+    certificateId: string;
+    contractorId: string;
+    company: string;
+    contractorName: string;
+    companyName: string;
+    rcBnNumber: string;
+    tin: string;
+    address: string;
+    lga: string;
+    phone: string;
+    email: string;
+    website: string;
+    approvedSectors: string[];
+    categories: string[];
+    grade: string;
+    status: string;
+    validUntil: string;
+    __v: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface ActivityLogResponse {
+    activityType: string;
+    description: string;
+    timestamp: string;
+}
+
+interface Notification {
+    _id: string;
+    type: string;
+    title: string;
+    message: string;
+    recipient: string;
+    vendorId: string;
+    recipientId: string;
+    priority: string;
+    isRead: boolean;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+}
+
+interface NotificationResponse {
+    message: string;
+    notifications: Notification[];
+    total: number;
+    totalRead: number;
+    totalUnread: number;
+    totalHigh: number;
+    totalCritical: number;
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }
+}
+
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor, ActivityLogResponse, NotificationResponse, MDAResponse };

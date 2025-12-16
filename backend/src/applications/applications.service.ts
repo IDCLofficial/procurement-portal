@@ -13,6 +13,7 @@ import { ActivityType } from '../vendors/entities/vendor-activity-log.schema';
 import { Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction, AuditSeverity, EntityType } from '../audit-logs/entities/audit-log.schema';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ApplicationsService {
@@ -403,4 +404,8 @@ export class ApplicationsService {
       throw new BadRequestException('Failed to generate certificate', err.message);
     }
   }
+  
+  /**
+   * Cron Job to send notifications concerning applications
+   */
 }

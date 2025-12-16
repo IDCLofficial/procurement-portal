@@ -16,7 +16,12 @@ const initialState: CompanyState = {
 const companySlice = createSlice({
   name: 'company',
   initialState,
-  reducers: {},
+  reducers: {
+    clearCompany: (state) => {
+      state.data = null;
+      state.isLoading = false;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addMatcher(vendorApi.endpoints.getCompanyDetails.matchFulfilled, (state, action) => {
@@ -24,12 +29,14 @@ const companySlice = createSlice({
         state.isLoading = false;
       })
       .addMatcher(vendorApi.endpoints.completeVendorRegistration.matchFulfilled, (state, action) => {
+        console.log(action.payload);
+
         const result = action.payload.result;
         if (result && typeof (result.directors) === "object") {
           state.data!.directors = result.directors;
         }
         if (result && typeof (result.categories) === "object") {
-          state.data!.categories = result.categories;
+          state.data!.category = result.categories;
         }
         if (result && typeof (result.grade) === "string") {
           state.data!.grade = result.grade;
@@ -43,8 +50,28 @@ const companySlice = createSlice({
         if (result && typeof (result.accountName) === "string") {
           state.data!.accountName = result.accountName;
         }
-        if (result && typeof (result.documents) === "object") {
-          state.data!.documents = result.documents;
+        if (result && typeof result.documents === "object") {
+          state.data!.documents = result.documents.map(doc => ({
+            _id: doc.id,
+            vendor: '',
+            fileUrl: doc.fileUrl,
+            validFrom: doc.validFrom,
+            validTo: doc.validTo,
+            documentType: doc.documentType,
+            uploadedDate: doc.uploadedDate,
+            fileName: doc.fileName,
+            fileSize: doc.fileSize,
+            fileType: doc.fileType,
+            validFor: doc.validFor,
+            hasValidityPeriod: doc.hasValidityPeriod,
+            status: {
+              status: "pending" as const,
+              message: undefined
+            },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            __v: 0
+          }));
         }
         if (result && typeof (result.companyName) === "string") {
           state.data!.companyName = result.companyName;
@@ -77,4 +104,6 @@ const companySlice = createSlice({
 // Selectors
 export const selectCompanyData = (state: RootState) => state.company.data;
 export const selectCompanyLoading = (state: RootState) => state.company.isLoading;
+
+export const { clearCompany } = companySlice.actions;
 export default companySlice.reducer;

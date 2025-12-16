@@ -5,6 +5,10 @@ import userReducer from './slices/userSlice';
 import companyReducer from './slices/companySlice';
 import documentsReducer from './slices/documentsSlice';
 import categoriesReducer from './slices/categoriesSlice';
+import applicationReducer from './slices/applicationSlice';
+import publicReducer from './slices/publicSlice';
+import verificationReducer from './slices/verificationSlice';
+import notificationReducer from './slices/notificationsSlice';
 import { apiSlice } from './api';
 
 const rootReducer = combineReducers({
@@ -15,7 +19,10 @@ const rootReducer = combineReducers({
   company: companyReducer,
   documents: documentsReducer,
   categories: categoriesReducer,
-  // Add more slices here as needed
+  application: applicationReducer,
+  public: publicReducer,
+  verification: verificationReducer,
+  notification: notificationReducer,
 });
 
 export const makeStore = () => {

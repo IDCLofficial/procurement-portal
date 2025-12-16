@@ -100,7 +100,7 @@ export class EmailService {
           <p>Your verification code is: <strong>${otp}</strong></p>
           <p>This code will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
           <p>If you didn't request this code, please ignore this email.</p>
-          <p>Best regards,<br>Ministry of Education</p>
+          <p>Best regards,<br>Procurement Bureau</p>
         </div>
       `;
 

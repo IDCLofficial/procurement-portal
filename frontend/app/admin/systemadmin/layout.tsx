@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation';
 import { TopBar } from '../components/general/TopBar';
 import { Sidebar } from './_components/Sidebar';
 import { TITLE_MAP } from './_constants';
-import { useGetApplicationsQuery } from '../redux/services/appApi';
 
 interface SystemAdminLayoutProps {
   children: React.ReactNode;
@@ -28,8 +27,8 @@ export default function SystemAdminLayout({ children }: SystemAdminLayoutProps) 
         <TopBar
           title={title}
           userInitials="SA"
-          onNotificationClick={() => {}}
-          onUserMenuClick={() => {}}
+          onNotificationClick={() => { }}
+          onUserMenuClick={() => { }}
         />
 
         {/* Page content */}

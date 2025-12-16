@@ -33,7 +33,7 @@ export default function DashboardHeader({
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 text-gray-600 hover:text-gray-900"
+                            className="h-9 w-9 text-gray-600 hover:text-gray-900 cursor-pointer"
                             onClick={() => router.back()}
                             aria-label="Go back"
                         >
@@ -76,7 +76,7 @@ export default function DashboardHeader({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-9 w-9 text-gray-600 hover:text-gray-900"
+                                    className="h-9 w-9 text-gray-600 hover:text-gray-900 cursor-pointer"
                                     aria-label="Settings"
                                 >
                                     <Settings className="h-5 w-5" />
@@ -88,7 +88,7 @@ export default function DashboardHeader({
 
                         <Button
                             variant="ghost"
-                            className="h-9 px-3 text-gray-700 hover:text-gray-900 font-medium"
+                            className="h-9 px-3 text-gray-700 hover:text-gray-900 font-medium cursor-pointer"
                             onClick={logout}
                         >
                             <LogOut className="h-4 w-4 mr-2" />

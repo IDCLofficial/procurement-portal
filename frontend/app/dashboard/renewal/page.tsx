@@ -48,9 +48,9 @@ export default function RegistrationRenewalPage() {
         },
     ];
 
-    const categories = company.categories;
+    const categories = company.category;
     const grade = company.grade.toUpperCase();
-    const mda = company.mda;
+
 
     const verificationItems = [
         { label: 'CAC Number', value: company.cacNumber },

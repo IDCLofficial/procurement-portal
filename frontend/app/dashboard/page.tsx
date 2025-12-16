@@ -10,9 +10,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
 import { format, differenceInDays } from 'date-fns';
 import { Loader2 } from 'lucide-react';
+import PendingPaymentCard from '@/components/dashboard/PendingPaymentCard';
+import { toast } from 'sonner';
 
 export default function DashboardPage() {
-    const { user, company, application, isLoading } = useAuth();
+    const { user, company, application, isLoading, categories } = useAuth();
 
     const router = useRouter();
 
@@ -78,7 +80,7 @@ export default function DashboardPage() {
     const daysRemaining = company?.createdAt ? differenceInDays(new Date(new Date(company.createdAt).setFullYear(new Date(company.createdAt).getFullYear() + 1)), new Date()) : 0;
     
     // Map application status to registration status
-    const getRegistrationStatus = (): 'approved' | 'declined' | 'expired' | 'suspended' | 'pending' => {
+    const getRegistrationStatus = (): 'approved' | 'declined' | 'expired' | 'suspended' | 'pending' | 'verified' => {
         switch (application?.status) {
             case 'Approved':
                 return 'approved';
@@ -86,6 +88,8 @@ export default function DashboardPage() {
                 return 'declined';
             case 'SLA Breach':
                 return 'suspended';
+            case 'Verified':
+                return 'verified';
             default:
                 return 'pending';
         }
@@ -95,6 +99,19 @@ export default function DashboardPage() {
     
     // Get decline/suspension reason from application notes if available
     const statusReason = application?.notes || undefined;
+
+    const handlePayment = async () => {
+        try {
+            // TODO: Implement actual payment processing
+            // This is a mock implementation
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            toast.success("Payment processed successfully!");
+        } catch (error) {
+            console.error("Payment error:", error);
+            toast.error("Failed to process payment. Please try again.");
+        }
+    };
+
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -107,22 +124,28 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column - Main Content */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* Pending Payment */}
+                        {categories && registrationStatus === 'approved' && <PendingPaymentCard
+                            amount={categories?.grades.find((grade) => grade.grade.toLowerCase() === company?.grade.toLowerCase())?.registrationCost || 0} // Set your amount here
+                            description="Registration Fee for Contractor Registration"
+                            onPay={handlePayment}
+                        />}
                         {/* Registration Status */}
-                        <RegistrationStatusCard
+                        {registrationStatus !== 'approved' && <RegistrationStatusCard
                             registrationId={registrationId}
                             validUntil={registrationStatus !== 'declined' ? validUntil : undefined}
-                            daysRemaining={registrationStatus === 'approved' ? daysRemaining : undefined}
+                            daysRemaining={registrationStatus === 'verified' ? daysRemaining : undefined}
                             status={registrationStatus}
                             declineReason={registrationStatus === 'declined' ? statusReason : undefined}
                             suspensionReason={registrationStatus === 'suspended' ? statusReason : undefined}
-                            onDownloadCertificate={registrationStatus === 'approved' ? handleDownloadCertificate : undefined}
+                            onDownloadCertificate={registrationStatus === 'verified' ? handleDownloadCertificate : undefined}
                             onUpdateProfile={handleUpdateProfile}
                             onReapply={registrationStatus === 'declined' || registrationStatus === 'expired' ? handleReapply : undefined}
                             onContactSupport={registrationStatus === 'declined' || registrationStatus === 'suspended' ? handleContactSupport : undefined}
-                        />
+                        />}
 
                         {/* Renewal Reminder - Only show when approved and days remaining <= 30 */}
-                        {registrationStatus === 'approved' && daysRemaining <= 30 && daysRemaining > 0 && (
+                        {registrationStatus === 'verified' && daysRemaining <= 30 && daysRemaining > 0 && (
                             <RenewalReminderCard
                                 daysRemaining={daysRemaining}
                                 onStartRenewal={handleStartRenewal}

@@ -66,8 +66,6 @@ export default function VendorLoginPage() {
             toast.loading('Sending verification code...', { id: 'resend-otp' });
             const response = await resendVerificationOtpMutation({ email: formData.email });
 
-            console.log('Resend OTP response:', response);
-
             // Check if response has an error property (RTK Query error response)
             if ('error' in response) {
                 toast.dismiss('resend-otp');

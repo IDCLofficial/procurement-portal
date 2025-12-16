@@ -29,8 +29,6 @@ const companySlice = createSlice({
         state.isLoading = false;
       })
       .addMatcher(vendorApi.endpoints.completeVendorRegistration.matchFulfilled, (state, action) => {
-        console.log(action.payload);
-
         const result = action.payload.result;
         if (result && typeof (result.directors) === "object") {
           state.data!.directors = result.directors;

@@ -64,7 +64,6 @@ export default function RegistrationContinuation() {
             case VendorSteps.COMPLETE:
                 return 9;
             default:
-                console.log("Invalid company form", companyForm);
                 return 2;
         }
     }, [user]);
@@ -397,7 +396,6 @@ export default function RegistrationContinuation() {
             try {
                 toast.loading('Saving your company bank details...', { id: "bankDetails" });
                 const response = await completeVendorRegistration(payload);
-                console.log(response);
 
                 if (response.error) {
                     throw new Error((response.error as ResponseError["error"]).data.message);

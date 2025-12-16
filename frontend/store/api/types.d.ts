@@ -248,7 +248,7 @@ interface InitPaymentResponse {
 }
 
 interface Application {
-    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected";
+    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected" | "Verified";
     timestamp: string;
     notes: string;
 }

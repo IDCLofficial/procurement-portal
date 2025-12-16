@@ -23,7 +23,6 @@ const userSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addMatcher(vendorApi.endpoints.getProfile.matchFulfilled, (state, action) => {
-        console.log("Fired getProfile",action.payload);
         state.data = action.payload;
       })
       .addMatcher(vendorApi.endpoints.loginVendor.matchFulfilled, (state, action) => {

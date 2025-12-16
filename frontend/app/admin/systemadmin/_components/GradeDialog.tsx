@@ -8,6 +8,7 @@ export interface GradeFormState {
   registrationCost: string;
   financialCapacity: string;
   category: string;
+renewalFee: string;
 }
 
 interface GradeDialogProps {
@@ -38,7 +39,8 @@ export function GradeDialog({
     !gradeForm.code?.trim() ||
     !gradeForm.category?.trim() ||
     !gradeForm.registrationCost?.trim() ||
-    !gradeForm.financialCapacity?.trim();
+    !gradeForm.financialCapacity?.trim() ||
+    !gradeForm.renewalFee?.trim();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -112,6 +114,26 @@ export function GradeDialog({
                 onChange('registrationCost', e.target.value)
               }
               placeholder="e.g., 100000"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="grade-renewal-fee"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Renewal Fee (₦)
+            </label>
+            <input
+              id="grade-renewal-fee"
+              type="number"
+              min="0"
+              value={gradeForm.renewalFee}
+              onChange={(e) =>
+                onChange('renewalFee', e.target.value)
+              }
+              placeholder="e.g., 50000"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>

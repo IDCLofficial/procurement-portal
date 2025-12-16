@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Save, Clock, Tags, FileText, Building2, type LucideIcon } from 'lucide-react';
+import { Clock, Tags, FileText, Building2, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type SettingsTabId =  'sla' | 'categories' | 'documents' | 'mdas';
@@ -9,7 +9,6 @@ export type SettingsTabId =  'sla' | 'categories' | 'documents' | 'mdas';
 interface SettingsTabsProps {
   activeTab?: SettingsTabId;
   onTabChange?: (tab: SettingsTabId) => void;
-  onSave?: () => void;
 }
 
 interface SettingsTabConfig {
@@ -25,7 +24,7 @@ const TABS: SettingsTabConfig[] = [
   { id: 'sla', label: 'SLA Timers', icon: Clock },
 ];
 
-export function SettingsTabs({ activeTab, onTabChange, onSave }: SettingsTabsProps) {
+export function SettingsTabs({ activeTab, onTabChange }: SettingsTabsProps) {
   const [internalTab, setInternalTab] = useState<SettingsTabId>('categories');
   const currentTab = activeTab ?? internalTab;
 
@@ -45,7 +44,6 @@ export function SettingsTabs({ activeTab, onTabChange, onSave }: SettingsTabsPro
         <p className="text-sm text-[#A0AEC0]">
           Configure system SLA timers, and requirements
         </p>
-        
       </div>
 
       <div className="inline-flex items-center rounded-full bg-white border border-gray-200 shadow-sm p-1">

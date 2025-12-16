@@ -6,7 +6,9 @@ import { useParams, useRouter } from "next/navigation";
 import { ApplicationDetailPage } from "@/app/admin/components/general/ApplicationDetailPage";
 import { ConfirmationDialog } from "@/app/admin/components/general/confirmation-dialog";
 import { useGetApplicationByIdQuery, useChangeApplicationStatusMutation } from "@/app/admin/redux/services/appApi";
+import { computeApplicationSla } from "@/app/admin/utils/sla";
 import { useAppSelector } from "@/app/admin/redux/hooks";
+
 import type { CompanyDocument } from "@/app/admin/types";
 
 function ApplicationDetails() {
@@ -14,6 +16,7 @@ function ApplicationDetails() {
   const params = useParams();
 
   const { initialized, user } = useAppSelector((state) => state.auth);
+  const slaConfig = useAppSelector((state) => state.slaConfig.config);
 
   const appIdParam = (params as { appId?: string | string[] }).appId;
   const applicationId = Array.isArray(appIdParam) ? appIdParam[0] : appIdParam || "";
@@ -53,6 +56,8 @@ function ApplicationDetails() {
   const isForwardDisabled =
     application?.currentStatus !== "Pending Desk Review" || hasUnapprovedDocuments;
   const isRegistrar = user?.role === "Registrar";
+
+  const slaMetrics = application && slaConfig ? computeApplicationSla(application, slaConfig) : undefined;
 
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50">
@@ -246,7 +251,7 @@ function ApplicationDetails() {
             rcNumber={application.rcNumber}
             sectorAndGrade={`${application.sector} ${application.grade}`}
             submissionDate={application.submissionDate}
-            slaDeadline={undefined}
+            slaDeadline={slaMetrics?.deadline}
             assignedTo={application.assignedTo}
             currentStatus={application.currentStatus}
             showBackButton={false}

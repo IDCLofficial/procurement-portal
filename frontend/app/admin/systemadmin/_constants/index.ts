@@ -118,7 +118,6 @@ export const CERTIFICATE_TABS: { id: CertificateTabId; label: string }[] = [
   { id: 'all', label: 'All Certificates' },
   { id: 'expiring', label: 'Expired' },
   { id: 'revoked', label: 'Revoked/Suspended' },
-  { id: 'logs', label: 'Verification Logs' },
 ];
 
 // ============================================================================

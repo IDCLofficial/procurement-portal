@@ -18,7 +18,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "all", label: "All Certificates" },
   { id: "expiring", label: "Expired" },
   { id: "revoked", label: "Revoked/Suspended" },
-  { id: "logs", label: "Verification Logs" },
+
 ];
 
 function CertificatesPage() {
@@ -160,11 +160,7 @@ function CertificatesPage() {
                   onTabChange={(id) => setActiveTab(id as TabId)}
                 />
 
-                {activeTab === "logs" ? (
-                  <div className="px-6 pb-6 text-xs text-gray-500">
-                    Verification logs will be available here once integrated.
-                  </div>
-                ) : (
+               
                   <CertificateTable
                     certificates={filteredCertificates}
                     onViewDetails={(cert) => setSelectedCertificate(cert)}
@@ -178,7 +174,7 @@ function CertificatesPage() {
                     limit={certificatesData?.limit ?? limit}
                     onPageChange={setPage}
                   />
-                )}
+                
               </section>
             </>
           )}

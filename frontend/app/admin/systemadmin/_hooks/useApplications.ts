@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useGetApplicationsQuery } from '@/app/admin/redux/services/appApi';
+import { useGetSlaConfigQuery } from '@/app/admin/redux/services/settingsApi';
+import { computeApplicationSla } from '@/app/admin/utils/sla';
+import { useAppDispatch } from '@/app/admin/redux/hooks';
+import { setSlaConfig } from '@/app/admin/redux/slice/slaConfigSlice';
 import { APPLICATION_TAB_FILTERS, type ApplicationTabId } from '../_constants';
 import type { Application, StatItem } from '@/app/admin/types';
 
@@ -36,9 +40,18 @@ export interface UseApplicationsReturn {
 const DEFAULT_LIMIT = 20;
 
 export function useApplications(): UseApplicationsReturn {
+  const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+
+  const { data: slaConfig } = useGetSlaConfigQuery();
+
+  useEffect(() => {
+    if (slaConfig) {
+      dispatch(setSlaConfig(slaConfig));
+    }
+  }, [slaConfig, dispatch]);
 
   // Determine status/type filter based on active tab
   const { statusFilter, typeFilter } = useMemo(() => {
@@ -61,8 +74,19 @@ export function useApplications(): UseApplicationsReturn {
   });
 
   const applications = useMemo(
-    () => applicationsResponse?.applications || [],
-    [applicationsResponse?.applications]
+    () => {
+      const base = applicationsResponse?.applications || [];
+      if (!slaConfig) return base;
+
+      return base.map((app) => {
+        const metrics = computeApplicationSla(app, slaConfig);
+        return {
+          ...app,
+          slaStatus: metrics.overdue ? 'Overdue' : 'On Track',
+        };
+      });
+    },
+    [applicationsResponse?.applications, slaConfig]
   );
   const totalApplications = applicationsResponse?.total || 0;
   const pageFromApi = applicationsResponse?.page || currentPage;

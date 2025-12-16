@@ -1,8 +1,9 @@
 "use client";
 
 import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
 // Lucide Icons
 import {
@@ -16,17 +17,9 @@ import {
 import { useAppSelector } from '../../redux/hooks';
 import { useGetApplicationsByUserQuery, useGetApplicationsQuery } from '../../redux/services/appApi';
 import { FormatDate } from '@/app/admin/utils/dateFormateer';
+import { computeApplicationSla } from '@/app/admin/utils/sla';
+import type { Application as AdminApplication } from '@/app/admin/types';
  
-interface Application {
-  id: string;
-  name: string;
-  type: string;
-  applicationStatus?: string;
-  currentStatus?: string;
-  submissionDate: string | Date;
-  _id: string;
-  grade?: string;
-}
 
 type RegistrarTab = 'new' | 'approved' | 'rejected';
 
@@ -36,10 +29,14 @@ function AdminApplications() {
   
   const [registrarTab, setRegistrarTab] = useState<RegistrarTab>('new');
 
+  const params = useParams();
+  const routeId = (params?.id as string) || user?.id;
+
   const isRegistrar = user?.role === 'Registrar';
   const {
     data: registrarData,
     isLoading: isRegistrarLoading,
+    isFetching: isRegistrarFetching,
     isError: isRegistrarError,
   } = useGetApplicationsQuery(
     {
@@ -56,6 +53,7 @@ function AdminApplications() {
   const {
     data: userData,
     isLoading: isUserLoading,
+    isFetching: isUserFetching,
     isError: isUserError,
   } = useGetApplicationsByUserQuery(undefined, {
     skip: !!isRegistrar,
@@ -64,10 +62,26 @@ function AdminApplications() {
   const data = isRegistrar ? registrarData : userData;
   console.log(data);
   const isLoading = isRegistrar ? isRegistrarLoading : isUserLoading;
+  const isFetching = isRegistrar ? isRegistrarFetching : isUserFetching;
+  const isBusy = isLoading || isFetching;
   const isError = isRegistrar ? isRegistrarError : isUserError;
 
-  const applications: Application[] = data?.applications ?? [];
-  const totalApplications = data?.total ?? applications.length;
+  const rawApplications = (data?.applications ?? []) as AdminApplication[];
+  const totalApplications = data?.total ?? rawApplications.length;
+
+  const slaConfig = useAppSelector((state) => state.slaConfig.config);
+
+  const applications = useMemo(() => {
+    if (!slaConfig) return rawApplications;
+
+    return rawApplications.map((app) => {
+      const metrics = computeApplicationSla(app, slaConfig);
+      return {
+        ...app,
+        slaStatus: metrics.overdue ? 'Overdue' : 'On Track',
+      } as AdminApplication;
+    });
+  }, [rawApplications, slaConfig]);
 
   if (!isAuthenticated) {
     // Optionally redirect to login
@@ -131,7 +145,7 @@ function AdminApplications() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Applications</h3>
                 <span className="text-sm text-gray-500">
-                  {isLoading
+                  {isBusy
                     ? 'Loading applications...'
                     : `Showing ${totalApplications} application${totalApplications === 1 ? '' : 's'}`}
                 </span>
@@ -167,26 +181,27 @@ function AdminApplications() {
                       <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Type</th>
                       <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                      <th className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">SLA Status</th>
                       <th className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Grade</th>
                       <th className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {isLoading ? (
+                    {isBusy ? (
                       <tr>
-                        <td colSpan={7} className="px-4 py-3 text-center text-gray-500">
+                        <td colSpan={8} className="px-4 py-3 text-center text-gray-500">
                          <span className='loader my-6'></span>
                         </td>
                       </tr>
                     ) : isError ? (
                       <tr>
-                        <td colSpan={7} className="px-4 py-3 text-center text-red-500">
+                        <td colSpan={8} className="px-4 py-3 text-center text-red-500">
                           Failed to load applications.
                         </td>
                       </tr>
                     ) : applications.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-4 py-3 text-center text-gray-500">
+                        <td colSpan={8} className="px-4 py-3 text-center text-gray-500">
                           No applications found.
                         </td>
                       </tr>
@@ -199,18 +214,27 @@ function AdminApplications() {
                           <td className="px-4 py-3 whitespace-nowrap text-gray-900">{app.type}</td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                              {typeof (app.applicationStatus ?? app.currentStatus) === 'string'
-                                ? (app.applicationStatus ?? app.currentStatus)
-                                : ''}
+                              {app.currentStatus ||  'Pending'}
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-gray-500">
                             {FormatDate(app.submissionDate)}
                           </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-right">
+                            <span
+                              className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                                app.slaStatus === 'Overdue'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-green-100 text-green-800'
+                              }`}
+                            >
+                              {app.slaStatus}
+                            </span>
+                          </td>
                           <td className="px-4 py-3 whitespace-nowrap text-right text-gray-900">{app.grade}</td>
                           <td className="px-4 py-3 whitespace-nowrap text-right">
                             <Link
-                              href={`/admin/${user?.id}/applications/${app._id}`}
+                              href={`/admin/${routeId}/applications/${app._id}`}
                               className="text-sm font-medium text-blue-600 hover:text-blue-800"
                             >
                               View details

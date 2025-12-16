@@ -33,7 +33,7 @@ export function UserForm({
 }: UserFormProps) {
   const roleOptions = [
     { value: 'officer', label: 'Desk Officer' },
-    { value: 'auditor', label: 'Auditor' },
+    { value: 'Auditor', label: 'Auditor' },
     { value: 'Registrar', label: 'Registrar' },
   ];
 

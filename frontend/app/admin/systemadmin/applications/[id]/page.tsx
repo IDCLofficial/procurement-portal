@@ -4,6 +4,8 @@ import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { useParams } from 'next/navigation';
 import { ApplicationDetailPage } from '@/app/admin/components/general/ApplicationDetailPage';
 import { useGetApplicationByIdQuery } from '@/app/admin/redux/services/appApi';
+import { useGetSlaConfigQuery } from '@/app/admin/redux/services/settingsApi';
+import { computeApplicationSla } from '@/app/admin/utils/sla';
 import { LoadingSpinner } from '../../_components';
 
 function SystemAdminApplicationDetailRoute() {
@@ -15,6 +17,8 @@ function SystemAdminApplicationDetailRoute() {
     skip: !applicationId,
   });
 
+  const { data: slaConfig } = useGetSlaConfigQuery();
+
   if (isLoading || !application) {
     return (
       <main className="flex-1 overflow-y-auto bg-gray-50">
@@ -24,6 +28,7 @@ function SystemAdminApplicationDetailRoute() {
   }
 
   const company = typeof application.companyId === 'string' ? undefined : application.companyId;
+  const slaMetrics = slaConfig ? computeApplicationSla(application, slaConfig) : undefined;
 
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50">
@@ -34,7 +39,7 @@ function SystemAdminApplicationDetailRoute() {
           rcNumber={application.rcNumber}
           sectorAndGrade={`${application.sector} ${application.grade}`}
           submissionDate={application.submissionDate}
-          slaDeadline={undefined}
+          slaDeadline={slaMetrics?.deadline}
           assignedTo={application.assignedTo}
           currentStatus={application.currentStatus}
           documents={company?.documents}

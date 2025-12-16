@@ -55,6 +55,7 @@ export function CategoriesConfiguration({
     registrationCost: '',
     financialCapacity: '',
     category: '',
+    renewalFee: '',
   });
 
   const [resultDialogOpen, setResultDialogOpen] = useState(false);
@@ -259,6 +260,7 @@ export function CategoriesConfiguration({
       registrationCost: grade.registrationCost.toString(),
       financialCapacity: grade.financialCapacity.toString(),
       category: grade.category ?? '',
+      renewalFee: grade.renewalFee.toString(),
     });
     setIsGradeDialogOpen(true);
   };
@@ -266,7 +268,7 @@ export function CategoriesConfiguration({
   const handleCloseGradeDialog = () => {
     setIsGradeDialogOpen(false);
     setEditingGrade(null);
-    setGradeForm({ code: '', registrationCost: '', financialCapacity: '', category: '' });
+    setGradeForm({ code: '', registrationCost: '', financialCapacity: '', category: '', renewalFee: '' });
   };
 
   const handleSubmitGrade = async () => {
@@ -278,10 +280,13 @@ export function CategoriesConfiguration({
     const financialCapacity = Number(
       gradeForm.financialCapacity.toString().replace(/,/g, ''),
     );
+    const renewalFee = Number(
+      gradeForm.renewalFee.toString().replace(/,/g, ''),
+    );
 
-    if (Number.isNaN(registrationCost) || Number.isNaN(financialCapacity)) {
+    if (Number.isNaN(registrationCost) || Number.isNaN(financialCapacity) || Number.isNaN(renewalFee)) {
       setResultDialogTitle('Invalid values');
-      setResultDialogDescription('Registration cost and financial capacity must be valid numbers.');
+      setResultDialogDescription('Registration cost, renewal fee, and financial capacity must be valid numbers.');
       setResultDialogVariant('destructive');
       setResultDialogOpen(true);
       return;
@@ -293,6 +298,7 @@ export function CategoriesConfiguration({
         grade: gradeForm.code.toUpperCase(),
         registrationCost,
         financialCapacity,
+        renewalFee,
       };
 
       const response = editingGrade
@@ -338,7 +344,7 @@ export function CategoriesConfiguration({
 
   const handleAddGrade = () => {
     setEditingGrade(null);
-    setGradeForm({ code: '', registrationCost: '', financialCapacity: '', category: '' });
+    setGradeForm({ code: '', registrationCost: '', financialCapacity: '', category: '', renewalFee: '' });
     setIsGradeDialogOpen(true);
   };
 

@@ -146,7 +146,7 @@ interface ApplicationHeaderProps {
   rcNumber: string;
   sectorAndGrade: string;
   submissionDate?: string | null;
-  slaDeadline?: string | null;
+  slaDeadline?: string | Date | null;
 }
 
 function ApplicationHeader({

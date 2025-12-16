@@ -43,7 +43,8 @@ export function ContractorGradesSection({
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Grade</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Description</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Registration Fees</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Renewal Fee</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Project Value Threshold</th>
               <th className="px-4 py-3 text-right font-medium text-gray-500">Actions</th>
             </tr>
@@ -63,12 +64,17 @@ export function ContractorGradesSection({
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-700">
                   <span className="text-xs text-gray-700">
-                    {`Registration: ₦${grade.registrationCost.toLocaleString()}`}
+                    {`₦${grade.registrationCost.toLocaleString()}`}
                   </span>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-700">
                   <span className="text-xs text-gray-700">
-                    {`₦${grade.financialCapacity.toLocaleString()}`}
+                    {`₦${grade.renewalFee.toLocaleString()}`}
+                  </span>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-700">
+                  <span className="text-xs text-gray-700">
+                    {`Below: ₦${grade.financialCapacity.toLocaleString()}`}
                   </span>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">

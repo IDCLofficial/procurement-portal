@@ -178,6 +178,7 @@ export interface CreateGradeRequest {
   grade: string;
   registrationCost: number;
   financialCapacity: number;
+  renewalFee: number;
 }
 
 export interface CreateGradeResponse {
@@ -186,6 +187,7 @@ export interface CreateGradeResponse {
   grade: string;
   registrationCost: number;
   financialCapacity: number;
+  renewalFee: number;
   createdAt: string;
   updatedAt: string;
 }

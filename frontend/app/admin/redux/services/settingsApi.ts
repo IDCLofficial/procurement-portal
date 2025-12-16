@@ -1,5 +1,5 @@
 import { baseApi } from "./baseApi";
-import type { CategoriesResponse, Grade } from "../../types/setting";
+import type { CategoriesResponse, Grade, SlaConfig } from "../../types/setting";
 import type {
   CreateCategoryRequest,
   CreateCategoryResponse,
@@ -27,6 +27,26 @@ export const settingsApi = baseApi.injectEndpoints({
     getCategories: builder.query<CategoriesResponse, void>({
       query: () => "/categories",
       providesTags: ["Categories", "Grades"],
+    }),
+
+    // GET ALL SLA CONFIGURATION
+    getSlaConfig: builder.query<SlaConfig, void>({
+      query: () => "/sla",
+      transformResponse: (response: SlaConfig) => {
+        console.log("SLA config API response:", response);
+        return response;
+      },
+      providesTags: ["Settings"],
+    }),
+
+    // UPDATE SLA CONFIGURATION
+    updateSlaConfig: builder.mutation<SlaConfig, Partial<SlaConfig>>({
+      query: (body) => ({
+        url: "/sla",
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Settings"],
     }),
 
     // GET ALL GRADES
@@ -172,6 +192,7 @@ export const settingsApi = baseApi.injectEndpoints({
 
 export const {
   useGetCategoriesQuery,
+  useGetSlaConfigQuery,
   useGetGradesQuery,
   useCreateCategoryMutation,
   useDeleteCategoryMutation,
@@ -187,4 +208,5 @@ export const {
   useCreateMdaMutation,
   useUpdateMdaMutation,
   useDeleteMdaMutation,
+  useUpdateSlaConfigMutation,
 } = settingsApi;

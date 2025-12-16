@@ -1,12 +1,21 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useGetCategoriesQuery, useGetDocumentPresetsQuery, useGetMdasQuery, useGetGradesQuery } from '@/app/admin/redux/services/settingsApi';
+import {
+  useGetCategoriesQuery,
+  useGetDocumentPresetsQuery,
+  useGetMdasQuery,
+  useGetGradesQuery,
+  useGetSlaConfigQuery,
+  useUpdateSlaConfigMutation,
+} from '@/app/admin/redux/services/settingsApi';
 import {
   DEFAULT_SLA_STAGES,
   type SlaStageConfig,
   type DocumentConfigItem,
 } from '../_constants';
+import { useAppDispatch } from '../../redux/hooks';
+import { setSlaConfig } from '../../redux/slice/slaConfigSlice';
 import type { SettingsTabId } from '@/app/admin/components/user/SettingsTabs';
 import type { SectorConfig, GradeConfig } from '@/app/admin/systemadmin/_types/settings-ui';
 
@@ -77,6 +86,7 @@ function loadSlaStagesFromStorage(): SlaStageConfig[] {
 const DEFAULT_MDAS_LIMIT = 10;
 
 export function useSettings(): UseSettingsReturn {
+  const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState<SettingsTabId>('categories');
   const [slaStages, setSlaStages] = useState<SlaStageConfig[]>(loadSlaStagesFromStorage);
   const [documents, setDocuments] = useState<DocumentConfigItem[]>([]);
@@ -97,6 +107,11 @@ export function useSettings(): UseSettingsReturn {
 
   // Fetch document presets from API
   const { data: documentsData } = useGetDocumentPresetsQuery();
+
+  // Fetch SLA configuration from backend
+  const { data: slaConfigData } = useGetSlaConfigQuery();
+
+  const [updateSlaConfig] = useUpdateSlaConfigMutation();
 
   const { data: mdasResponse } = useGetMdasQuery({
     page: mdasCurrentPage,
@@ -124,6 +139,7 @@ export function useSettings(): UseSettingsReturn {
       grade: grade.grade,
       registrationCost: grade.registrationCost,
       financialCapacity: grade.financialCapacity,
+      renewalFee: grade.renewalFee,
     }));
   }, [gradesData, categoriesData?.grades]);
 
@@ -140,6 +156,52 @@ export function useSettings(): UseSettingsReturn {
   const mdasTotal = mdasResponse?.total ?? 0;
   const mdasPage = mdasResponse?.page ?? mdasCurrentPage;
   const mdasLimit = mdasResponse?.limit ?? DEFAULT_MDAS_LIMIT;
+
+  // Initialize SLA stages from backend configuration when available
+  useEffect(() => {
+    if (!slaConfigData) return;
+
+    try {
+      dispatch(setSlaConfig(slaConfigData));
+
+      // Map the single SLA config document into our stage array
+      setSlaStages((current) =>
+        current.map((stage) => {
+          switch (stage.id) {
+            case 'desk-officer-review':
+              return {
+                ...stage,
+                value: slaConfigData.deskOfficerReview ?? stage.value,
+              };
+            case 'registrar-review':
+              return {
+                ...stage,
+                value: slaConfigData.registrarReview ?? stage.value,
+              };
+            case 'clarification-response':
+              return {
+                ...stage,
+                value: slaConfigData.clarificationResponse ?? stage.value,
+              };
+            case 'payment-verification':
+              return {
+                ...stage,
+                value: slaConfigData.paymentVerification ?? stage.value,
+              };
+            case 'total-processing-target':
+              return {
+                ...stage,
+                value: slaConfigData.totalProcessingTarget ?? stage.value,
+              };
+            default:
+              return stage;
+          }
+        }),
+      );
+    } catch (error) {
+      console.error('Failed to map SLA configuration from API', error);
+    }
+  }, [slaConfigData]);
 
   // Handlers
   const handleTabChange = useCallback((tab: SettingsTabId) => {
@@ -176,31 +238,57 @@ export function useSettings(): UseSettingsReturn {
   }, []);
 
   const handleSave = useCallback(() => {
-    try {
-      setSaving(true);
+    setSaving(true);
 
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('slaStages', JSON.stringify(slaStages));
-      }
+    const payload: Partial<{
+      deskOfficerReview: number;
+      registrarReview: number;
+      clarificationResponse: number;
+      paymentVerification: number;
+      totalProcessingTarget: number;
+    }> = {};
 
-      setDialog({
-        open: true,
-        title: 'Settings saved',
-        description: 'Your configuration changes have been saved successfully.',
-        variant: 'default',
+    const getValue = (id: string) => slaStages.find((s) => s.id === id)?.value;
+
+    const deskOfficerReview = getValue('desk-officer-review');
+    const registrarReview = getValue('registrar-review');
+    const clarificationResponse = getValue('clarification-response');
+    const paymentVerification = getValue('payment-verification');
+    const totalProcessingTarget = getValue('total-processing-target');
+
+    if (deskOfficerReview !== undefined) payload.deskOfficerReview = deskOfficerReview;
+    if (registrarReview !== undefined) payload.registrarReview = registrarReview;
+    if (clarificationResponse !== undefined) payload.clarificationResponse = clarificationResponse;
+    if (paymentVerification !== undefined) payload.paymentVerification = paymentVerification;
+    if (totalProcessingTarget !== undefined) payload.totalProcessingTarget = totalProcessingTarget;
+
+    updateSlaConfig(payload)
+      .unwrap()
+      .then(() => {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('slaStages', JSON.stringify(slaStages));
+        }
+
+        setDialog({
+          open: true,
+          title: 'Settings saved',
+          description: 'Your configuration changes have been saved successfully.',
+          variant: 'default',
+        });
+      })
+      .catch((error) => {
+        console.error('Failed to save settings', error);
+        setDialog({
+          open: true,
+          title: 'Save failed',
+          description: "We couldn't save your changes. Please try again.",
+          variant: 'destructive',
+        });
+      })
+      .finally(() => {
+        setSaving(false);
       });
-    } catch (error) {
-      console.error('Failed to save settings', error);
-      setDialog({
-        open: true,
-        title: 'Save failed',
-        description: "We couldn't save your changes. Please try again.",
-        variant: 'destructive',
-      });
-    } finally {
-      setSaving(false);
-    }
-  }, [slaStages]);
+  }, [slaStages, updateSlaConfig]);
 
   const handleDialogClose = useCallback(() => {
     setDialog((prev) => ({ ...prev, open: false }));

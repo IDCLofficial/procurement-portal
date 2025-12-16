@@ -12,6 +12,18 @@ export interface Grade {
   grade: string;
   registrationCost: number;
   financialCapacity: number;
+  renewalFee: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SlaConfig {
+  _id: string;
+  deskOfficerReview: number;
+  registrarReview: number;
+  clarificationResponse: number;
+  paymentVerification: number;
+  totalProcessingTarget: number;
   createdAt: string;
   updatedAt: string;
 }

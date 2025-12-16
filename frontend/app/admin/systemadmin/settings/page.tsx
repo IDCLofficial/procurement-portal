@@ -41,7 +41,6 @@ function SystemAdminSettings() {
           <SettingsTabs
             activeTab={activeTab}
             onTabChange={handleTabChange}
-            onSave={handleSave}
           />
 
         
@@ -50,6 +49,7 @@ function SystemAdminSettings() {
             <SlaTimerConfiguration
               stages={slaStages}
               onChange={handleSlaStagesChange}
+              onSave={handleSave}
             />
           )}
 

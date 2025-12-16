@@ -20,6 +20,22 @@ type TransactionsApiResponse = {
   };
 };
 
+type AdminNotificationDto = {
+  title: string;
+  message: string;
+  priority: string;
+  createdAt: string;
+};
+
+type AdminNotificationsApiResponse = {
+  message: string;
+  notifications: AdminNotificationDto[];
+  totalNotifications: number;
+  totalUnreadNotifications: number;
+  totalCriticalNotifications: number;
+  totalHighPriorityNotifications: number;
+};
+
 export type GetAuditLogsParams = {
   entityType?: string;
   entityId?: string;
@@ -110,6 +126,23 @@ export const adminApi = baseApi.injectEndpoints({
         return response;
       },
     }),
+
+    // GET ADMIN NOTIFICATIONS
+    getAdminNotifications: builder.query<AdminNotificationsApiResponse, void>({
+      query: () => "/notifications/admin-notification",
+      transformResponse: (response: AdminNotificationsApiResponse) => {
+        console.log("Admin notifications API response:", response);
+        return response;
+      },
+    }),
+
+    // MARK ADMIN NOTIFICATION AS READ (BY ID)
+    markAdminNotificationAsReadById: builder.mutation<void, string>({
+      query: (notificationId) => ({
+        url: `/notifications/mark-as-read/${notificationId}`,
+        method: "PATCH",
+      }),
+    }),
   }),
 });
 
@@ -121,4 +154,6 @@ export const {
   useLoginMutation,
   useGetTransactionsQuery,
   useGetAuditLogsQuery,
+  useGetAdminNotificationsQuery,
+  useMarkAdminNotificationAsReadByIdMutation,
 } = adminApi;

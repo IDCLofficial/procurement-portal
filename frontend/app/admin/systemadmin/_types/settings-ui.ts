@@ -12,4 +12,5 @@ export interface GradeConfig {
   grade: string;
   registrationCost: number;
   financialCapacity: number;
+  renewalFee: number;
 }

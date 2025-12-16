@@ -38,7 +38,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
         if (NEXT_PUBLIC_CAN_SKIP_COMPLETE_REGISTRATION !== 'true' && !allowedPathsWhenNotComplete.includes(pathname)) {
             if (user && user.companyForm !== "complete"){
-                // console.log("User not complete, redirecting to complete registration", user);
                 router.replace('/dashboard/complete-registration');
                 return;
             }
@@ -58,11 +57,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     }
     
     if (!isAuthenticated || !user || !user.isVerified) {
-        console.log("User not authenticated or not verified", {
-            isAuthenticated,
-            user,
-            isVerified: user?.isVerified
-        });
         return null;
     }
 

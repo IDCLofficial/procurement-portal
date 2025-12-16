@@ -254,7 +254,7 @@ interface Application {
 }
 
 type ApplicationTimeline = Array<{
-    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected" | "Verified";
+    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected";
     timestamp: string;
 }>;
 

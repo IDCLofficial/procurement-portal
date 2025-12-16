@@ -212,6 +212,8 @@ export class EmailService {
     };
   }
 
+  //
+
   // Clean up expired OTPs from the store
   private cleanupExpiredOtps(): void {
     const now = new Date();
@@ -221,4 +223,54 @@ export class EmailService {
       }
     }
   }
+
+  // async sendApplicationApprovalEmail(email: string, vendorName: string, certificateLink:string): Promise<void> {
+  //   try {
+  //     const emailConfig = this.configService.get('email');
+  //     const fromEmail = emailConfig?.from || 'noreply@procurement.gov.ng';
+  //     const apiUrl = this.configService.get('app.frontendUrl') || 'https://procurement.gov.ng';
+      
+  //     const emailHtml = `
+  //       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+  //         <div style="text-align: center; margin-bottom: 20px;">
+  //           <h1 style="color: #1a365d;">Application Approved! 🎉</h1>
+  //         </div>
+          
+  //         <p>Dear ${vendorName},</p>
+          
+  //         <p>We are pleased to inform you that your procurement application has been successfully approved!</p>
+          
+  //         <p>Your certificate has been issued and is now available for download. This certificate serves as proof of your registration with our procurement portal.</p>
+          
+  //         <div style="text-align: center; margin: 30px 0;">
+  //           <a href="${appUrl}${certificateLink}" 
+  //              style="display: inline-block; padding: 12px 24px; background-color: #3182ce; color: white; 
+  //                     text-decoration: none; border-radius: 4px; font-weight: bold;">
+  //             View Your Certificate
+  //           </a>
+  //         </div>
+          
+  //         <p>If you have any questions or need further assistance, please don't hesitate to contact our support team.</p>
+          
+  //         <p>Best regards,<br>Procurement Portal Team</p>
+          
+  //         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #666;">
+  //           <p>This is an automated message. Please do not reply to this email.</p>
+  //         </div>
+  //       </div>
+  //     `;
+
+  //     await this.resend.emails.send({
+  //       from: `Procurement Portal <${fromEmail}>`,
+  //       to: email,
+  //       subject: 'Your Procurement Application Has Been Approved',
+  //       html: emailHtml,
+  //     });
+
+  //     this.logger.log(`Approval email sent to ${email}`);
+  //   } catch (error) {
+  //     this.logger.error(`Failed to send approval email to ${email}:`, error);
+  //     throw new Error('Failed to send approval email');
+  //   }
+  // }
 }

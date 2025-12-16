@@ -16,6 +16,7 @@ import { AuditAction, AuditSeverity, EntityType } from '../audit-logs/entities/a
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PaymentDocument } from 'src/payments/entities/payment.schema';
 import { Notification, NotificationDocument, NotificationRecipient, NotificationType, priority } from 'src/notifications/entities/notification.entity';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class ApplicationsService {
@@ -30,6 +31,7 @@ export class ApplicationsService {
     @InjectModel(Notification.name) private notificationModel:Model<NotificationDocument>,
     private vendorsService: VendorsService,
     private auditLogsService: AuditLogsService,
+    private emailService: EmailService,
   ) {}
 
   async findAll(status?: ApplicationStatus, type?:ApplicationType, page: number = 1, limit: number = 10) {
@@ -266,6 +268,7 @@ export class ApplicationsService {
             throw new NotFoundException("could not find a vendor")
           }
 
+          // Create notification
           await this.notificationModel.create({
             type: NotificationType.APPLICATION_APPROVED,
             title: 'Application approved',
@@ -275,6 +278,25 @@ export class ApplicationsService {
             priority: priority.LOW,
             isRead: false,
           });
+
+          // Send approval email to vendor
+          // try {
+          //   const user = await this.userModel.findById(company.userId);
+          //   if (user && user.email) {
+          //     const certificateLink = `/vendor/dashboard/certificates`; // Adjust this path as per your frontend routing
+          //     await this.emailService.sendApplicationApprovalEmail(
+          //       user.email,
+          //       company.companyName,
+          //       certificateLink
+          //     );
+          //     this.logger.log(`Sent approval email to ${user.email}`);
+          //   }
+          // } catch (emailError) {
+          //   this.logger.error('Failed to send approval email:', emailError);
+          //   // Don't fail the whole operation if email sending fails
+          // }
+
+          //
         }
       }
       

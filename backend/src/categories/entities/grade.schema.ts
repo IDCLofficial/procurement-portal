@@ -15,7 +15,7 @@ export class Grade {
     registrationCost: number;
 
     @Prop({ required: true})
-    renewalFees:number;
+    renewalFee:number;
 
     @Prop({ required: true })
     financialCapacity: number;

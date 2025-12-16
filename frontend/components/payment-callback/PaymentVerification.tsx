@@ -7,9 +7,10 @@ import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 interface PaymentVerificationProps {
     reference: string | null;
+    return_url?: string;
 }
 
-export default function PaymentVerification({ reference }: PaymentVerificationProps) {
+export default function PaymentVerification({ reference, return_url }: PaymentVerificationProps) {
     const router = useRouter();
     const [countdown, setCountdown] = useState(3);
 
@@ -24,7 +25,11 @@ export default function PaymentVerification({ reference }: PaymentVerificationPr
                 setCountdown((prev) => {
                     if (prev <= 1) {
                         clearInterval(interval);
-                        router.push('/dashboard/complete-registration');
+                        if (return_url) {
+                            router.push(return_url);
+                        } else {
+                            router.push('/dashboard/complete-registration');
+                        }
                         return 0;
                     }
                     return prev - 1;
@@ -33,7 +38,7 @@ export default function PaymentVerification({ reference }: PaymentVerificationPr
 
             return () => clearInterval(interval);
         }
-    }, [isSuccess, router]);
+    }, [isSuccess, router, return_url]);
 
     const renderContent = () => {
         if (isLoading || !reference) {

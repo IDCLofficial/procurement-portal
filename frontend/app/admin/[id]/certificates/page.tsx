@@ -1,5 +1,6 @@
 "use client";
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { useMemo, useState } from "react";
 import { CertificateDirectoryToolbar } from "@/app/admin/components/user/CertificateDirectoryToolbar";
 import { CertificateTabs } from "@/app/admin/components/user/CertificateTabs";
@@ -20,7 +21,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "logs", label: "Verification Logs" },
 ];
 
-export default function CertificatesPage() {
+function CertificatesPage() {
   const [activeTab, setActiveTab] = useState<TabId>("all");
   const [search, setSearch] = useState("");
   const [gradeFilter, setGradeFilter] = useState("All Grades");
@@ -186,3 +187,5 @@ export default function CertificatesPage() {
     </main>
   );
 }
+
+export default withProtectedRoute(CertificatesPage);

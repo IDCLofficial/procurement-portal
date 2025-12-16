@@ -176,18 +176,6 @@ export interface DocumentConfigItem {
   hasExpiry: 'Yes' | 'No';
   renewalFrequency: string;
 }
-
-export const DEFAULT_DOCUMENTS: DocumentConfigItem[] = [
-  { id: 'doc-cac', name: 'CAC Incorporation Certificate', required: 'Required', hasExpiry: 'No', renewalFrequency: 'N/A' },
-  { id: 'doc-tax', name: 'Tax Clearance Certificate', required: 'Required', hasExpiry: 'Yes', renewalFrequency: 'Annual' },
-  { id: 'doc-pencom', name: 'PENCOM Certificate', required: 'Required', hasExpiry: 'Yes', renewalFrequency: 'Annual' },
-  { id: 'doc-itf', name: 'ITF Certificate', required: 'Required', hasExpiry: 'Yes', renewalFrequency: 'Annual' },
-  { id: 'doc-nsitf', name: 'NSITF Certificate', required: 'Required', hasExpiry: 'Yes', renewalFrequency: 'Annual' },
-  { id: 'doc-affidavit', name: 'Sworn Affidavit', required: 'Required', hasExpiry: 'No', renewalFrequency: 'N/A' },
-  { id: 'doc-bank-ref', name: 'Bank Reference Letter', required: 'Optional', hasExpiry: 'No', renewalFrequency: 'N/A' },
-  { id: 'doc-project-refs', name: 'Past Project References', required: 'Optional', hasExpiry: 'No', renewalFrequency: 'N/A' },
-];
-
 // ============================================================================
 // Users Constants
 // ============================================================================

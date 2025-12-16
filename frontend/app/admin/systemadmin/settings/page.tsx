@@ -1,13 +1,15 @@
-'use client';
+"use client";
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { SettingsTabs } from '@/app/admin/components/user/SettingsTabs';
 import { SlaTimerConfiguration } from '@/app/admin/components/user/SlaTimerConfiguration';
 import { CategoriesConfiguration } from '@/app/admin/systemadmin/_components/CategoriesConfiguration';
 import { RequiredDocumentsTable } from '@/app/admin/components/user/RequiredDocumentsTable';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
+import { MdasTable } from '@/app/admin/systemadmin/_components/MdasTable';
 import { useSettings } from '../_hooks';
 
-export default function SystemAdminSettings() {
+function SystemAdminSettings() {
   const {
     activeTab,
    
@@ -17,6 +19,10 @@ export default function SystemAdminSettings() {
     dialog,
     sectors,
     grades,
+    mdas,
+    mdasTotal,
+    mdasPage,
+    mdasLimit,
     handleTabChange,
     handleSlaStagesChange,
     handleDocumentsChange,
@@ -25,6 +31,7 @@ export default function SystemAdminSettings() {
     handleAddDocument,
     handleEditDocument,
     handleDeleteDocument,
+    handleMdasPageChange,
   } = useSettings();
 
   return (
@@ -50,6 +57,16 @@ export default function SystemAdminSettings() {
             <CategoriesConfiguration
               sectors={sectors}
               grades={grades}
+            />
+          )}
+
+          {activeTab === 'mdas' && (
+            <MdasTable
+              mdas={mdas}
+              total={mdasTotal}
+              page={mdasPage}
+              limit={mdasLimit}
+              onPageChange={handleMdasPageChange}
             />
           )}
 
@@ -79,3 +96,5 @@ export default function SystemAdminSettings() {
     </main>
   );
 }
+
+export default withProtectedRoute(SystemAdminSettings, { requiredRoles: ['Admin'] });

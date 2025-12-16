@@ -1,11 +1,12 @@
 'use client';
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { useParams } from 'next/navigation';
 import { ApplicationDetailPage } from '@/app/admin/components/general/ApplicationDetailPage';
 import { useGetApplicationByIdQuery } from '@/app/admin/redux/services/appApi';
 import { LoadingSpinner } from '../../_components';
 
-export default function SystemAdminApplicationDetailRoute() {
+function SystemAdminApplicationDetailRoute() {
   const params = useParams();
   const idParam = (params as { id?: string | string[] })?.id;
   const applicationId = Array.isArray(idParam) ? idParam[0] : idParam || '';
@@ -43,3 +44,5 @@ export default function SystemAdminApplicationDetailRoute() {
     </main>
   );
 }
+
+export default withProtectedRoute(SystemAdminApplicationDetailRoute, { requiredRoles: ['Admin'] });

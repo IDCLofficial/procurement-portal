@@ -8,6 +8,7 @@ export interface Category {
 
 export interface Grade {
   _id: string;
+  category: string;
   grade: string;
   registrationCost: number;
   financialCapacity: number;

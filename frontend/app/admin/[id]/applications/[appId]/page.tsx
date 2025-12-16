@@ -1,5 +1,6 @@
 "use client";
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ApplicationDetailPage } from "@/app/admin/components/general/ApplicationDetailPage";
@@ -8,7 +9,7 @@ import { useGetApplicationByIdQuery, useChangeApplicationStatusMutation } from "
 import { useAppSelector } from "@/app/admin/redux/hooks";
 import type { CompanyDocument } from "@/app/admin/types";
 
-export default function ApplicationDetails() {
+function ApplicationDetails() {
   const router = useRouter();
   const params = useParams();
 
@@ -259,3 +260,5 @@ export default function ApplicationDetails() {
     </main>
   );
 }
+
+export default withProtectedRoute(ApplicationDetails);

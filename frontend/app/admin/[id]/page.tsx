@@ -1,5 +1,6 @@
 'use client';
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { useDeskOfficerDashboard } from './_hooks';
 import {
   WelcomeSection,
@@ -7,7 +8,7 @@ import {
   LoadingSpinner,
 } from '@/app/admin/_shared';
 
-export default function DeskOfficerDashboard() {
+function DeskOfficerDashboard() {
   const { user, isAuthenticated, notifications } = useDeskOfficerDashboard();
 
   if (!isAuthenticated) {
@@ -32,3 +33,5 @@ export default function DeskOfficerDashboard() {
     </main>
   );
 }
+
+export default withProtectedRoute(DeskOfficerDashboard);

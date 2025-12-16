@@ -1,23 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useCallback } from 'react';
-import { useGetCategoriesQuery } from '@/app/admin/redux/services/settingsApi';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useGetCategoriesQuery, useGetDocumentPresetsQuery, useGetMdasQuery, useGetGradesQuery } from '@/app/admin/redux/services/settingsApi';
 import {
   DEFAULT_SLA_STAGES,
-  
-  DEFAULT_DOCUMENTS,
   type SlaStageConfig,
-
   type DocumentConfigItem,
 } from '../_constants';
 import type { SettingsTabId } from '@/app/admin/components/user/SettingsTabs';
-import type { SectorConfig, GradeConfig } from '@/app/admin/systemadmin/_components/CategoriesConfiguration';
+import type { SectorConfig, GradeConfig } from '@/app/admin/systemadmin/_types/settings-ui';
 
 export interface DialogState {
   open: boolean;
   title: string;
   description: string;
   variant: 'default' | 'destructive';
+}
+
+export interface MdaConfig {
+  id: string;
+  name: string;
+  code?: string;
 }
 
 export interface UseSettingsReturn {
@@ -28,13 +31,18 @@ export interface UseSettingsReturn {
   documents: DocumentConfigItem[];
   saving: boolean;
   dialog: DialogState;
+  mdasTotal: number;
+  mdasPage: number;
+  mdasLimit: number;
   
   // Derived data
   sectors: SectorConfig[];
   grades: GradeConfig[];
+  mdas: MdaConfig[];
   
   // Handlers
   handleTabChange: (tab: SettingsTabId) => void;
+  handleMdasPageChange: (page: number) => void;
 
   handleSlaStagesChange: (stages: SlaStageConfig[]) => void;
   handleDocumentsChange: (docs: DocumentConfigItem[]) => void;
@@ -66,10 +74,12 @@ function loadSlaStagesFromStorage(): SlaStageConfig[] {
   return DEFAULT_SLA_STAGES;
 }
 
+const DEFAULT_MDAS_LIMIT = 10;
+
 export function useSettings(): UseSettingsReturn {
   const [activeTab, setActiveTab] = useState<SettingsTabId>('categories');
   const [slaStages, setSlaStages] = useState<SlaStageConfig[]>(loadSlaStagesFromStorage);
-  const [documents, setDocuments] = useState<DocumentConfigItem[]>(DEFAULT_DOCUMENTS);
+  const [documents, setDocuments] = useState<DocumentConfigItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [dialog, setDialog] = useState<DialogState>({
     open: false,
@@ -77,9 +87,21 @@ export function useSettings(): UseSettingsReturn {
     description: '',
     variant: 'default',
   });
+  const [mdasCurrentPage, setMdasCurrentPage] = useState(1);
 
   // Fetch categories from API
   const { data: categoriesData } = useGetCategoriesQuery();
+
+  // Fetch grades from dedicated endpoint
+  const { data: gradesData } = useGetGradesQuery();
+
+  // Fetch document presets from API
+  const { data: documentsData } = useGetDocumentPresetsQuery();
+
+  const { data: mdasResponse } = useGetMdasQuery({
+    page: mdasCurrentPage,
+    limit: DEFAULT_MDAS_LIMIT,
+  });
 
   // Transform API data to component format
   const sectors = useMemo<SectorConfig[]>(
@@ -94,20 +116,38 @@ export function useSettings(): UseSettingsReturn {
     [categoriesData?.categories]
   );
 
-  const grades = useMemo<GradeConfig[]>(
+  const grades = useMemo<GradeConfig[]>(() => {
+    const source = gradesData ?? categoriesData?.grades ?? [];
+    return source.map((grade) => ({
+      _id: grade._id,
+      category: grade.category ?? '',
+      grade: grade.grade,
+      registrationCost: grade.registrationCost,
+      financialCapacity: grade.financialCapacity,
+    }));
+  }, [gradesData, categoriesData?.grades]);
+
+  const mdas = useMemo<MdaConfig[]>(
     () =>
-      categoriesData?.grades?.map((grade) => ({
-        id: grade._id,
-        code: grade.grade,
-        description: `Registration: ₦${grade.registrationCost.toLocaleString()}`,
-        threshold: `₦${grade.financialCapacity.toLocaleString()}`,
+      mdasResponse?.mdas?.map((mda) => ({
+        id: mda._id,
+        name: mda.name,
+        code: mda.code,
       })) ?? [],
-    [categoriesData?.grades]
+    [mdasResponse?.mdas]
   );
+
+  const mdasTotal = mdasResponse?.total ?? 0;
+  const mdasPage = mdasResponse?.page ?? mdasCurrentPage;
+  const mdasLimit = mdasResponse?.limit ?? DEFAULT_MDAS_LIMIT;
 
   // Handlers
   const handleTabChange = useCallback((tab: SettingsTabId) => {
     setActiveTab(tab);
+  }, []);
+
+  const handleMdasPageChange = useCallback((page: number) => {
+    setMdasCurrentPage(page);
   }, []);
 
 
@@ -115,6 +155,21 @@ export function useSettings(): UseSettingsReturn {
   const handleSlaStagesChange = useCallback((stages: SlaStageConfig[]) => {
     setSlaStages(stages);
   }, []);
+
+  // Initialize documents from backend presets when available
+  useEffect(() => {
+    if (!documentsData || documentsData.length === 0) return;
+
+    const mapped: DocumentConfigItem[] = documentsData.map((preset) => ({
+      id: preset._id,
+      name: preset.documentName,
+      required: preset.isRequired ? 'Required' : 'Optional',
+      hasExpiry: preset.hasExpiry.toLowerCase() === 'yes' ? 'Yes' : 'No',
+      renewalFrequency: preset.renewalFrequency,
+    }));
+
+    setDocuments(mapped);
+  }, [documentsData]);
 
   const handleDocumentsChange = useCallback((docs: DocumentConfigItem[]) => {
     setDocuments(docs);
@@ -188,9 +243,14 @@ export function useSettings(): UseSettingsReturn {
     documents,
     saving,
     dialog,
+    mdasTotal,
+    mdasPage,
+    mdasLimit,
     sectors,
     grades,
+    mdas,
     handleTabChange,
+    handleMdasPageChange,
     handleSlaStagesChange,
     handleDocumentsChange,
     handleSave,

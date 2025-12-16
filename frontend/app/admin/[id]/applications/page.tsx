@@ -1,5 +1,6 @@
 "use client";
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -29,7 +30,7 @@ interface Application {
 
 type RegistrarTab = 'new' | 'approved' | 'rejected';
 
-export default function AdminApplications() {
+function AdminApplications() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   console.log("user: ", user)
   
@@ -228,3 +229,5 @@ export default function AdminApplications() {
     </div>
   );
 }
+
+export default withProtectedRoute(AdminApplications);

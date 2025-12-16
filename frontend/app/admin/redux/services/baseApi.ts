@@ -1,7 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import { logout } from "../slice/authSlice";
 
-// Define a base query with auth header injection
-const baseQuery = fetchBaseQuery({
+const rawBaseQuery = fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_URL,
     credentials: "include",
     prepareHeaders: (headers, { getState }) => {
@@ -17,10 +18,28 @@ const baseQuery = fetchBaseQuery({
     },
 });
 
-// Create a single API instance that all services will inject into
+const baseQueryWithAuthLogout: BaseQueryFn<
+    string | FetchArgs,
+    unknown,
+    FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+    const result = await rawBaseQuery(args, api, extraOptions);
+
+    if (result.error && (result.error.status === 401 || result.error.status === 403)) {
+        if (typeof window !== "undefined") {
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+        }
+
+        api.dispatch(logout());
+    }
+
+    return result;
+};
+
 export const baseApi = createApi({
     reducerPath: "api",
-    baseQuery,
+    baseQuery: baseQueryWithAuthLogout,
     tagTypes: [
         "Users",
         "Applications",

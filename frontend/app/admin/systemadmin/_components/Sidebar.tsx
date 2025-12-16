@@ -4,7 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Home, FileText, Users, Settings, LogOut } from 'lucide-react';
+import { Home, FileText, Users, Settings, LogOut, FileSearch, CreditCard } from 'lucide-react';
+
 import { useLogout } from '@/app/admin/hooks/useLogout';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 
@@ -39,11 +40,16 @@ export function Sidebar() {
             icon: Settings,
             label: "Settings",
         },
-        // {
-        //     href: "/admin/systemadmin/audit-logs",
-        //     icon: FileSearch,
-        //     label: "Audit Logs",
-        // },
+        {
+            href: "/admin/systemadmin/audit-logs",
+            icon: FileSearch,
+            label: "Audit Logs",
+        },
+         {
+            href: "/admin/systemadmin/transactions",
+            icon: CreditCard,
+            label: "Transactions",
+        },
         // {
         //     href: "/admin/systemadmin/reports",
         //     icon: BarChart2,

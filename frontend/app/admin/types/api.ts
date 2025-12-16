@@ -126,6 +126,39 @@ export interface ChangeDocumentStatusResponse {
   };
 }
 
+export interface DocumentPreset {
+  _id: string;
+  documentName: string;
+  isRequired: boolean;
+  hasExpiry: string;
+  renewalFrequency: string;
+  __v: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type DocumentsResponse = DocumentPreset[];
+
+export interface CreateDocumentPresetRequest {
+  documentName: string;
+  isRequired: boolean;
+  hasExpiry: string;
+  renewalFrequency: string;
+}
+
+export type CreateDocumentPresetResponse = DocumentPreset;
+
+export interface UpdateDocumentPresetRequest {
+  documentName?: string;
+  isRequired?: boolean;
+  hasExpiry?: string;
+  renewalFrequency?: string;
+}
+
+export type UpdateDocumentPresetResponse = DocumentPreset;
+
+export type DeleteDocumentPresetResponse = DocumentPreset;
+
 // Settings API Types
 export interface CreateCategoryRequest {
   sector: string;
@@ -141,6 +174,7 @@ export interface CreateCategoryResponse {
 }
 
 export interface CreateGradeRequest {
+  category: string;
   grade: string;
   registrationCost: number;
   financialCapacity: number;
@@ -148,9 +182,48 @@ export interface CreateGradeRequest {
 
 export interface CreateGradeResponse {
   _id: string;
+  category: string;
   grade: string;
   registrationCost: number;
   financialCapacity: number;
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Mda {
+  _id: string;
+  name: string;
+  code: string;
+  __v?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MdasResponse {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  mdas: Mda[];
+}
+
+export interface MdasQueryParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface CreateMdaRequest {
+  name: string;
+  code: string;
+}
+
+export type CreateMdaResponse = Mda;
+
+export interface UpdateMdaRequest {
+  name?: string;
+  code?: string;
+}
+
+export type UpdateMdaResponse = Mda;
+
+export type DeleteMdaResponse = Mda;

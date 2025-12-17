@@ -172,6 +172,8 @@ export const STATUS_MESSAGES = {
     },
 } as const;
 
+export const processingFee = 30_000;
+
 // Type exports for better TypeScript support
 export type StatusType = keyof typeof STATUS_CONFIG;
 export type SectorType = keyof typeof SECTOR_CONFIG;

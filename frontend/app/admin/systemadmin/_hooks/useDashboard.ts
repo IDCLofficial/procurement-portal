@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { AlertTriangle, FileText } from 'lucide-react';
 import { useAppSelector } from '@/app/admin/redux/hooks';
 import {
@@ -46,43 +46,51 @@ export interface UseDashboardReturn {
 export function useDashboard(): UseDashboardReturn {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
+  const [hiddenNotificationIds, setHiddenNotificationIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<NotificationTabKey>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: apiNotifications } = useGetAdminNotificationsQuery();
   const [markAdminNotificationAsReadById] = useMarkAdminNotificationAsReadByIdMutation();
 
-  useEffect(() => {
-    if (!apiNotifications?.notifications) return;
+  const notifications = useMemo<Notification[]>(() => {
+    if (!apiNotifications?.notifications) return [];
 
-    const mapped: Notification[] = apiNotifications.notifications.map((n, index) => {
-      const created = new Date(n.createdAt);
-      const dateStr = Number.isNaN(created.getTime())
-        ? n.createdAt
-        : created.toLocaleDateString();
+    return apiNotifications.notifications
+      .map((n, index) => {
+        const created = new Date(n.createdAt);
+        const dateStr = Number.isNaN(created.getTime())
+          ? n.createdAt
+          : created.toLocaleDateString();
 
-      const priority = n.priority?.toLowerCase() ?? '';
-      const isCritical = priority === 'critical';
+        const priority = n.priority?.toLowerCase() ?? '';
+        const isCritical = priority === 'critical';
+        const id = String(index + 1);
 
-      return {
-        id: String(index + 1),
-        title: n.title,
-        description: n.message,
-        date: dateStr,
-        priorityLabel: isCritical ? 'Critical Priority' : 'High Priority',
-        priorityLevel: isCritical ? 'critical' : 'high',
-        tone: isCritical ? 'critical' : 'warning',
-        tag: 'SYSTEM',
-        applicationRef: 'SYSTEM',
-        isUnread: true,
-        icon: isCritical ? AlertTriangle : FileText,
-        actionLabel: 'View Details',
-      };
-    });
+        if (hiddenNotificationIds.includes(id)) {
+          return null;
+        }
 
-    setNotifications(mapped);
-  }, [apiNotifications]);
+        const isUnread = !readNotificationIds.includes(id);
+
+        return {
+          id,
+          title: n.title,
+          description: n.message,
+          date: dateStr,
+          priorityLabel: isCritical ? 'Critical Priority' : 'High Priority',
+          priorityLevel: isCritical ? 'critical' : 'high',
+          tone: isCritical ? 'critical' : 'warning',
+          tag: 'SYSTEM',
+          applicationRef: 'SYSTEM',
+          isUnread,
+          icon: isCritical ? AlertTriangle : FileText,
+          actionLabel: 'View Details',
+        } as Notification;
+      })
+      .filter((notification): notification is Notification => notification !== null);
+  }, [apiNotifications, readNotificationIds, hiddenNotificationIds]);
 
   // Calculate stats
   const stats = useMemo<DashboardStats>(() => {
@@ -117,22 +125,14 @@ export function useDashboard(): UseDashboardReturn {
   const handleMarkRead = useCallback(
     (id: string) => {
       // Optimistic update: mark as read locally first
-      setNotifications((prev) =>
-        prev.map((notification) =>
-          notification.id === id ? { ...notification, isUnread: false } : notification
-        )
-      );
+      setReadNotificationIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
 
       // Persist change on the server
       markAdminNotificationAsReadById(id)
         .unwrap()
         .catch((error) => {
           // Roll back on failure
-          setNotifications((prev) =>
-            prev.map((notification) =>
-              notification.id === id ? { ...notification, isUnread: true } : notification
-            )
-          );
+          setReadNotificationIds((prev) => prev.filter((existingId) => existingId !== id));
 
           console.error('Failed to mark admin notification as read', error);
         });
@@ -141,7 +141,7 @@ export function useDashboard(): UseDashboardReturn {
   );
 
   const handleDelete = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
+    setHiddenNotificationIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
   }, []);
 
   const handleTabChange = useCallback((tab: NotificationTabKey) => {

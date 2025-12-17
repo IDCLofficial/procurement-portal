@@ -83,7 +83,7 @@ export function MdasTable({ mdas, total, page, limit, onPageChange }: MdasTableP
       setResultDialogOpen(true);
       setIsFormOpen(false);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to save MDA', error);
       let message = 'Failed to save MDA.';
 
@@ -119,7 +119,7 @@ export function MdasTable({ mdas, total, page, limit, onPageChange }: MdasTableP
       setIsDeleteOpen(false);
       setDeleteId(null);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to delete MDA', error);
       let message = 'Failed to delete MDA.';
 

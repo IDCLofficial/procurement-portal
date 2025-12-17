@@ -14,7 +14,6 @@ interface ContractorGradesSectionProps {
 export function ContractorGradesSection({
   grades,
   onAddGrade,
-  onGradeChange,
   onEditGradeClick,
   onDeleteGradeClick,
 }: ContractorGradesSectionProps) {

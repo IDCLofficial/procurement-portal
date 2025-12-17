@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
-import { Home, FileText, FileCheck, ClipboardList, LogOut } from "lucide-react";
+import { Home, FileText, FileCheck, ClipboardList, LogOut, FileSearch } from "lucide-react";
 import { useLogout } from "@/app/admin/hooks/useLogout";
 import { ConfirmationDialog } from "@/app/admin/components/general/confirmation-dialog";
 import { useAppSelector } from "../../redux/hooks";
@@ -48,16 +48,19 @@ export default function SidebarUser() {
   const { user } = useAppSelector((state) => state.auth);
 
   const isRegistrar = user?.role === "Registrar";
+  const isAuditor = user?.role === "Auditor";
 
   const dashboardHref = `/admin/${id}`;
   const applicationsHref = `/admin/${id}/applications`;
   const certificatesHref = `/admin/${id}/certificates`;
   const transactionsHref = `/admin/${id}/transactions`;
+  const auditLogsHref = `/admin/${id}/audit-logs`;
 
   const isDashboardActive = pathname === dashboardHref || pathname === `${dashboardHref}/`;
   const isApplicationsActive = pathname.startsWith(applicationsHref);
   const isCertificatesActive = pathname.startsWith(certificatesHref);
   const isTransactionsActive = pathname.startsWith(transactionsHref);
+  const isAuditLogsActive = pathname.startsWith(auditLogsHref);
   return (
     <div className="hidden md:flex md:
     shrink-0">
@@ -74,15 +77,13 @@ export default function SidebarUser() {
         </div>
 
         <nav className="flex-1 px-2 py-4 space-y-1">
-          <NavItem icon={Home} text="Dashboard" href={dashboardHref} active={isDashboardActive} />
-          <NavItem icon={FileText} text="Applications" href={applicationsHref} active={isApplicationsActive} />
-          {isRegistrar && (
+          {isAuditor ? (
             <>
               <NavItem
-                icon={FileCheck}
-                text="Certificates"
-                href={certificatesHref}
-                active={isCertificatesActive}
+                icon={FileSearch}
+                text="Audit Logs"
+                href={auditLogsHref}
+                active={isAuditLogsActive}
               />
               <NavItem
                 icon={ClipboardList}
@@ -90,6 +91,37 @@ export default function SidebarUser() {
                 href={transactionsHref}
                 active={isTransactionsActive}
               />
+            </>
+          ) : (
+            <>
+              <NavItem
+                icon={Home}
+                text="Dashboard"
+                href={dashboardHref}
+                active={isDashboardActive}
+              />
+              <NavItem
+                icon={FileText}
+                text="Applications"
+                href={applicationsHref}
+                active={isApplicationsActive}
+              />
+              {isRegistrar && (
+                <>
+                  <NavItem
+                    icon={FileCheck}
+                    text="Certificates"
+                    href={certificatesHref}
+                    active={isCertificatesActive}
+                  />
+                  <NavItem
+                    icon={ClipboardList}
+                    text="Transactions"
+                    href={transactionsHref}
+                    active={isTransactionsActive}
+                  />
+                </>
+              )}
             </>
           )}
         </nav>

@@ -111,7 +111,7 @@ export function RequiredDocumentsTable({
       setResultDialogVariant('default');
       setResultDialogOpen(true);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to delete document preset', error);
       let message = 'Failed to delete document.';
 
@@ -332,7 +332,7 @@ export function RequiredDocumentsTable({
                   }
                   setIsAddOpen(false);
                 } catch (error) {
-                  // eslint-disable-next-line no-console
+                   
                   console.error('Failed to create document preset', error);
                 }
               }}
@@ -354,7 +354,7 @@ export function RequiredDocumentsTable({
           <DialogHeader>
             <DialogTitle>Edit Document Preset</DialogTitle>
             <DialogDescription>
-              Update this document's configuration.
+              Update this document&apos;s configuration.
             </DialogDescription>
           </DialogHeader>
 

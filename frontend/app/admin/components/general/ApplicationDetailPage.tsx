@@ -16,7 +16,7 @@ interface ApplicationDetailPageProps {
   rcNumber: string;
   sectorAndGrade: string;
   submissionDate?: string | null;
-  slaDeadline?: string | null;
+  slaDeadline?: string | Date | null;
   currentStatus?: string;
   assignedTo?: string;
   documents?: CompanyDocument[];

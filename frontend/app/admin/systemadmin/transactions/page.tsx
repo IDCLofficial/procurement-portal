@@ -104,8 +104,10 @@ function formatDate(value?: string) {
 
 export default function Transactions() {
   const { data, isLoading, isFetching, error } = useGetTransactionsQuery();
-
-  const transactions = (data as Transaction[] | undefined) ?? [];
+  const transactions = useMemo(
+    () => (data as Transaction[] | undefined) ?? [],
+    [data],
+  );
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");

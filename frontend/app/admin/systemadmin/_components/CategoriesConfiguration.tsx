@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Edit, Trash2, Plus } from 'lucide-react';
 import {
   useCreateCategoryMutation,
   useCreateGradeMutation,

@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 
 export interface SlaStageConfig {
   id: string;
@@ -18,6 +20,8 @@ interface SlaTimerConfigurationProps {
 }
 
 export function SlaTimerConfiguration({ stages, onChange, onSave }: SlaTimerConfigurationProps) {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
   const handleValueChange = (id: string, value: number) => {
     if (!onChange) return;
     const nextStages = stages.map((stage) =>
@@ -28,13 +32,7 @@ export function SlaTimerConfiguration({ stages, onChange, onSave }: SlaTimerConf
 
   const handleSaveClick = () => {
     if (!onSave) return;
-
-    if (typeof window !== 'undefined') {
-      const confirmed = window.confirm('Are you sure you want to make these changes?');
-      if (!confirmed) return;
-    }
-
-    onSave();
+    setIsConfirmOpen(true);
   };
 
   return (
@@ -88,6 +86,20 @@ export function SlaTimerConfiguration({ stages, onChange, onSave }: SlaTimerConf
         <span className="font-semibold">Note: </span>
         SLA timers automatically pause when clarification is requested and resume when vendor responds.
       </div>
+
+      <ConfirmationDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => {
+          if (!onSave) return;
+          onSave();
+          setIsConfirmOpen(false);
+        }}
+        title="Update SLA configuration"
+        description="Are you sure you want to make these changes?"
+        confirmText="Yes, save"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

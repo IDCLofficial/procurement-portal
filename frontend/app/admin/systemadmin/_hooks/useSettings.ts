@@ -88,8 +88,6 @@ const DEFAULT_MDAS_LIMIT = 10;
 export function useSettings(): UseSettingsReturn {
   const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState<SettingsTabId>('categories');
-  const [slaStages, setSlaStages] = useState<SlaStageConfig[]>(loadSlaStagesFromStorage);
-  const [documents, setDocuments] = useState<DocumentConfigItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [dialog, setDialog] = useState<DialogState>({
     open: false,
@@ -98,6 +96,8 @@ export function useSettings(): UseSettingsReturn {
     variant: 'default',
   });
   const [mdasCurrentPage, setMdasCurrentPage] = useState(1);
+  const [editedSlaStages, setEditedSlaStages] = useState<SlaStageConfig[] | null>(null);
+  const [editedDocuments, setEditedDocuments] = useState<DocumentConfigItem[] | null>(null);
 
   // Fetch categories from API
   const { data: categoriesData } = useGetCategoriesQuery();
@@ -157,51 +157,71 @@ export function useSettings(): UseSettingsReturn {
   const mdasPage = mdasResponse?.page ?? mdasCurrentPage;
   const mdasLimit = mdasResponse?.limit ?? DEFAULT_MDAS_LIMIT;
 
-  // Initialize SLA stages from backend configuration when available
+  const storedSlaStages = useMemo<SlaStageConfig[]>(() => loadSlaStagesFromStorage(), []);
+
+  const apiSlaStages = useMemo<SlaStageConfig[] | null>(() => {
+    if (!slaConfigData) return null;
+
+    try {
+      return DEFAULT_SLA_STAGES.map((stage) => {
+        switch (stage.id) {
+          case 'desk-officer-review':
+            return {
+              ...stage,
+              value: slaConfigData.deskOfficerReview ?? stage.value,
+            };
+          case 'registrar-review':
+            return {
+              ...stage,
+              value: slaConfigData.registrarReview ?? stage.value,
+            };
+          case 'clarification-response':
+            return {
+              ...stage,
+              value: slaConfigData.clarificationResponse ?? stage.value,
+            };
+          case 'payment-verification':
+            return {
+              ...stage,
+              value: slaConfigData.paymentVerification ?? stage.value,
+            };
+          case 'total-processing-target':
+            return {
+              ...stage,
+              value: slaConfigData.totalProcessingTarget ?? stage.value,
+            };
+          default:
+            return stage;
+        }
+      });
+    } catch (error) {
+      console.error('Failed to map SLA configuration from API', error);
+      return null;
+    }
+  }, [slaConfigData]);
+
+  const slaStages = editedSlaStages ?? apiSlaStages ?? storedSlaStages;
+
+  const documentsFromApi = useMemo<DocumentConfigItem[]>(() => {
+    if (!documentsData || documentsData.length === 0) return [];
+
+    return documentsData.map((preset) => ({
+      id: preset._id,
+      name: preset.documentName,
+      required: preset.isRequired ? 'Required' : 'Optional',
+      hasExpiry: preset.hasExpiry.toLowerCase() === 'yes' ? 'Yes' : 'No',
+      renewalFrequency: preset.renewalFrequency,
+    }));
+  }, [documentsData]);
+
+  const documents = editedDocuments ?? documentsFromApi;
+
+  // Mirror SLA configuration into global Redux when available
   useEffect(() => {
     if (!slaConfigData) return;
 
-    try {
-      dispatch(setSlaConfig(slaConfigData));
-
-      // Map the single SLA config document into our stage array
-      setSlaStages((current) =>
-        current.map((stage) => {
-          switch (stage.id) {
-            case 'desk-officer-review':
-              return {
-                ...stage,
-                value: slaConfigData.deskOfficerReview ?? stage.value,
-              };
-            case 'registrar-review':
-              return {
-                ...stage,
-                value: slaConfigData.registrarReview ?? stage.value,
-              };
-            case 'clarification-response':
-              return {
-                ...stage,
-                value: slaConfigData.clarificationResponse ?? stage.value,
-              };
-            case 'payment-verification':
-              return {
-                ...stage,
-                value: slaConfigData.paymentVerification ?? stage.value,
-              };
-            case 'total-processing-target':
-              return {
-                ...stage,
-                value: slaConfigData.totalProcessingTarget ?? stage.value,
-              };
-            default:
-              return stage;
-          }
-        }),
-      );
-    } catch (error) {
-      console.error('Failed to map SLA configuration from API', error);
-    }
-  }, [slaConfigData]);
+    dispatch(setSlaConfig(slaConfigData));
+  }, [slaConfigData, dispatch]);
 
   // Handlers
   const handleTabChange = useCallback((tab: SettingsTabId) => {
@@ -212,29 +232,12 @@ export function useSettings(): UseSettingsReturn {
     setMdasCurrentPage(page);
   }, []);
 
-
-
   const handleSlaStagesChange = useCallback((stages: SlaStageConfig[]) => {
-    setSlaStages(stages);
+    setEditedSlaStages(stages);
   }, []);
 
-  // Initialize documents from backend presets when available
-  useEffect(() => {
-    if (!documentsData || documentsData.length === 0) return;
-
-    const mapped: DocumentConfigItem[] = documentsData.map((preset) => ({
-      id: preset._id,
-      name: preset.documentName,
-      required: preset.isRequired ? 'Required' : 'Optional',
-      hasExpiry: preset.hasExpiry.toLowerCase() === 'yes' ? 'Yes' : 'No',
-      renewalFrequency: preset.renewalFrequency,
-    }));
-
-    setDocuments(mapped);
-  }, [documentsData]);
-
   const handleDocumentsChange = useCallback((docs: DocumentConfigItem[]) => {
-    setDocuments(docs);
+    setEditedDocuments(docs);
   }, []);
 
   const handleSave = useCallback(() => {

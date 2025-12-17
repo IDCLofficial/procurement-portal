@@ -16,8 +16,9 @@ import {
 } from 'lucide-react';
 import { useAppSelector } from '../../redux/hooks';
 import { useGetApplicationsByUserQuery, useGetApplicationsQuery } from '../../redux/services/appApi';
+import { useGetSlaConfigQuery } from '@/app/admin/redux/services/settingsApi';
 import { FormatDate } from '@/app/admin/utils/dateFormateer';
-import { computeApplicationSla } from '@/app/admin/utils/sla';
+import { getApplicationSlaStatus } from '@/app/admin/utils/sla';
 import type { Application as AdminApplication } from '@/app/admin/types';
  
 
@@ -66,19 +67,37 @@ function AdminApplications() {
   const isBusy = isLoading || isFetching;
   const isError = isRegistrar ? isRegistrarError : isUserError;
 
-  const rawApplications = (data?.applications ?? []) as AdminApplication[];
+  const rawApplications = useMemo(
+    () => (data?.applications ?? []) as AdminApplication[],
+    [data],
+  );
   const totalApplications = data?.total ?? rawApplications.length;
 
-  const slaConfig = useAppSelector((state) => state.slaConfig.config);
+  const slaConfigFromStore = useAppSelector((state) => state.slaConfig.config);
+  const { data: slaConfigFromApi } = useGetSlaConfigQuery();
+  const slaConfig = slaConfigFromStore ?? slaConfigFromApi ?? null;
 
   const applications = useMemo(() => {
+    console.log('[SLA] AdminApplications: building applications list', {
+      hasSlaConfig: Boolean(slaConfig),
+      rawCount: rawApplications.length,
+      slaConfig,
+    });
+
     if (!slaConfig) return rawApplications;
 
     return rawApplications.map((app) => {
-      const metrics = computeApplicationSla(app, slaConfig);
+      const slaStatus = getApplicationSlaStatus(app, slaConfig);
+      console.log('[SLA] AdminApplications: computed SLA status for app', {
+        id: app.id,
+        _id: app._id,
+        currentStatus: app.currentStatus,
+        submissionDate: app.submissionDate,
+        slaStatus,
+      });
       return {
         ...app,
-        slaStatus: metrics.overdue ? 'Overdue' : 'On Track',
+        slaStatus,
       } as AdminApplication;
     });
   }, [rawApplications, slaConfig]);

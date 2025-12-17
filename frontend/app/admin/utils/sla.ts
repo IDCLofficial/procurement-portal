@@ -37,7 +37,7 @@ export function businessDaysBetween(start: Date, end: Date): number {
 
   if (to <= from) return 0;
 
-  let current = new Date(from);
+  const current = new Date(from);
   let count = 0;
 
   while (current < to) {
@@ -149,4 +149,100 @@ export function computeApplicationSla(
     completed,
     overdue,
   };
+}
+
+export function getApplicationSlaStatus(
+  application: Application,
+  slaConfig?: SlaConfig | null,
+  now: Date = new Date(),
+): 'Overdue' | 'On Track' {
+  const normalizedStatus = (application.currentStatus ?? '').toLowerCase();
+
+  console.log('[SLA] getApplicationSlaStatus: start', {
+    id: application.id,
+    _id: application._id,
+    currentStatus: application.currentStatus,
+    normalizedStatus,
+    submissionDate: application.submissionDate,
+    createdAt: application.createdAt,
+    slaConfig,
+  });
+
+  // Explicit SLA breach status from backend
+  if (normalizedStatus === 'sla breach') {
+    console.log('[SLA] getApplicationSlaStatus: explicit SLA breach', {
+      id: application.id,
+    });
+    return 'Overdue';
+  }
+
+  // Final states are considered completed and not overdue
+  if (normalizedStatus === 'approved' || normalizedStatus === 'rejected') {
+    console.log('[SLA] getApplicationSlaStatus: final state, treating as On Track', {
+      id: application.id,
+      currentStatus: application.currentStatus,
+    });
+    return 'On Track';
+  }
+
+  if (!slaConfig) {
+    console.log('[SLA] getApplicationSlaStatus: missing slaConfig, defaulting to On Track', {
+      id: application.id,
+    });
+    return 'On Track';
+  }
+
+  const start = toDate(application.submissionDate) ?? toDate(application.createdAt ?? null);
+  if (!start) {
+    console.log('[SLA] getApplicationSlaStatus: missing start date, defaulting to On Track', {
+      id: application.id,
+    });
+    return 'On Track';
+  }
+
+  let targetDays: number | undefined;
+
+  // Map status to the appropriate SLA stage from configuration
+  if (
+    normalizedStatus === 'pending desk review' ||
+    normalizedStatus === 'pending review' ||
+    normalizedStatus === 'under review'
+  ) {
+    targetDays = slaConfig.deskOfficerReview;
+  } else if (
+    normalizedStatus === 'forwarded to registrar' ||
+    normalizedStatus.includes('registrar')
+  ) {
+    targetDays = slaConfig.registrarReview;
+  } else if (normalizedStatus.includes('clarification')) {
+    targetDays = slaConfig.clarificationResponse;
+  } else if (normalizedStatus.includes('payment')) {
+    targetDays = slaConfig.paymentVerification;
+  }
+
+  // If we don't have a specific stage target, fall back to overall SLA metrics
+  if (!targetDays || !Number.isFinite(targetDays) || targetDays <= 0) {
+    const metrics = computeApplicationSla(application, slaConfig, now);
+    console.log('[SLA] getApplicationSlaStatus: fallback to overall SLA metrics', {
+      id: application.id,
+      normalizedStatus,
+      metrics,
+    });
+    return metrics.overdue ? 'Overdue' : 'On Track';
+  }
+
+  const deadline = addBusinessDays(start, targetDays);
+  const isOverdue = now > deadline;
+
+  console.log('[SLA] getApplicationSlaStatus: per-stage evaluation', {
+    id: application.id,
+    normalizedStatus,
+    targetDays,
+    start,
+    deadline,
+    now,
+    isOverdue,
+  });
+
+  return isOverdue ? 'Overdue' : 'On Track';
 }

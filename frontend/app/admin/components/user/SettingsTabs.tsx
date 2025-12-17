@@ -1,15 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Save, Clock, Tags, FileText, type LucideIcon } from 'lucide-react';
+import { Clock, Tags, FileText, Building2, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type SettingsTabId =  'sla' | 'categories' | 'documents';
+export type SettingsTabId =  'sla' | 'categories' | 'documents' | 'mdas';
 
 interface SettingsTabsProps {
   activeTab?: SettingsTabId;
   onTabChange?: (tab: SettingsTabId) => void;
-  onSave?: () => void;
 }
 
 interface SettingsTabConfig {
@@ -21,10 +20,11 @@ interface SettingsTabConfig {
 const TABS: SettingsTabConfig[] = [
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'documents', label: 'Documents', icon: FileText },
+  { id: 'mdas', label: 'MDAs', icon: Building2 },
   { id: 'sla', label: 'SLA Timers', icon: Clock },
 ];
 
-export function SettingsTabs({ activeTab, onTabChange, onSave }: SettingsTabsProps) {
+export function SettingsTabs({ activeTab, onTabChange }: SettingsTabsProps) {
   const [internalTab, setInternalTab] = useState<SettingsTabId>('categories');
   const currentTab = activeTab ?? internalTab;
 
@@ -44,14 +44,6 @@ export function SettingsTabs({ activeTab, onTabChange, onSave }: SettingsTabsPro
         <p className="text-sm text-[#A0AEC0]">
           Configure system SLA timers, and requirements
         </p>
-        <button
-          type="button"
-          onClick={onSave}
-          className="inline-flex items-center px-4 py-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-sm font-medium text-white shadow-sm"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Save Changes
-        </button>
       </div>
 
       <div className="inline-flex items-center rounded-full bg-white border border-gray-200 shadow-sm p-1">

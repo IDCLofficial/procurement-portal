@@ -1,5 +1,6 @@
 "use client";
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { useMemo, useState } from "react";
 import { CertificateDirectoryToolbar } from "@/app/admin/components/user/CertificateDirectoryToolbar";
 import { CertificateTabs } from "@/app/admin/components/user/CertificateTabs";
@@ -17,10 +18,10 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "all", label: "All Certificates" },
   { id: "expiring", label: "Expired" },
   { id: "revoked", label: "Revoked/Suspended" },
-  { id: "logs", label: "Verification Logs" },
+
 ];
 
-export default function CertificatesPage() {
+function CertificatesPage() {
   const [activeTab, setActiveTab] = useState<TabId>("all");
   const [search, setSearch] = useState("");
   const [gradeFilter, setGradeFilter] = useState("All Grades");
@@ -159,11 +160,7 @@ export default function CertificatesPage() {
                   onTabChange={(id) => setActiveTab(id as TabId)}
                 />
 
-                {activeTab === "logs" ? (
-                  <div className="px-6 pb-6 text-xs text-gray-500">
-                    Verification logs will be available here once integrated.
-                  </div>
-                ) : (
+               
                   <CertificateTable
                     certificates={filteredCertificates}
                     onViewDetails={(cert) => setSelectedCertificate(cert)}
@@ -177,7 +174,7 @@ export default function CertificatesPage() {
                     limit={certificatesData?.limit ?? limit}
                     onPageChange={setPage}
                   />
-                )}
+                
               </section>
             </>
           )}
@@ -186,3 +183,5 @@ export default function CertificatesPage() {
     </main>
   );
 }
+
+export default withProtectedRoute(CertificatesPage);

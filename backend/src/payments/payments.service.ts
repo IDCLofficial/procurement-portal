@@ -339,7 +339,7 @@ export class SplitPaymentService {
               {
                 companyId: vendor.companyId,
               },
-              {status: ApplicationStatus.VERIFIED},
+              {currentStatus: ApplicationStatus.VERIFIED},
               {new:true}
             ).exec();
 

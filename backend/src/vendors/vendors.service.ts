@@ -1344,7 +1344,7 @@ export class VendorsService {
 
       // Send password reset email
       const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-      
+      this.Logger.log(resetToken)
       await this.emailService.sendResetPasswordLink(resetLink, email);
       return { message: 'If an account with this email exists, a password reset link has been sent' };
     } catch (error) {

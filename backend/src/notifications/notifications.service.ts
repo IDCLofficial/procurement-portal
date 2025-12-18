@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../users/entities/user.schema';
@@ -90,20 +90,26 @@ export class NotificationsService {
    * @throws {NotFoundException} If notification is not found or doesn't belong to user
    */
   async markAsRead(notificationId: string, userId: string): Promise<void> {
-    const notification = await this.notificationModel.findOneAndUpdate(
-      {
-        _id: new Types.ObjectId(notificationId),
-        $or: [
-          { vendorId: new Types.ObjectId(userId) },
-          { recipientId: new Types.ObjectId(userId) }
-        ]
-      },
-      { $set: { isRead: true } },
-      { new: true }
-    );
+    try{
 
-    if (!notification) {
-      throw new NotFoundException('Notification not found');
+      const notification = await this.notificationModel.findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(notificationId),
+          $or: [
+            { vendorId: new Types.ObjectId(userId) },
+            { recipientId: new Types.ObjectId(userId) }
+          ]
+        },
+        { $set: { isRead: true } },
+        { new: true }
+      );
+      
+      if (!notification) {
+        throw new NotFoundException('Notification not found');
+      }
+    }catch(e){
+      this.logger.error(e)
+      throw new ConflictException('The server encountered a problem executing your request')
     }
   }
 

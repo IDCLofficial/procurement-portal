@@ -100,53 +100,79 @@ export class EmailService {
       const emailConfig = this.configService.get('email');
 
       const emailHtml = `
-        <div style='padding:1rem 2rem; align-items:center; justify-content:center; display:block'> 
-          <div style="padding:1rem; display:block">
-              <img src="https://images.unsplash.com/photo-1748959504388-9eb3143984e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" style="width:80px; height:60px; border-radius:10px"/>
-              <h2 style="font-family: Arial, sans-serif; font-weight:500; text-align:center;">Hi ${userName.split(' ')[0]}, Your Signup verification <br/>Code</h2>
-            <div style="display:flex; align-items:center; justify-content:center; gap:1rem">
-              ${otp.split('').map(
-                (str) => `
-               <div style="height:50px; width:50px; padding:1rem; background-color:red; box-shadow:0px 0px 8px 0px rgba(0,0,0,0.1); background-color:#fff; border-radius:10px; border:1px solid #e8e8e8; display:flex; align-items:center">
-                ${str}
-               </div>
-              `,
-              )}
-            </div>
-            <p style="color:rgba(130,130,130,0.86)">This code will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
-            <p style="color:rgba(130,130,130,0.66); font-family: Arial, sans-serif;">Don't share this code to anyone!</p>
-            <div style="
-          background-color: #faf6eb;
-          padding: 1rem 1.2rem;
-          border-radius: 8px;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-          font-family: Arial, sans-serif;
-          color: #5c4a24;
-          max-width: 420px;
-          line-height: 1.5;
-          font-size: 14px;
-        ">
-          <div style="font-weight: bold; display: flex; align-items: center;">
-            <span style="margin-right: 6px;">⚠️</span>
-            Was this request not made by you?
+        <div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6;">
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); padding: 2rem; text-align: center; border-radius: 8px 8px 0 0;">
+            <img src="https://images.unsplash.com/photo-1748959504388-9eb3143984e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+                 alt="Logo" 
+                 style="width: 80px; height: auto; border-radius: 50%; border: 3px solid #fff; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"/>
+            <h1 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 600;">Verify Your Email</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0; font-size: 1rem;">Enter the following code to complete your signup</p>
           </div>
 
-          <div style="margin-top: 6px; color:rgba(130,130,130,0.76)">
-            This code was generated from a request made using Chrome browser on 
-            <strong>macOS</strong> on 
-            <strong>12/02/2024 AH</strong>.
-            If you did not initiate this request, you can safely ignore this email.
+          <!-- OTP Section -->
+          <div style="background: #ffffff; padding: 2.5rem; text-align: center;">
+            <p style="margin: 0 0 1.5rem; color: #4b5563; font-size: 1rem;">
+              Hello <strong>${userName.split(' ')[0]}</strong>, your verification code is:
+            </p>
+            
+            <div style="display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 2rem;">
+              ${otp.split('').map(
+                (digit) => `
+                <div style="
+                  width: 56px; 
+                  height: 64px; 
+                  background: #f9fafb; 
+                  border-radius: 8px; 
+                  display: flex; 
+                  align-items: center; 
+                  justify-content: center; 
+                  font-size: 2rem; 
+                  font-weight: 700;
+                  color: #1f2937;
+                  border: 1.5px solid #e5e7eb;
+                  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                ">
+                  ${digit}
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; text-align: left;">
+              <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                <div style="background: #e0e7ff; border-radius: 9999px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <span style="color: #4f46e5; font-size: 1rem;">!</span>
+                </div>
+                <div>
+                  <p style="margin: 0 0 0.5rem; font-weight: 600; color: #1e293b;">Keep this code secure</p>
+                  <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">
+                    This code will expire in <strong>${OTP_EXPIRY_MINUTES} minutes</strong>. Do not share this code with anyone, including our support team.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 1.5rem; color: #6b7280; font-size: 0.875rem;">
+              <p style="margin: 0 0 0.5rem;">
+                <strong>Didn't request this code?</strong>
+              </p>
+              <p style="margin: 0;">
+                This code was requested from <strong>${new Date().toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>.
+                If this wasn't you, please secure your account immediately.
+              </p>
+            </div>
           </div>
-              
+
+          <!-- Footer -->
+          <div style="background: #f9fafb; padding: 1.5rem; text-align: center; border-radius: 0 0 8px 8px; font-size: 0.8rem; color: #6b7280;">
+            <p style="margin: 0 0 0.5rem;">
+              © ${new Date().getFullYear()} Procurement Portal. All rights reserved.
+            </p>
+            <p style="margin: 0; font-size: 0.75rem; color: #9ca3af;">
+              This is an automated message, please do not reply.
+            </p>
+          </div>
         </div>
-        <p style="font-family: Arial, sans-serif;">
-          <span style="color:rgba(130,130,130,0.66)">
-            This is an automated message.         
-          </span>
-          Please do not reply.
-        </p>
-      </div>
-  </div>
       `;
 
       const result = await this.resend.emails.send({

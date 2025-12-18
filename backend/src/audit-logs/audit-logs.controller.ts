@@ -20,6 +20,8 @@ export class AuditLogsController {
   @ApiQuery({ name: 'severity', required: false, enum: AuditSeverity })
   @ApiQuery({ name: 'startDate', required: false })
   @ApiQuery({ name: 'endDate', required: false })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   async findAll(
@@ -30,9 +32,17 @@ export class AuditLogsController {
     @Query('severity') severity?: AuditSeverity,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
     @Query('limit') limit?: string,
     @Query('skip') skip?: string,
   ) {
+    const pageNum = page ? parseInt(page) : undefined;
+    const pageSizeNum = pageSize ? parseInt(pageSize) : undefined;
+    const limitNum = limit ? parseInt(limit) : pageSizeNum;
+    const perPage = pageSizeNum ?? limitNum;
+    const skipNum = skip ? parseInt(skip) : (pageNum && perPage ? (pageNum - 1) * perPage : undefined);
+
     const filters = {
       entityType,
       entityId,
@@ -41,8 +51,8 @@ export class AuditLogsController {
       severity,
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
-      limit: limit ? parseInt(limit) : undefined,
-      skip: skip ? parseInt(skip) : undefined,
+      limit: limitNum,
+      skip: skipNum,
     };
 
     return this.auditLogsService.findAll(filters);

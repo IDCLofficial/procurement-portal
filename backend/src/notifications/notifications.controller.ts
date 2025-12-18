@@ -355,12 +355,21 @@ export class NotificationsController {
     description: 'Unauthorized.',
   })
   @Get('admin-notification')
+  @ApiQuery({ name: 'isRead', required: false, type: Boolean })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (starts from 1)', type: Number })
+  @ApiQuery({ name: 'limit', required: false, description: 'Number of items per page (max 100)', type: Number })
   async adminNotification(
     @Req() req:any,
     @Query() query:{
-      isRead?:boolean
+      isRead?:boolean,
+      page?: number,
+      limit?: number,
     }){
     try{
+      const page = query.page ? Math.max(1, parseInt(query.page.toString())) : 1;
+      const limit = query.limit ? Math.min(100, Math.max(1, parseInt(query.limit.toString()))) : 10;
+      const skip = (page - 1) * limit;
+
       const header = req.headers.authorization;
       if(!header){
         this.logger.log(`Authorization header is missing`);
@@ -371,7 +380,7 @@ export class NotificationsController {
         this.logger.log(`User is not authorized to access this endpoint`);
         throw new UnauthorizedException('User is not authorized to access this endpoint');
       }
-      return await this.notificationsService.findAdminNotifications(query);
+      return await this.notificationsService.findAdminNotifications({ ...query, page, limit, skip } as any);
     }catch(err){
       this.logger.log(`Unauthorized user trying to access the endpoint`);
       throw new UnauthorizedException('Unauthorized');

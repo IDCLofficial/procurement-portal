@@ -236,7 +236,10 @@ export class NotificationsService {
   }
 
   async findVendorNotifications(vendorId: any, query:{
-    isRead?:boolean
+    isRead?:boolean,
+    page?: number,
+    limit?: number,
+    skip?: number,
   }): Promise<any> {
     const filter: any = {
       vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
@@ -256,12 +259,21 @@ export class NotificationsService {
       filter.isRead = isReadFilter;
     }
 
-    const vendorNotifications = await this.notificationModel
-      .find(filter)
-      .sort({
-        createdAt: -1
-      })
-      .exec()
+    const limit = query?.limit ? Math.min(100, Math.max(1, parseInt(query.limit.toString()))) : 10;
+    const skip = query?.skip ? Math.max(0, parseInt(query.skip.toString())) : 0;
+    const page = query?.page ? Math.max(1, parseInt(query.page.toString())) : Math.floor(skip / limit) + 1;
+
+    const [vendorNotifications, filteredTotal] = await Promise.all([
+      this.notificationModel
+        .find(filter)
+        .sort({
+          createdAt: -1
+        })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.notificationModel.countDocuments(filter),
+    ]);
 
     // Aggregate counts for this vendor
     const baseVendorFilter = { vendorId: new Types.ObjectId(vendorId as Types.ObjectId) };
@@ -292,6 +304,12 @@ export class NotificationsService {
       totalUnreadNotifications,
       totalCriticalNotifications,
       totalHighPriorityNotifications,
+      pagination: {
+        total: filteredTotal,
+        page,
+        limit,
+        totalPages: Math.ceil(filteredTotal / limit),
+      },
     }
   }
 
@@ -330,7 +348,10 @@ export class NotificationsService {
   }
 
   async findAdminNotifications(query:{
-    isRead?:boolean
+    isRead?:boolean,
+    page?: number,
+    limit?: number,
+    skip?: number,
   }): Promise<any> {
     // const adminId = decoded._id;
     const filter: any = {
@@ -351,10 +372,19 @@ export class NotificationsService {
       // Only apply isRead filter when explicitly requested
       filter.isRead = isReadFilter;
     }
-    const adminNotifications = await this.notificationModel
-    .find(filter)
-    .sort({createdAt: -1})
-    .exec()
+    const limit = query?.limit ? Math.min(100, Math.max(1, parseInt(query.limit.toString()))) : 10;
+    const skip = query?.skip ? Math.max(0, parseInt(query.skip.toString())) : 0;
+    const page = query?.page ? Math.max(1, parseInt(query.page.toString())) : Math.floor(skip / limit) + 1;
+
+    const [adminNotifications, filteredTotal] = await Promise.all([
+      this.notificationModel
+      .find(filter)
+      .sort({createdAt: -1})
+      .skip(skip)
+      .limit(limit)
+      .exec(),
+      this.notificationModel.countDocuments(filter),
+    ]);
     
     const result = adminNotifications.map((notification) => ({
       title: notification.title,
@@ -384,6 +414,12 @@ export class NotificationsService {
       totalUnreadNotifications,
       totalCriticalNotifications,
       totalHighPriorityNotifications,
+      pagination: {
+        total: filteredTotal,
+        page,
+        limit,
+        totalPages: Math.ceil(filteredTotal / limit),
+      },
     }
   }
 

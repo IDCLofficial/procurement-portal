@@ -327,49 +327,53 @@ export class SplitPaymentService {
                 certificateId:certificate.certificateId
               }
             })
+            
+            const updateApplcationStatus = await this.application.findOneAndUpdate(
+              {companyId: company._id},
+              {status: ApplicationStatus.VERIFIED}
+            )
+            // Log application submission activity
+            await this.vendorService.createActivityLog(
+              userId,
+              ActivityType.CERTIFICATE_ISSUED,
+              `Payment recieved, your certificate has been issued`,
+              {
+                grade: payment.grade,
+                type: payment.type,
+                companyName: company.companyName
+              }
+            );
+  
+            //notify the vendor
+            await this.notificationModel.create({
+              type: NotificationType.APPLICATION_SUBMITTED,
+              title: 'Certificate Issued',
+              message: `Your payment has been recieved and your certificate has been issued successfully.`,
+              recipient: NotificationRecipient.VENDOR,
+              vendorId: vendor._id,
+              priority: priority.LOW,
+              isRead: false,
+            });
+  
+            //notify the Admin
+            const admins = await this.userModel.find({ role: 'Admin' });
+            for (const admin of admins){
+              await this.notificationModel.create({
+                type: NotificationType.APPLICATION_SUBMITTED,
+                title: 'Certificate Issued',
+                message: `${vendor.fullname} just paid for certificate issuance`,
+                recipient: NotificationRecipient.ADMIN,
+                recipientId: admin._id,
+                priority: priority.LOW,
+                isRead: false,
+              });
+            }
+          }
+          this.logger.log(`Payment verified and updated: ${reference}`);
           }catch(e){
             this.logger.error(e)
             throw new ConflictException("failed to update vendor document")
           }
-          // Log application submission activity
-          await this.vendorService.createActivityLog(
-            userId,
-            ActivityType.CERTIFICATE_ISSUED,
-            `Payment recieved, your certificate has been issued`,
-            {
-              grade: payment.grade,
-              type: payment.type,
-              companyName: company.companyName
-            }
-          );
-
-          //notify the vendor
-          await this.notificationModel.create({
-            type: NotificationType.APPLICATION_SUBMITTED,
-            title: 'Certificate Issued',
-            message: `Your payment has been recieved and your certificate has been issued successfully.`,
-            recipient: NotificationRecipient.VENDOR,
-            vendorId: vendor._id,
-            priority: priority.LOW,
-            isRead: false,
-          });
-
-          //notify the Admin
-          const admins = await this.userModel.find({ role: 'Admin' });
-          for (const admin of admins){
-            await this.notificationModel.create({
-              type: NotificationType.APPLICATION_SUBMITTED,
-              title: 'Certificate Issued',
-              message: `${vendor.fullname} just paid for certificate issuance`,
-              recipient: NotificationRecipient.ADMIN,
-              recipientId: admin._id,
-              priority: priority.LOW,
-              isRead: false,
-            });
-          }
-        }
-        this.logger.log(`Payment verified and updated: ${reference}`);
-        
       }else{
         throw new ConflictException('The payment was not successful')
       }

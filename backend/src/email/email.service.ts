@@ -177,6 +177,107 @@ export class EmailService {
     }
   }
 
+  async sendApplicationStatusUpdate(email: string, vendorName: string, applicationId: string, status: string, notes?: string) {
+    try {
+      const emailConfig = this.configService.get('email');
+      const statusMessages = {
+        'APPROVED': {
+          subject: 'Application Approved',
+          message: 'Your application has been approved!',
+          color: '#4CAF50'
+        },
+        'REJECTED': {
+          subject: 'Application Rejected',
+          message: 'Your application has been rejected.',
+          color: '#F44336'
+        },
+        'PENDING': {
+          subject: 'Application Status Update',
+          message: 'Your application status has been updated to Pending.',
+          color: '#FFC107'
+        },
+        'REVIEW': {
+          subject: 'Application Under Review',
+          message: 'Your application is currently under review.',
+          color: '#2196F3'
+        },
+        'RETURNED': {
+          subject: 'Application Returned for Updates',
+          message: 'Your application has been returned for additional information.',
+          color: '#FF9800'
+        },
+        'CANCELLED': {
+          subject: 'Application Cancelled',
+          message: 'Your application has been cancelled.',
+          color: '#9E9E9E'
+        }
+      };
+
+      const statusInfo = statusMessages[status] || {
+        subject: 'Application Status Update',
+        message: `Your application status has been updated to ${status}.`,
+        color: '#9C27B0'
+      };
+
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="https://images.unsplash.com/photo-1748959504388-9eb3143984e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+                 style="width: 120px; height: auto; border-radius: 10px; margin-bottom: 20px;" 
+                 alt="Company Logo">
+          </div>
+          
+          <h2 style="color: ${statusInfo.color}; text-align: center;">${statusInfo.subject}</h2>
+          
+          <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p>Hello ${vendorName.split(' ')[0]},</p>
+            <p>${statusInfo.message}</p>
+            
+            ${notes ? `<div style="background-color: #fff3e0; padding: 12px; border-left: 4px solid ${statusInfo.color}; margin: 15px 0;">
+              <p style="margin: 0; font-style: italic;">${notes}</p>
+            </div>` : ''}
+            
+            <p>Application ID: <strong>${applicationId}</strong></p>
+            <p>Status: <strong style="color: ${statusInfo.color}">${status}</strong></p>
+          </div>
+          
+          <p style="text-align: center; margin-top: 30px;">
+            <a href="${this.configService.get('app.frontendUrl')}/applications/${applicationId}" 
+               style="display: inline-block; padding: 12px 24px; 
+                      background-color: ${statusInfo.color}; 
+                      color: white; text-decoration: none; 
+                      border-radius: 4px;">
+              View Application
+            </a>
+          </p>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #777;">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>If you have any questions, please contact our support team.</p>
+          </div>
+        </div>
+      `;
+
+      const result = await this.resend.emails.send({
+        from: emailConfig?.from || 'noreply@ezconadvisory.com',
+        to: [email],
+        subject: statusInfo.subject,
+        html: emailHtml,
+      });
+
+      if (result.error) {
+        this.logger.error('Failed to send application status email:', result.error);
+        return false;
+      }
+
+      this.logger.log(`Application status email sent to ${email}`);
+      return true;
+    } catch (error) {
+      this.logger.error('Error sending application status email:', error);
+      return false;
+    }
+  }
+
   async sendResetPasswordLink(resetLink: string, email: string) {
     const emailConfig = this.configService.get('email');
     const emailHtml = `

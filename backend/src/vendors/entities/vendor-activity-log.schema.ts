@@ -10,6 +10,7 @@ export enum ActivityType {
   CERTIFICATE_ISSUED = 'Certificate Issued',
   APPLICATION_CREATED = 'Application Created',
   APPLICATION_SUBMITTED = 'Application Submitted',
+  APPLICATION_REJECTED = 'Application Rejected',
   PAYMENT_INITIATED = 'Payment Initiated',
   PAYMENT_COMPLETED = 'Payment Completed',
   PAYMENT_FAILED = 'Payment Failed',

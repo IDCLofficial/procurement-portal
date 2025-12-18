@@ -71,7 +71,12 @@ export class ApplicationsService {
         return acc;
       }, {} as Record<string, number>);
 
-      //
+      // Get specific status counts in parallel for better performance
+      const [forwardedCount, approvedCount, rejectedCount] = await Promise.all([
+        this.applicationModel.countDocuments({ currentStatus: ApplicationStatus.FORWARDED_TO_REGISTRAR }),
+        this.applicationModel.countDocuments({ currentStatus: ApplicationStatus.APPROVED }),
+        this.applicationModel.countDocuments({ currentStatus: ApplicationStatus.REJECTED })
+      ]);
       
       // Get paginated results
       const applications = await this.applicationModel
@@ -93,6 +98,11 @@ export class ApplicationsService {
         limit: limit,
         totalPages: Math.ceil(total / limit),
         countByStatus: countByStatus,
+        statusCounts: {
+          forwardedToRegistrar: forwardedCount,
+          approved: approvedCount,
+          rejected: rejectedCount
+        },
         applications: applications
       };
     } catch (err) {
@@ -296,49 +306,65 @@ export class ApplicationsService {
           throw new NotFoundException('could not find a vendor');
         }
         
-        // If status changed to APPROVED, proceed to payment
-        if (newStatus === ApplicationStatus.APPROVED) {
-          await this.vendorsService.createActivityLog(
-            (application.companyId as any).userId,
-            ActivityType.APPROVED,
-            `Application approved by Registrar, you can proceed to make payments for certicate issuance`
-          );
+        // Create notification based on status
+        let notificationType: NotificationType;
+        let notificationTitle: string;
+        let notificationMessage: string;
+        let activityType: ActivityType;
+        let activityMessage: string;
 
-          // Create notification
-          await this.notificationModel.create({
-            type: NotificationType.APPLICATION_APPROVED,
-            title: 'Application approved',
-            message: `Your Application has been approved, please proceed to payment for certificate issuance.`,
-            recipient: NotificationRecipient.VENDOR,
-            vendorId: vendor._id,
-            priority: priority.LOW,
-            isRead: false,
-          });
-
-          // Send approval email to vendor
-          try {
-            const frontendUrl = process.env.FRONTEND_URL || 'https://procurement-portal-mu.vercel.app';
-            const paymentLink = `${frontendUrl}/vendor/dashboard/payments`;
-            await this.emailService.sendApplicationApprovalEmail(
-              vendor.email,
-              vendor.fullname,
-              paymentLink,
-            );
-          } catch (emailError) {
-            this.logger.error(`Failed to send approval email: ${emailError.message}`);
-          }
+        switch (newStatus) {
+          case ApplicationStatus.APPROVED:
+            notificationType = NotificationType.APPLICATION_APPROVED;
+            notificationTitle = 'Application Approved';
+            notificationMessage = 'Your Application has been approved, please proceed to payment for certificate issuance.';
+            activityType = ActivityType.APPROVED;
+            activityMessage = 'Application approved by Registrar, you can proceed to make payments for certificate issuance';
+            break;
+          case ApplicationStatus.REJECTED:
+            notificationType = NotificationType.APPLICATION_REJECTED;
+            notificationTitle = 'Application Rejected';
+            notificationMessage = `Your application has been rejected.${updateApplicationStatusDto.notes ? ` Reason: ${updateApplicationStatusDto.notes}` : ''}`;
+            activityType = ActivityType.APPLICATION_REJECTED;
+            activityMessage = 'Your application has been rejected by the Registrar';
+            break;
+          default:
+            notificationType = NotificationType.APPLICATION_APPROVED;
+            notificationTitle = 'Application Status Updated';
+            notificationMessage = `Your application status has been updated to ${newStatus}.`;
+            activityType = ActivityType.APPROVED;
+            activityMessage = `Your application status has been updated to ${newStatus}`;
         }
 
-        if (newStatus === ApplicationStatus.REJECTED) {
-          await this.notificationModel.create({
-            type: NotificationType.APPLICATION_REJECTED,
-            title: 'Application Rejected',
-            message: `Your application has been rejected.${updateApplicationStatusDto.notes ? ` Reason: ${updateApplicationStatusDto.notes}` : ''}`,
-            recipient: NotificationRecipient.VENDOR,
-            vendorId: vendor._id,
-            priority: priority.LOW,
-            isRead: false,
-          });
+        // Create activity log
+        await this.vendorsService.createActivityLog(
+          (application.companyId as any).userId,
+          activityType,
+          activityMessage + (updateApplicationStatusDto.notes ? `: ${updateApplicationStatusDto.notes}` : '')
+        );
+
+        // Create notification
+        await this.notificationModel.create({
+          type: notificationType,
+          title: notificationTitle,
+          message: notificationMessage,
+          recipient: NotificationRecipient.VENDOR,
+          vendorId: vendor._id,
+          priority: priority.LOW,
+          isRead: false,
+        });
+
+        // Send email notification
+        try {
+          await this.emailService.sendApplicationStatusUpdate(
+            vendor.email,
+            vendor.fullname,
+            application.applicationId,
+            newStatus,
+            updateApplicationStatusDto.notes
+          );
+        } catch (emailError) {
+          this.logger.error(`Failed to send status update email: ${emailError.message}`);
         }
       }
       

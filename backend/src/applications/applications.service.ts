@@ -6,7 +6,7 @@ import { UpdateApplicationStatusDto } from './dto/update-application-status.dto'
 import { AssignApplicationDto } from './dto/assign-application.dto';
 import { Certificate, CertificateDocument, certificateStatus } from '../certificates/entities/certificate.schema';
 import { Company, CompanyDocument } from '../companies/entities/company.schema';
-import { User, UserDocument } from '../users/entities/user.schema';
+import { Role, User, UserDocument } from '../users/entities/user.schema';
 import { generateCertificateId } from '../lib/generateCertificateId';
 import { VendorsService } from '../vendors/vendors.service';
 import { ActivityType } from '../vendors/entities/vendor-activity-log.schema';
@@ -199,6 +199,38 @@ export class ApplicationsService {
       }
 
       await application.save();
+
+      // Create notification for the assigned user
+      if (!previouslyAssignedTo || previouslyAssignedTo !== newAssignedTo) {
+        try {
+          let recipient: NotificationRecipient;
+          switch (user.role) {
+            case Role.REGISTRAR:
+              recipient = NotificationRecipient.REGISTRAR;
+              break;
+            case Role.DESK_OFFICER:
+              recipient = NotificationRecipient.DESK_OFFICER;
+              break;
+            case Role.ADMIN:
+            default:
+              recipient = NotificationRecipient.ADMIN;
+              break;
+          }
+
+          await this.notificationModel.create({
+            type: NotificationType.STATUS_UPDATED,
+            title: 'Application Assigned',
+            message: `${application.applicationId} has been assigned to you${assignApplicationDto.assignedByName ? ` by ${assignApplicationDto.assignedByName}` : ''}.`,
+            recipient,
+            recipientId: new Types.ObjectId(newAssignedTo),
+            applicationId: application._id,
+            priority: priority.MEDIUM,
+            isRead: false,
+          });
+        } catch (notificationError) {
+          this.logger.error(`Failed to create assignment notification: ${notificationError.message}`);
+        }
+      }
 
       // Create audit log for application assignment
       try {

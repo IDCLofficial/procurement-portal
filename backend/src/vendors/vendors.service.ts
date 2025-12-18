@@ -1093,6 +1093,8 @@ export class VendorsService {
       // Verify company exists
       const vendor = await this.vendorModel.findById(userId);
 
+      this.Logger.log(vendor)
+
       if(!vendor){
         throw new NotFoundException("Vendor not found")
       }
@@ -1101,6 +1103,8 @@ export class VendorsService {
       if (!company) {
         throw new NotFoundException('Company not found');
       }
+
+      this.Logger.log(company)
 
       // Find the application
       const application = await this.applicationModel
@@ -1117,6 +1121,8 @@ export class VendorsService {
       if (!application) {
         throw new NotFoundException('No applications found for this company');
       }
+
+      this.Logger.log(application)
 
       return {
         status: application.currentStatus

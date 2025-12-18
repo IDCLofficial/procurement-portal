@@ -177,6 +177,11 @@ export class SplitPaymentService {
       this.logger.log(`Verifying payment: ${reference}`);
       const result = await this.paystackSplitService.verifyTransaction(reference);
 
+      if(result.data.status !== 'success'){
+        this.logger.log("payment did not go through")
+        throw new BadRequestException("payment did not go through")
+      }
+
       // Update transaction status in database
       if (result.data.status === 'success') {
         // Find the company
@@ -195,7 +200,9 @@ export class SplitPaymentService {
         const payment = await this.paymentModel.findOneAndUpdate({ transactionReference: reference }, 
           {
             $set: {
-              paymentDate:new Date()
+              paymentDate:new Date(),
+              status: PaymentStatus.VERIFIED,
+              verificationMessage: 'Payment has been confirmed via Paystack gateway',
             }
           }
         );
@@ -244,9 +251,6 @@ export class SplitPaymentService {
           await this.paymentModel.findOneAndUpdate(
             { transactionReference: reference },
             {
-              status: PaymentStatus.VERIFIED,
-              paymentDate: new Date(),
-              verificationMessage: 'Payment has been confirmed via Paystack gateway',
               applicationId: createApplication.applicationId,
             }
           );
@@ -327,6 +331,25 @@ export class SplitPaymentService {
               throw new ConflictException("failed to generate certificate")
             }
 
+            const updatedApplication = await this.applicationModel
+              .findOneAndUpdate(
+                {
+                  companyId: company._id,
+                },
+                {
+                  $set: { currentStatus: ApplicationStatus.VERIFIED },
+                  $push: {
+                    applicationTimeline: {
+                      status: ApplicationStatus.VERIFIED,
+                      timestamp: new Date(),
+                      notes: 'Payment verified and certificate issued',
+                    },
+                  },
+                },
+                { new: true, sort: { createdAt: -1 } }
+              )
+              .exec();
+
             await this.vendorModel.findOneAndUpdate({
               _id:certificate.contractorId
             }, {
@@ -334,22 +357,11 @@ export class SplitPaymentService {
                 certificateId:certificate.certificateId
               }
             })
-            
-            const updatedApplication = await this.applicationModel.findOneAndUpdate(
-              {
-                companyId: vendor.companyId,
-              },
-              {currentStatus: ApplicationStatus.VERIFIED},
-              {new:true}
-            ).exec();
-
-            console.log(updatedApplication)
 
             if(!updatedApplication){
               throw new NotFoundException("application not found")
             }
 
-            console.log()
             // Log application submission activity
             await this.vendorService.createActivityLog(
               userId,
@@ -361,6 +373,7 @@ export class SplitPaymentService {
                 companyName: company.companyName
               }
             );
+
   
             //notify the vendor
             await this.notificationModel.create({

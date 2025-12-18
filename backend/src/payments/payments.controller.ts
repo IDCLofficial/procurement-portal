@@ -128,11 +128,12 @@ export class SplitPaymentController {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = this.jwtService.decode(token);
 
+    console.log(`This is my id: ${decoded._id}`)
+
     if(!decoded){
       throw new UnauthorizedException("Expired or missing token")
     }
     const userId = decoded._id;
-    console.log(decoded)
     return this.splitPaymentService.verifyPayment(reference, userId);
   }
 

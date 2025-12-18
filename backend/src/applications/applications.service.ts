@@ -293,7 +293,7 @@ export class ApplicationsService {
           );
 
           const vendor = await this.vendorModel.findOne({
-            companyId:application.companyId
+            companyId:new Types.ObjectId(application.companyId)
           })
 
           if(!vendor){

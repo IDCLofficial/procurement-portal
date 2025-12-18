@@ -152,7 +152,7 @@ export class SplitPaymentService {
         grade: company.grade,
         status: PaymentStatus.PENDING,
         type: dto.type,
-        paymentDate: Date.now().toLocaleString(),
+        paymentDate: new Date(),
         description: dto.description,
         transactionReference: paymentReference,
       });
@@ -195,7 +195,7 @@ export class SplitPaymentService {
         const payment = await this.paymentModel.findOneAndUpdate({ transactionReference: reference }, 
           {
             $set: {
-              paymentDate:Date.now().toLocaleString()
+              paymentDate:new Date()
             }
           }
         );

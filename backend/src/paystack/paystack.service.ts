@@ -7,6 +7,7 @@ import {
   UpdateSplitDto,
   InitializePaymentWithSplitDto,
 } from 'src/payments/dto/split-payment.dto';
+import { paymentType } from 'src/payments/entities/payment.schema';
 
 @Injectable()
 export class PaystackSplitService {

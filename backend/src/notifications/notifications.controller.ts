@@ -376,11 +376,11 @@ export class NotificationsController {
         throw new UnauthorizedException('Unauthorized');
       }
       const decoded = this.jwtService.decode(header.split(" ")[1]);
-      if(!decoded || decoded.role !== 'Admin'){
+      if(!decoded.role){
         this.logger.log(`User is not authorized to access this endpoint`);
         throw new UnauthorizedException('User is not authorized to access this endpoint');
       }
-      return await this.notificationsService.findAdminNotifications({ ...query, page, limit, skip } as any);
+      return await this.notificationsService.findAdminNotifications({ ...query, page, limit, skip } as any, decoded._id);
     }catch(err){
       this.logger.log(`Unauthorized user trying to access the endpoint`);
       throw new UnauthorizedException('Unauthorized');

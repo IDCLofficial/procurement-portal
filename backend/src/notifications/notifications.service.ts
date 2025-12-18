@@ -352,10 +352,11 @@ export class NotificationsService {
     page?: number,
     limit?: number,
     skip?: number,
-  }): Promise<any> {
+  }, userId: string): Promise<any> {
     // const adminId = decoded._id;
     const filter: any = {
       recipient:NotificationRecipient.ADMIN,
+      recipientId: userId,
     };
 
     let isReadFilter: boolean | undefined;

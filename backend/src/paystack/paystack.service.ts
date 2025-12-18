@@ -105,7 +105,7 @@ export class PaystackSplitService {
     }
   }
 
-  async initializeTransaction(dto: InitializePaymentWithSplitDto, email:string, reference:string, return_url?:string) {
+  async initializeTransaction(dto: InitializePaymentWithSplitDto, email:string, reference:string) {
     try {
       const splitCode = this.configService.get<string>('PAYSTACK_SPLIT_CODE');
       const payload = {
@@ -113,7 +113,7 @@ export class PaystackSplitService {
         amount: dto.amount * 100,
         split_code: splitCode || 'SPL_3yyVlNI9mE',
         reference: reference,
-        callback_url: `${this.configService.get<string>('FRONTEND_URL')}/payment-callback?return_url=${return_url}` || `https://procurement-portal-mu.vercel.app/payment-callback?return_url=${return_url}`,
+        callback_url: `${this.configService.get<string>('FRONTEND_URL')}/payment-callback` || `https://procurement-portal-mu.vercel.app/payment-callback`,
         metadata: dto.metadata,
       };
 

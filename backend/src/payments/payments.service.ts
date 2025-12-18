@@ -181,7 +181,7 @@ export class SplitPaymentService {
       if (result.data.status === 'success') {
         // Find the company
         const vendor  = await this.vendorModel.findById(userId);
-        
+        console.log(vendor)
         if(!vendor){
           throw new NotFoundException("Vendor not found") 
         }
@@ -337,8 +337,7 @@ export class SplitPaymentService {
             
             const updatedApplication = await this.applicationModel.findOneAndUpdate(
               {
-                companyId: company._id,
-                type:ApplicationType.NEW
+                companyId: vendor.companyId,
               },
               {status: ApplicationStatus.VERIFIED},
               {new:true}

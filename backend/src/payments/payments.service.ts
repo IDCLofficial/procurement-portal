@@ -152,6 +152,7 @@ export class SplitPaymentService {
         grade: company.grade,
         status: PaymentStatus.PENDING,
         type: dto.type,
+        paymentDate: Date.now().toLocaleString(),
         description: dto.description,
         transactionReference: paymentReference,
       });

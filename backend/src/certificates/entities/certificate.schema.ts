@@ -63,6 +63,9 @@ export class Certificate {
     @Prop({required:true, enum: certificateStatus})
     status: certificateStatus;
 
+    @Prop({required:false})
+    valdFrom?:Date;
+
     @Prop({required:true})
     validUntil: Date;
 }

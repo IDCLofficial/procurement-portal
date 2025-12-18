@@ -212,6 +212,59 @@ export class EmailService {
     };
   }
 
+  async sendApplicationApprovalEmail(email: string, vendorName: string, paymentLink: string): Promise<void> {
+    try {
+      const emailConfig = this.configService.get('email');
+
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #1a365d; margin: 0;">Application Approved</h2>
+          </div>
+
+          <p>Dear ${vendorName},</p>
+
+          <p>Your application has been approved. Please proceed to payment for certificate issuance.</p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${paymentLink}"
+               style="display: inline-block; padding: 12px 24px; background-color: #3182ce; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              Proceed to Payment
+            </a>
+          </div>
+
+          <p>If you have any questions or need further assistance, please contact support.</p>
+
+          <p>Best regards,<br/>Procurement Portal Team</p>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #666;">
+            <p>This is an automated message. Please do not reply to this email.</p>
+          </div>
+        </div>
+      `;
+
+      const result = await this.resend.emails.send({
+        from: emailConfig?.from || 'noreply@procurement.gov.ng',
+        to: [email],
+        subject: 'Your Application Has Been Approved',
+        html: emailHtml,
+      });
+
+      if (result.error) {
+        this.logger.error('Failed to send approval email:', result.error);
+        throw new ConflictException('Failed to send approval email');
+      }
+
+      this.logger.log(`Approval email sent successfully to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send approval email to ${email}:`, error);
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      throw new ConflictException('Failed to send approval email');
+    }
+  }
+
   //
 
   // Clean up expired OTPs from the store

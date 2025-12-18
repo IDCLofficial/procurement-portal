@@ -70,6 +70,8 @@ export class ApplicationsService {
         acc[item._id] = item.count;
         return acc;
       }, {} as Record<string, number>);
+
+      //
       
       // Get paginated results
       const applications = await this.applicationModel
@@ -275,6 +277,10 @@ export class ApplicationsService {
       
       // Only update if status actually changed
       if (oldStatus !== newStatus) {
+        if (newStatus === ApplicationStatus.REJECTED && !updateApplicationStatusDto.notes) {
+          throw new BadRequestException("include a reason for rejection");
+        }
+
         // Add new status to history array
         const statusHistoryEntry = {
           status: newStatus,
@@ -283,6 +289,12 @@ export class ApplicationsService {
         
         application.applicationTimeline.push(statusHistoryEntry);
         application.currentStatus = newStatus;
+
+        const companyId = (application.companyId as any)?._id ?? application.companyId;
+        const vendor = await this.vendorModel.findOne({ companyId });
+        if (!vendor) {
+          throw new NotFoundException('could not find a vendor');
+        }
         
         // If status changed to APPROVED, proceed to payment
         if (newStatus === ApplicationStatus.APPROVED) {
@@ -291,14 +303,6 @@ export class ApplicationsService {
             ActivityType.APPROVED,
             `Application approved by Registrar, you can proceed to make payments for certicate issuance`
           );
-
-          const vendor = await this.vendorModel.findOne({
-            companyId:new Types.ObjectId(application.companyId)
-          })
-
-          if(!vendor){
-            throw new NotFoundException("could not find a vendor")
-          }
 
           // Create notification
           await this.notificationModel.create({
@@ -312,23 +316,29 @@ export class ApplicationsService {
           });
 
           // Send approval email to vendor
-          // try {
-          //   const user = await this.vendorModel.findById(company.userId);
-          //   if (user && user.email) {
-          //     const certificateLink = `/vendor/dashboard/certificates`; // Adjust this path as per your frontend routing
-          //     await this.emailService.sendApplicationApprovalEmail(
-          //       user.email,
-          //       company.companyName,
-          //       certificateLink
-          //     );
-          //     this.logger.log(`Sent approval email to ${user.email}`);
-          //   }
-          // } catch (emailError) {
-          //   this.logger.error('Failed to send approval email:', emailError);
-          //   // Don't fail the whole operation if email sending fails
-          // }
+          try {
+            const frontendUrl = process.env.FRONTEND_URL || 'https://procurement-portal-mu.vercel.app';
+            const paymentLink = `${frontendUrl}/vendor/dashboard/payments`;
+            await this.emailService.sendApplicationApprovalEmail(
+              vendor.email,
+              vendor.fullname,
+              paymentLink,
+            );
+          } catch (emailError) {
+            this.logger.error(`Failed to send approval email: ${emailError.message}`);
+          }
+        }
 
-          //
+        if (newStatus === ApplicationStatus.REJECTED) {
+          await this.notificationModel.create({
+            type: NotificationType.APPLICATION_REJECTED,
+            title: 'Application Rejected',
+            message: `Your application has been rejected.${updateApplicationStatusDto.notes ? ` Reason: ${updateApplicationStatusDto.notes}` : ''}`,
+            recipient: NotificationRecipient.VENDOR,
+            vendorId: vendor._id,
+            priority: priority.LOW,
+            isRead: false,
+          });
         }
       }
       
@@ -477,6 +487,9 @@ export class ApplicationsService {
         throw new BadRequestException('Failed to generate unique certificate ID. Please try again.');
       }
 
+      //valid from date 
+      const validFrom = new Date();
+
       // Calculate certificate validity (1 year from now)
       const validUntil = new Date();
       validUntil.setFullYear(validUntil.getFullYear() + 1);
@@ -510,6 +523,7 @@ export class ApplicationsService {
         
         // Registration Status
         status: certificateStatus.APPROVED,
+        validFrom: validFrom,
         validUntil: validUntil
       });
 

@@ -335,10 +335,17 @@ export class SplitPaymentService {
               }
             })
             
-            await this.applicationModel.findOneAndUpdate(
+            const updatedApplication = await this.applicationModel.findOneAndUpdate(
               {companyId: company._id},
-              {status: ApplicationStatus.VERIFIED}
-            )
+              {status: ApplicationStatus.VERIFIED},
+              {new:true}
+            ).exec();
+
+            if(!updatedApplication){
+              throw new NotFoundException("application not found")
+            }
+
+            console.log()
             // Log application submission activity
             await this.vendorService.createActivityLog(
               userId,

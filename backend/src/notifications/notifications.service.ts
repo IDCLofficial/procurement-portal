@@ -115,7 +115,7 @@ export class NotificationsService {
 
   async checkExpiringDocuments() {
     const now = new Date();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
     
     const documents = await this.documentModel.find({
       validTo: {
@@ -396,7 +396,7 @@ export class NotificationsService {
 
 
 
-   @Cron(CronExpression.EVERY_DAY_AT_10AM)
+   @Cron(CronExpression.EVERY_30_MINUTES)
   async handleCron() {
     this.logger.log('Running scheduled checks...');
     

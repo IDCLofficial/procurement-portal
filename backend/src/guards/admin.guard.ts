@@ -44,8 +44,10 @@ export class AdminGuard implements CanActivate {
         throw new UnauthorizedException('User not found');
       }
 
+      const allowedRoles = [Role.ADMIN, Role.REGISTRAR, Role.AUDITOR];
+
       // Check if user has Admin role
-      if (user.role !== Role.ADMIN) {
+      if (!allowedRoles.includes(user.role)) {
         throw new ForbiddenException('Access denied. Admin role required.');
       }
 

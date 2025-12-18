@@ -190,32 +190,12 @@ export class EmailService {
           subject: 'Application Rejected',
           message: 'Your application has been rejected.',
           color: '#F44336'
-        },
-        'PENDING': {
-          subject: 'Application Status Update',
-          message: 'Your application status has been updated to Pending.',
-          color: '#FFC107'
-        },
-        'REVIEW': {
-          subject: 'Application Under Review',
-          message: 'Your application is currently under review.',
-          color: '#2196F3'
-        },
-        'RETURNED': {
-          subject: 'Application Returned for Updates',
-          message: 'Your application has been returned for additional information.',
-          color: '#FF9800'
-        },
-        'CANCELLED': {
-          subject: 'Application Cancelled',
-          message: 'Your application has been cancelled.',
-          color: '#9E9E9E'
         }
       };
 
       const statusInfo = statusMessages[status] || {
         subject: 'Application Status Update',
-        message: `Your application status has been updated to ${status}.`,
+        message: `Your application was ${status}.`,
         color: '#9C27B0'
       };
 

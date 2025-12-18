@@ -328,7 +328,7 @@ export class SplitPaymentService {
               }
             })
             
-            const updateApplcationStatus = await this.application.findOneAndUpdate(
+            await this.applicationModel.findOneAndUpdate(
               {companyId: company._id},
               {status: ApplicationStatus.VERIFIED}
             )
@@ -368,12 +368,12 @@ export class SplitPaymentService {
                 isRead: false,
               });
             }
-          }
-          this.logger.log(`Payment verified and updated: ${reference}`);
+            this.logger.log(`Payment verified and updated: ${reference}`);
           }catch(e){
             this.logger.error(e)
             throw new ConflictException("failed to update vendor document")
           }
+        }
       }else{
         throw new ConflictException('The payment was not successful')
       }

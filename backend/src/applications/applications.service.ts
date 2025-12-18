@@ -281,7 +281,7 @@ export class ApplicationsService {
 
           // Send approval email to vendor
           // try {
-          //   const user = await this.userModel.findById(company.userId);
+          //   const user = await this.vendorModel.findById(company.userId);
           //   if (user && user.email) {
           //     const certificateLink = `/vendor/dashboard/certificates`; // Adjust this path as per your frontend routing
           //     await this.emailService.sendApplicationApprovalEmail(

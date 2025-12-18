@@ -156,7 +156,7 @@ export default function Step6CategoryGrade({
 
                                 {/* Registration Cost */}
                                 <div className="mb-3 pb-3 border-b border-gray-200">
-                                    <p className="text-xs text-gray-600 mb-1">Registration Cost</p>
+                                    <p className="text-xs text-gray-600 mb-1">Certificate Cost</p>
                                     <p className="font-bold text-gray-900">
                                         {formatCurrency(grade.registrationCost)}
                                     </p>

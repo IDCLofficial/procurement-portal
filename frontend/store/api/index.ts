@@ -1,3 +1,4 @@
+import { session_key } from '@/lib/constants';
 import { decrypt } from '@/lib/crypto';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -9,7 +10,7 @@ export const apiSlice = createApi({
     baseQuery: fetchBaseQuery({
         baseUrl: BASE_URL,
         prepareHeaders: (headers, { endpoint }) => {
-            const enc_token = localStorage.getItem('token');
+            const enc_token = localStorage.getItem(session_key);
             if (!enc_token) return headers;
             const token = decrypt(enc_token);
 

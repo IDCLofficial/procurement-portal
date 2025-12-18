@@ -11,10 +11,10 @@ import { useAuth } from '@/components/providers/public-service/AuthProvider';
 import { format, differenceInDays } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import PendingPaymentCard from '@/components/dashboard/PendingPaymentCard';
-import { toast } from 'sonner';
+import { return_url_key } from '@/lib/constants';
 
 export default function DashboardPage() {
-    const { user, company, application, isLoading, categories } = useAuth();
+    const { user, company, application, isLoading, categories, certificate } = useAuth();
 
     const router = useRouter();
 
@@ -76,8 +76,8 @@ export default function DashboardPage() {
 
     // Calculate registration details
     const registrationId = user?.certificateId || user?.certificateId || 'N/A';
-    const validUntil = company?.createdAt ? format(new Date(new Date(company.createdAt).setFullYear(new Date(company.createdAt).getFullYear() + 1)), 'dd MMMM yyyy') : 'N/A';
-    const daysRemaining = company?.createdAt ? differenceInDays(new Date(new Date(company.createdAt).setFullYear(new Date(company.createdAt).getFullYear() + 1)), new Date()) : 0;
+    const validUntil = certificate ? format(new Date(certificate.validUntil), 'dd MMM yyyy') : 'N/A';
+    const daysRemaining = certificate ? differenceInDays(new Date(certificate.validUntil), new Date()) : 0;
     
     // Map application status to registration status
     const getRegistrationStatus = (): 'approved' | 'declined' | 'expired' | 'suspended' | 'pending' | 'verified' => {
@@ -101,15 +101,7 @@ export default function DashboardPage() {
     const statusReason = application?.notes || undefined;
 
     const handlePayment = async () => {
-        try {
-            // TODO: Implement actual payment processing
-            // This is a mock implementation
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            toast.success("Payment processed successfully!");
-        } catch (error) {
-            console.error("Payment error:", error);
-            toast.error("Failed to process payment. Please try again.");
-        }
+        localStorage.setItem(return_url_key, "/dashboard");
     };
 
 
@@ -145,7 +137,7 @@ export default function DashboardPage() {
                         />}
 
                         {/* Renewal Reminder - Only show when approved and days remaining <= 30 */}
-                        {registrationStatus === 'verified' && daysRemaining <= 30 && daysRemaining > 0 && (
+                        {registrationStatus === 'verified' && daysRemaining <= 30 && (
                             <RenewalReminderCard
                                 daysRemaining={daysRemaining}
                                 onStartRenewal={handleStartRenewal}

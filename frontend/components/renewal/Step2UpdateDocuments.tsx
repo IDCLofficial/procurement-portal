@@ -1,20 +1,14 @@
 'use client';
 
+import { DocumentRenewal } from './DocumentsRequiringUpdateSection';
 import RenewalDocumentUploadCard from './RenewalDocumentUploadCard';
 import UploadInstructionBanner from './UploadInstructionBanner';
 
-interface Document {
-    title: string;
-    currentExpiry: string;
-    status: 'expiring_soon' | 'expired';
-}
-
 interface Step2UpdateDocumentsProps {
-    documents: Document[];
-    onFileUpload: (title: string, file: File, validFrom: string, validTo: string) => void;
+    documents: DocumentRenewal[];
 }
 
-export default function Step2UpdateDocuments({ documents, onFileUpload }: Step2UpdateDocumentsProps) {
+export default function Step2UpdateDocuments({ documents }: Step2UpdateDocumentsProps) {
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -35,12 +29,12 @@ export default function Step2UpdateDocuments({ documents, onFileUpload }: Step2U
                 {documents.map((doc, index) => (
                     <RenewalDocumentUploadCard
                         key={index}
-                        title={doc.title}
-                        currentExpiry={doc.currentExpiry}
+                        title={doc.documentName}
+                        currentExpiry={doc.currentExpiry!}
                         status={doc.status}
-                        onFileUpload={(file, validFrom, validTo) =>
-                            onFileUpload(doc.title, file, validFrom, validTo)
-                        }
+                        documentId={doc.id}
+                        hasExpiry={doc.hasExpiry}
+                        documentPresetName={doc.documentName}
                     />
                 ))}
             </div>

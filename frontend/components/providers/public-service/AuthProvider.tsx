@@ -1,6 +1,6 @@
 "use client"
 import { decrypt, encrypt } from '@/lib/crypto';
-import { Application, CompanyDetailsResponse, MDAResponse, User } from '@/store/api/types';
+import { Application, CompanyDetailsResponse, Contractor, MDAResponse, User } from '@/store/api/types';
 import { useGetCompanyDetailsQuery, useGetProfileQuery } from '@/store/api/vendor.api';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useContext, useMemo, useState } from 'react'
@@ -14,6 +14,8 @@ import { selectApplicationData, selectApplicationLoading } from '@/store/slices/
 import { DocumentRequirement, CategoriesResponse } from '@/store/api/types.d';
 import { useGetDocumentsPresetsQuery, useGetCategoriesQuery, useGetMDAQuery } from '@/store/api/helper.api';
 import { useGetApplicationQuery } from '@/store/api/vendor.api';
+import { session_key } from '@/lib/constants';
+import { useGetContractorByIdQuery } from '@/store/api/public.api';
 
 interface AuthContextType {
     user: User | null;
@@ -25,6 +27,7 @@ interface AuthContextType {
     documents: DocumentRequirement[] | null;
     categories: CategoriesResponse | null;
     mdas: MDAResponse["mdas"] | undefined;
+    certificate?: Contractor;
     isLoggingOut: boolean;
     clearToken: () => void;
     refresh: () => void;
@@ -41,7 +44,7 @@ const getStoredToken = () => {
     }
 
     try {
-        const storedToken = localStorage.getItem('token');
+        const storedToken = localStorage.getItem(session_key);
         if (!storedToken) return null;
         const dec_token = decrypt(storedToken);
         
@@ -52,7 +55,7 @@ const getStoredToken = () => {
         return null;
     } catch (error) {
         console.error('Failed to retrieve stored token:', error);
-        localStorage.removeItem('token');
+        localStorage.removeItem(session_key);
         return null;
     }
 };
@@ -102,8 +105,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const application = useSelector(selectApplicationData);
     const applicationLoading = useSelector(selectApplicationLoading);
 
-    const isLoading = React.useMemo(() => profileLoading || companyLoading || documentsLoading || categoriesLoading || applicationLoading, [profileLoading, companyLoading, documentsLoading, categoriesLoading, applicationLoading]);
+    const { data: certificate, isLoading: contractorLoading } = useGetContractorByIdQuery(user ? user.certificateId : '', {
+        skip: !user?.certificateId
+    });
 
+    const isLoading = React.useMemo(() => profileLoading || companyLoading || documentsLoading || categoriesLoading || applicationLoading || contractorLoading, [profileLoading, companyLoading, documentsLoading, categoriesLoading, applicationLoading, contractorLoading]);
 
     // Sync local token with slice token
     React.useEffect(() => {
@@ -125,7 +131,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     const handleClearToken = useCallback(() => {
         setToken(null);
-        localStorage.removeItem('token');
+        localStorage.removeItem(session_key);
         dispatch(clearToken());
     }, [dispatch]);
 
@@ -133,7 +139,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (!user) return;
 
         if (!user.isVerified) {
-            localStorage.removeItem('token');
+            localStorage.removeItem(session_key);
 
             const params = new URLSearchParams();
             params.set('vrf', '1');
@@ -171,7 +177,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const handleLogin = useCallback((token: string) => {
         const enc_token = encrypt(token);
         setToken(token);
-        localStorage.setItem('token', enc_token);
+        localStorage.setItem(session_key, enc_token);
         dispatch(login(token));
         
         router.replace('/dashboard');
@@ -192,6 +198,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         isLoading,
         isAuthenticated,
         isLoggingOut,
+        certificate,
         documents,
         categories,
         mdas: mdas ? mdas.mdas : [],
@@ -199,7 +206,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         login: handleLogin,
         logout: handleLogout,
         clearToken: handleClearToken,
-    }), [user, token, isLoading, isAuthenticated, isLoggingOut, documents, categories, mdas, handleRefresh, handleLogin, handleLogout, handleClearToken, company, application]);
+    }), [user, token, isLoading, isAuthenticated, isLoggingOut, documents, categories, mdas, handleRefresh, handleLogin, handleLogout, handleClearToken, company, application, certificate]);
 
     return (
         <AuthContext.Provider value={value}>

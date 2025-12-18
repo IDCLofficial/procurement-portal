@@ -74,13 +74,13 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                         <div className="mt-6 flex gap-3">
                             <Button
                                 variant="outline"
-                                className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50"
+                                className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 cursor-pointer"
                                 onClick={() => setIsOpen(true)}
                             >
                                 View Details
                             </Button>
                             <Button
-                                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                className="flex-1 bg-amber-600 hover:bg-amber-700 cursor-pointer"
                                 onClick={() => setIsOpen(true)}
                             >
                                 Pay Now
@@ -113,7 +113,7 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Payment Method:</span>
-                                    <span className="font-medium">Card Payment</span>
+                                    <span className="font-medium">Paystack</span>
                                 </div>
                             </div>
                         </div>
@@ -130,7 +130,7 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                                         Processing Payment...
                                     </span>
                                 ) : (
-                                    `Pay ₦${amount.toLocaleString()} Now`
+                                    `Pay Now`
                                 )}
                             </Button>
                         </div>

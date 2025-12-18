@@ -1,17 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { FaFileAlt, FaFilePdf, FaFileImage, FaEye, FaTrash } from 'react-icons/fa';
+import { FaFileAlt, FaFilePdf, FaFileImage, FaEye, FaTrash, FaUpload } from 'react-icons/fa';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import sirvClient from '@/lib/sirv.class';
+import { useCompleteVendorRegistrationMutation } from '@/store/api/vendor.api';
+import { VendorSteps } from '@/store/api/enum';
+import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
+import { useAuth } from '@/components/providers/public-service/AuthProvider';
+import { cn } from '@/lib/utils';
 
 interface RenewalDocumentUploadCardProps {
     title: string;
     currentExpiry: string;
-    status: 'expiring_soon' | 'expired';
-    onFileUpload: (file: File, validFrom: string, validTo: string) => void;
+    status: 'expiring_soon' | 'expired' | 'missing';
+    hasExpiry: "yes" | "no";
+    documentId?: string;
+    documentPresetName?: string;
 }
 
 interface UploadedFile {
@@ -27,13 +36,20 @@ export default function RenewalDocumentUploadCard({
     title,
     currentExpiry,
     status,
-    onFileUpload,
+    hasExpiry,
+    documentId,
+    documentPresetName,
 }: RenewalDocumentUploadCardProps) {
+    const { company, documents: docPresets } = useAuth();
     const [validFrom, setValidFrom] = useState('');
     const [validTo, setValidTo] = useState('');
     const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [zoom, setZoom] = useState(100);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string>('');
+    const [completeVendorRegistration] = useCompleteVendorRegistrationMutation();
+    // const { refetch } = useGetCompanyDetailsQuery();
 
     const statusConfig = {
         expiring_soon: {
@@ -44,6 +60,11 @@ export default function RenewalDocumentUploadCard({
         expired: {
             label: 'Expired',
             borderColor: 'border-red-300',
+            bgColor: 'bg-white',
+        },
+        missing: {
+            label: 'Missing',
+            borderColor: 'border-gray-300',
             bgColor: 'bg-white',
         },
     };
@@ -78,10 +99,7 @@ export default function RenewalDocumentUploadCard({
             };
 
             setUploadedFile(uploadedFileData);
-            if (validFrom && validTo) {
-                onFileUpload(file, validFrom, validTo);
-            }
-            toast.success('Document uploaded successfully');
+            toast.success('Document selected successfully');
         }
     };
 
@@ -100,6 +118,113 @@ export default function RenewalDocumentUploadCard({
         setPreviewOpen(false);
         setZoom(100);
     };
+
+    const handleUpload = useCallback(async () => {
+        if (!uploadedFile) {
+            toast.error('Please select a file');
+            return;
+        }
+        if (!validFrom || !validTo) {
+            toast.error('Please provide validity dates');
+            return;
+        }
+
+        // Find document preset
+        const docPreset = docPresets?.find(d =>
+            d.documentName.toLowerCase().trim() === (documentPresetName || title).toLowerCase().trim()
+        );
+
+        setIsUploading(true);
+        setUploadError('');
+
+        try {
+            // Upload file to Sirv
+            toast.loading(`Uploading ${title}...`, { id: `upload-${documentId || title}` });
+            const uploadedFileUrl = await sirvClient.uploadAttachment(uploadedFile.file);
+
+            // Prepare document payload
+            const documentPayload = {
+                id: documentId || title,
+                fileUrl: uploadedFileUrl,
+                validFrom: validFrom,
+                validTo: validTo,
+                documentType: title,
+                uploadedDate: new Date().toISOString().split('T')[0],
+                fileName: uploadedFile.file.name,
+                fileSize: `${(uploadedFile.file.size / 1024 / 1024).toFixed(2)} MB`,
+                fileType: uploadedFile.file.type,
+                validFor: docPreset?.renewalFrequency || '',
+                hasValidityPeriod: true,
+            };
+
+            // Get all current documents
+            const currentDocs = company?.documents || [];
+
+            // Check if document already exists
+            const existingDocIndex = currentDocs.findIndex(d =>
+                d.documentType.toLowerCase().trim() === title.toLowerCase().trim()
+            );
+
+            let updatedDocuments;
+            if (existingDocIndex !== -1) {
+                // Replace existing document
+                updatedDocuments = [...currentDocs];
+                updatedDocuments[existingDocIndex] = {
+                    ...currentDocs[existingDocIndex],
+                    ...documentPayload,
+                };
+            } else {
+                // Add new document
+                updatedDocuments = [...currentDocs, documentPayload];
+            }
+
+            // Submit to API
+            const payload = {
+                [VendorSteps.DOCUMENTS]: updatedDocuments.map((doc) => ({
+                    id: 'id' in doc ? doc.id : doc._id,
+                    fileUrl: doc.fileUrl,
+                    validFrom: doc.validFrom,
+                    validTo: doc.validTo,
+                    documentType: doc.documentType,
+                    uploadedDate: doc.uploadedDate,
+                    fileName: doc.fileName,
+                    fileSize: doc.fileSize,
+                    fileType: doc.fileType,
+                    validFor: doc.validFor,
+                    hasValidityPeriod: doc.hasValidityPeriod,
+                })),
+                mode: "renewal" as CompleteVendorRegistrationRequest["mode"]
+            };
+
+            console.log(payload);
+
+            // return;
+
+            const response = await completeVendorRegistration(payload);
+
+            if (response.error) {
+                throw new Error((response.error as ResponseError["error"]).data.message);
+            }
+
+            toast.dismiss(`upload-${documentId || title}`);
+            toast.success(`${title} uploaded successfully!`);
+
+            // Reset state
+            if (uploadedFile.url) {
+                URL.revokeObjectURL(uploadedFile.url);
+            }
+            setUploadedFile(null);
+            setValidFrom('');
+            setValidTo('');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            toast.dismiss(`upload-${documentId || title}`);
+            toast.error((error as Error).message || `Failed to upload ${title}`);
+            setUploadError((error as Error).message || 'Upload failed. Please try again.');
+        } finally {
+            setIsUploading(false);
+        }
+    }, [uploadedFile, validFrom, validTo, company, documentId, title, docPresets, completeVendorRegistration, documentPresetName]);
 
     return (
         <div className={`${config.bgColor} border ${config.borderColor} rounded-xl p-5 space-y-4`}>
@@ -124,7 +249,7 @@ export default function RenewalDocumentUploadCard({
             </div>
 
             {/* Validity Period */}
-            <div className="grid grid-cols-2 gap-4">
+            {hasExpiry === "yes" && <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label htmlFor={`validFrom-${title}`} className="text-xs text-gray-700 mb-1.5 block">
                         Valid From
@@ -133,11 +258,13 @@ export default function RenewalDocumentUploadCard({
                         id={`validFrom-${title}`}
                         type="date"
                         value={validFrom}
+                        min={new Date().toISOString().split('T')[0]}
                         onChange={(e) => setValidFrom(e.target.value)}
                         className="bg-gray-50 border-gray-200"
+                        disabled={isUploading}
                     />
                 </div>
-                <div>
+                <div className={cn("", !validFrom && "pointer-events-none opacity-50")}>
                     <Label htmlFor={`validTo-${title}`} className="text-xs text-gray-700 mb-1.5 block">
                         Valid To
                     </Label>
@@ -145,11 +272,17 @@ export default function RenewalDocumentUploadCard({
                         id={`validTo-${title}`}
                         type="date"
                         value={validTo}
-                        onChange={(e) => setValidTo(e.target.value)}
+                        onChange={(e) => !validFrom ? null : setValidTo(e.target.value)}
+                        min={validFrom ? (() => {
+                            const date = new Date(validFrom);
+                            date.setFullYear(date.getFullYear() + 1);
+                            return date.toISOString().split('T')[0];
+                        })() : undefined}
                         className="bg-gray-50 border-gray-200"
+                        disabled={isUploading}
                     />
                 </div>
-            </div>
+            </div>}
 
             {/* Upload Section */}
             <div>
@@ -162,6 +295,7 @@ export default function RenewalDocumentUploadCard({
                             accept="application/pdf, image/jpeg, image/jpg, image/png"
                             onChange={handleFileChange}
                             className="hidden"
+                            disabled={isUploading}
                         />
                         <label
                             htmlFor={`file-${title}`}
@@ -221,6 +355,7 @@ export default function RenewalDocumentUploadCard({
                                     size="sm"
                                     onClick={handlePreview}
                                     className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    disabled={isUploading}
                                 >
                                     <FaEye className="mr-1" />
                                     Preview
@@ -231,6 +366,7 @@ export default function RenewalDocumentUploadCard({
                                     size="sm"
                                     onClick={handleRemoveFile}
                                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    disabled={isUploading}
                                 >
                                     <FaTrash />
                                 </Button>
@@ -245,10 +381,11 @@ export default function RenewalDocumentUploadCard({
                                 accept=".pdf,.png,.jpg,.jpeg"
                                 onChange={handleFileChange}
                                 className="hidden"
+                                disabled={isUploading}
                             />
                             <label
                                 htmlFor={`replace-${title}`}
-                                className="text-xs text-gray-600 hover:text-gray-900 cursor-pointer underline"
+                                className={`text-xs text-gray-600 hover:text-gray-900 cursor-pointer underline ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
                             >
                                 Replace document
                             </label>
@@ -256,6 +393,35 @@ export default function RenewalDocumentUploadCard({
                     </div>
                 )}
             </div>
+
+            {/* Upload Error */}
+            {uploadError && (
+                <div className="p-2 bg-red-50 border border-red-200 rounded">
+                    <p className="text-xs text-red-700">{uploadError}</p>
+                </div>
+            )}
+
+            {/* Upload Button */}
+            {uploadedFile && (
+                <Button
+                    type="button"
+                    className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                    onClick={handleUpload}
+                    disabled={isUploading || !validFrom || !validTo}
+                >
+                    {isUploading ? (
+                        <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Uploading...
+                        </>
+                    ) : (
+                        <>
+                            <FaUpload className="mr-2" />
+                            Upload & Update Document
+                        </>
+                    )}
+                </Button>
+            )}
 
             {/* Preview Modal */}
             {previewOpen && uploadedFile && (

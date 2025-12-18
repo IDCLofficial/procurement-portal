@@ -24,7 +24,7 @@ import { Loader2 } from 'lucide-react';
 import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
 import { deepEqual } from '@/lib';
 import { useRouter } from 'next/navigation';
-import { processingFee } from '@/lib/constants';
+import { processingFee, return_url_key } from '@/lib/constants';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -246,6 +246,7 @@ export default function RegistrationContinuation() {
             toast.loading('Initializing payment...', { id: "payment" });
             const response = await initPayment(payload);
             toast.dismiss("payment");
+            localStorage.setItem(return_url_key, "/dashboard/complete-registration");
             if (response.data) {
                 router.push(response.data.authorization_url);
             }

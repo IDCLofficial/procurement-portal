@@ -191,7 +191,13 @@ export class SplitPaymentService {
         }
 
         // Get the payment record to extract payment details
-        const payment = await this.paymentModel.findOne({ transactionReference: reference });
+        const payment = await this.paymentModel.findOneAndUpdate({ transactionReference: reference }, 
+          {
+            $set: {
+              paymentDate:Date.now().toLocaleString()
+            }
+          }
+        );
         if (!payment) {
           throw new NotFoundException("Payment record not found");
         } 

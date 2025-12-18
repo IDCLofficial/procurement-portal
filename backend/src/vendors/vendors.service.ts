@@ -1050,7 +1050,7 @@ export class VendorsService {
         amount: payment.amount,
         reference:payment.transactionReference,
         status:payment.status,
-        data:payment.paymentDate,
+        date:payment.paymentDate,
         description:payment.description,
         type: payment.type
       }

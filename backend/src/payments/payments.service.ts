@@ -180,9 +180,11 @@ export class SplitPaymentService {
       if (result.data.status === 'success') {
         // Find the company
         const vendor  = await this.vendorModel.findById(userId);
+        
         if(!vendor){
           throw new NotFoundException("Vendor not found") 
         }
+        
         const company = await this.companyModel.findById(vendor.companyId);
         if (!company) {
           throw new NotFoundException("Company not found");
@@ -193,12 +195,6 @@ export class SplitPaymentService {
         if (!payment) {
           throw new NotFoundException("Payment record not found");
         } 
-
-        // Find application using applicationId field instead of _id
-        const application = await this.applicationModel.findOne({ applicationId: payment.applicationId });
-        if (!application) {
-          throw new NotFoundException("Application not found for this payment");
-        }
 
         // Log payment completion activity
         await this.vendorService.createActivityLog(
@@ -318,19 +314,12 @@ export class SplitPaymentService {
           }
         }else if(payment.type === paymentType.CERTIFICATEFEE){
           try{
-            const application = await this.applicationModel.findOne({
-              companyId:company._id,
-              applicationId:payment.applicationId
-            })
-            if(!application){
-              throw new NotFoundException("Application not found")
-            }
             const certificate = await this.applicationService.generateCertificate(company._id);
+            
             if(!certificate){
               throw new ConflictException("failed to generate certificate")
             }
-            application.currentStatus = ApplicationStatus.VERIFIED
-            await application.save();
+
             await this.vendorModel.findOneAndUpdate({
               _id:certificate.contractorId
             }, {

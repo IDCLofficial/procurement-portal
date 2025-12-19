@@ -195,7 +195,7 @@ function ApplicationHeader({
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500">Sector &amp; Grade</p>
-            <p className="mt-1 text-sm font-semibold text-gray-900">{sectorAndGrade}</p>
+            <p className="mt-1 text-sm font-semibold text-gray-900">{sectorAndGrade.toUpperCase()}</p>
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500">Submission Date</p>

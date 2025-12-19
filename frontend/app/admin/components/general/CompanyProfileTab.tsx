@@ -9,9 +9,9 @@ interface CompanyProfileTabProps {
   rcNumber: string;
   sectorAndGrade: string;
 }
-
 export function CompanyProfileTab({ company, contractorName, rcNumber, sectorAndGrade }: CompanyProfileTabProps) {
   const rawCategories = company?.categories ?? [];
+  console.log(rawCategories)
 
   return (
     <div className="space-y-4">
@@ -51,13 +51,10 @@ export function CompanyProfileTab({ company, contractorName, rcNumber, sectorAnd
           <p className="text-xs font-medium text-gray-500">Address</p>
           <p className="mt-1 text-gray-900">{company?.address ?? 'N/A'}</p>
         </div>
-        <div>
-          <p className="text-xs font-medium text-gray-500">LGA</p>
-          <p className="mt-1 text-gray-900">{company?.lga ?? 'N/A'}</p>
-        </div>
+       
         <div>
           <p className="text-xs font-medium text-gray-500">Grade</p>
-          <p className="mt-1 text-gray-900">{company?.grade ?? sectorAndGrade}</p>
+          <p className="mt-1 text-gray-900">{company?.grade?.toUpperCase() ?? sectorAndGrade?.toUpperCase()}</p>
         </div>
       </div>
 
@@ -101,12 +98,12 @@ export function CompanyProfileTab({ company, contractorName, rcNumber, sectorAnd
         </div>
       </div>
 
-      {company?.directors && (
+      {/* {company?.directors && (
         <div className="mt-4">
           <h3 className="text-sm font-semibold text-gray-900">Directors</h3>
           <p className="mt-1 text-sm text-gray-900">{company.directors}</p>
         </div>
-      )}
+      )} */}
 
       {(company?.createdAt || company?.updatedAt) && (
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 text-sm">

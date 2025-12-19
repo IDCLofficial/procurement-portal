@@ -61,7 +61,7 @@ export function ApplicationsTable({ applications, total, page, limit, onPageChan
                       ? app.applicationTimeline[app.applicationTimeline.length - 1]?.status
                       : undefined);
 
-                  return (
+                  return (console.log(app),
                     <tr key={app.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-blue-600 sm:pl-6">
                         {app.id}

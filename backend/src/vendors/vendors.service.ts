@@ -756,10 +756,6 @@ export class VendorsService {
           }
         })
       );
-
-      vendor.renewalStep = renewalSteps.STEP2;
-      await vendor.save();
-
       //
 
       const company = await this.companyModel.findOne({ userId: vendor._id }).exec();
@@ -773,6 +769,10 @@ export class VendorsService {
       if(!updatedDocuments){
         throw new ConflictException('Error updating documents')
       }
+
+      vendor.renewalStep = renewalSteps.STEP2;
+      await vendor.save();
+
 
       return {
         message: 'Documents updated successfully',

@@ -182,7 +182,7 @@ export function AddUserButton() {
           onChange={handleChange}
           onSubmit={handleSubmit}
           onClose={() => setIsOpen(false)}
-          isValidNigerianNumber={isValidNigerianNumber}
+          // isValidNigerianNumber={isValidNigerianNumber}
           onMdaSelect={(id, name) => {
             setSelectedMdaId(id);
             setFormData(prev => ({ ...prev, mda: name }));

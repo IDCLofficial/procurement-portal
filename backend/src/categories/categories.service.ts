@@ -69,7 +69,12 @@ export class CategoriesService {
 
   async findAllGrades(): Promise<Grade[]> {
     try {
-      const grades = await this.gradeModel.find();
+      const grades = await this.gradeModel
+      .find()
+      .sort({
+        createdAt:-1
+      })
+      .exec();
       return grades;
     } catch (err) {
       this.logger.error(`Failed to retrieve grades: ${err.message}`);

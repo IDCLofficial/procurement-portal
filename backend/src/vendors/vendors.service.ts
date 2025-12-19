@@ -143,10 +143,42 @@ export class VendorsService {
     }
     const { password: _, ...user } = vendor.toObject();
     console.log(user)
+    const accessToken =  this.tokenHandlers.generateToken(user)
+    
+    vendor.accessToken = accessToken;
+    await vendor.save();
+
     return {
       message:"Login Successful",
-      token: this.tokenHandlers.generateToken(user)
+      token:vendor.accessToken
     };
+  }
+
+  async logout(req:any): Promise<any>{
+    const authHeader = req?.headers?.authorization;
+    if (!authHeader || typeof authHeader !== 'string') {
+      throw new UnauthorizedException('Could not find your authorization token')
+    }
+
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.replace('Bearer ', '').trim()
+      : authHeader.trim();
+
+    if (!token) {
+      throw new UnauthorizedException('Could not find your authorization token')
+    }
+
+    const vendor = await this.vendorModel.findOne({ accessToken: token }).exec();
+    if (!vendor) {
+      throw new UnauthorizedException('Invalid token')
+    }
+
+    vendor.accessToken = undefined;
+    await vendor.save();
+
+    return {
+      message: 'Logout successful',
+    }
   }
 
   /**

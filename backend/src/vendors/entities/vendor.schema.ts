@@ -59,6 +59,9 @@ export class Vendor {
 
   @Prop({ required: false, default: true })
   isActive: boolean;
+
+  @Prop({required: false})
+  accessToken?: string;
 }
 
 export const VendorSchema = SchemaFactory.createForClass(Vendor);

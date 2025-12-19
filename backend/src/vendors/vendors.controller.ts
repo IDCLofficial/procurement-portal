@@ -105,6 +105,12 @@ export class VendorsController {
     return this.vendorsService.login(body);
   }
 
+  /** Logout vendor */
+  @Post('logout')
+  logout(@Req() req:any){
+    return this.vendorsService.logout(req)
+  }
+
   /** 
    * Change Password for vendor
   */

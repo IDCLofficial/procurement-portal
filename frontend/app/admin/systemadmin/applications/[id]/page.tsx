@@ -37,7 +37,7 @@ function SystemAdminApplicationDetailRoute() {
           applicationId={application._id}
           contractorName={application.name}
           rcNumber={application.rcNumber}
-          sectorAndGrade={`${application.sector} ${application.grade}`}
+          sectorAndGrade={`${application.sector}`}
           submissionDate={application.submissionDate}
           slaDeadline={slaMetrics?.deadline}
           assignedTo={application.assignedTo}

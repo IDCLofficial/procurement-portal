@@ -540,6 +540,8 @@ export class VendorsService {
             );
           }
 
+          let firstTimeDocUpload = true;
+
           // Process each document - create or update individual document records
           const savedDocs = await Promise.all(
             documentsToProcess.map(async (doc) => {
@@ -588,10 +590,7 @@ export class VendorsService {
                     },
                   });
                   const response = await newDoc.save();
-                  if (response) {
-                    return response;
-                  }
-                  return null;
+                  return response
                 } catch (e) {
                   this.Logger.log(e);
                   throw new ConflictException('there was an error uploading documents');
@@ -610,6 +609,8 @@ export class VendorsService {
             );
             await company.save();
           }
+
+          firstTimeDocUpload = false;
 
           if (hasPresets) {
             const requiredPresetNames = verificationDocPresets
@@ -630,14 +631,10 @@ export class VendorsService {
                 missingDocuments: missingRequiredDocuments,
               });
             }
-
-            if (vendor.companyForm !== companyForm.STEP5) {
+            if(firstTimeDocUpload){
               vendor.companyForm = companyForm.STEP5;
               await vendor.save();
             }
-          } else if (savedDocs.length > 0) {
-            vendor.companyForm = companyForm.STEP5;
-            await vendor.save();
           }
 
           return {

@@ -8,6 +8,10 @@ import { ConfirmationDialog } from "@/app/admin/components/general/confirmation-
 import { useGetApplicationByIdQuery, useChangeApplicationStatusMutation } from "@/app/admin/redux/services/appApi";
 import { computeApplicationSla } from "@/app/admin/utils/sla";
 import { useAppSelector } from "@/app/admin/redux/hooks";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 import type { CompanyDocument } from "@/app/admin/types";
 
@@ -26,7 +30,7 @@ function ApplicationDetails() {
   const { data: application, isLoading, isFetching, refetch } = useGetApplicationByIdQuery(applicationId, {
     skip: shouldSkipQuery,
   });
-                console.log("application:", application)
+  console.log("application:", application)
 
   const [isForwardDialogOpen, setIsForwardDialogOpen] = useState(false);
   const [isForwardSuccessDialogOpen, setIsForwardSuccessDialogOpen] = useState(false);
@@ -39,6 +43,9 @@ function ApplicationDetails() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [isRejectSuccessDialogOpen, setIsRejectSuccessDialogOpen] = useState(false);
   const [isRejectErrorDialogOpen, setIsRejectErrorDialogOpen] = useState(false);
+
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionMessage, setRejectionMessage] = useState("");
 
   const [changeApplicationStatus, { isLoading: isChangingStatus }] = useChangeApplicationStatusMutation();
 
@@ -195,30 +202,100 @@ function ApplicationDetails() {
             cancelText="Close"
             variant="destructive"
           />
-          <ConfirmationDialog
-            isOpen={isRejectDialogOpen}
-            onClose={() => setIsRejectDialogOpen(false)}
-            onConfirm={async () => {
-              if (!applicationId) return;
-              try {
-                await changeApplicationStatus({
-                  applicationId,
-                  applicationStatus: "Rejected",
-                }).unwrap();
-                setIsRejectDialogOpen(false);
-                setIsRejectSuccessDialogOpen(true);
-              } catch (error) {
-                console.error("Failed to reject application", error);
-                setIsRejectDialogOpen(false);
-                setIsRejectErrorDialogOpen(true);
+          <Dialog
+            open={isRejectDialogOpen}
+            onOpenChange={(open) => {
+              setIsRejectDialogOpen(open);
+              if (!open) {
+                setRejectionReason("");
+                setRejectionMessage("");
               }
             }}
-            title="Reject application"
-            description="Do you want to reject this application?"
-            confirmText="Yes, reject"
-            cancelText="Cancel"
-            loading={isChangingStatus}
-          />
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Reject application</DialogTitle>
+                <DialogDescription>
+                  Select a reason for rejection and optionally provide a custom message.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Reason
+                  </label>
+                  <Select
+                    value={rejectionReason}
+                    onValueChange={(value) => setRejectionReason(value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a reason" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Documents are falsified">Documents are falsified</SelectItem>
+                      <SelectItem value="Incomplete or missing documents">Incomplete or missing documents</SelectItem>
+                      <SelectItem value="Company does not meet eligibility criteria">Company does not meet eligibility criteria</SelectItem>
+                      <SelectItem value="Failed verification checks">Failed verification checks</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Additional details (optional)
+                  </label>
+                  <Textarea
+                    rows={4}
+                    value={rejectionMessage}
+                    onChange={(e) => setRejectionMessage(e.target.value)}
+                    placeholder="Provide more information for the applicant..."
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsRejectDialogOpen(false);
+                    setRejectionReason("");
+                    setRejectionMessage("");
+                  }}
+                  disabled={isChangingStatus}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={async () => {
+                    if (!applicationId || !rejectionReason) {
+                      return;
+                    }
+                    try {
+                      const notes = rejectionMessage
+                        ? `${rejectionReason} - ${rejectionMessage}`
+                        : rejectionReason;
+                      await changeApplicationStatus({
+                        applicationId,
+                        applicationStatus: "Rejected",
+                        notes,
+                      }).unwrap();
+                      setIsRejectDialogOpen(false);
+                      setRejectionReason("");
+                      setRejectionMessage("");
+                      setIsRejectSuccessDialogOpen(true);
+                    } catch (error) {
+                      console.error("Failed to reject application", error);
+                      setIsRejectDialogOpen(false);
+                      setIsRejectErrorDialogOpen(true);
+                    }
+                  }}
+                  disabled={!rejectionReason || isChangingStatus}
+                >
+                  {isChangingStatus ? "Processing..." : "Reject application"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <ConfirmationDialog
             isOpen={isRejectSuccessDialogOpen}
             onClose={() => setIsRejectSuccessDialogOpen(false)}

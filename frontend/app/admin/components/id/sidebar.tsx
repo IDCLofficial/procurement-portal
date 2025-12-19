@@ -127,7 +127,7 @@ export default function SidebarUser() {
         </nav>
 
         <div className="p-4 mt-auto border-t border-gray-200">
-          <div className="mb-2">
+          {/* <div className="mb-2">
             <div className="flex justify-between text-sm font-medium text-gray-700">
               <span>SLA Compliance</span>
               <span>94.2%</span>
@@ -135,7 +135,7 @@ export default function SidebarUser() {
             <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
               <div className="bg-green-600 h-2.5 rounded-full" style={{ width: "94.2%" }}></div>
             </div>
-          </div>
+          </div> */}
 
           <button
             onClick={() => setLogoutDialogOpen(true)}

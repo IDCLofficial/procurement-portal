@@ -20,6 +20,12 @@ type TransactionsApiResponse = {
   };
 };
 
+export type GetTransactionsParams = {
+  page?: number;
+  limit?: number;
+  status?: string;
+};
+
 type AdminNotificationDto = {
   title: string;
   message: string;
@@ -95,11 +101,26 @@ export const adminApi = baseApi.injectEndpoints({
     }),
 
     // GET ALL TRANSACTIONS
-    getTransactions: builder.query<unknown[], void>({
-      query: () => "/vendor-payments/all",
+    getTransactions: builder.query<TransactionsApiResponse, GetTransactionsParams | void>({
+      query: (params) => {
+        if (!params) {
+          return "/vendor-payments/all";
+        }
+
+        const cleanedParams = Object.fromEntries(
+          Object.entries(params).filter(([, value]) =>
+            value !== undefined && value !== null,
+          ),
+        );
+
+        return {
+          url: "/vendor-payments/all",
+          params: cleanedParams,
+        };
+      },
       transformResponse: (response: TransactionsApiResponse) => {
         console.log("Transactions API response:", response);
-        return Array.isArray(response?.data) ? response.data : [];
+        return response;
       },
     }),
 

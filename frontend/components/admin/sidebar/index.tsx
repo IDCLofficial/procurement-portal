@@ -29,15 +29,15 @@ export function Sidebar() {
         </nav>
 
         <div className="p-4 mt-auto border-t border-gray-200">
-          <div className="mb-2">
-            <div className="flex justify-between text-sm font-medium text-gray-700">
+          {/* <div className="mb-2"> */}
+            {/* <div className="flex justify-between text-sm font-medium text-gray-700">
               <span>SLA Compliance</span>
               <span>94.2%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+            </div> */}
+            {/* <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
               <div className="bg-green-600 h-2.5 rounded-full" style={{ width: '94.2%' }}></div>
-            </div>
-          </div>
+            </div> */}
+          {/* </div> */}
           
           <button className="flex items-center w-full px-4 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
             <LogOut className="w-5 h-5 mr-2 text-gray-500" />

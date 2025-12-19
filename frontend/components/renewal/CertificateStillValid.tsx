@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, Clock, AlertCircle, XCircle, Send } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, XCircle, Send, LucideIcon } from 'lucide-react';
 import { Application } from '@/store/api/types';
 
 interface CertificateStillValidProps {
@@ -7,7 +7,19 @@ interface CertificateStillValidProps {
     status: Application["status"];
 }
 
-const statusConfig = {
+const statusConfig: Record<Application["status"], {
+    icon: LucideIcon;
+    bgColor: string;
+    borderColor: string;
+    iconBg: string;
+    iconColor: string;
+    titleColor: string;
+    descColor: string;
+    title: string;
+    description: string;
+    showValidity: boolean;
+    actions: string[];
+}> = {
     "Approved": {
         icon: CheckCircle2,
         bgColor: "bg-emerald-50",
@@ -17,6 +29,23 @@ const statusConfig = {
         titleColor: "text-emerald-900",
         descColor: "text-emerald-700",
         title: "Certificate Approved",
+        description: "Your registration is active and in good standing",
+        showValidity: true,
+        actions: [
+            "Browse and bid on procurement opportunities",
+            "Update your company profile anytime",
+            "Receive renewal notifications automatically"
+        ]
+    },
+    "Verified": {
+        icon: CheckCircle2,
+        bgColor: "bg-emerald-50",
+        borderColor: "border-emerald-200",
+        iconBg: "bg-emerald-100",
+        iconColor: "text-emerald-600",
+        titleColor: "text-emerald-900",
+        descColor: "text-emerald-700",
+        title: "Certificate Verified",
         description: "Your registration is active and in good standing",
         showValidity: true,
         actions: [

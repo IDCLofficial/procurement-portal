@@ -25,6 +25,14 @@ export class CreateGradeDto {
     @IsNotEmpty()
     registrationCost: number;
 
+    @ApiProperty({
+        example: 25000,
+        description: "Renewal fee for this grade"
+    })
+    @IsNumber()
+    @IsNotEmpty()
+    renewalFee: number;
+
     @ApiProperty({ 
         example: 1000000, 
         description: "Financial capacity requirement for this grade"

@@ -39,6 +39,9 @@ export class User {
 
     @Prop({ type: Date })
     lastLogin?: Date;
+
+    @Prop({required: false, type: String})
+    accessToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

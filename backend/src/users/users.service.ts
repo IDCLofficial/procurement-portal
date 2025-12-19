@@ -124,16 +124,18 @@ export class UsersService {
       throw new BadRequestException('Invalid password');
     }
 
+    // Return user without password and generate token
+    const { password: _, ...userWithoutPassword } = user.toObject();
+
+    const token = this.tokenHandlers.generateToken(userWithoutPassword);
+    user.accessToken = token;
     // Update last login timestamp
     user.lastLogin = new Date();
     await user.save();
 
-    // Return user without password and generate token
-    const { password: _, ...userWithoutPassword } = user.toObject();
-    
     return {
       user: userWithoutPassword,
-      token: this.tokenHandlers.generateToken(userWithoutPassword),
+      token
     };
   }
 

@@ -8,7 +8,7 @@ export class Grade {
     @Prop({required:true})
     category:string;
 
-    @Prop({ required: true, unique: true })
+    @Prop({ required: true })
     grade: string;
 
     @Prop({ required: true })
@@ -23,3 +23,4 @@ export class Grade {
 }
 
 export const GradeSchema = SchemaFactory.createForClass(Grade);
+GradeSchema.index({ category: 1, grade: 1 }, { unique: true });

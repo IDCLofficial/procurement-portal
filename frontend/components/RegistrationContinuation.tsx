@@ -732,13 +732,7 @@ export default function RegistrationContinuation() {
                     name: category.sector.toUpperCase(),
                     description: category.description,
                 })) || [];
-                const grades = categoriesData?.grades?.map(grade => ({
-                    id: grade.grade.toLowerCase(),
-                    name: grade.grade,
-                    label: `Grade ${grade.grade}`,
-                    registrationCost: grade.registrationCost,
-                    financialCapacity: grade.financialCapacity,
-                })) || [];
+                const grades = categoriesData?.grades
                 return (
                     <Step6CategoryGrade
                         selectedSector={selectedSector}
@@ -749,7 +743,7 @@ export default function RegistrationContinuation() {
                         mdas={mdas || []}
                         selectedMDA={selectedMDA}
                         onMDAChange={setSelectedMDA}
-                        grades={grades}
+                        grades={grades || []}
                     />
                 );
             

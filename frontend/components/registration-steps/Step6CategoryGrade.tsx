@@ -7,20 +7,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { MDAResponse } from '@/store/api/types';
+import { CategoriesResponse, MDAResponse } from '@/store/api/types';
 
 interface Sector {
     id: string;
     name: string;
     description: string;
-}
-
-interface Grade {
-    id: string;
-    name: string;
-    label: string;
-    registrationCost: number;
-    financialCapacity: number;
 }
 
 interface Step6CategoryGradeProps {
@@ -31,7 +23,7 @@ interface Step6CategoryGradeProps {
     onSectorChange: (sector: string) => void;
     onGradeChange: (grade: string) => void;
     sectors: Sector[];
-    grades: Grade[];
+    grades: CategoriesResponse["grades"];
     mdas: MDAResponse["mdas"];
 }
 
@@ -120,18 +112,18 @@ export default function Step6CategoryGrade({
             </div>
 
             {/* Grade Selection */}
-            <div>
+            {selectedSector && <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Select Grade <span className="text-red-500 text-lg">*</span>
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {grades.map((grade) => {
-                        const isSelected = selectedGrade === grade.id;
+                    {grades.filter((grade) => grade.category === selectedSector).sort((a, b) => String(a.grade).localeCompare(String(b.grade))).map((grade) => {
+                        const isSelected = selectedGrade === grade._id;
                         return (
                             <button
-                                key={grade.id}
+                                key={grade._id}
                                 type="button"
-                                onClick={() => onGradeChange(grade.id)}
+                                onClick={() => onGradeChange(grade._id)}
                                 className={`p-6 rounded-lg border-2 text-center transition-all cursor-pointer active:scale-[0.98] active:rotate-2 ${
                                     isSelected
                                         ? 'border-theme-green bg-green-50'
@@ -146,13 +138,8 @@ export default function Step6CategoryGrade({
                                             : 'bg-gray-100 text-gray-600'
                                     }`}
                                 >
-                                    {grade.name}
+                                    {grade.grade}
                                 </div>
-
-                                {/* Grade Label */}
-                                <h4 className="font-semibold text-gray-900 mb-4">
-                                    {grade.label}
-                                </h4>
 
                                 {/* Registration Cost */}
                                 <div className="mb-3 pb-3 border-b border-gray-200">
@@ -173,7 +160,7 @@ export default function Step6CategoryGrade({
                         );
                     })}
                 </div>
-            </div>
+            </div>}
 
             {/* Upgrade Policy */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

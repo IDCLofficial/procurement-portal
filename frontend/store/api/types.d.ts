@@ -225,13 +225,14 @@ interface Category {
 
 interface Grade {
     _id: string;
+    category: string;
     grade: string;
     registrationCost: number;
-    financialCapacity: number;
     renewalFee: number;
-    __v: number;
+    financialCapacity: number;
     createdAt: string;
     updatedAt: string;
+    __v: number;
 }
 
 interface CategoriesResponse {

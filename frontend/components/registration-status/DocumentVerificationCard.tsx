@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { getStatusBadge } from '@/components/registration-status/utils';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import { toValidJSDate } from '@/lib';
 
     export interface Document {
         _id: string;
@@ -30,11 +31,11 @@ export default function DocumentVerificationCard({ documents }: DocumentVerifica
         <Card className="border-gray-200">
             <CardContent className="p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Document Verification Status</h3>
-                <p className="text-sm text-gray-500 mb-6">Track the status of each uploaded document</p>
+                <p className="text-sm text-gray-500 mb-6">Track the status of each uploaded document {documents[0].uploadedDate}</p>
                 {documents.length > 0 ? (
                     <div className="space-y-0 divide-y divide-gray-200">
                         {documents.map((doc) => {
-                            const uploadedDate = doc.uploadedDate ? format(new Date(doc.uploadedDate), 'dd MMMM yyyy') : 'N/A';
+                            const uploadedDate = doc.uploadedDate ? format(toValidJSDate(doc.uploadedDate || ""), 'dd MMMM yyyy') : 'N/A';
                             return (
                                 <div
                                     key={doc._id}
@@ -80,7 +81,7 @@ export default function DocumentVerificationCard({ documents }: DocumentVerifica
                             <div className="flex-1">
                                 <DialogTitle className="text-lg font-semibold">{selectedDoc?.documentType}</DialogTitle>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Uploaded {selectedDoc?.uploadedDate ? format(new Date(selectedDoc.uploadedDate), 'dd MMMM yyyy') : 'N/A'}
+                                    Uploaded {selectedDoc?.uploadedDate ? format(toValidJSDate(selectedDoc.uploadedDate), 'dd MMMM yyyy') : 'N/A'}
                                 </p>
                                 <div className="mt-2">
                                     {selectedDoc?.status && getStatusBadge(selectedDoc.status.status)}

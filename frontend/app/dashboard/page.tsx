@@ -12,6 +12,7 @@ import { format, differenceInDays } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import PendingPaymentCard from '@/components/dashboard/PendingPaymentCard';
 import { return_url_key } from '@/lib/constants';
+import { toValidJSDate } from '@/lib';
 
 export default function DashboardPage() {
     const { user, company, application, isLoading, categories, certificate } = useAuth();
@@ -59,8 +60,8 @@ export default function DashboardPage() {
 
     // Transform company documents to compliance documents format
     const complianceDocuments = (company?.documents || []).map((doc) => {
-        const docValidUntil = doc.validTo ? format(new Date(doc.validTo), 'dd MMM yyyy') : undefined;
-        const daysUntilExpiry = doc.validTo ? differenceInDays(new Date(doc.validTo), new Date()) : null;
+        const docValidUntil = doc.validTo ? format(toValidJSDate(doc.validTo), 'dd MMM yyyy') : undefined;
+        const daysUntilExpiry = doc.validTo ? differenceInDays(toValidJSDate(doc.validTo), new Date()) : null;
         const expiresText = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 ? 'Expires soon' : undefined;
 
         return {

@@ -156,6 +156,7 @@ export class VendorsService {
 
   async logout(req:any): Promise<any>{
     const authHeader = req?.headers?.authorization;
+    
     if (!authHeader || typeof authHeader !== 'string') {
       throw new UnauthorizedException('Could not find your authorization token')
     }
@@ -184,10 +185,15 @@ export class VendorsService {
   /**
    * change password
    */
-  async changePassword(id:string, body:changePasswordDto){
+  async changePassword(id:string, body:changePasswordDto, authToken:string){
     const vendor = await this.vendorModel.findById(id)
+    
     if(!vendor){
       throw new NotFoundException('Vendor not found')
+    }
+
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
     }
 
     const isCurrentPassword = await bcrypt.compare(body.currentPassword, vendor.password);
@@ -313,7 +319,7 @@ export class VendorsService {
    * 3. Fetching the vendor profile from the database
    * 4. Returning the profile without the password field
    */
-  async getProfile(userId: string): Promise<Omit<Vendor, 'password'>> {
+  async getProfile(userId: string, authToken:string): Promise<Omit<Vendor, 'password'>> {
     
     if (!userId) {
       throw new UnauthorizedException('An error occured');
@@ -325,6 +331,10 @@ export class VendorsService {
       
       if (!vendor) {
         throw new NotFoundException(`Vendor with ID ${userId} not found`);
+      }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or Expired token')
       }
       
       return vendor.toObject();
@@ -346,11 +356,21 @@ export class VendorsService {
    * - Automatically hashes password if provided
    * - Returns updated document
    */
-  async update(id: string, updateVendorDto: UpdateVendorDto): Promise<Vendor> {
+  async update(id: string, updateVendorDto: UpdateVendorDto, authToken:string): Promise<Vendor> {
     if (updateVendorDto.password) {
       const salt = await bcrypt.genSalt();
       updateVendorDto.password = await bcrypt.hash(updateVendorDto.password, salt);
     }
+    const vendor = await this.vendorModel.findById(id).exec();
+    
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${id} not found`);
+    }
+    
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
+    }
+
     const updatedVendor = await this.vendorModel
       .findByIdAndUpdate(id, updateVendorDto, { new: true })
       .exec();
@@ -377,10 +397,16 @@ export class VendorsService {
    * - Stores bank details and service categories
    * - Sets company status to PENDING for new registrations
    */
-  async registerCompany(userId:string, updateRegistrationDto:updateRegistrationDto): Promise<any> {
+  async registerCompany(userId:string, updateRegistrationDto:updateRegistrationDto, authToken:string): Promise<any> {
+    
     const vendor = await this.vendorModel.findById(userId).exec();
+    
     if (!vendor) {
       throw new NotFoundException(`Vendor not found`);
+    }
+
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
     }
 
     try{
@@ -985,11 +1011,15 @@ export class VendorsService {
     }
   }
 
-  async getRegistrationPayment(vendorId: string) {
+  async getRegistrationPayment(vendorId: string, authToken:string) {
     // Find vendor
     const vendor = await this.vendorModel.findById(vendorId);
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
+    }
+    
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
     }
 
     // Find company
@@ -1017,16 +1047,21 @@ export class VendorsService {
 
   async getPaymentHistory(
     vendorId: string, 
+    authToken:string,
     page = 1, 
     limit = 10,
     search?: string,
     year?: number,
-    type?: string
+    type?: string,
   ) {
     // Find vendor
     const vendor = await this.vendorModel.findById(vendorId);
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
+    }
+
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
     }
 
     // Find company
@@ -1133,23 +1168,24 @@ export class VendorsService {
    * Retrieves all applications associated with a vendor's company,
    * including populated company details and documents
    */
-  async getVendorApplication(userId:string){
+  async getVendorApplication(userId:string, authToken:string){
     try {
       // Verify company exists
       const vendor = await this.vendorModel.findById(userId);
 
-      this.Logger.log(vendor)
-
       if(!vendor){
         throw new NotFoundException("Vendor not found")
       }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
+      }
       
       const company = await this.companyModel.findById(vendor.companyId);
+      
       if (!company) {
         throw new NotFoundException('Company not found');
       }
-
-      this.Logger.log(company)
 
       // Find the application
       const application = await this.applicationModel
@@ -1187,13 +1223,17 @@ export class VendorsService {
    * @param userId - The vendor's user ID
    * @returns Array of timeline entries with status, timestamp, and notes
    */
-  async getApplicationTimeline(userId: string) {
+  async getApplicationTimeline(userId: string, authToken:string) {
     try {
       // Verify vendor exists
       const vendor = await this.vendorModel.findById(userId);
 
       if (!vendor) {
         throw new NotFoundException('Vendor not found');
+      }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
       }
       
       // Verify company exists
@@ -1268,13 +1308,17 @@ export class VendorsService {
    * @param userId - Vendor's user ID
    * @returns Latest 5 activity logs
    */
-  async getVendorActivityLogs(userId: string) {
+  async getVendorActivityLogs(userId: string, authToken:string) {
     try {
       // Verify vendor exists
       const vendor = await this.vendorModel.findById(userId);
 
       if (!vendor) {
         throw new NotFoundException('Vendor not found');
+      }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
       }
 
       // Get latest 5 activity logs
@@ -1307,12 +1351,18 @@ export class VendorsService {
     }
   }
 
-  async deactivateMyAccount(id:any){
+  async deactivateMyAccount(id:any, authToken:string){
     try {
       const vendor = await this.vendorModel.findById(id);
+      
       if (!vendor) {
         throw new NotFoundException('Vendor not found');
       }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
+      }
+
       vendor.isActive = false;
       vendor.originalEmail = vendor.email,
       vendor.email = " "
@@ -1330,16 +1380,23 @@ export class VendorsService {
     }
   }
 
-  async replaceDocument(id:string, replaceDocumentDto:replaceDocumentDto, vendorId:string){
+  async replaceDocument(id:string, replaceDocumentDto:replaceDocumentDto, vendorId:string, authToken:string){
     try {
       const newDocument = await this.verificationDocumentModel.create(replaceDocumentDto.document)
+      
       if(!newDocument){
         throw new ConflictException('there was an error uploading the document')
       }
       const vendor = await this.vendorModel.findById(vendorId);
+      
       if (!vendor) {
         throw new NotFoundException('Vendor not found');
       } 
+      
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
+      }
+
       const company  = await this.companyModel.findOne({userId:new Types.ObjectId(vendorId)})
       if (!company) {
         throw new NotFoundException('Company not found');
@@ -1423,6 +1480,7 @@ export class VendorsService {
       }
       // Find the user
       const vendor = await this.vendorModel.findById(decodeToken.id);
+      
       if (!vendor) {
         throw new NotFoundException('User not found');
       }

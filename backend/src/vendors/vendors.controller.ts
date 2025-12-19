@@ -123,12 +123,12 @@ export class VendorsController {
       throw new UnauthorizedException('Could not find your authorization token')
     }
 
-    const decodedId = this.jwtService.decode(authToken)._id
-    if(!decodedId){
+    const decoded = this.jwtService.decode(authToken)
+    if(!decoded){
       throw new UnauthorizedException('You are not authorized to access this resource')
     }
-
-    return this.vendorsService.changePassword(decodedId, body)
+    
+    return this.vendorsService.changePassword(decoded._id, body, authToken)
     
   }
 
@@ -325,8 +325,15 @@ export class VendorsController {
   })
   findOne(@Req() req:any) {
     const authHeader = req.headers.authorization;
-    const userId = this.jwtService.decode(authHeader.split(' ')[1])._id;
-    return this.vendorsService.getProfile(userId);
+    if (!authHeader || typeof authHeader !== 'string') {
+      throw new UnauthorizedException('Could not find your authorization header')
+    }
+    const authToken = authHeader.split(' ')[1];
+    if (!authToken) {
+      throw new UnauthorizedException('Could not find your authorization token')
+    }
+    const userId = this.jwtService.decode(authToken)._id;
+    return this.vendorsService.getProfile(userId, authToken);
   }
 
   /**
@@ -474,25 +481,20 @@ export class VendorsController {
     if (!authHeader) {
       throw new UnauthorizedException('Authorization header is missing');
     }  
-    const token = authHeader.replace('Bearer ', '').trim();
-    if (!token) {
+    const authToken = authHeader.replace('Bearer ', '').trim();
+    if (!authToken) {
       throw new UnauthorizedException('Token is missing');
     }   
-    let userId: string;
-    try {
-      const decoded = this.jwtService.verify(token);
-      userId = decoded.sub || decoded._id || decoded.id;
-      
-      if (!userId) {
-        throw new UnauthorizedException('Invalid token payload');
-      }
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
+    const userId = this.jwtService.verify(authToken)._id;
+    
+    if (!userId) {
+      throw new UnauthorizedException('Invalid token');
     }
+    
     if(updateRegistrationDto.mode==mode.RENEWAL){
-        return this.vendorsService.renewRegistration(userId, { documents: updateRegistrationDto.documents });
+      return this.vendorsService.renewRegistration(userId, { documents: updateRegistrationDto.documents });
     }
-    return this.vendorsService.registerCompany(userId, updateRegistrationDto);
+    return this.vendorsService.registerCompany(userId, updateRegistrationDto, authToken);
   }
 
   //
@@ -510,7 +512,6 @@ export class VendorsController {
    * @example
    * GET /vendors/applications/company/507f1f77bcf86cd799439011
    */
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get('applications/my-company')
   @ApiOperation({ 
@@ -561,27 +562,19 @@ export class VendorsController {
       throw new UnauthorizedException('Authorization header is required');
     }
 
-    try {
-      const authHeader = req.headers.authorization;
-      const token = authHeader.split(' ')[1];
-      
-      if (!token) {
-        throw new UnauthorizedException('Invalid authorization token format');
-      }
-
-      const decoded = this.jwtService.decode(token);
-      
-      if (!decoded?._id) {
-        throw new UnauthorizedException('Invalid token payload');
-      }
-
-      return this.vendorsService.getVendorApplication(decoded._id);
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new UnauthorizedException('Invalid or expired token');
+    const authToken = req.headers?.authorization?.split(' ')[1];
+    
+    if (!authToken) {
+      throw new UnauthorizedException('Invalid authorization token format');
     }
+
+    const decoded = this.jwtService.decode(authToken);
+    
+    if (!decoded?._id) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
+
+    return this.vendorsService.getVendorApplication(decoded._id, authToken);
   }
 
   /**
@@ -675,20 +668,19 @@ export class VendorsController {
     }
 
     try {
-      const authHeader = req.headers.authorization;
-      const token = authHeader.split(' ')[1];
+      const authToken = req.headers?.authorization?.split(' ')[1];
       
-      if (!token) {
+      if (!authToken) {
         throw new UnauthorizedException('Invalid authorization token format');
       }
 
-      const decoded = this.jwtService.decode(token);
+      const decoded = this.jwtService.decode(authToken);
       
       if (!decoded?._id) {
         throw new UnauthorizedException('Invalid token payload');
       }
 
-      return this.vendorsService.getApplicationTimeline(decoded._id);
+      return this.vendorsService.getApplicationTimeline(decoded._id, authToken);
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -798,20 +790,19 @@ export class VendorsController {
     }
 
     try {
-      const authHeader = req.headers.authorization;
-      const token = authHeader.split(' ')[1];
+      const authToken = req.headers?.authorization?.split(' ')[1];
 
-      if (!token) {
+      if (!authToken) {
         throw new UnauthorizedException('Invalid authorization token format');
       }
 
-      const decoded = this.jwtService.decode(token);
+      const decoded = this.jwtService.decode(authToken);
 
       if (!decoded?._id) {
         throw new UnauthorizedException('Invalid token payload');
       }
 
-      return this.vendorsService.getVendorActivityLogs(decoded._id);
+      return this.vendorsService.getVendorActivityLogs(decoded._id, authToken);
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -835,19 +826,21 @@ export class VendorsController {
    * }
    */
   @Patch('profile')
-  update(@Param('id') id: string, @Body() updateVendorDto: UpdateVendorDto, @Req() req: any) {
+  update(@Body() updateVendorDto: UpdateVendorDto, @Req() req: any) {
     try{
-      const header = req.headers.authorization;
-      if(!header){
+      const authToken = req.headers.authorization?.split(' ')[1];
+      if(!authToken){
         this.logger.log(`Unauthorized user trying to access the endpoint`);
         throw new UnauthorizedException('Unauthorized');
       }
-      const id = this.jwtService.decode(header.split(' ')[1])._id;
-      if(!id){
+      const decoded = this.jwtService.decode(authToken);
+
+      const vendorId = decoded._id;
+      if(!vendorId){
         this.logger.log(`Unauthorized user trying to access the endpoint`);
         throw new UnauthorizedException('Unauthorized');
       }
-      return this.vendorsService.update(id, updateVendorDto);
+      return this.vendorsService.update(vendorId, updateVendorDto, authToken);
     }catch(err){
       this.logger.log(`Unauthorized user trying to access the endpoint`);
       throw new UnauthorizedException('Unauthorized');
@@ -878,7 +871,7 @@ export class VendorsController {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    return this.vendorsService.getRegistrationPayment(decoded._id);
+    return this.vendorsService.getRegistrationPayment(decoded._id, token);
   }
 
   /**
@@ -917,7 +910,14 @@ export class VendorsController {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    return this.vendorsService.getPaymentHistory(decoded._id, page, limit, search, year, type);
+    return this.vendorsService.getPaymentHistory(
+      decoded._id, 
+      token,
+      page, 
+      limit, 
+      search, 
+      year, 
+      type);
   }
 
   /**
@@ -1064,7 +1064,12 @@ export class VendorsController {
     const vendorId = decoded._id;
 
     try {
-      return await this.vendorsService.replaceDocument(id, replaceDocumentDto, vendorId);
+      return await this.vendorsService.replaceDocument(
+        id, 
+        replaceDocumentDto, 
+        vendorId, 
+        token
+      );
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -1088,7 +1093,7 @@ export class VendorsController {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    return this.vendorsService.deactivateMyAccount(decoded._id);
+    return this.vendorsService.deactivateMyAccount(decoded._id, token);
   }
 
   /**

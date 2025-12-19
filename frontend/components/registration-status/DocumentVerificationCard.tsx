@@ -34,9 +34,7 @@ export default function DocumentVerificationCard({ documents }: DocumentVerifica
                 {documents.length > 0 ? (
                     <div className="space-y-0 divide-y divide-gray-200">
                         {documents.map((doc) => {
-                            const [day, month, year] = "24/11/2025".split("/") as [string, string, string];
-                            const date = new Date(Number(year), Number(month) - 1, Number(day));
-                            const uploadedDate = doc.uploadedDate ? format(new Date(date), 'dd MMMM yyyy') : 'N/A';
+                            const uploadedDate = doc.uploadedDate ? format(new Date(doc.uploadedDate), 'dd MMMM yyyy') : 'N/A';
                             return (
                                 <div
                                     key={doc._id}

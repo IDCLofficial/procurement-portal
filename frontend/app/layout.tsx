@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 import AuthProvider from "@/components/providers/public-service/AuthProvider";
 import DebugSlices from "@/components/ui/DebugSlices";
+import { defaultMetadata } from "../lib/metadata";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -17,10 +18,7 @@ const geistMono = Geist_Mono({
     subsets: ["latin"],
 });
 
-export const metadata: Metadata = { 
-    title: "BPPPI",
-    description: "Imo State Bureau of Public Procurement and Pricing Intelligence",
-};
+export const metadata: Metadata = defaultMetadata;
 
 export default function RootLayout({
     children,

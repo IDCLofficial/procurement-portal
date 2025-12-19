@@ -159,18 +159,23 @@ export default function RegistrationStatusCard({
 
                     {/* Valid Until - Only show for verified/expired/suspended */}
                     {(status === 'verified' || status === 'expired' || status === 'suspended') && validUntil && (
-                        <div className="bg-linear-to-b from-white to-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className={cn(
+                            "bg-linear-to-b from-white to-blue-50 border border-blue-200 rounded-lg p-4",
+                            daysRemaining && daysRemaining <= 30 && 'bg-red-50 border-red-200 to-red-50'
+                        )}>
                             <div className="flex items-start gap-2">
-                                <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg 
+                                    className={cn("w-5 h-5 text-blue-600 mt-0.5", daysRemaining && daysRemaining <= 30 && 'text-red-600')}
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <div className="flex-1">
-                                    <p className="text-xs text-blue-700 font-medium mb-1">
-                                        {status === 'expired' ? 'Expired On' : 'Valid Until'}
+                                    <p className={cn("text-xs text-blue-700 font-medium mb-1", daysRemaining && daysRemaining <= 30 && 'text-red-700')}>
+                                        {status === 'expired' || daysRemaining && daysRemaining <= 30 ? 'Expired On' : 'Valid Until'}
                                     </p>
-                                    <p className="text-sm font-semibold text-blue-900">{validUntil}</p>
+                                    <p className={cn("text-sm font-semibold text-blue-900", daysRemaining && daysRemaining <= 30 && 'text-red-900')}>{validUntil}</p>
                                     {daysRemaining !== undefined && status === 'verified' && (
-                                        <p className="text-xs text-blue-600 mt-0.5">{daysRemaining} days remaining</p>
+                                        <p className={cn("text-xs text-blue-600 mt-0.5", daysRemaining && daysRemaining <= 30 && 'text-red-600')}>{daysRemaining} days remaining</p>
                                     )}
                                 </div>
                             </div>
@@ -179,17 +184,17 @@ export default function RegistrationStatusCard({
                 </div>
 
                 {/* Action Buttons - Dynamic based on status */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex gap-3 flex-wrap">
                     {status === 'verified' && (
                         <>
-                            <Button
-                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                            {daysRemaining && daysRemaining > 30 && <Button
+                                className="min-w-64 bg-teal-700 hover:bg-teal-800 text-white flex-1"
                                 onClick={onDownloadCertificate}
                             >
                                 <FaDownload className="mr-2 text-sm" />
                                 Download Certificate
-                            </Button>
-                            <Link href="/dashboard/settings?tab=account">
+                            </Button>}
+                            <Link href="/dashboard/settings?tab=account" className="flex-1 min-w-64">
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -204,13 +209,13 @@ export default function RegistrationStatusCard({
                     {status === 'expired' && (
                         <>
                             <Button
-                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                                className="min-w-64 flex-1 bg-teal-700 hover:bg-teal-800 text-white"
                                 onClick={onReapply}
                             >
                                 <FaEdit className="mr-2 text-sm" />
                                 Renew Registration
                             </Button>
-                            <Link href="/dashboard/settings?tab=account">
+                            <Link href="/dashboard/settings?tab=account" className="flex-1 min-w-64">
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -225,14 +230,14 @@ export default function RegistrationStatusCard({
                     {status === 'suspended' && (
                         <>
                             <Button
-                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                                className="min-w-64 flex-1 bg-teal-700 hover:bg-teal-800 text-white"
                                 onClick={onContactSupport}
                             >
                                 Contact Support
                             </Button>
                             <Button
                                 variant="outline"
-                                className="w-full"
+                                className="min-w-64 flex-1"
                                 onClick={onUpdateProfile}
                             >
                                 <FaEdit className="mr-2 text-sm" />
@@ -243,7 +248,7 @@ export default function RegistrationStatusCard({
 
                     {status === 'pending' && (
                         <>
-                            <Link href="/dashboard/registration-status" className="w-full">
+                            <Link href="/dashboard/registration-status" className="min-w-64 flex-1">
                                 <Button
                                     className="w-full bg-teal-700 hover:bg-teal-800 text-white"
                                 >
@@ -251,7 +256,7 @@ export default function RegistrationStatusCard({
                                     View Application Status
                                 </Button>
                             </Link>
-                            <Link href="/dashboard/settings?tab=account" className="w-full">
+                            <Link href="/dashboard/settings?tab=account" className="min-w-64 flex-1">
                                 <Button
                                     variant="outline"
                                     className="w-full"

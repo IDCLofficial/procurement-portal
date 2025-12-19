@@ -6,7 +6,7 @@ interface DocumentUpdateItemProps {
     title: string;
     expiryDate?: string;
     currentExpiry?: string;
-    status: 'expiring_soon' | 'expired';
+    status: 'expiring_soon' | 'expired' | 'missing';
 }
 
 export default function DocumentUpdateItem({ title, expiryDate, currentExpiry, status }: DocumentUpdateItemProps) {
@@ -21,6 +21,11 @@ export default function DocumentUpdateItem({ title, expiryDate, currentExpiry, s
             label: 'Expired',
             bgColor: 'bg-red-100',
             textColor: 'text-red-700',
+        },
+        missing: {
+            label: 'Missing',
+            bgColor: 'bg-gray-100',
+            textColor: 'text-gray-700',
         },
     };
 

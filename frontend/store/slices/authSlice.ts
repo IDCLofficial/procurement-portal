@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { vendorApi } from '../api/vendor.api';
 import { RootState } from '../store';
+import { session_key } from '@/lib/constants';
 
 interface AuthState {
     token: string | null;
@@ -68,10 +69,15 @@ const authSlice = createSlice({
             .addMatcher(vendorApi.endpoints.getProfile.matchPending, (state) => {
                 state.isLoading = true;
             })
-            .addMatcher(vendorApi.endpoints.getProfile.matchRejected, (state) => {
-                state.isLoading = false;
+            .addMatcher(vendorApi.endpoints.getProfile.matchRejected, (state, action) => {
+                state.isLoading = true;
                 state.isAuthenticated = false;
-                state.token = "n/a";
+                
+                if (action.error.message != "Aborted due to condition callback returning false."){
+                    state.isLoading = false;
+                    localStorage.removeItem(session_key);
+                    state.token = "n/a";
+                }
             });
     },
 });

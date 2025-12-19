@@ -5,41 +5,19 @@ interface Step7PaymentSummaryProps {
     cacNumber: string;
     selectedSector: string;
     selectedGrade: string;
-    registrationFee: number;
 }
-
-// Mock data for sectors and grades - should match Step 6
-const sectorNames: Record<string, string> = {
-    works: 'WORKS',
-    services: 'SERVICES',
-    supplies: 'SUPPLIES',
-    ict: 'ICT',
-};
-
-const gradeLabels: Record<string, string> = {
-    a: 'Grade A',
-    b: 'Grade B',
-    c: 'Grade C',
-    d: 'Grade D',
-};
 
 export default function Step7PaymentSummary({
     companyName,
     cacNumber,
     selectedSector,
     selectedGrade,
-    registrationFee,
 }: Step7PaymentSummaryProps) {
-    const processingFee = 5000;
-    const certificateFee = 2500;
-    const totalAmount = registrationFee + processingFee + certificateFee;
+    const processingFee = 30_000;
+    const totalAmount = processingFee;
 
     const formatCurrency = (amount: number) => {
         return `₦${amount.toLocaleString()}`;
-    };
-
-    const getSectorName = () => {
-        return sectorNames[selectedSector] || selectedSector;
     };
 
     return (
@@ -65,13 +43,13 @@ export default function Step7PaymentSummary({
                     <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Selected Ministry:</span>
                         <span className="text-sm font-medium text-gray-900">
-                            {selectedSector ? getSectorName() : 'Placeholder'}
+                            {selectedSector}
                         </span>
                     </div>
                     <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Grade:</span>
                         <span className="text-sm font-medium text-gray-900">
-                            {selectedGrade ? gradeLabels[selectedGrade] : 'Grade B'}
+                            {selectedGrade.toUpperCase()}
                         </span>
                     </div>
                 </div>
@@ -84,23 +62,9 @@ export default function Step7PaymentSummary({
                 </h3>
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-700">
-                            Registration Fee ({selectedGrade ? gradeLabels[selectedGrade] : 'Grade B'})
-                        </span>
-                        <span className="text-sm font-semibold text-gray-900">
-                            {formatCurrency(registrationFee)}
-                        </span>
-                    </div>
-                    <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-700">Processing Fee</span>
                         <span className="text-sm font-semibold text-gray-900">
                             {formatCurrency(processingFee)}
-                        </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-700">Certificate Issuance</span>
-                        <span className="text-sm font-semibold text-gray-900">
-                            {formatCurrency(certificateFee)}
                         </span>
                     </div>
                     

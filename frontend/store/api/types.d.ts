@@ -95,6 +95,7 @@ interface CompleteVendorRegistrationRequest {
         mda: string;
         grade: string;
     };
+    mode?: "registration" | "renewal"
 }
 
 
@@ -227,6 +228,7 @@ interface Grade {
     grade: string;
     registrationCost: number;
     financialCapacity: number;
+    renewalFee: number;
     __v: number;
     createdAt: string;
     updatedAt: string;
@@ -267,7 +269,7 @@ interface PaymentHistoryResponse {
         amount: number;
         reference: string;
         status: string;
-        data: string;
+        date: string;
         description: string;
         type: string;
     }[];
@@ -332,6 +334,7 @@ interface Contractor {
     grade: string;
     status: string;
     validUntil: string;
+    validFrom: string;
     __v: number;
     createdAt: string;
     updatedAt: string;

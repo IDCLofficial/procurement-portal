@@ -3,15 +3,19 @@
 import { FaExclamationCircle } from 'react-icons/fa';
 import DocumentUpdateItem from './DocumentUpdateItem';
 
-interface Document {
-    title: string;
+export interface DocumentRenewal {
+    id: string;
     expiryDate?: string;
     currentExpiry?: string;
-    status: 'expiring_soon' | 'expired';
+    status: 'expiring_soon' | 'expired' | 'missing';
+    documentName: string;
+    isRequired: boolean;
+    hasExpiry: "yes" | "no";
+    renewalFrequency: "annual" | "quarterly" | "monthly" | "never";
 }
 
 interface DocumentsRequiringUpdateSectionProps {
-    documents: Document[];
+    documents: DocumentRenewal[];
 }
 
 export default function DocumentsRequiringUpdateSection({
@@ -27,7 +31,7 @@ export default function DocumentsRequiringUpdateSection({
                 {documents.map((doc, index) => (
                     <DocumentUpdateItem
                         key={index}
-                        title={doc.title}
+                        title={doc.documentName}
                         expiryDate={doc.expiryDate}
                         currentExpiry={doc.currentExpiry}
                         status={doc.status}

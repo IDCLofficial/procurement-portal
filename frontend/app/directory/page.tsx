@@ -6,15 +6,16 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import Loader from '@/components/ui/loader';
 import { Suspense } from "react";
+import { defaultMetadata } from '../../lib/metadata';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = {...defaultMetadata, ...{
     title: 'Public Contractor Directory - Imo State',
     description: 'Search and verify approved contractors registered with the Imo State Bureau of Public Private Partnerships & Investments (BPPPI)',
     openGraph: {
         title: 'Public Contractor Directory',
         description: 'Search and verify approved contractors in Imo State',
     },
-};
+}};
 
 export default async function DirectoryPage() {
     return (

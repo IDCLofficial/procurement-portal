@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Image from 'next/image';
+import { toValidJSDate } from '@/lib';
 
 type TransformedDocument = {
     _id: string;
@@ -52,16 +53,16 @@ export default function CertificatesPage() {
         if (!documents) return [];
         
         return documents.map((doc) => {
-            const issueDate = doc.uploadedDate ? format(new Date(doc.uploadedDate), 'dd MMM yyyy') : 'N/A';
-            const expiryDate = doc.validTo ? format(new Date(doc.validTo), 'dd MMM yyyy') : 'No Expiry';
+            const issueDate = doc.uploadedDate ? format(toValidJSDate(doc.uploadedDate), 'dd MMM yyyy') : 'N/A';
+            const expiryDate = doc.validTo ? format(toValidJSDate(doc.validTo), 'dd MMM yyyy') : 'No Expiry';
             
             // Calculate expiring soon based on validFrom-validTo period
             let daysUntilExpiry: number | null = null;
             if (doc.validFrom && doc.validTo) {
-                const daysRemaining = differenceInDays(new Date(doc.validTo), new Date());
+                const daysRemaining = differenceInDays(toValidJSDate(doc.validTo), new Date());
                 daysUntilExpiry = daysRemaining;
             } else if (doc.validTo) {
-                daysUntilExpiry = differenceInDays(new Date(doc.validTo), new Date());
+                daysUntilExpiry = differenceInDays(toValidJSDate(doc.validTo), new Date());
             }
             
             // Determine status

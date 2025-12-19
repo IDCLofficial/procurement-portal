@@ -13,10 +13,7 @@ interface Step9ReceiptProps {
     cacNumber: string;
     contactPerson: string;
     email: string;
-    registrationFee: number;
     processingFee: number;
-    certificateFee: number;
-    selectedGrade: string;
 }
 
 export default function Step9Receipt({
@@ -27,12 +24,9 @@ export default function Step9Receipt({
     cacNumber,
     contactPerson,
     email,
-    registrationFee,
     processingFee,
-    certificateFee,
-    selectedGrade,
 }: Step9ReceiptProps) {
-    const totalPaid = registrationFee + processingFee + certificateFee;
+    const totalPaid = processingFee;
     const router = useRouter();
 
     const formatCurrency = (amount: number) => {
@@ -116,9 +110,7 @@ export default function Step9Receipt({
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         
-        addRow(`Registration Fee (Grade ${selectedGrade})`, formatCurrency(registrationFee));
         addRow('Processing Fee', formatCurrency(processingFee));
-        addRow('Certificate Issuance', formatCurrency(certificateFee));
         
         // Total
         yPos += 5;
@@ -230,23 +222,9 @@ export default function Step9Receipt({
                     <h4 className="text-base font-semibold text-gray-900 mb-3">Payment Details</h4>
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-700">
-                                Registration Fee (Grade {selectedGrade})
-                            </span>
-                            <span className="text-sm font-medium text-gray-900">
-                                {formatCurrency(registrationFee)}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-700">Processing Fee</span>
                             <span className="text-sm font-medium text-gray-900">
                                 {formatCurrency(processingFee)}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-700">Certificate Issuance</span>
-                            <span className="text-sm font-medium text-gray-900">
-                                {formatCurrency(certificateFee)}
                             </span>
                         </div>
                     </div>

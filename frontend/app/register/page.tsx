@@ -2,11 +2,12 @@ import Header from '@/components/Header';
 import RegistrationStepper from '@/components/RegistrationStepper';
 import Loader from '@/components/ui/loader';
 import { Suspense } from 'react';
+import { getPageMetadata } from '../../lib/metadata';
 
-export const metadata = {
+export const metadata = getPageMetadata({
     title: 'Contractor Registration - Imo State BPPPI',
     description: 'Register as a contractor with the Imo State Bureau of Public Private Partnerships & Investments',
-};
+});
 
 export default function RegisterPage() {
     return (

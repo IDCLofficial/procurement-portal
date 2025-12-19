@@ -24,6 +24,7 @@ import { Loader2 } from 'lucide-react';
 import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
 import { deepEqual } from '@/lib';
 import { useRouter } from 'next/navigation';
+import { processingFee, return_url_key } from '@/lib/constants';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -42,6 +43,7 @@ export default function RegistrationContinuation() {
     const { user, company: companyData, documents: presets, categories: categoriesData, mdas } = useAuth();
     const [isUploadingDocuments, setIsUploadingDocuments] = useState(false);
     const router = useRouter();
+
     const setStartPoint = useMemo(() => {
         if (!user) return 2;
 
@@ -165,12 +167,6 @@ export default function RegistrationContinuation() {
         setBankDetails(prev => ({ ...prev, [field]: value }));
     };
 
-    const getRegistrationFee = () => {
-        if (!categoriesData?.grades) return 0;
-        const gradeObj = categoriesData.grades.find(g => g.grade.toLowerCase() === selectedGrade);
-        return gradeObj?.registrationCost || 0;
-    };
-
     // Auto-fill helper for simulation mode
     const autoFillCurrentStep = () => {
         if (currentStep === 2) {
@@ -241,7 +237,7 @@ export default function RegistrationContinuation() {
         if (!formData) return;
 
         const payload = {
-            amount: getRegistrationFee() + 5000 + 2500,
+            amount: processingFee,
             type: PaymentType.PROCESSINGFEE,
             description: `${formData.companyName}'s registration fee`,
         }
@@ -250,6 +246,7 @@ export default function RegistrationContinuation() {
             toast.loading('Initializing payment...', { id: "payment" });
             const response = await initPayment(payload);
             toast.dismiss("payment");
+            localStorage.setItem(return_url_key, "/dashboard/complete-registration");
             if (response.data) {
                 router.push(response.data.authorization_url);
             }
@@ -763,7 +760,6 @@ export default function RegistrationContinuation() {
                         cacNumber={formData.cacNumber}
                         selectedSector={selectedSector}
                         selectedGrade={selectedGrade}
-                        registrationFee={getRegistrationFee()}
                     />
                 );
             
@@ -773,7 +769,7 @@ export default function RegistrationContinuation() {
                         companyName={formData.companyName}
                         email={user?.email || ''}
                         phone={user?.phoneNo || ''}
-                        totalAmount={getRegistrationFee() + 5000 + 2500}
+                        totalAmount={processingFee}
                     />
                 );
             
@@ -787,10 +783,7 @@ export default function RegistrationContinuation() {
                         cacNumber={formData.cacNumber}
                         contactPerson={directors[0]?.fullName || ''}
                         email={directors[0]?.email || ''}
-                        registrationFee={getRegistrationFee()}
-                        processingFee={5000}
-                        certificateFee={2500}
-                        selectedGrade={selectedGrade}
+                        processingFee={processingFee}
                     />
                 );
             

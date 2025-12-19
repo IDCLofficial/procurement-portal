@@ -45,3 +45,22 @@ function deepEqualObject(
 
     return true;
 }
+
+export function toValidJSDate(dateString: string): string {
+    // Check if the string is already a valid date format
+    const directDate = new Date(dateString);
+    if (!isNaN(directDate.getTime())) {
+        return directDate.toISOString();
+    }
+
+    // Check if it's a valid DD/MM/YYYY format
+    const datePattern = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+    if (!datePattern.test(dateString)) {
+        // Not a valid date string at all, return today
+        return new Date().toISOString();
+    }
+
+    // Normal logic: parse DD/MM/YYYY
+    const [day, month, year] = dateString.split('/');
+    return new Date(Number(year), Number(month) - 1, Number(day)).toISOString();
+}

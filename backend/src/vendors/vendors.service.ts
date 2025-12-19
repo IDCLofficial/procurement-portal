@@ -545,14 +545,17 @@ export class VendorsService {
           // Process each document - create or update individual document records
           const savedDocs = await Promise.all(
             documentsToProcess.map(async (doc) => {
+              const escapedDocumentType = (doc.documentType || '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
               // Check if document with same type already exists for this vendor
               const existingDoc = await this.verificationDocumentModel.findOne({
                 vendor: vendor._id,
-                documentType: doc.documentType,
+                documentType: { $regex: new RegExp(`^${escapedDocumentType}$`, 'i') },
               });
 
               if (existingDoc ) {
                 // Update existing document
+                const previousFileUrl = existingDoc.fileUrl;
                 existingDoc.fileUrl = doc.fileUrl;
                 existingDoc.validFrom = doc.validFrom;
                 existingDoc.validTo = doc.validTo;
@@ -563,7 +566,7 @@ export class VendorsService {
                 existingDoc.documentType = doc.documentType;
                 existingDoc.validFor = doc.validFor;
                 existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
-                if(existingDoc.fileUrl !== doc.fileUrl){
+                if (previousFileUrl !== doc.fileUrl) {
                   existingDoc.status = {
                     status: DocumentStatus.PENDING,
                   };
@@ -713,12 +716,14 @@ export class VendorsService {
 
       const updatedDocuments = await Promise.all(
         renewRegistrationDto.documents.map(async (doc) => {
+          const escapedDocumentType = (doc.documentType || '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           const existingDoc = await this.verificationDocumentModel.findOne({
             vendor: userId,
-            documentType: doc.documentType
+            documentType: { $regex: new RegExp(`^${escapedDocumentType}$`, 'i') },
           });
           
           if (existingDoc) {
+            const previousFileUrl = existingDoc.fileUrl;
             existingDoc.fileUrl = doc.fileUrl;
             existingDoc.validFrom = doc.validFrom;
             existingDoc.validTo = doc.validTo;
@@ -728,8 +733,10 @@ export class VendorsService {
             existingDoc.fileType = doc.fileType;
             existingDoc.validFor = doc.validFor;
             existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
-            existingDoc.status = {
-              status:DocumentStatus.PENDING,
+            if (previousFileUrl !== doc.fileUrl) {
+              existingDoc.status = {
+                status:DocumentStatus.PENDING,
+              }
             }
             await existingDoc.save();
             return existingDoc;

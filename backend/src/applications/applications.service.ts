@@ -101,7 +101,8 @@ export class ApplicationsService {
         statusCounts: {
           forwardedToRegistrar: forwardedCount,
           approved: approvedCount,
-          rejected: rejectedCount
+          rejected: rejectedCount,
+          total: forwardedCount + approvedCount + rejectedCount
         },
         applications: applications
       };

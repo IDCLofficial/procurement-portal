@@ -391,6 +391,7 @@ export class NotificationsService {
       message: notification.message,
       priority: notification.priority,
       createdAt: notification.createdAt,
+      _id: notification._id
     }));
 
     // Aggregate counts for this admin

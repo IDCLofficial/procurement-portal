@@ -193,29 +193,28 @@ export default function RegistrationRenewalPage() {
                     {currentStep === 2 && (
                         <div className="space-y-6">
                             {requiredUploads.length > 0 ? (
-                                <Step2UpdateDocuments documents={requiredUploads} />
+                                <Step2UpdateDocuments setCurrentStep={setCurrentStep} documents={requiredUploads} />
                             ) : (
-                                <AllDocumentsUpToDate />
-                            )}
-
-                            {(
-                                <div className="flex justify-between mt-6">
-                                    <Button
-                                        variant="outline"
-                                        className='cursor-pointer'
-                                        onClick={() => setCurrentStep(1)}
-                                    >
-                                        <FaArrowLeft className="mr-2 text-sm" />
-                                        Previous
-                                    </Button>
-                                    {requiredUploads.length === 0 && <Button
-                                        className="bg-teal-700 hover:bg-teal-800 text-white px-8"
-                                        onClick={() => setCurrentStep(3)}
-                                    >
-                                        Continue to Payment
-                                        <FaArrowRight className="ml-2 text-sm" />
-                                    </Button>}
-                                </div>
+                                <>
+                                    <AllDocumentsUpToDate />
+                                    <div className="flex justify-between mt-6">
+                                        <Button
+                                            variant="outline"
+                                            className='cursor-pointer'
+                                            onClick={() => setCurrentStep(1)}
+                                        >
+                                            <FaArrowLeft className="mr-2 text-sm" />
+                                            Previous
+                                        </Button>
+                                        {<Button
+                                            className="bg-teal-700 hover:bg-teal-800 text-white px-8"
+                                            onClick={() => setCurrentStep(3)}
+                                        >
+                                            Continue to Payment
+                                            <FaArrowRight className="ml-2 text-sm" />
+                                        </Button>}
+                                    </div>
+                                </>
                             )}
                         </div>
                     )}

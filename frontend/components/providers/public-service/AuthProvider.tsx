@@ -106,7 +106,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const applicationLoading = useSelector(selectApplicationLoading);
 
     const { data: certificate, isLoading: contractorLoading } = useGetContractorByIdQuery(user ? user.certificateId : '', {
-        skip: !user?.certificateId
+        skip: user?.certificateId ? user?.certificateId.length < 2 : true
     });
 
     const isLoading = React.useMemo(() => profileLoading || companyLoading || documentsLoading || categoriesLoading || applicationLoading || contractorLoading, [profileLoading, companyLoading, documentsLoading, categoriesLoading, applicationLoading, contractorLoading]);

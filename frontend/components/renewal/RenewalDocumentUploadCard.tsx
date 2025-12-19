@@ -8,11 +8,9 @@ import { FaFileAlt, FaFilePdf, FaFileImage, FaEye, FaTrash, FaUpload } from 'rea
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import sirvClient from '@/lib/sirv.class';
-import { useCompleteVendorRegistrationMutation } from '@/store/api/vendor.api';
-import { VendorSteps } from '@/store/api/enum';
-import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
 import { cn } from '@/lib/utils';
+import { DocumentUpload } from './Step2UpdateDocuments';
 
 interface RenewalDocumentUploadCardProps {
     title: string;
@@ -21,6 +19,7 @@ interface RenewalDocumentUploadCardProps {
     hasExpiry: "yes" | "no";
     documentId?: string;
     documentPresetName?: string;
+    onUpload: (upload: DocumentUpload) => void;
 }
 
 interface UploadedFile {
@@ -39,6 +38,7 @@ export default function RenewalDocumentUploadCard({
     hasExpiry,
     documentId,
     documentPresetName,
+    onUpload,
 }: RenewalDocumentUploadCardProps) {
     const { company, documents: docPresets } = useAuth();
     const [validFrom, setValidFrom] = useState('');
@@ -48,8 +48,6 @@ export default function RenewalDocumentUploadCard({
     const [zoom, setZoom] = useState(100);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string>('');
-    const [completeVendorRegistration] = useCompleteVendorRegistrationMutation();
-    // const { refetch } = useGetCompanyDetailsQuery();
 
     const statusConfig = {
         expiring_soon: {
@@ -178,44 +176,7 @@ export default function RenewalDocumentUploadCard({
                 updatedDocuments = [...currentDocs, documentPayload];
             }
 
-            // Submit to API
-            const payload = {
-                [VendorSteps.DOCUMENTS]: updatedDocuments.map((doc) => ({
-                    id: 'id' in doc ? doc.id : doc._id,
-                    fileUrl: doc.fileUrl,
-                    validFrom: doc.validFrom,
-                    validTo: doc.validTo,
-                    documentType: doc.documentType,
-                    uploadedDate: doc.uploadedDate,
-                    fileName: doc.fileName,
-                    fileSize: doc.fileSize,
-                    fileType: doc.fileType,
-                    validFor: doc.validFor,
-                    hasValidityPeriod: doc.hasValidityPeriod,
-                })),
-                mode: "renewal" as CompleteVendorRegistrationRequest["mode"]
-            };
-
-            console.log(payload);
-
-            // return;
-
-            const response = await completeVendorRegistration(payload);
-
-            if (response.error) {
-                throw new Error((response.error as ResponseError["error"]).data.message);
-            }
-
-            toast.dismiss(`upload-${documentId || title}`);
-            toast.success(`${title} uploaded successfully!`);
-
-            // Reset state
-            if (uploadedFile.url) {
-                URL.revokeObjectURL(uploadedFile.url);
-            }
-            setUploadedFile(null);
-            setValidFrom('');
-            setValidTo('');
+            onUpload(documentPayload);
         } catch (error) {
             console.error('Upload failed:', error);
             toast.dismiss(`upload-${documentId || title}`);
@@ -224,7 +185,7 @@ export default function RenewalDocumentUploadCard({
         } finally {
             setIsUploading(false);
         }
-    }, [uploadedFile, validFrom, validTo, company, documentId, title, docPresets, completeVendorRegistration, documentPresetName]);
+    }, [uploadedFile, validFrom, validTo, company, documentId, title, docPresets, documentPresetName, onUpload]);
 
     return (
         <div className={`${config.bgColor} border ${config.borderColor} rounded-xl p-5 space-y-4`}>

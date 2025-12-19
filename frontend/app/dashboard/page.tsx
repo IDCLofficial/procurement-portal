@@ -75,8 +75,10 @@ export default function DashboardPage() {
     });
 
     // Calculate registration details
+
+    console.log(certificate);
     const registrationId = user?.certificateId || user?.certificateId || 'N/A';
-    const validUntil = certificate ? format(new Date(certificate.validUntil), 'dd MMM yyyy') : 'N/A';
+    const validUntil = certificate ? format(new Date(certificate.validUntil || ""), 'dd MMM yyyy') : 'N/A';
     const daysRemaining = certificate ? differenceInDays(new Date(certificate.validUntil), new Date()) : 0;
     
     // Map application status to registration status

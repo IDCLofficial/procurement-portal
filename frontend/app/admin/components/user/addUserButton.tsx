@@ -58,15 +58,8 @@ export function AddUserButton() {
       return;
     }
 
-    const requiresMda = formData.role === 'Desk officer';
-    if (requiresMda && !selectedMdaId) {
-      setResponseModal({
-        open: true,
-        title: "Error",
-        message: "Please select an MDA from the list.",
-      });
-      return;
-    }
+    // Include MDA name in the payload if selected
+    const mdaToSubmit = formData.mda || undefined;
     
     try {
       await createUser({
@@ -75,7 +68,7 @@ export function AddUserButton() {
         phoneNo: formData.phone,
         role: formData.role,
         password: formData.password,
-        mda: selectedMdaId ?? undefined,
+        mda: mdaToSubmit,
       }).unwrap();
       
       // Reset form and close modal on success

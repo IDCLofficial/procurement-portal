@@ -1,12 +1,12 @@
 'use client';
 
-import { Edit, Trash2, Lightbulb } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { UserTableProps } from '@/app/admin/types/user';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 import { FormatDate } from '../../utils/dateFormateer';
 
-export function UserTable({ users, onEdit, onToggleStatus, onDelete }: UserTableProps) {
+export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
   const [userToDelete, setUserToDelete] = useState<{id: string, name: string} | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 

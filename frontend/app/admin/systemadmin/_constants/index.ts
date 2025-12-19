@@ -3,7 +3,6 @@ import {
   FileText,
   Clock,
   AlertTriangle,
-  CheckCircle,
   AlertCircle,
 } from 'lucide-react';
 

@@ -101,12 +101,15 @@ export function CompanyProfileTab({ company, contractorName, rcNumber, sectorAnd
       {(() => {
         type Director = {
           name: string;
-          position: string;
-          address: string;
-          nationality: string;
-          identification: string;
+          position?: string;
+          address?: string;
+          nationality?: string;
+          identification?: string;
           idType: string;
-          expiryDate: string;
+          id: string;
+          email?: string;
+          phone?: string;
+          expiryDate?: string;
         };
         
         const rawDirectorsContainer = company?.directors;

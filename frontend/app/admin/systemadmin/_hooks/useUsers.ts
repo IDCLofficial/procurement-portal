@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { FileText, Clock, AlertCircle } from 'lucide-react';
 import { useGetUsersQuery, useDeleteUserMutation } from '@/app/admin/redux/services/adminApi';
 import type { User } from '@/app/admin/types/user';
 import type { StatItem } from '@/app/admin/types';

@@ -114,9 +114,14 @@ export class ApplicationsService {
     try {
       const application = await this.applicationModel.findById(id).populate({
         path: "companyId",
-        populate: {
-          path: "documents"
-        }
+        populate: [
+          {
+            path: "documents",
+          },
+          {
+            path: "directors"
+          }
+        ]
       }).exec();
       
       if (!application) {

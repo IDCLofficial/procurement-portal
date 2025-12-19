@@ -39,6 +39,12 @@ export const vendorApi = apiSlice.injectEndpoints({
                 body,
             }),
         }),
+        logoutVendor: builder.mutation<void, void>({
+            query: () => ({
+                url: endpoints.logoutVendor,
+                method: 'DELETE',
+            }),
+        }),
         forgotPassword: builder.mutation<{ message: string }, { email: string }>({
             query: (body) => ({
                 url: endpoints.forgotPassword,
@@ -162,6 +168,7 @@ export const {
     useCreateVendorMutation,
     useVerifyVendorMutation,
     useLoginVendorMutation,
+    useLogoutVendorMutation,
     useResendVerificationOtpMutation,
     useForgotPasswordMutation,
     useResetPasswordMutation,

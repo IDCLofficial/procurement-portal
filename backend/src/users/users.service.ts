@@ -152,6 +152,7 @@ export class UsersService {
       isActive: user.isActive,
       lastLogin: user.lastLogin,
       assignedApps: user.assignedApps,
+      mda: user.mda
     }));
   }
 
@@ -195,6 +196,9 @@ export class UsersService {
     }
     if (editUserDto.role !== undefined) {
       user.role = editUserDto.role;
+    }
+    if(editUserDto.mda !== undefined){
+      user.mda = editUserDto.mda;
     }
 
     await user.save();

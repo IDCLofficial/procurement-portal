@@ -27,4 +27,13 @@ export class EditUserDto {
   @IsOptional()
   @IsEnum(Role, { message: 'Role must be one of: Desk officer, Auditor, Registrar, Admin' })
   role?: Role;
+
+  @ApiProperty({
+    description: 'MDA of the user in the system',
+    example: 'Education',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  mda?: string;
 }

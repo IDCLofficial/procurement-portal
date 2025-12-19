@@ -89,7 +89,12 @@ export class CategoriesService {
 
   async createGrade(createGradeDto: CreateGradeDto): Promise<Grade> {
     try {
-      const existingGrade = await this.gradeModel.findOne({ grade: createGradeDto.grade });
+      
+      const existingGrade = await this.gradeModel.findOne({ 
+        grade: createGradeDto.grade,
+        category: createGradeDto.category
+      });
+
       if (existingGrade) {
         throw new BadRequestException(`Grade ${createGradeDto.grade} already exists`);
       }
@@ -119,6 +124,10 @@ export class CategoriesService {
       
       if (updateGradeDto.financialCapacity !== undefined) {
         grade.financialCapacity = updateGradeDto.financialCapacity;
+      }
+
+      if(updateGradeDto.renewalFee !== undefined){
+        grade.renewalFee = updateGradeDto.renewalFee;
       }
 
       return await grade.save();

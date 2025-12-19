@@ -549,7 +549,7 @@ export class VendorsService {
                 documentType: doc.documentType,
               });
 
-              if (existingDoc) {
+              if (existingDoc ) {
                 // Update existing document
                 existingDoc.fileUrl = doc.fileUrl;
                 existingDoc.validFrom = doc.validFrom;
@@ -558,11 +558,14 @@ export class VendorsService {
                 existingDoc.fileName = doc.fileName;
                 existingDoc.fileSize = doc.fileSize;
                 existingDoc.fileType = doc.fileType;
+                existingDoc.documentType = doc.documentType;
                 existingDoc.validFor = doc.validFor;
                 existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
-                existingDoc.status = {
-                  status: DocumentStatus.PENDING,
-                };
+                if(existingDoc.fileUrl !== doc.fileUrl){
+                  existingDoc.status = {
+                    status: DocumentStatus.PENDING,
+                  };
+                }
 
                 return await existingDoc.save();
               } else {

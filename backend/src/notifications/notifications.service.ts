@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../users/entities/user.schema';
@@ -91,7 +91,6 @@ export class NotificationsService {
    */
   async markAsRead(notificationId: string, userId: string): Promise<void> {
     try{
-
       const notification = await this.notificationModel.findOneAndUpdate(
         {
           _id: new Types.ObjectId(notificationId),
@@ -429,6 +428,24 @@ export class NotificationsService {
       recipient:NotificationRecipient.ADMIN,
     };
     return await this.notificationModel.updateMany(filter, { isRead: true });
+  }
+
+  async markOneAdminAsRead(notificationId: string, uid:string, authToken:string){
+    const user = await this.userModel.findById(uid);
+    
+    if(!user){
+      throw new NotFoundException("No user found")
+    }
+
+    if(user.accessToken!==authToken){
+      throw new UnauthorizedException("Invalid or expired token")
+    }
+
+    const filter: any = {
+      _id: notificationId,
+      recipient:NotificationRecipient.ADMIN,
+    };
+    return await this.notificationModel.updateOne(filter, { isRead: true });
   }
 
 

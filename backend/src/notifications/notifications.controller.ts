@@ -341,6 +341,57 @@ export class NotificationsController {
     }
   }
 
+  @ApiOperation({
+    summary: 'Mark one admin notification as read',
+    description: 'Marks a single admin notification as read for the currently authenticated admin user.'
+  })
+  @ApiParam({
+    name: 'notificationId',
+    description: 'ID of the admin notification to mark as read',
+    required: true,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Admin notification marked as read successfully.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  @Patch('mark-one-admin-as-read/:notificationId')
+  async markOneAdminAsRead(
+    @Req() req: any,
+    @Param('notificationId') notificationId: string,
+  ) {
+    try {
+      const authHeader = req.headers?.authorization
+      
+      if (!authHeader) {
+        this.logger.log(`Authorization header missing`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+
+      const authToken = authHeader.split(' ')[1];
+      
+      if(!authToken){
+        throw new UnauthorizedException("You are unauthorized")
+      }
+
+      const decoded = this.jwtService.decode(authToken);
+      
+      if (!decoded || decoded.role !== 'Admin') {
+        this.logger.log(`User is not authorized to access this endpoint`);
+        throw new UnauthorizedException('User is not authorized to access this endpoint');
+      }
+
+      await this.notificationsService.markOneAdminAsRead(notificationId, decoded._id, authToken);
+      return { message: 'Notification marked as read' };
+    } catch (err) {
+      this.logger.log(`User is not authorized to access this endpoint`);
+      throw new UnauthorizedException('User is not authorized to access this endpoint');
+    }
+  }
+
   //q
   @ApiOperation({
     summary: 'Get admin notifications',
@@ -386,4 +437,6 @@ export class NotificationsController {
       throw new UnauthorizedException('Unauthorized');
     }
   }
+
+  //
 }

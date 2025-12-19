@@ -30,7 +30,7 @@ export default function Step8ConfirmPayment({
                             Important: Please Confirm
                         </h3>
                         <p className="text-sm text-yellow-900">
-                            You are about to make a payment of{' '}
+                            You are about to make a <span className="font-bold">Non Refundable</span> payment of{' '}
                             <span className="font-bold">{formatCurrency(totalAmount)}</span>
                             {' '}for contractor registration. Please ensure all details are correct before proceeding.
                         </p>
@@ -83,19 +83,19 @@ export default function Step8ConfirmPayment({
                 </div>
                 <ul className="space-y-2 ml-8">
                     <li className="text-sm text-green-900 flex items-start">
-                        <span className="mr-2">•</span>
+                        <span className="mr-2"><FaCheckCircle className="text-green-600 text-xl mt-0.5 shrink-0" /></span>
                         <span>You&rsquo;ll receive an instant payment receipt via email</span>
                     </li>
                     <li className="text-sm text-green-900 flex items-start">
-                        <span className="mr-2">•</span>
+                        <span className="mr-2"><FaCheckCircle className="text-green-600 text-xl mt-0.5 shrink-0" /></span>
                         <span>Your application will be submitted for review</span>
                     </li>
                     <li className="text-sm text-green-900 flex items-start">
-                        <span className="mr-2">•</span>
+                        <span className="mr-2"><FaCheckCircle className="text-green-600 text-xl mt-0.5 shrink-0" /></span>
                         <span>Desk officers will verify your documents (3-5 business days)</span>
                     </li>
                     <li className="text-sm text-green-900 flex items-start">
-                        <span className="mr-2">•</span>
+                        <span className="mr-2"><FaCheckCircle className="text-green-600 text-xl mt-0.5 shrink-0" /></span>
                         <span>You&rsquo;ll receive email notifications on your application status</span>
                     </li>
                 </ul>

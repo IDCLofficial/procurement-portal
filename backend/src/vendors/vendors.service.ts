@@ -760,6 +760,16 @@ export class VendorsService {
       vendor.renewalStep = renewalSteps.STEP2;
       await vendor.save();
 
+      //
+
+      const company = await this.companyModel.findOne({ userId: vendor._id }).exec();
+      if (!company) {
+        throw new NotFoundException('Company not found. Please register company first.')
+      }
+
+      company.documents = updatedDocuments.map((doc) => doc?._id as Types.ObjectId);
+      await company.save();
+
       if(!updatedDocuments){
         throw new ConflictException('Error updating documents')
       }

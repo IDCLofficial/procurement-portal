@@ -86,10 +86,13 @@ export const appApi = baseApi.injectEndpoints({
 
         // CHANGE APPLICATION STATUS
         changeApplicationStatus: builder.mutation<Application, ChangeApplicationStatusRequest>({
-            query: ({ applicationId, applicationStatus }) => ({
+            query: ({ applicationId, applicationStatus, notes }) => ({
                 url: `/applications/status/${applicationId}`,
                 method: "PATCH",
-                body: { applicationStatus },
+                body: {
+                    applicationStatus,
+                    ...(notes ? { notes } : {}),
+                },
             }),
             invalidatesTags: ["Applications"],
         }),

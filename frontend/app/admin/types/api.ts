@@ -84,6 +84,7 @@ export interface AssignApplicationRequest {
 export interface ChangeApplicationStatusRequest {
   applicationId: string;
   applicationStatus: string;
+  notes?: string;
 }
 
 // Certificate API Types

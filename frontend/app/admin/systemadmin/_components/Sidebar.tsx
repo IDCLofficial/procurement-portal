@@ -100,7 +100,7 @@ export function Sidebar() {
             </nav>
 
             <div className="p-4 border-t border-gray-200">
-                <div className="mb-4">
+                {/* <div className="mb-4">
                     <div className="flex justify-between text-sm font-medium mb-1">
                         <span>SLA Compliance</span>
                         <span>94.2%</span>
@@ -111,7 +111,7 @@ export function Sidebar() {
                             style={{ width: '94.2%' }} 
                         />
                     </div>
-                </div>
+                </div> */}
                 <button 
                     className="w-full flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                     onClick={() => {

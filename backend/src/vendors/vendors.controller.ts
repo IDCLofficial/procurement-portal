@@ -106,7 +106,9 @@ export class VendorsController {
   }
 
   /** Logout vendor */
-  @Post('logout')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout vendor' })
+  @Delete('logout')
   logout(@Req() req:any){
     return this.vendorsService.logout(req)
   }

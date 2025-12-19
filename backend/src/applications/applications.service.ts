@@ -146,6 +146,23 @@ export class ApplicationsService {
       
       // Get total count for pagination metadata
       const total = await this.applicationModel.countDocuments(filter).exec();
+
+      //
+
+      const [pendingReviewCount, approvedCount, rejectedCount] = await Promise.all([
+        this.applicationModel.countDocuments({
+          ...filter,
+          currentStatus: ApplicationStatus.PENDING_DESK_REVIEW,
+        }),
+        this.applicationModel.countDocuments({
+          ...filter,
+          currentStatus: ApplicationStatus.APPROVED,
+        }),
+        this.applicationModel.countDocuments({
+          ...filter,
+          currentStatus: ApplicationStatus.REJECTED,
+        }),
+      ]);
       
       // Get paginated results
       const applications = await this.applicationModel
@@ -171,6 +188,11 @@ export class ApplicationsService {
         page: page,
         limit: limit,
         totalPages: Math.ceil(total / limit),
+        statusCounts: {
+          pendingReview: pendingReviewCount,
+          approved: approvedCount,
+          rejected: rejectedCount,
+        },
         applications: applications
       };
     } catch (err) {

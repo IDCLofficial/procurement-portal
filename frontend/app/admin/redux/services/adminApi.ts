@@ -26,21 +26,28 @@ export type GetTransactionsParams = {
   status?: string;
 };
 
-type AdminNotificationDto = {
+export interface AdminNotificationDto {
+  _id: string;
   title: string;
   message: string;
   priority: string;
   createdAt: string;
-};
+}
 
-type AdminNotificationsApiResponse = {
+export interface AdminNotificationsApiResponse {
   message: string;
   notifications: AdminNotificationDto[];
   totalNotifications: number;
   totalUnreadNotifications: number;
   totalCriticalNotifications: number;
   totalHighPriorityNotifications: number;
-};
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 export type GetAuditLogsParams = {
   entityType?: string;

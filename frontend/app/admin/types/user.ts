@@ -7,6 +7,7 @@ export interface User {
   email: string;
   phoneNo: string;
   role: UserRole;
+  mda: string;
   isActive: boolean;
   lastLogin?: string;
   assignedApps?: string;

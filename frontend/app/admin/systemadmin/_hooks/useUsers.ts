@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { FileText, Clock, AlertCircle } from 'lucide-react';
 import { useGetUsersQuery, useDeleteUserMutation } from '@/app/admin/redux/services/adminApi';
 import type { User } from '@/app/admin/types/user';
 import type { StatItem } from '@/app/admin/types';
@@ -77,14 +77,7 @@ export function useUsers(): UseUsersReturn {
         change: '+2%',
         changeType: 'increase' as const,
       },
-      {
-        id: 3,
-        name: 'Inactive Users',
-        value: userList.filter((user) => user?.isActive === false).length.toString(),
-        icon: CheckCircle,
-        change: '+5%',
-        changeType: 'increase' as const,
-      },
+  
       {
         id: 4,
         name: 'Desk Officers',

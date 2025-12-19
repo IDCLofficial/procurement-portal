@@ -37,6 +37,7 @@ export interface CreateUserRequest {
   password: string;
   role: string;
   phoneNo: string;
+  mda?: string;
 }
 
 export interface CreateUserResponse {

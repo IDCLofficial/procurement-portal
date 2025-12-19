@@ -269,10 +269,7 @@ export default function Transactions() {
               <p className="text-xs text-gray-500 mb-1">Pending / Processing</p>
               <p className="text-2xl font-semibold text-amber-600">{stats.pending}</p>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="text-xs text-gray-500 mb-1">Failed / Reversed</p>
-              <p className="text-2xl font-semibold text-rose-600">{stats.failed}</p>
-            </div>
+           
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-white p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

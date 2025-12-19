@@ -51,7 +51,25 @@ export interface Company {
   updatedAt?: string;
   __v?: number;
   website?: string;
-  directors?: string;
+  directors?: {
+    directors?: Array<{
+      name: string;
+      position: string;
+      address: string;
+      nationality: string;
+      identification: string;
+      idType: string;
+      expiryDate: string;
+    }>;
+  } | Array<{
+    name: string;
+    position: string;
+    address: string;
+    nationality: string;
+    identification: string;
+    idType: string;
+    expiryDate: string;
+  }>;
   accountName?: string;
   accountNumber?: number;
   bankName?: string;

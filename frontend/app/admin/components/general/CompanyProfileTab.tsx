@@ -99,11 +99,24 @@ export function CompanyProfileTab({ company, contractorName, rcNumber, sectorAnd
       </div>
 
       {(() => {
-        const rawDirectorsContainer = (company as any)?.directors;
-        const directorsArray: any[] = Array.isArray(rawDirectorsContainer?.directors)
-          ? rawDirectorsContainer.directors
+        type Director = {
+          name: string;
+          position?: string;
+          address?: string;
+          nationality?: string;
+          identification?: string;
+          idType: string;
+          id: string;
+          email?: string;
+          phone?: string;
+          expiryDate?: string;
+        };
+        
+        const rawDirectorsContainer = company?.directors;
+        const directorsArray: Director[] = Array.isArray((rawDirectorsContainer as { directors?: Director[] })?.directors)
+          ? (rawDirectorsContainer as { directors: Director[] }).directors
           : Array.isArray(rawDirectorsContainer)
-            ? rawDirectorsContainer
+            ? rawDirectorsContainer as Director[]
             : [];
 
         if (!directorsArray.length) {

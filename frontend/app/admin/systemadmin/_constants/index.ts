@@ -3,7 +3,6 @@ import {
   FileText,
   Clock,
   AlertTriangle,
-  CheckCircle,
   AlertCircle,
 } from 'lucide-react';
 
@@ -182,8 +181,8 @@ export interface DocumentConfigItem {
 export const USER_STATS_CONFIG = {
   totalUsers: { id: 1, name: 'Total Users', icon: FileText },
   activeUsers: { id: 2, name: 'Active Users', icon: Clock },
-  inactiveUsers: { id: 3, name: 'Inactive Users', icon: CheckCircle },
-  deskOfficers: { id: 4, name: 'Desk Officers', icon: AlertCircle },
+ 
+  deskOfficers: { id: 3, name: 'Desk Officers', icon: AlertCircle },
 } as const;
 
 // ============================================================================

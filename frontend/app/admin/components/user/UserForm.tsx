@@ -2,6 +2,7 @@ import { useState, useMemo, ChangeEvent } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
 import { InputField, SelectField } from './UserFormField';
 import { useGetMdasQuery } from '@/app/admin/redux/services/settingsApi';
+import { SearchableSelect } from '../SearchableSelect';
 
 interface UserFormProps {
   formData: {
@@ -42,31 +43,39 @@ export function UserForm({
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showMdaSuggestions, setShowMdaSuggestions] = useState(false);
-
   const { data: mdasResponse } = useGetMdasQuery({ page: 1, limit: 100 });
 
-  const filteredMdas = useMemo(() => {
-    const term = formData.mda?.toLowerCase().trim();
-    if (!term) return [];
-    const allMdas = mdasResponse?.mdas ?? [];
-    return allMdas.filter((mda) => mda.name.toLowerCase().includes(term));
-  }, [mdasResponse, formData.mda]);
+  // Transform MDAs to the format expected by SearchableSelect
+  const mdaOptions = useMemo(() => {
+    return (mdasResponse?.mdas || []).map((mda) => ({
+      value: mda._id,
+      label: mda.name,
+    }));
+  }, [mdasResponse]);
 
-  const handleMdaSelect = (mda: { _id: string; name: string }) => {
-    const syntheticEvent = {
-      target: { 
-        name: 'mda', 
-        value: mda.name,
-        type: 'change'
+  const handleMdaSelect = (mdaId: string) => {
+    const selectedMda = mdasResponse?.mdas?.find((mda) => mda._id === mdaId);
+    if (selectedMda) {
+      // Update the form data
+      const syntheticEvent = {
+        target: { 
+          name: 'mda', 
+          value: selectedMda.name,
+          type: 'change'
+        }
+      } as React.ChangeEvent<HTMLInputElement>;
+      
+      // Call both the form's onChange and onMdaSelect callbacks
+      onChange(syntheticEvent);
+      
+      if (onMdaSelect) {
+        onMdaSelect(selectedMda._id, selectedMda.name);
       }
-    } as React.ChangeEvent<HTMLInputElement>;
-    onChange(syntheticEvent);
-    if (onMdaSelect) {
-      onMdaSelect(mda._id, mda.name);
     }
-    setShowMdaSuggestions(false);
   };
+  
+  // Get the current MDA ID from the form data
+  const selectedMdaId = mdasResponse?.mdas?.find(mda => mda.name === formData.mda)?._id || '';
 
   return (
     <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
@@ -197,31 +206,14 @@ export function UserForm({
             <label htmlFor="mda" className="block text-sm font-medium text-gray-700 mb-1">
               MDA
             </label>
-            <input
-              id="mda"
-              name="mda"
-              type="text"
-              autoComplete="off"
-              value={formData.mda}
-              onChange={(e) => {
-                onChange(e);
-                setShowMdaSuggestions(true);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            <SearchableSelect
+              options={mdaOptions}
+              value={selectedMdaId}
+              onValueChange={handleMdaSelect}
+              placeholder="Select an MDA"
+              searchPlaceholder="Search MDAs..."
+              emptyText="No MDAs found"
             />
-            {showMdaSuggestions && filteredMdas.length > 0 && (
-              <ul className="mt-1 max-h-32 overflow-y-auto rounded-md border border-gray-200 bg-white text-sm">
-                {filteredMdas.map((mda) => (
-                  <li
-                    key={mda._id}
-                    className="px-3 py-1 text-gray-700 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => handleMdaSelect(mda)}
-                  >
-                    {mda.name}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           <div className="flex justify-end gap-3 mt-6">

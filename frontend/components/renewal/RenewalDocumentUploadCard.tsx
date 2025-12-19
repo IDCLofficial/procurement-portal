@@ -48,6 +48,7 @@ export default function RenewalDocumentUploadCard({
     const [zoom, setZoom] = useState(100);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string>('');
+    const [uploaded, setUploaded] = useState(false);
 
     const statusConfig = {
         expiring_soon: {
@@ -71,6 +72,7 @@ export default function RenewalDocumentUploadCard({
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+        setUploaded(false);
         if (file) {
             // Validate file type
             const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
@@ -177,6 +179,7 @@ export default function RenewalDocumentUploadCard({
             }
 
             onUpload(documentPayload);
+            setUploaded(true);
         } catch (error) {
             console.error('Upload failed:', error);
             toast.dismiss(`upload-${documentId || title}`);
@@ -363,7 +366,7 @@ export default function RenewalDocumentUploadCard({
             )}
 
             {/* Upload Button */}
-            {uploadedFile && (
+            {uploadedFile && !uploaded && (
                 <Button
                     type="button"
                     className="w-full bg-teal-700 hover:bg-teal-800 text-white"

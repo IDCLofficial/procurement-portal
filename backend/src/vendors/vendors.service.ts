@@ -690,7 +690,7 @@ export class VendorsService {
 
   /** */
   async renewRegistration(userId:string, renewRegistrationDto:renewRegistrationDto){
-    if(!renewRegistrationDto.documents){
+    if(!renewRegistrationDto.documents || renewRegistrationDto.documents.length === 0){
       this.Logger.log('Please upload at least 1 document')
       throw new BadRequestException('Please upload at least 1 document')
     }
@@ -706,7 +706,7 @@ export class VendorsService {
         vendor:userId
       })
 
-      if(!documents){
+      if(!documents || documents.length === 0){
         this.Logger.log(`No documents found for vendor with id ${userId}`)
         throw new NotFoundException(`No documents found for this vendor`)
       }
@@ -732,14 +732,7 @@ export class VendorsService {
               status:DocumentStatus.PENDING,
             }
             await existingDoc.save();
-            
-            vendor.renewalStep = renewalSteps.STEP2;
-            await vendor.save();
-            
-            return {
-              message:'Documents updated successfully',
-              nextStep:vendor.renewalStep
-            }
+            return existingDoc;
             
           } else {
             const newDoc = new this.verificationDocumentModel({
@@ -763,6 +756,9 @@ export class VendorsService {
           }
         })
       );
+
+      vendor.renewalStep = renewalSteps.STEP2;
+      await vendor.save();
 
       if(!updatedDocuments){
         throw new ConflictException('Error updating documents')

@@ -355,8 +355,7 @@ export class NotificationsService {
   }, userId: string): Promise<any> {
     // const adminId = decoded._id;
     const filter: any = {
-      recipient:NotificationRecipient.ADMIN,
-      recipientId: userId,
+      recipient:NotificationRecipient.ADMIN
     };
 
     let isReadFilter: boolean | undefined;

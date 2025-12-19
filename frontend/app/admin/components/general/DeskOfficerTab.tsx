@@ -29,7 +29,7 @@ export function DeskOfficerTab({
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
 
   const { user } = useAppSelector((state: RootState) => state.auth);
-  const isRegistrar = user?.role?.toLowerCase() === 'registrar';
+  const isRegistrar = user?.role?.toLowerCase() === 'registrar' || 'Desk officer';
 
   // Derive assigned officer name from prop or local state (for optimistic updates)
   const assignedOfficerName = useMemo(() => {

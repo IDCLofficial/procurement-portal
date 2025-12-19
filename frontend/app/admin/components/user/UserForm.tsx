@@ -22,7 +22,6 @@ interface UserFormProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
-  isValidNigerianNumber: (num: string) => boolean;
   onMdaSelect?: (id: string, name: string) => void;
 }
 
@@ -33,7 +32,6 @@ export function UserForm({
   onChange,
   onSubmit,
   onClose,
-  isValidNigerianNumber,
   onMdaSelect,
 }: UserFormProps) {
   const roleOptions = [
@@ -56,9 +54,13 @@ export function UserForm({
   }, [mdasResponse, formData.mda]);
 
   const handleMdaSelect = (mda: { _id: string; name: string }) => {
-    const syntheticEvent: ChangeEvent<HTMLInputElement> = {
-      target: { name: 'mda', value: mda.name },
-    } as any;
+    const syntheticEvent = {
+      target: { 
+        name: 'mda', 
+        value: mda.name,
+        type: 'change'
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
     onChange(syntheticEvent);
     if (onMdaSelect) {
       onMdaSelect(mda._id, mda.name);

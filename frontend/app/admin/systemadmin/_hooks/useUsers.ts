@@ -77,14 +77,7 @@ export function useUsers(): UseUsersReturn {
         change: '+2%',
         changeType: 'increase' as const,
       },
-      {
-        id: 3,
-        name: 'Inactive Users',
-        value: userList.filter((user) => user?.isActive === false).length.toString(),
-        icon: CheckCircle,
-        change: '+5%',
-        changeType: 'increase' as const,
-      },
+  
       {
         id: 4,
         name: 'Desk Officers',

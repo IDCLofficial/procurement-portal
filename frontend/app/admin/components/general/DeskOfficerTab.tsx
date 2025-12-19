@@ -5,6 +5,8 @@ import { useGetUsersQuery } from '@/app/admin/redux/services/adminApi';
 import type { User } from '@/app/admin/types/user';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 import { useAssignApplicationMutation } from '@/app/admin/redux/services/appApi';
+import { useAppSelector } from '@/app/admin/redux/hooks';
+import type { RootState } from '@/app/admin/redux/store';
 
 interface DeskOfficerTabProps {
   applicationId: string;
@@ -26,12 +28,18 @@ export function DeskOfficerTab({
   const [officerToAssign, setOfficerToAssign] = useState<User | null>(null);
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
 
+  const { user } = useAppSelector((state: RootState) => state.auth);
+  const isRegistrar = user?.role?.toLowerCase() === 'registrar';
+
   // Derive assigned officer name from prop or local state (for optimistic updates)
   const assignedOfficerName = useMemo(() => {
+    // For registrars, use the assignedTo value directly
+    if (isRegistrar) return assignedTo || null;
+    // For non-registrars, use the existing logic
     if (localAssignedName) return localAssignedName;
     if (assignedTo && assignedTo !== 'Unassigned') return assignedTo;
     return null;
-  }, [assignedTo, localAssignedName]);
+  }, [assignedTo, localAssignedName, isRegistrar]);
 
   const normalizedStatus = (currentStatus || '').toUpperCase();
   const isAssignmentLocked = [
@@ -41,8 +49,19 @@ export function DeskOfficerTab({
     'APPROVED',
   ].includes(normalizedStatus);
 
-  const { data: users = [], isLoading: isUsersLoading } = useGetUsersQuery();
-  const deskOfficers = (users as User[]).filter((user) => user?.role === 'Desk officer');
+  // Only fetch users if the current user is not a registrar
+  const { data: users = [], isLoading: isUsersLoading, error: usersError } = useGetUsersQuery(undefined, {
+    skip: isRegistrar
+  });
+  
+  const deskOfficers = useMemo(() => {
+    if (isRegistrar) return [];
+    if (usersError) {
+      console.error('Error fetching desk officers:', usersError);
+      return [];
+    }
+    return (users as User[]).filter((user) => user?.role === 'Desk officer');
+  }, [users, usersError, isRegistrar]);
 
   const [assignApplication, { isLoading: isAssigning }] = useAssignApplicationMutation();
 

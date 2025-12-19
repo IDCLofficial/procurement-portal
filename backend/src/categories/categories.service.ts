@@ -29,7 +29,12 @@ export class CategoriesService {
   async findAll() {
     try{
       const categories = await this.categoryModel.find();
-      const grades = await this.gradeModel.find();
+      const grades = await this.gradeModel
+      .find()
+      .sort({
+        createdAt:-1
+      })
+      .exec();
       return {categories, grades};
     }catch(err){
       this.logger.error(`Failed to retrieve categories or grades: ${err.message}`);

@@ -178,6 +178,9 @@ export default function RenewalDocumentUploadCard({
                 updatedDocuments = [...currentDocs, documentPayload];
             }
 
+            toast.dismiss(`upload-${documentId || title}`);
+            toast.success(`Uploaded ${title} successfully!`);
+
             onUpload(documentPayload);
             setUploaded(true);
         } catch (error) {

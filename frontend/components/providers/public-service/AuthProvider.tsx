@@ -1,9 +1,9 @@
 "use client"
 import { decrypt, encrypt } from '@/lib/crypto';
 import { Application, CompanyDetailsResponse, Contractor, MDAResponse, User } from '@/store/api/types';
-import { useGetCompanyDetailsQuery, useGetProfileQuery } from '@/store/api/vendor.api';
+import { useGetCompanyDetailsQuery, useGetProfileQuery, useLogoutVendorMutation } from '@/store/api/vendor.api';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useContext, useMemo, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux';
 import { selectAuthIsLoading, selectAuthIsAuthenticated, selectAuthIsLoggingOut, login, logout, clearToken, refresh, selectAuthToken } from '@/store/slices/authSlice';
 import { selectUserData } from '@/store/slices/userSlice';
@@ -16,6 +16,7 @@ import { useGetDocumentsPresetsQuery, useGetCategoriesQuery, useGetMDAQuery } fr
 import { useGetApplicationQuery } from '@/store/api/vendor.api';
 import { session_key } from '@/lib/constants';
 import { useGetContractorByIdQuery } from '@/store/api/public.api';
+import { toast } from 'sonner';
 
 interface AuthContextType {
     user: User | null;
@@ -29,6 +30,7 @@ interface AuthContextType {
     mdas: MDAResponse["mdas"] | undefined;
     certificate?: Contractor;
     isLoggingOut: boolean;
+    logoutLoading: boolean;
     clearToken: () => void;
     refresh: () => void;
     login: (token: string) => void;
@@ -90,6 +92,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const { refetch: refetchApplication } = useGetApplicationQuery(undefined, {
         skip: !token || token === 'n/a',
     });
+    const [logoutVendor, { isLoading: logoutLoading, isSuccess: logoutSuccess, error: logoutError }] = useLogoutVendorMutation();
 
     // Use slice data
     const user = useSelector(selectUserData);
@@ -185,10 +188,25 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }, [router, dispatch]);
 
     const handleLogout = useCallback(() => {
-        dispatch(logout());
-        handleClearToken();
-        router.replace('/vendor-login');
-    }, [router, handleClearToken, dispatch]);
+        logoutVendor();
+    }, [logoutVendor]);
+
+    useEffect(() => {
+        if (logoutSuccess) {
+            toast.success("✅ Logout successful.");
+            dispatch(logout());
+            router.replace('/vendor-login');
+            localStorage.removeItem(session_key);
+            dispatch(clearToken());
+        }
+    }, [logoutSuccess, router, dispatch]);
+
+    useEffect(() => {
+        if (logoutError) {
+            console.error('Logout failed:', logoutError);
+            toast.error("❌ An error occurred while logging out. Please try again later.")
+        }
+    }, [logoutError]);
 
     const value = useMemo(() => ({
         user,
@@ -196,6 +214,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         application,
         token,
         isLoading,
+        logoutLoading,
         isAuthenticated,
         isLoggingOut,
         certificate,
@@ -206,7 +225,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         login: handleLogin,
         logout: handleLogout,
         clearToken: handleClearToken,
-    }), [user, token, isLoading, isAuthenticated, isLoggingOut, documents, categories, mdas, handleRefresh, handleLogin, handleLogout, handleClearToken, company, application, certificate]);
+    }), [user, token, isLoading, logoutLoading, isAuthenticated, isLoggingOut, documents, categories, mdas, handleRefresh, handleLogin, handleLogout, handleClearToken, company, application, certificate]);
 
     return (
         <AuthContext.Provider value={value}>

@@ -7,6 +7,7 @@ export default {
     verifyVendor: "/vendors/verify-email",
     resendVerificationCode: "/vendors/resend-verification-otp",
     loginVendor: "/vendors/login",
+    logoutVendor: "/vendors/logout",
 
     // Vendor Endpoints
     getProfile: "/vendors/profile",

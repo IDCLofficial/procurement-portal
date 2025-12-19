@@ -175,8 +175,8 @@ export default function RegistrationRenewalPage() {
     function renderContent() {
         if (!company || !user || !application || !documents || !certificate) return null;
 
-        if (timeLeft > 30) {
-            return <CertificateStillValid validUntil={certificate?.validUntil || ""} />
+        if (timeLeft > 30 || application.status !== "Approved") {
+            return <CertificateStillValid status={application.status} validUntil={certificate?.validUntil || ""} />
         }
         return (
             <>

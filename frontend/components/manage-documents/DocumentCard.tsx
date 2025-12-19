@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import sirvClient from '@/lib/sirv.class';
 import { useCompleteVendorRegistrationMutation, useGetCompanyDetailsQuery } from '@/store/api/vendor.api';
 import { VendorSteps } from '@/store/api/enum';
-import { ResponseError } from '@/store/api/types';
+import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
 
 type DocumentStatus = 'verified' | 'required' | 'expiring' | 'expired' | 'pending' | 'review';
@@ -55,7 +55,7 @@ export default function DocumentCard({
     documentPresetName,
     onView,
 }: DocumentCardProps) {
-    const { company, documents: docPresets } = useAuth();
+    const { company, documents: docPresets, certificate } = useAuth();
     const [downloadStatus, startDownload] = useFileDownload();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -242,6 +242,7 @@ export default function DocumentCard({
                     validFor: doc.validFor,
                     hasValidityPeriod: doc.hasValidityPeriod,
                 })),
+                mode: (certificate ? 'renewal' : undefined) as CompleteVendorRegistrationRequest['mode']    
             };
 
             const response = await completeVendorRegistration(payload);
@@ -271,7 +272,7 @@ export default function DocumentCard({
         } finally {
             setIsUploading(false);
         }
-    }, [selectedFile, localValidFrom, localValidTo, company, documentId, title, docPresets, completeVendorRegistration, refetch, previewUrl, documentPresetName, hasValidityPeriod, status]);
+    }, [selectedFile, localValidFrom, localValidTo, company, documentId, title, docPresets, completeVendorRegistration, refetch, previewUrl, documentPresetName, hasValidityPeriod, status, certificate]);
 
     const config = statusConfig[status];
 

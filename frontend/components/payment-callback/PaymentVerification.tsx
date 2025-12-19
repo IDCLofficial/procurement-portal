@@ -14,10 +14,6 @@ export default function PaymentVerification({ reference }: PaymentVerificationPr
     const router = useRouter();
     const [countdown, setCountdown] = useState(3);
 
-    console.log({
-        reference
-    });
-
     const { error, isLoading, isSuccess, isError } = useVerifyPaymentQuery(reference!, {
         skip: !reference,
     });
@@ -33,6 +29,7 @@ export default function PaymentVerification({ reference }: PaymentVerificationPr
                         if (return_url) {
                             router.push(return_url);
                         } else {
+                            localStorage.removeItem(return_url_key);
                             router.push('/dashboard/complete-registration');
                         }
                         return 0;

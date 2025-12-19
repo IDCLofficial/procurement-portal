@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from './ui/button';
-import { Bell, Settings, LogOut } from 'lucide-react';
+import { Bell, Settings, LogOut, Loader2 } from 'lucide-react';
 import { FaAngleLeft } from 'react-icons/fa6';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -22,7 +22,7 @@ export default function DashboardHeader({
     rightButton?: React.ReactNode;
     justLogout?: boolean;
 }) {
-    const { logout } = useAuth();
+    const { logout, logoutLoading } = useAuth();
     const router = useRouter();
     return (
         <header className="sticky top-0 z-50 border-b bg-white shadow-sm">
@@ -90,8 +90,13 @@ export default function DashboardHeader({
                             variant="ghost"
                             className="h-9 px-3 text-gray-700 hover:text-gray-900 font-medium cursor-pointer"
                             onClick={logout}
+                            disabled={logoutLoading}
                         >
-                            <LogOut className="h-4 w-4 mr-2" />
+                            {logoutLoading ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <LogOut className="h-4 w-4 mr-2" />
+                            )}
                             Logout
                         </Button>
                     </div>

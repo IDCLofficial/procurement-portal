@@ -15,11 +15,17 @@ import { useAuth } from '@/components/providers/public-service/AuthProvider';
 import { formatDate } from 'date-fns';
 import CertificateStillValid from '@/components/renewal/CertificateStillValid';
 import AllDocumentsUpToDate from '@/components/renewal/AllDocumentsUpToDate';
+import { PaymentType } from '@/store/api/enum';
+import { toast } from 'sonner';
+import { useInitPaymentMutation } from '@/store/api/vendor.api';
+import { return_url_key } from '@/lib/constants';
+import { Loader2 } from 'lucide-react';
 
 export default function RegistrationRenewalPage() {
     const { company, user, application, documents, categories: categoriesPreset, certificate } = useAuth();
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(1);
+    const [initPayment, { isLoading: isInitPaymentLoading }] = useInitPaymentMutation()
 
     const missingDocuments: DocumentRenewal[] = useMemo(() => {
         if (!documents || documents.length === 0) return [];
@@ -73,7 +79,7 @@ export default function RegistrationRenewalPage() {
 
     const categories = company.category;
     const grade = company.grade.toUpperCase();
-
+    const renewalFee = categoriesPreset?.grades.find((i) => String(i.grade.toLowerCase().trim()) === grade.toLowerCase().trim())?.renewalFee?.toString() || "";
 
     const verificationItems = [
         { label: 'CAC Number', value: company.cacNumber },
@@ -127,9 +133,29 @@ export default function RegistrationRenewalPage() {
         setCurrentStep(2);
     };
 
-    const handlePayment = () => {
-        console.log('Processing payment...');
-        // Handle payment logic
+    const handlePayment = async () => {
+        if (!company) return;
+
+        const payload = {
+            amount: Number(renewalFee),
+            type: PaymentType.RENEWAL,
+            description: `${company.companyName}'s registration fee`,
+        }
+
+        try {
+            toast.loading('Initializing payment...', { id: "payment" });
+            const response = await initPayment(payload);
+            toast.dismiss("payment");
+            localStorage.setItem(return_url_key, "/dashboard");
+            if (response.data) {
+                router.push(response.data.authorization_url);
+            }
+        } catch (error) {
+            toast.dismiss("payment");
+            console.error(error);
+            toast.error((error as Error).message || 'Failed to initialize payment');
+            throw new Error((error as Error).message || 'Failed to initialize payment');
+        }
     };
 
     const summaryItems = [
@@ -223,7 +249,7 @@ export default function RegistrationRenewalPage() {
                     {currentStep === 3 && (
                         <>
                             <Step3Payment
-                                amount={categoriesPreset?.grades.find((i) => String(i) === grade)?.renewalFee?.toString() || ""}
+                                amount={renewalFee}
                                 categories={[categories, grade]}
                                 summaryItems={summaryItems}
                                 onPayment={handlePayment}
@@ -242,9 +268,19 @@ export default function RegistrationRenewalPage() {
                                 <Button
                                     className="bg-teal-700 hover:bg-teal-800 text-white px-8"
                                     onClick={handlePayment}
+                                    disabled={isInitPaymentLoading}
                                 >
-                                    <FaCreditCard className="mr-2 text-sm" />
-                                    Pay ₦180,000
+                                    {isInitPaymentLoading ? (
+                                        <>
+                                            <Loader2 className="mr-2 text-sm animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaCreditCard className="mr-2 text-sm" />
+                                            Pay ₦{renewalFee}
+                                        </>
+                                    )}
                                 </Button>
                             </div>
                         </>

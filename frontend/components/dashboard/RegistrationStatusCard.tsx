@@ -188,7 +188,7 @@ export default function RegistrationStatusCard({
                     {status === 'verified' && (
                         <>
                             {daysRemaining && daysRemaining > 30 && <Button
-                                className="w-full bg-teal-700 hover:bg-teal-800 text-white flex-1"
+                                className="min-w-64 bg-teal-700 hover:bg-teal-800 text-white flex-1"
                                 onClick={onDownloadCertificate}
                             >
                                 <FaDownload className="mr-2 text-sm" />
@@ -197,7 +197,7 @@ export default function RegistrationStatusCard({
                             <Link href="/dashboard/settings?tab=account" className="flex-1">
                                 <Button
                                     variant="outline"
-                                    className="w-full"
+                                    className="min-w-64"
                                 >
                                     <FaEdit className="mr-2 text-sm" />
                                     Update Profile
@@ -209,7 +209,7 @@ export default function RegistrationStatusCard({
                     {status === 'expired' && (
                         <>
                             <Button
-                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                                className="min-w-64 bg-teal-700 hover:bg-teal-800 text-white"
                                 onClick={onReapply}
                             >
                                 <FaEdit className="mr-2 text-sm" />
@@ -218,7 +218,7 @@ export default function RegistrationStatusCard({
                             <Link href="/dashboard/settings?tab=account">
                                 <Button
                                     variant="outline"
-                                    className="w-full"
+                                    className="min-w-64"
                                 >
                                     <FaEdit className="mr-2 text-sm" />
                                     Update Profile
@@ -230,14 +230,14 @@ export default function RegistrationStatusCard({
                     {status === 'suspended' && (
                         <>
                             <Button
-                                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                                className="min-w-64 bg-teal-700 hover:bg-teal-800 text-white"
                                 onClick={onContactSupport}
                             >
                                 Contact Support
                             </Button>
                             <Button
                                 variant="outline"
-                                className="w-full"
+                                className="min-w-64"
                                 onClick={onUpdateProfile}
                             >
                                 <FaEdit className="mr-2 text-sm" />
@@ -248,18 +248,18 @@ export default function RegistrationStatusCard({
 
                     {status === 'pending' && (
                         <>
-                            <Link href="/dashboard/registration-status" className="w-full">
+                            <Link href="/dashboard/registration-status" className="min-w-64">
                                 <Button
-                                    className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                                    className="min-w-64 bg-teal-700 hover:bg-teal-800 text-white"
                                 >
                                     <FaClock className="mr-2 text-sm" />
                                     View Application Status
                                 </Button>
                             </Link>
-                            <Link href="/dashboard/settings?tab=account" className="w-full">
+                            <Link href="/dashboard/settings?tab=account" className="min-w-64">
                                 <Button
                                     variant="outline"
-                                    className="w-full"
+                                    className="min-w-64"
                                 >
                                     <FaEdit className="mr-2 text-sm" />
                                     Update Profile

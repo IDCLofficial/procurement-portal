@@ -212,20 +212,20 @@ export class NotificationsService {
           isRead: false,
         });
 
-        // Notify all admins
-        const admins = await this.userModel.find({ role: 'Admin' });
-        for (const admin of admins) {
-          await this.notificationModel.create({
-            type: NotificationType.CERTIFICATE_EXPIRED,
-            title: 'Vendor Document Expired',
-            vendorId: doc.vendor,
-            message: `A vendor's ${doc.documentType} document expired on ${expiredDate}. Immediate action required.`,
-            recipient: NotificationRecipient.ADMIN,
-            recipientId: admin._id,
-            priority: priority.CRITICAL,
-            isRead: false,
-          });
-        }
+        // // Notify all admins
+        // const admins = await this.userModel.find({ role: 'Admin' });
+        // for (const admin of admins) {
+        //   await this.notificationModel.create({
+        //     type: NotificationType.CERTIFICATE_EXPIRED,
+        //     title: 'Vendor Document Expired',
+        //     vendorId: doc.vendor,
+        //     message: `A vendor's ${doc.documentType} document expired on ${expiredDate}. Immediate action required.`,
+        //     recipient: NotificationRecipient.ADMIN,
+        //     recipientId: admin._id,
+        //     priority: priority.CRITICAL,
+        //     isRead: false,
+        //   });
+        // }
 
         notificationsSent++;
       }

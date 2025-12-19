@@ -170,6 +170,29 @@ export class UsersService {
     }));
   }
 
+  async getDeskOfficersByMda(
+    mda:string
+  ): Promise<any>{
+    const deskOfficers = await this.userModel
+    .find({
+      role:'Desk officer',
+      mda
+    })
+    .sort({createdAt: -1})
+    .exec()
+
+    if(!deskOfficers){
+      return {
+        officers:[]
+      }
+    }
+
+    return {
+      officers:deskOfficers
+    }
+
+  }
+
   /**
    * Edit user information (name and/or role only)
    * 

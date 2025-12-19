@@ -252,6 +252,58 @@ export class UsersController {
       throw new UnauthorizedException('Unauthorized')
     }
   }
+
+    /**
+   * Get all users by MDA
+   * 
+   * @param mda - The MDA (Ministry, Department, or Agency) to filter users by
+   * @returns Array of users in the specified MDA
+   * @throws {UnauthorizedException} 401 - If user is not authenticated or not an admin
+   * 
+   * @description
+   * Retrieves all users associated with a specific MDA.
+   * - Only accessible by admin users
+   * - Returns users with their details (excluding passwords)
+   * - Returns empty array if no users found for the MDA
+   */
+  @Get('by-mda/:mda')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ 
+    summary: 'Get users by MDA (Admin only)',
+    description: 'Retrieves all users for a specific MDA. Requires admin privileges.'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Users retrieved successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string' },
+          fullName: { type: 'string' },
+          email: { type: 'string' },
+          phoneNo: { type: 'string' },
+          role: { type: 'string', enum: ['Desk officer', 'Auditor', 'Registrar', 'Admin'] },
+          isActive: { type: 'boolean' },
+          assignedApps: { type: 'number' },
+          mda: { type: 'string' },
+          lastLogin: { type: 'string', format: 'date-time' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Unauthorized - Admin access required' 
+  })
+  @ApiBearerAuth()
+  async getUsersByMda(@Param('mda') mda: string) {
+    return this.usersService.getDeskOfficersByMda(mda);
+  }
+  
   /**
    * User login authentication
    * 

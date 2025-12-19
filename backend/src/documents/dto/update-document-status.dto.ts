@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import type { statusObject } from '../entities/document.schema';
+import { Status, type statusObject } from '../entities/document.schema';
 
 export class UpdateDocumentStatusDto {
   @ApiProperty({
@@ -9,5 +9,6 @@ export class UpdateDocumentStatusDto {
     required: true
   })
   @IsNotEmpty()
+  @IsEnum(Status)
   status: statusObject;
 }

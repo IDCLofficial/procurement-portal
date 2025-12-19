@@ -372,6 +372,64 @@ export class EmailService {
     }
   }
 
+  async sendUserCredentialsEmail(email: string, fullName: string, password: string): Promise<boolean> {
+    try {
+      const emailConfig = this.configService.get('email');
+      const portalUrl = this.configService.get('app.frontendUrl');
+
+      const emailHtml = `
+        <div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6;">
+          <div style="background: linear-gradient(135deg, #0f766e, #0891b2); padding: 2rem; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 1.6rem; font-weight: 600;">Your Account Has Been Created</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0; font-size: 1rem;">Use the credentials below to sign in</p>
+          </div>
+
+          <div style="background: #ffffff; padding: 2rem; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="margin: 0 0 1rem; color: #374151;">Hello <strong>${fullName.split(' ')[0]}</strong>,</p>
+            <p style="margin: 0 0 1.25rem; color: #4b5563;">An account has been created for you on the Procurement Portal.</p>
+
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
+              <p style="margin: 0 0 0.5rem;"><strong>Login Email:</strong> ${email}</p>
+              <p style="margin: 0;"><strong>Temporary Password:</strong> ${password}</p>
+            </div>
+
+            <p style="margin: 1.25rem 0 0; color: #6b7280; font-size: 0.95rem;">
+              For security, please change your password after you log in.
+            </p>
+
+            ${portalUrl ? `
+              <div style="text-align: center; margin-top: 1.75rem;">
+                <a href="${portalUrl}" style="display: inline-block; padding: 12px 22px; background-color: #0ea5e9; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Go to Portal</a>
+              </div>
+            ` : ''}
+          </div>
+
+          <div style="background: #f9fafb; padding: 1.25rem; text-align: center; border-radius: 0 0 8px 8px; font-size: 0.8rem; color: #6b7280;">
+            <p style="margin: 0;">This is an automated message. Please do not reply.</p>
+          </div>
+        </div>
+      `;
+
+      const result = await this.resend.emails.send({
+        from: emailConfig?.from || 'noreply@procurement.gov.ng',
+        to: [email],
+        subject: 'Your Procurement Portal Login Credentials',
+        html: emailHtml,
+      });
+
+      if (result.error) {
+        this.logger.error('Failed to send user credentials email:', result.error);
+        return false;
+      }
+
+      this.logger.log(`User credentials email sent to ${email}`);
+      return true;
+    } catch (error) {
+      this.logger.error('Error sending user credentials email:', error);
+      return false;
+    }
+  }
+
   //
 
   // Clean up expired OTPs from the store

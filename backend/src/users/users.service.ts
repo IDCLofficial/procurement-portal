@@ -8,12 +8,14 @@ import { EditUserDto } from './dto/edit-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { User, UserDocument } from './entities/user.schema';
 import TokenHandlers from 'src/lib/generateToken';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private tokenHandlers: TokenHandlers,
+    private emailService: EmailService,
   ) {}
 
   /**
@@ -69,6 +71,16 @@ export class UsersService {
     });
 
     await user.save();
+
+    try {
+      await this.emailService.sendUserCredentialsEmail(
+        createUserDto.email,
+        createUserDto.fullName,
+        createUserDto.password,
+      );
+    } catch (err) {
+      // Intentionally do not fail user creation if email sending fails
+    }
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = user.toObject();

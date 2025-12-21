@@ -30,9 +30,7 @@ export function ApplicationsTable({ applications, total, page, limit, onPageChan
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-medium text-gray-900">
                     Contractor Name
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-medium text-gray-900">
-                    RC/BN Number
-                  </th>
+                
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-medium text-gray-900">
                     Sector & Grade
                   </th>
@@ -63,16 +61,17 @@ export function ApplicationsTable({ applications, total, page, limit, onPageChan
                       ? app.applicationTimeline[app.applicationTimeline.length - 1]?.status
                       : undefined);
 
-                  return (
+                  return (console.log(app),
                     <tr key={app.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-blue-600 sm:pl-6">
                         {app.id}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{app.name}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{app.rcNumber}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {app.sector}
-                      </td>
+                      <td className="px-3 py-4 text-sm text-gray-500 max-w-[350px] whitespace-normal wrap-break-word">{app.name}</td>
+                     
+                      <td className="px-3 py-4 text-sm text-gray-500 max-w-[350px] whitespace-normal wrap-break-word">
+  {app.sector}
+</td>
+
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{app.type}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{FormatDate(app.submissionDate)}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">

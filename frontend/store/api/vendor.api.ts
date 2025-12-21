@@ -25,11 +25,41 @@ export const vendorApi = apiSlice.injectEndpoints({
                 body,
             }),
         }),
+        changePassword: builder.mutation<unknown, { currentPassword: string, newPassword: string, confirmPassword: string }>({
+            query: (body) => ({
+                url: endpoints.changePassword,
+                method: 'PATCH',
+                body,
+            }),
+        }),
         loginVendor: builder.mutation<LoginVendorResponse, LoginVendorRequest>({
             query: (body) => ({
                 url: endpoints.loginVendor,
                 method: 'POST',
                 body,
+            }),
+        }),
+        logoutVendor: builder.mutation<void, void>({
+            query: () => ({
+                url: endpoints.logoutVendor,
+                method: 'DELETE',
+            }),
+        }),
+        forgotPassword: builder.mutation<{ message: string }, { email: string }>({
+            query: (body) => ({
+                url: endpoints.forgotPassword,
+                method: 'POST',
+                body,
+            }),
+        }),
+        resetPassword: builder.mutation<unknown, { newPassword: string, confirmPassword: string, token: string }>({
+            query: (body) => ({
+                url: `${endpoints.resetPassword}?token=${body.token}`,
+                method: 'POST',
+                body: {
+                    newPassword: body.newPassword,
+                    confirmPassword: body.confirmPassword,
+                },
             }),
         }),
         getProfile: builder.query<User, void>({
@@ -109,7 +139,19 @@ export const vendorApi = apiSlice.injectEndpoints({
         markNotificationAsRead: builder.mutation<void, void>({
             query: () => ({
                 url: endpoints.markNotificationAsRead,
-                method: 'POST',
+                method: 'PATCH',
+            }),
+        }),
+        markNotificationAsReadById: builder.mutation<void, string>({
+            query: (id) => ({
+                url: endpoints.markNotificationAsReadById(id),
+                method: 'PATCH',
+            }),
+        }),
+        deleteNotificationById: builder.mutation<void, string>({
+            query: (id) => ({
+                url: endpoints.deleteNotificationById(id),
+                method: 'DELETE',
             }),
         }),
         deactivateVendor: builder.mutation<void, void>({
@@ -122,11 +164,17 @@ export const vendorApi = apiSlice.injectEndpoints({
 })
 
 export const { 
+    // Auth Endpoints
     useCreateVendorMutation,
     useVerifyVendorMutation,
     useLoginVendorMutation,
+    useLogoutVendorMutation,
     useResendVerificationOtpMutation,
-    useCompleteVendorRegistrationMutation,
+    useForgotPasswordMutation,
+    useResetPasswordMutation,
+    useChangePasswordMutation,
+
+    // Vendor Endpoints
     useGetProfileQuery,
     useUpdateVendorProfileMutation,
     useGetCompanyDetailsQuery,
@@ -137,6 +185,10 @@ export const {
     useGetPaymentHistoryQuery,
     useGetMyActivityLogsQuery,
     useGetMyNotificationsQuery,
+    useLazyGetMyNotificationsQuery,
     useMarkNotificationAsReadMutation,
+    useMarkNotificationAsReadByIdMutation,
+    useDeleteNotificationByIdMutation,
     useDeactivateVendorMutation,
+    useCompleteVendorRegistrationMutation,
 } = vendorApi;

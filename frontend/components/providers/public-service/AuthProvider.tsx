@@ -1,9 +1,9 @@
 "use client"
 import { decrypt, encrypt } from '@/lib/crypto';
-import { Application, CompanyDetailsResponse, User } from '@/store/api/types';
-import { useGetCompanyDetailsQuery, useGetProfileQuery } from '@/store/api/vendor.api';
+import { Application, CompanyDetailsResponse, Contractor, MDAResponse, User } from '@/store/api/types';
+import { useGetCompanyDetailsQuery, useGetProfileQuery, useLogoutVendorMutation } from '@/store/api/vendor.api';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useContext, useMemo, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux';
 import { selectAuthIsLoading, selectAuthIsAuthenticated, selectAuthIsLoggingOut, login, logout, clearToken, refresh, selectAuthToken } from '@/store/slices/authSlice';
 import { selectUserData } from '@/store/slices/userSlice';
@@ -12,8 +12,11 @@ import { selectDocumentsLoading, selectDocumentsPresets } from '@/store/slices/d
 import { selectCategoriesData, selectCategoriesLoading } from '@/store/slices/categoriesSlice';
 import { selectApplicationData, selectApplicationLoading } from '@/store/slices/applicationSlice';
 import { DocumentRequirement, CategoriesResponse } from '@/store/api/types.d';
-import { useGetDocumentsPresetsQuery, useGetCategoriesQuery } from '@/store/api/helper.api';
+import { useGetDocumentsPresetsQuery, useGetCategoriesQuery, useGetMDAQuery } from '@/store/api/helper.api';
 import { useGetApplicationQuery } from '@/store/api/vendor.api';
+import { session_key } from '@/lib/constants';
+import { useGetContractorByIdQuery } from '@/store/api/public.api';
+import { toast } from 'sonner';
 
 interface AuthContextType {
     user: User | null;
@@ -24,7 +27,10 @@ interface AuthContextType {
     isAuthenticated: boolean;
     documents: DocumentRequirement[] | null;
     categories: CategoriesResponse | null;
+    mdas: MDAResponse["mdas"] | undefined;
+    certificate?: Contractor;
     isLoggingOut: boolean;
+    logoutLoading: boolean;
     clearToken: () => void;
     refresh: () => void;
     login: (token: string) => void;
@@ -40,7 +46,7 @@ const getStoredToken = () => {
     }
 
     try {
-        const storedToken = localStorage.getItem('token');
+        const storedToken = localStorage.getItem(session_key);
         if (!storedToken) return null;
         const dec_token = decrypt(storedToken);
         
@@ -51,7 +57,7 @@ const getStoredToken = () => {
         return null;
     } catch (error) {
         console.error('Failed to retrieve stored token:', error);
-        localStorage.removeItem('token');
+        localStorage.removeItem(session_key);
         return null;
     }
 };
@@ -81,10 +87,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         skip: !token || token === 'n/a',
     });
     const { refetch: refetchCategories } = useGetCategoriesQuery();
+    const { data: mdas, refetch: refetchMDA } = useGetMDAQuery();
     
     const { refetch: refetchApplication } = useGetApplicationQuery(undefined, {
         skip: !token || token === 'n/a',
     });
+    const [logoutVendor, { isLoading: logoutLoading, isSuccess: logoutSuccess, error: logoutError }] = useLogoutVendorMutation();
 
     // Use slice data
     const user = useSelector(selectUserData);
@@ -100,20 +108,33 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const application = useSelector(selectApplicationData);
     const applicationLoading = useSelector(selectApplicationLoading);
 
-    const isLoading = React.useMemo(() => profileLoading || companyLoading || documentsLoading || categoriesLoading || applicationLoading, [profileLoading, companyLoading, documentsLoading, categoriesLoading, applicationLoading]);
+    const { data: certificate, isLoading: contractorLoading } = useGetContractorByIdQuery(user ? user.certificateId : '', {
+        skip: user?.certificateId ? user?.certificateId.length < 2 : true
+    });
 
+    const isLoading = React.useMemo(() => profileLoading || companyLoading || documentsLoading || categoriesLoading || applicationLoading || contractorLoading, [profileLoading, companyLoading, documentsLoading, categoriesLoading, applicationLoading, contractorLoading]);
 
     // Sync local token with slice token
     React.useEffect(() => {
         if (isLoading) return;
+
         if (tokenFromSlice === "n/a") {
-            setToken(null);
+            setToken((prev) => {
+                if (prev === null) {
+                    return null;
+                }
+                return prev;
+            });
+            return;
         }
+
+        // Only update if current token is null
+        setToken((prev) => prev === null ? tokenFromSlice : prev);
     }, [tokenFromSlice, isLoading]);
 
     const handleClearToken = useCallback(() => {
         setToken(null);
-        localStorage.removeItem('token');
+        localStorage.removeItem(session_key);
         dispatch(clearToken());
     }, [dispatch]);
 
@@ -121,7 +142,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (!user) return;
 
         if (!user.isVerified) {
-            localStorage.removeItem('token');
+            localStorage.removeItem(session_key);
 
             const params = new URLSearchParams();
             params.set('vrf', '1');
@@ -131,20 +152,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         }
     }, [user, router]);
 
-    const handleLogin = useCallback((token: string) => {
-        const enc_token = encrypt(token);
-        setToken(token);
-        localStorage.setItem('token', enc_token);
-        dispatch(login(token));
-        // User will be fetched automatically by useGetProfileQuery
-        router.replace('/dashboard');
-    }, [router, dispatch]);
-
-    const handleLogout = useCallback(() => {
-        dispatch(logout());
-        handleClearToken();
-        router.replace('/vendor-login');
-    }, [router, handleClearToken, dispatch]);
 
     const handleRefresh = useCallback(() => {
         dispatch(refresh());
@@ -153,9 +160,53 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             refetchCompanyDetails();
             refetchDocumentsPresets();
             refetchCategories();
+            refetchMDA();
             refetchApplication();
         }
-    }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, refetchApplication, dispatch]);
+    }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, refetchMDA, refetchApplication, dispatch]);
+
+
+    React.useEffect(() => {
+        if (token && token !== 'n/a') {
+            refetchProfile();
+            refetchCompanyDetails();
+            refetchDocumentsPresets();
+            refetchCategories();
+            refetchMDA();
+            refetchApplication();
+        }
+    }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, refetchMDA, refetchApplication]); 
+
+    const handleLogin = useCallback((token: string) => {
+        const enc_token = encrypt(token);
+        setToken(token);
+        localStorage.setItem(session_key, enc_token);
+        dispatch(login(token));
+        
+        router.replace('/dashboard');
+        // User will be fetched automatically by useGetProfileQuery
+    }, [router, dispatch]);
+
+    const handleLogout = useCallback(() => {
+        logoutVendor();
+    }, [logoutVendor]);
+
+    useEffect(() => {
+        if (logoutSuccess) {
+            toast.success("✅ Logout successful.");
+            dispatch(logout());
+            router.replace('/vendor-login');
+            localStorage.removeItem(session_key);
+            dispatch(clearToken());
+        }
+    }, [logoutSuccess, router, dispatch]);
+
+    useEffect(() => {
+        if (logoutError) {
+            console.error('Logout failed:', logoutError);
+            toast.error("❌ An error occurred while logging out. Please try again later.")
+        }
+    }, [logoutError]);
 
     const value = useMemo(() => ({
         user,
@@ -163,15 +214,18 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         application,
         token,
         isLoading,
+        logoutLoading,
         isAuthenticated,
         isLoggingOut,
+        certificate,
         documents,
         categories,
+        mdas: mdas ? mdas.mdas : [],
         refresh: handleRefresh,
         login: handleLogin,
         logout: handleLogout,
         clearToken: handleClearToken,
-    }), [user, token, isLoading, isAuthenticated, isLoggingOut, documents, categories, handleRefresh, handleLogin, handleLogout, handleClearToken, company, application]);
+    }), [user, token, isLoading, logoutLoading, isAuthenticated, isLoggingOut, documents, categories, mdas, handleRefresh, handleLogin, handleLogout, handleClearToken, company, application, certificate]);
 
     return (
         <AuthContext.Provider value={value}>

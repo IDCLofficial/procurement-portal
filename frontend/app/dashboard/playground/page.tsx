@@ -30,7 +30,7 @@ export default function PlaygroundPage() {
 
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  const loadEndpoint = (endpoint: string, suggestedMethod: string = 'GET', requiresAuth: boolean = false) => {
+  const loadEndpoint = (endpoint: string, suggestedMethod: string = 'GET', requiresAuth: boolean = true) => {
     setUrl(endpoint);
     setMethod(suggestedMethod);
     setUseAuth(requiresAuth);
@@ -160,7 +160,7 @@ export default function PlaygroundPage() {
                 </Label>
               </div>
 
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" className='cursor-pointer' disabled={loading}>
                 {loading ? 'Sending...' : 'Send Request'}
               </Button>
             </form>

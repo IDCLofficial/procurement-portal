@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
-import { Home, FileText, FileCheck, LogOut } from "lucide-react";
+import { Home, FileText, FileCheck, ClipboardList, LogOut, FileSearch } from "lucide-react";
 import { useLogout } from "@/app/admin/hooks/useLogout";
 import { ConfirmationDialog } from "@/app/admin/components/general/confirmation-dialog";
 import { useAppSelector } from "../../redux/hooks";
@@ -48,16 +48,19 @@ export default function SidebarUser() {
   const { user } = useAppSelector((state) => state.auth);
 
   const isRegistrar = user?.role === "Registrar";
+  const isAuditor = user?.role === "Auditor";
 
   const dashboardHref = `/admin/${id}`;
   const applicationsHref = `/admin/${id}/applications`;
   const certificatesHref = `/admin/${id}/certificates`;
-  // const transactionsHref = `/admin/${id}/transactions`;
+  const transactionsHref = `/admin/${id}/transactions`;
+  const auditLogsHref = `/admin/${id}/audit-logs`;
 
   const isDashboardActive = pathname === dashboardHref || pathname === `${dashboardHref}/`;
   const isApplicationsActive = pathname.startsWith(applicationsHref);
   const isCertificatesActive = pathname.startsWith(certificatesHref);
-  // const isTransactionsActive = pathname.startsWith(transactionsHref);
+  const isTransactionsActive = pathname.startsWith(transactionsHref);
+  const isAuditLogsActive = pathname.startsWith(auditLogsHref);
   return (
     <div className="hidden md:flex md:
     shrink-0">
@@ -74,28 +77,57 @@ export default function SidebarUser() {
         </div>
 
         <nav className="flex-1 px-2 py-4 space-y-1">
-          <NavItem icon={Home} text="Dashboard" href={dashboardHref} active={isDashboardActive} />
-          <NavItem icon={FileText} text="Applications" href={applicationsHref} active={isApplicationsActive} />
-          {isRegistrar && (
+          {isAuditor ? (
             <>
               <NavItem
-                icon={FileCheck}
-                text="Certificates"
-                href={certificatesHref}
-                active={isCertificatesActive}
+                icon={FileSearch}
+                text="Audit Logs"
+                href={auditLogsHref}
+                active={isAuditLogsActive}
               />
-              {/* <NavItem
+              <NavItem
                 icon={ClipboardList}
                 text="Transactions"
                 href={transactionsHref}
                 active={isTransactionsActive}
-              /> */}
+              />
+            </>
+          ) : (
+            <>
+              <NavItem
+                icon={Home}
+                text="Dashboard"
+                href={dashboardHref}
+                active={isDashboardActive}
+              />
+              <NavItem
+                icon={FileText}
+                text="Applications"
+                href={applicationsHref}
+                active={isApplicationsActive}
+              />
+              {isRegistrar && (
+                <>
+                  <NavItem
+                    icon={FileCheck}
+                    text="Certificates"
+                    href={certificatesHref}
+                    active={isCertificatesActive}
+                  />
+                  <NavItem
+                    icon={ClipboardList}
+                    text="Transactions"
+                    href={transactionsHref}
+                    active={isTransactionsActive}
+                  />
+                </>
+              )}
             </>
           )}
         </nav>
 
         <div className="p-4 mt-auto border-t border-gray-200">
-          <div className="mb-2">
+          {/* <div className="mb-2">
             <div className="flex justify-between text-sm font-medium text-gray-700">
               <span>SLA Compliance</span>
               <span>94.2%</span>
@@ -103,7 +135,7 @@ export default function SidebarUser() {
             <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
               <div className="bg-green-600 h-2.5 rounded-full" style={{ width: "94.2%" }}></div>
             </div>
-          </div>
+          </div> */}
 
           <button
             onClick={() => setLogoutDialogOpen(true)}

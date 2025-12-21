@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVerifyPaymentQuery } from '@/store/api/vendor.api';
 import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { return_url_key } from '@/lib/constants';
 
 interface PaymentVerificationProps {
     reference: string | null;
@@ -19,12 +20,18 @@ export default function PaymentVerification({ reference }: PaymentVerificationPr
 
     useEffect(() => {
         if (isSuccess) {
+            const return_url = localStorage.getItem(return_url_key);
             // Start countdown
             const interval = setInterval(() => {
                 setCountdown((prev) => {
                     if (prev <= 1) {
                         clearInterval(interval);
-                        router.push('/dashboard/complete-registration');
+                        if (return_url) {
+                            router.push(return_url);
+                        } else {
+                            localStorage.removeItem(return_url_key);
+                            router.push('/dashboard/complete-registration');
+                        }
                         return 0;
                     }
                     return prev - 1;
@@ -76,7 +83,7 @@ export default function PaymentVerification({ reference }: PaymentVerificationPr
                     </div>
                     <div className="flex gap-4 mt-6">
                         <button
-                            onClick={() => router.push('/dashboard/complete-registration')}
+                            onClick={() => router.push(localStorage.getItem(return_url_key) || "/dashboard/complete-registration")}
                             className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                         >
                             Go to Dashboard

@@ -54,7 +54,7 @@ export default function RegistrationStatusPage() {
         );
     }
 
-    const submittedDate = company?.createdAt ? format(new Date(company.createdAt), 'dd MMMM yyyy') : 'N/A';
+    const submittedDate = company?.createdAt ? format(new Date(company.createdAt || ""), 'dd MMMM yyyy') : 'N/A';
     const documents: Document[] = company?.documents?.map(doc => ({
         _id: doc._id,
         fileUrl: doc.fileUrl,

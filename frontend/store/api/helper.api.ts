@@ -1,6 +1,6 @@
 import { apiSlice } from "./";
 import endpoints from "./endpoints.const";
-import { DocumentRequirement, CategoriesResponse } from "./types.d";
+import { DocumentRequirement, CategoriesResponse, MDAResponse } from "./types.d";
 
 export const helperApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -16,11 +16,17 @@ export const helperApi = apiSlice.injectEndpoints({
                 method: 'GET',
             }),
         }),
+        getMDA: builder.query<MDAResponse, void>({
+            query: () => ({
+                url: endpoints.getMDA,
+                method: 'GET',
+            }),
+        }),
     })
 })
 
 export const { 
     useGetDocumentsPresetsQuery,
     useGetCategoriesQuery,
-    useLazyGetCategoriesQuery
+    useGetMDAQuery,
 } = helperApi;

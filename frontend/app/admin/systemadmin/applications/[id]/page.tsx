@@ -1,11 +1,14 @@
 'use client';
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { useParams } from 'next/navigation';
 import { ApplicationDetailPage } from '@/app/admin/components/general/ApplicationDetailPage';
 import { useGetApplicationByIdQuery } from '@/app/admin/redux/services/appApi';
+import { useGetSlaConfigQuery } from '@/app/admin/redux/services/settingsApi';
+import { computeApplicationSla } from '@/app/admin/utils/sla';
 import { LoadingSpinner } from '../../_components';
 
-export default function SystemAdminApplicationDetailRoute() {
+function SystemAdminApplicationDetailRoute() {
   const params = useParams();
   const idParam = (params as { id?: string | string[] })?.id;
   const applicationId = Array.isArray(idParam) ? idParam[0] : idParam || '';
@@ -13,6 +16,8 @@ export default function SystemAdminApplicationDetailRoute() {
   const { data: application, isLoading } = useGetApplicationByIdQuery(applicationId, {
     skip: !applicationId,
   });
+
+  const { data: slaConfig } = useGetSlaConfigQuery();
 
   if (isLoading || !application) {
     return (
@@ -23,6 +28,7 @@ export default function SystemAdminApplicationDetailRoute() {
   }
 
   const company = typeof application.companyId === 'string' ? undefined : application.companyId;
+  const slaMetrics = slaConfig ? computeApplicationSla(application, slaConfig) : undefined;
 
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50">
@@ -31,9 +37,9 @@ export default function SystemAdminApplicationDetailRoute() {
           applicationId={application._id}
           contractorName={application.name}
           rcNumber={application.rcNumber}
-          sectorAndGrade={`${application.sector} ${application.grade}`}
+          sectorAndGrade={`${application.sector}`}
           submissionDate={application.submissionDate}
-          slaDeadline={undefined}
+          slaDeadline={slaMetrics?.deadline}
           assignedTo={application.assignedTo}
           currentStatus={application.currentStatus}
           documents={company?.documents}
@@ -43,3 +49,5 @@ export default function SystemAdminApplicationDetailRoute() {
     </main>
   );
 }
+
+export default withProtectedRoute(SystemAdminApplicationDetailRoute, { requiredRoles: ['Admin'] });

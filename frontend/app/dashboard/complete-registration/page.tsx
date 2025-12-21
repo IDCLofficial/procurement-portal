@@ -7,10 +7,12 @@ import { useAuth } from '@/components/providers/public-service/AuthProvider';
 export default function CompleteRegistrationPage() {
     const { user, company } = useAuth();
 
+    if (!user || !company) return null;
+
     return (
         <div className="min-h-screen bg-linear-to-b from-green-50 to-gray-50">
             <DashboardHeader
-                companyName={company?.companyName || user?.fullname}
+                companyName={company.companyName.length > 1 ? company.companyName : user.fullname}
                 subtitle="Complete Your Registration"
                 justLogout
             />

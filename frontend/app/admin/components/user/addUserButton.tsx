@@ -16,7 +16,10 @@ export function AddUserButton() {
     password: '',
     confirmPassword: '',
     role: 'Desk officer',
+    mda: '',
   });
+  const [selectedMdaId, setSelectedMdaId] = useState<string | null>(null);
+
   const isValidNigerianNumber = (num: string) => {
     const regex = /^(?:0\d{10}|\+234\d{10})$/;
     return regex.test(num);
@@ -54,6 +57,9 @@ export function AddUserButton() {
     if (!validateForm()) {
       return;
     }
+
+    // Include MDA name in the payload if selected
+    const mdaToSubmit = formData.mda || undefined;
     
     try {
       await createUser({
@@ -61,7 +67,8 @@ export function AddUserButton() {
         email: formData.email,
         phoneNo: formData.phone,
         role: formData.role,
-        password: formData.password
+        password: formData.password,
+        mda: mdaToSubmit,
       }).unwrap();
       
       // Reset form and close modal on success
@@ -71,8 +78,11 @@ export function AddUserButton() {
         phone: '',
         password: '',
         confirmPassword: '',
-        role: 'Desk officer'
+        role: 'Desk officer',
+        mda: '',
       });
+      setSelectedMdaId(null);
+
       setFormErrors({ passwordMatch: false, isValidnumber: false, passwordStrength: false });
       setIsOpen(false);
       
@@ -137,6 +147,11 @@ export function AddUserButton() {
         newErrors.isValidnumber = isValidNigerianNumber(updatedForm.phone);
       }
 
+      if (name === 'mda') {
+        // User is typing, so clear any previously selected MDA id
+        setSelectedMdaId(null);
+      }
+
       setFormErrors(newErrors);
       return updatedForm;
     });
@@ -160,7 +175,11 @@ export function AddUserButton() {
           onChange={handleChange}
           onSubmit={handleSubmit}
           onClose={() => setIsOpen(false)}
-          isValidNigerianNumber={isValidNigerianNumber}
+          // isValidNigerianNumber={isValidNigerianNumber}
+          onMdaSelect={(id, name) => {
+            setSelectedMdaId(id);
+            setFormData(prev => ({ ...prev, mda: name }));
+          }}
         />
       )}
 

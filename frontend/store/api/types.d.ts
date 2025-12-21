@@ -1,4 +1,4 @@
-import { VendorSteps } from "./enum";
+import { PaymentType, VendorSteps } from "./enum";
 
 interface CreateVendorRequest {
     fullname: string;
@@ -91,12 +91,11 @@ interface CompleteVendorRegistrationRequest {
         hasValidityPeriod: boolean;
     }[];
     [VendorSteps.CATEGORIES_AND_GRADE]?: {
-        categories: {
-            sector: string;
-            service: string;
-        }[];
+        category: string;
+        mda: string;
         grade: string;
     };
+    mode?: "registration" | "renewal"
 }
 
 
@@ -112,10 +111,8 @@ interface RegisterCompanyResponse {
         grade?: string;
         website?: string;
         _id: string;
-        categories?: {
-            sector: string;
-            service: string;
-        }[];
+        categories?: string;
+        mda?: string;
         createdAt: string;
         updatedAt: string;
         __v: number;
@@ -156,10 +153,8 @@ interface CompanyDetailsResponse {
     grade: string;
     website: string;
     _id: string;
-    categories: {
-        sector: string;
-        service: string;
-    }[];
+    category: string;
+    mda: string;
     createdAt: string;
     updatedAt: string;
     __v: number;
@@ -203,6 +198,22 @@ interface DocumentRequirement {
     renewalFrequency: "annual" | "quarterly" | "monthly" | "never";
 }
 
+interface MDA {
+    _id: string;
+    name: string;
+    code: string;
+    __v: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface MDAResponse {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    mdas: MDA[];
+}
 interface Category {
     _id: string;
     sector: string;
@@ -214,12 +225,14 @@ interface Category {
 
 interface Grade {
     _id: string;
+    category: string;
     grade: string;
     registrationCost: number;
+    renewalFee: number;
     financialCapacity: number;
-    __v: number;
     createdAt: string;
     updatedAt: string;
+    __v: number;
 }
 
 interface CategoriesResponse {
@@ -229,7 +242,7 @@ interface CategoriesResponse {
 
 interface InitPaymentRequest {
     amount: number;
-    type: "new" | "renewal";
+    type: PaymentType;
     description?: string;
 }
  
@@ -238,7 +251,7 @@ interface InitPaymentResponse {
 }
 
 interface Application {
-    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected";
+    status: "Pending Desk Review" | "Forwarded to Registrar" | "Pending Payment" | "Clarification Requested" | "SLA Breach" | "Approved" | "Rejected" | "Verified";
     timestamp: string;
     notes: string;
 }
@@ -257,7 +270,7 @@ interface PaymentHistoryResponse {
         amount: number;
         reference: string;
         status: string;
-        data: string;
+        date: string;
         description: string;
         type: string;
     }[];
@@ -322,6 +335,7 @@ interface Contractor {
     grade: string;
     status: string;
     validUntil: string;
+    validFrom: string;
     __v: number;
     createdAt: string;
     updatedAt: string;
@@ -334,15 +348,34 @@ interface ActivityLogResponse {
 }
 
 interface Notification {
+    _id: string;
+    type: string;
     title: string;
     message: string;
+    recipient: string;
+    vendorId: string;
+    recipientId: string;
     priority: string;
+    isRead: boolean;
     createdAt: string;
+    updatedAt: string;
+    __v: number;
 }
 
 interface NotificationResponse {
     message: string;
-    notification: Notification[]
+    notifications: Notification[];
+    total: number;
+    totalRead: number;
+    totalUnread: number;
+    totalHigh: number;
+    totalCritical: number;
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }
 }
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor, ActivityLogResponse, NotificationResponse };
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor, ActivityLogResponse, NotificationResponse, MDAResponse };

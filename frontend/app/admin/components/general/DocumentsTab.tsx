@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAppSelector } from '@/app/admin/redux/hooks';
+import type { RootState } from '@/app/admin/redux/store';
 import type { CompanyDocument } from '@/app/admin/types';
 import { useChangeDocumentStatusMutation } from '@/app/admin/redux/services/docsApi';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ interface DocumentsTabProps {
 }
 
 export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProps) {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector((state: RootState) => state.auth);
   const [selectedDocument, setSelectedDocument] = useState<CompanyDocument | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [changeDocumentStatus] = useChangeDocumentStatusMutation();

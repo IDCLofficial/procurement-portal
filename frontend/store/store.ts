@@ -8,6 +8,7 @@ import categoriesReducer from './slices/categoriesSlice';
 import applicationReducer from './slices/applicationSlice';
 import publicReducer from './slices/publicSlice';
 import verificationReducer from './slices/verificationSlice';
+import notificationReducer from './slices/notificationsSlice';
 import { apiSlice } from './api';
 
 const rootReducer = combineReducers({
@@ -21,7 +22,7 @@ const rootReducer = combineReducers({
   application: applicationReducer,
   public: publicReducer,
   verification: verificationReducer,
-  // Add more slices here as needed
+  notification: notificationReducer,
 });
 
 export const makeStore = () => {

@@ -10,9 +10,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
 import { format, differenceInDays } from 'date-fns';
 import { Loader2 } from 'lucide-react';
+import PendingPaymentCard from '@/components/dashboard/PendingPaymentCard';
+import { return_url_key } from '@/lib/constants';
+import { toValidJSDate } from '@/lib';
 
 export default function DashboardPage() {
-    const { user, company, application, isLoading } = useAuth();
+    const { user, company, application, isLoading, categories, certificate } = useAuth();
 
     const router = useRouter();
 
@@ -57,8 +60,8 @@ export default function DashboardPage() {
 
     // Transform company documents to compliance documents format
     const complianceDocuments = (company?.documents || []).map((doc) => {
-        const docValidUntil = doc.validTo ? format(new Date(doc.validTo), 'dd MMM yyyy') : undefined;
-        const daysUntilExpiry = doc.validTo ? differenceInDays(new Date(doc.validTo), new Date()) : null;
+        const docValidUntil = doc.validTo ? format(toValidJSDate(doc.validTo), 'dd MMM yyyy') : undefined;
+        const daysUntilExpiry = doc.validTo ? differenceInDays(toValidJSDate(doc.validTo), new Date()) : null;
         const expiresText = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 ? 'Expires soon' : undefined;
 
         return {
@@ -73,12 +76,12 @@ export default function DashboardPage() {
     });
 
     // Calculate registration details
-    const registrationId = company?.cacNumber || user?.certificateId || 'N/A';
-    const validUntil = company?.createdAt ? format(new Date(new Date(company.createdAt).setFullYear(new Date(company.createdAt).getFullYear() + 1)), 'dd MMMM yyyy') : 'N/A';
-    const daysRemaining = company?.createdAt ? differenceInDays(new Date(new Date(company.createdAt).setFullYear(new Date(company.createdAt).getFullYear() + 1)), new Date()) : 0;
+    const registrationId = user?.certificateId || user?.certificateId || 'N/A';
+    const validUntil = certificate ? format(new Date(certificate.validUntil || ""), 'dd MMM yyyy') : 'N/A';
+    const daysRemaining = certificate ? differenceInDays(new Date(certificate.validUntil), new Date()) : 0;
     
     // Map application status to registration status
-    const getRegistrationStatus = (): 'approved' | 'declined' | 'expired' | 'suspended' | 'pending' => {
+    const getRegistrationStatus = (): 'approved' | 'declined' | 'expired' | 'suspended' | 'pending' | 'verified' => {
         switch (application?.status) {
             case 'Approved':
                 return 'approved';
@@ -86,6 +89,8 @@ export default function DashboardPage() {
                 return 'declined';
             case 'SLA Breach':
                 return 'suspended';
+            case 'Verified':
+                return 'verified';
             default:
                 return 'pending';
         }
@@ -95,6 +100,11 @@ export default function DashboardPage() {
     
     // Get decline/suspension reason from application notes if available
     const statusReason = application?.notes || undefined;
+
+    const handlePayment = async () => {
+        localStorage.setItem(return_url_key, "/dashboard");
+    };
+
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -107,22 +117,28 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column - Main Content */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* Pending Payment */}
+                        {categories && registrationStatus === 'approved' && <PendingPaymentCard
+                            amount={categories?.grades.find((grade) => grade.grade.toLowerCase() === company?.grade.toLowerCase())?.registrationCost || 0} // Set your amount here
+                            description="Registration Fee for Contractor Registration"
+                            onPay={handlePayment}
+                        />}
                         {/* Registration Status */}
-                        <RegistrationStatusCard
+                        {registrationStatus !== 'approved' && <RegistrationStatusCard
                             registrationId={registrationId}
                             validUntil={registrationStatus !== 'declined' ? validUntil : undefined}
-                            daysRemaining={registrationStatus === 'approved' ? daysRemaining : undefined}
+                            daysRemaining={registrationStatus === 'verified' ? daysRemaining : undefined}
                             status={registrationStatus}
                             declineReason={registrationStatus === 'declined' ? statusReason : undefined}
                             suspensionReason={registrationStatus === 'suspended' ? statusReason : undefined}
-                            onDownloadCertificate={registrationStatus === 'approved' ? handleDownloadCertificate : undefined}
+                            onDownloadCertificate={registrationStatus === 'verified' ? handleDownloadCertificate : undefined}
                             onUpdateProfile={handleUpdateProfile}
                             onReapply={registrationStatus === 'declined' || registrationStatus === 'expired' ? handleReapply : undefined}
                             onContactSupport={registrationStatus === 'declined' || registrationStatus === 'suspended' ? handleContactSupport : undefined}
-                        />
+                        />}
 
                         {/* Renewal Reminder - Only show when approved and days remaining <= 30 */}
-                        {registrationStatus === 'approved' && daysRemaining <= 30 && daysRemaining > 0 && (
+                        {registrationStatus === 'verified' && daysRemaining <= 30 && (
                             <RenewalReminderCard
                                 daysRemaining={daysRemaining}
                                 onStartRenewal={handleStartRenewal}

@@ -1,5 +1,6 @@
 'use client';
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { CertificateDirectoryToolbar } from '@/app/admin/components/user/CertificateDirectoryToolbar';
 import { CertificateTabs } from '@/app/admin/components/user/CertificateTabs';
 import { CertificateTable } from '@/app/admin/components/user/CertificateTable';
@@ -9,7 +10,7 @@ import { CertificateStats } from '@/app/admin/components/user/CertificateStats';
 import { useCertificates } from '../_hooks';
 import { PageHeader } from '../_components';
 
-export default function CertificatesPage() {
+function CertificatesPage() {
   const {
     activeTab,
     search,
@@ -106,3 +107,5 @@ export default function CertificatesPage() {
     </main>
   );
 }
+
+export default withProtectedRoute(CertificatesPage, { requiredRoles: ['Admin'] });

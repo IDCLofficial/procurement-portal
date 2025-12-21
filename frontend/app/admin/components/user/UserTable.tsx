@@ -1,12 +1,12 @@
 'use client';
 
-import { Edit, Trash2, Lightbulb } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { UserTableProps } from '@/app/admin/types/user';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 import { FormatDate } from '../../utils/dateFormateer';
 
-export function UserTable({ users, onEdit, onToggleStatus, onDelete }: UserTableProps) {
+export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
   const [userToDelete, setUserToDelete] = useState<{id: string, name: string} | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -39,9 +39,9 @@ export function UserTable({ users, onEdit, onToggleStatus, onDelete }: UserTable
         return 'bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs';
       case 'desk officer':
         return 'bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs';
-      case 'director':
+      case 'auditor':
         return 'bg-green-100 text-green-800 px-2 py-1 rounded text-xs';
-      default: // auditor
+      default:
         return 'bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs';
     }
   };
@@ -69,7 +69,7 @@ export function UserTable({ users, onEdit, onToggleStatus, onDelete }: UserTable
               Phone
             </th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Status
+              MDA
             </th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Last Login
@@ -86,35 +86,29 @@ export function UserTable({ users, onEdit, onToggleStatus, onDelete }: UserTable
         <tbody className="bg-white divide-y divide-gray-200">
           {users.map((user) => (
             <tr key={user.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-4 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                  
                   <div className="text-xs font-medium text-gray-900">{user?.fullName}</div>
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-4 py-4 whitespace-nowrap">
                 <span className={getRoleClasses(user.role)}>
                   {user.role}
                 </span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">{user?.email}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">{user?.phoneNo}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  user.isActive 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {user.isActive ? 'Active' : 'Inactive'}
-                </span>
+              <td className="px-4 py-4 whitespace-nowrap text-xs text-gray-500">{user?.email}</td>
+              <td className="px-4 py-4 whitespace-nowrap text-xs text-gray-500">{user?.phoneNo}</td>
+              <td className="px-4 py-4 text-xs text-gray-500 w-48 break-word">
+                {user?.mda}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{FormatDate(user.lastLogin)}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{FormatDate(user.lastLogin)}</td>
+              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                 <div className="flex flex-wrap gap-1 text-gray-500">
                   {user.assignedApps}
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex items-center space-x-1">
                   <button
                     onClick={() => onEdit(user.id)}
@@ -123,19 +117,7 @@ export function UserTable({ users, onEdit, onToggleStatus, onDelete }: UserTable
                   >
                     <Edit className="h-4 w-4" />
                   </button>
-                  <button
-                    onClick={() => onToggleStatus(user.id, user.isActive)}
-                    className={`p-1.5 rounded-full transition-colors ${
-                      user.isActive 
-                        ? 'text-yellow-500 hover:bg-yellow-50' 
-                        : 'text-gray-400 hover:bg-gray-100'
-                    }`}
-                    title={user.isActive ? 'Deactivate user' : 'Activate user'}
-                  >
-                    <Lightbulb 
-                      className={`h-4 w-4 ${user.isActive ? 'fill-current' : ''}`} 
-                    />
-                  </button>
+                
                   <button
                     onClick={() => handleDeleteClick(user?.id, user?.fullName)}
                     className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"

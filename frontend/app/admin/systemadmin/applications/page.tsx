@@ -1,5 +1,6 @@
 'use client';
 
+import { withProtectedRoute } from '@/app/admin/lib/protectedRoute';
 import { InfoCards } from '@/app/admin/components/general/InfoCards';
 import { SearchBar } from '@/app/admin/components/general/SearchBar';
 import { TabNavigation } from '@/app/admin/components/general/TabNavigation';
@@ -8,7 +9,7 @@ import { useApplications } from '../_hooks';
 import { LoadingSpinner } from '../_components';
 import { APPLICATION_TABS } from '../_constants';
 
-export default function SystemAdminApplications() {
+function SystemAdminApplications() {
   const {
     activeTab,
     applications,
@@ -81,3 +82,5 @@ export default function SystemAdminApplications() {
     </main>
   );
 }
+
+export default withProtectedRoute(SystemAdminApplications, { requiredRoles: ['Admin'] });

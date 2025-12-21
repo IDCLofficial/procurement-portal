@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
+import { Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 
 export interface SlaStageConfig {
   id: string;
@@ -13,9 +16,12 @@ export interface SlaStageConfig {
 interface SlaTimerConfigurationProps {
   stages: SlaStageConfig[];
   onChange?: (stages: SlaStageConfig[]) => void;
+  onSave?: () => void;
 }
 
-export function SlaTimerConfiguration({ stages, onChange }: SlaTimerConfigurationProps) {
+export function SlaTimerConfiguration({ stages, onChange, onSave }: SlaTimerConfigurationProps) {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
   const handleValueChange = (id: string, value: number) => {
     if (!onChange) return;
     const nextStages = stages.map((stage) =>
@@ -24,13 +30,30 @@ export function SlaTimerConfiguration({ stages, onChange }: SlaTimerConfiguratio
     onChange(nextStages);
   };
 
+  const handleSaveClick = () => {
+    if (!onSave) return;
+    setIsConfirmOpen(true);
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-6 pt-6 pb-6">
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold text-gray-900">SLA Timer Configuration</h2>
-        <p className="mt-1 text-xs text-[#A0AEC0]">
-          Define review time limits for each stage
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">SLA Timer Configuration</h2>
+          <p className="mt-1 text-xs text-[#A0AEC0]">
+            Define review time limits for each stage
+          </p>
+        </div>
+        {onSave && (
+          <button
+            type="button"
+            onClick={handleSaveClick}
+            className="inline-flex items-center gap-1.5 rounded-full bg-gray-900 text-white px-3 py-1.5 text-xs font-medium shadow hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
+          >
+            <Save className="h-3.5 w-3.5" />
+            <span>Save changes</span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -63,6 +86,20 @@ export function SlaTimerConfiguration({ stages, onChange }: SlaTimerConfiguratio
         <span className="font-semibold">Note: </span>
         SLA timers automatically pause when clarification is requested and resume when vendor responds.
       </div>
+
+      <ConfirmationDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => {
+          if (!onSave) return;
+          onSave();
+          setIsConfirmOpen(false);
+        }}
+        title="Update SLA configuration"
+        description="Are you sure you want to make these changes?"
+        confirmText="Yes, save"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

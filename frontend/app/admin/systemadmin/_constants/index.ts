@@ -3,7 +3,6 @@ import {
   FileText,
   Clock,
   AlertTriangle,
-  CheckCircle,
   AlertCircle,
 } from 'lucide-react';
 
@@ -118,7 +117,6 @@ export const CERTIFICATE_TABS: { id: CertificateTabId; label: string }[] = [
   { id: 'all', label: 'All Certificates' },
   { id: 'expiring', label: 'Expired' },
   { id: 'revoked', label: 'Revoked/Suspended' },
-  { id: 'logs', label: 'Verification Logs' },
 ];
 
 // ============================================================================
@@ -176,18 +174,6 @@ export interface DocumentConfigItem {
   hasExpiry: 'Yes' | 'No';
   renewalFrequency: string;
 }
-
-export const DEFAULT_DOCUMENTS: DocumentConfigItem[] = [
-  { id: 'doc-cac', name: 'CAC Incorporation Certificate', required: 'Required', hasExpiry: 'No', renewalFrequency: 'N/A' },
-  { id: 'doc-tax', name: 'Tax Clearance Certificate', required: 'Required', hasExpiry: 'Yes', renewalFrequency: 'Annual' },
-  { id: 'doc-pencom', name: 'PENCOM Certificate', required: 'Required', hasExpiry: 'Yes', renewalFrequency: 'Annual' },
-  { id: 'doc-itf', name: 'ITF Certificate', required: 'Required', hasExpiry: 'Yes', renewalFrequency: 'Annual' },
-  { id: 'doc-nsitf', name: 'NSITF Certificate', required: 'Required', hasExpiry: 'Yes', renewalFrequency: 'Annual' },
-  { id: 'doc-affidavit', name: 'Sworn Affidavit', required: 'Required', hasExpiry: 'No', renewalFrequency: 'N/A' },
-  { id: 'doc-bank-ref', name: 'Bank Reference Letter', required: 'Optional', hasExpiry: 'No', renewalFrequency: 'N/A' },
-  { id: 'doc-project-refs', name: 'Past Project References', required: 'Optional', hasExpiry: 'No', renewalFrequency: 'N/A' },
-];
-
 // ============================================================================
 // Users Constants
 // ============================================================================
@@ -195,8 +181,8 @@ export const DEFAULT_DOCUMENTS: DocumentConfigItem[] = [
 export const USER_STATS_CONFIG = {
   totalUsers: { id: 1, name: 'Total Users', icon: FileText },
   activeUsers: { id: 2, name: 'Active Users', icon: Clock },
-  inactiveUsers: { id: 3, name: 'Inactive Users', icon: CheckCircle },
-  deskOfficers: { id: 4, name: 'Desk Officers', icon: AlertCircle },
+ 
+  deskOfficers: { id: 3, name: 'Desk Officers', icon: AlertCircle },
 } as const;
 
 // ============================================================================

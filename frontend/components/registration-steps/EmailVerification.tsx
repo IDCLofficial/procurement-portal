@@ -43,7 +43,6 @@ export default function EmailVerification({ email, onVerified, onCancel }: Email
         try {
             toast.loading('Verifying your account...', { id: 'verify-vendor' });
             const response = await verifyVendorMutation({ email, otp });
-            console.log(response.data);
 
             // Check if response has an error property (RTK Query error response)
             if ('error' in response) {
@@ -98,8 +97,6 @@ export default function EmailVerification({ email, onVerified, onCancel }: Email
         try {
             toast.loading('Sending verification code...', { id: 'resend-otp' });
             const response = await resendVerificationOtpMutation({ email });
-
-            console.log('Resend OTP response:', response);
 
             // Check if response has an error property (RTK Query error response)
             if ('error' in response) {

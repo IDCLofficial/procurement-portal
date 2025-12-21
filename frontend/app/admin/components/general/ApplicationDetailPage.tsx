@@ -16,7 +16,7 @@ interface ApplicationDetailPageProps {
   rcNumber: string;
   sectorAndGrade: string;
   submissionDate?: string | null;
-  slaDeadline?: string | null;
+  slaDeadline?: string | Date | null;
   currentStatus?: string;
   assignedTo?: string;
   documents?: CompanyDocument[];
@@ -146,7 +146,7 @@ interface ApplicationHeaderProps {
   rcNumber: string;
   sectorAndGrade: string;
   submissionDate?: string | null;
-  slaDeadline?: string | null;
+  slaDeadline?: string | Date | null;
 }
 
 function ApplicationHeader({
@@ -195,7 +195,7 @@ function ApplicationHeader({
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500">Sector &amp; Grade</p>
-            <p className="mt-1 text-sm font-semibold text-gray-900">{sectorAndGrade}</p>
+            <p className="mt-1 text-sm font-semibold text-gray-900">{sectorAndGrade.toUpperCase()}</p>
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500">Submission Date</p>

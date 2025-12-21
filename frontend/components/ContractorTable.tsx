@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCurrentPage, setItemsPerPage } from '@/store/slices/publicSlice';
 import { useGetAllContractorsQuery } from '@/store/api/public.api';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 export interface Contractor {
     id: string;
@@ -243,7 +244,7 @@ export default function ContractorTable() {
                                         <TableHead className="w-12">S/N</TableHead>
                                         <TableHead>Contractor Name</TableHead>
                                         <TableHead>CAC Number</TableHead>
-                                        <TableHead>Sector</TableHead>
+                                        <TableHead><abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></TableHead>
                                         <TableHead>Grade</TableHead>
                                         <TableHead>LGA</TableHead>
                                         <TableHead>Status</TableHead>
@@ -258,9 +259,18 @@ export default function ContractorTable() {
                                             <TableCell className="font-semibold">{contractor.name}</TableCell>
                                             <TableCell className="font-mono text-sm">{contractor.rcbnNumber}</TableCell>
                                             <TableCell className='grid gap-1'>
-                                                {contractor.sector.length > 0 && contractor.sector.map((sector) => (<Badge key={sector} className={`${getSectorConfig(sector).badgeClass} text-xs uppercase`}>
-                                                    {sector}
-                                                </Badge>))}
+                                                {contractor.sector.length > 0 && contractor.sector.map((sector) => (
+                                                    <Tooltip key={sector}>
+                                                        <TooltipTrigger asChild>
+                                                            <Badge className={`${getSectorConfig(sector).badgeClass} text-xs uppercase`}>
+                                                                {(sector.charAt(0).toUpperCase() + sector.slice(1, 10)).length > 10 ? sector.slice(0, 10) + '...' : sector}
+                                                            </Badge>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{sector}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                ))}
                                             </TableCell>
                                             <TableCell>
                                                 <div className={`w-8 h-8 rounded-full flex items-center uppercase justify-center ${getGradeConfig(contractor.grade).badgeClass} font-bold text-sm`}>

@@ -4,7 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Home, FileText, Users, Settings, LogOut } from 'lucide-react';
+import { Home, FileText, Users, Settings, LogOut, FileSearch, CreditCard } from 'lucide-react';
+
 import { useLogout } from '@/app/admin/hooks/useLogout';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 
@@ -39,11 +40,16 @@ export function Sidebar() {
             icon: Settings,
             label: "Settings",
         },
-        // {
-        //     href: "/admin/systemadmin/audit-logs",
-        //     icon: FileSearch,
-        //     label: "Audit Logs",
-        // },
+        {
+            href: "/admin/systemadmin/audit-logs",
+            icon: FileSearch,
+            label: "Audit Logs",
+        },
+         {
+            href: "/admin/systemadmin/transactions",
+            icon: CreditCard,
+            label: "Transactions",
+        },
         // {
         //     href: "/admin/systemadmin/reports",
         //     icon: BarChart2,
@@ -94,7 +100,7 @@ export function Sidebar() {
             </nav>
 
             <div className="p-4 border-t border-gray-200">
-                <div className="mb-4">
+                {/* <div className="mb-4">
                     <div className="flex justify-between text-sm font-medium mb-1">
                         <span>SLA Compliance</span>
                         <span>94.2%</span>
@@ -105,7 +111,7 @@ export function Sidebar() {
                             style={{ width: '94.2%' }} 
                         />
                     </div>
-                </div>
+                </div> */}
                 <button 
                     className="w-full flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                     onClick={() => {

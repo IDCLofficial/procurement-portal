@@ -9,9 +9,9 @@ interface CompanyProfileTabProps {
   rcNumber: string;
   sectorAndGrade: string;
 }
-
 export function CompanyProfileTab({ company, contractorName, rcNumber, sectorAndGrade }: CompanyProfileTabProps) {
   const rawCategories = company?.categories ?? [];
+  console.log(rawCategories)
 
   return (
     <div className="space-y-4">
@@ -51,13 +51,10 @@ export function CompanyProfileTab({ company, contractorName, rcNumber, sectorAnd
           <p className="text-xs font-medium text-gray-500">Address</p>
           <p className="mt-1 text-gray-900">{company?.address ?? 'N/A'}</p>
         </div>
-        <div>
-          <p className="text-xs font-medium text-gray-500">LGA</p>
-          <p className="mt-1 text-gray-900">{company?.lga ?? 'N/A'}</p>
-        </div>
+       
         <div>
           <p className="text-xs font-medium text-gray-500">Grade</p>
-          <p className="mt-1 text-gray-900">{company?.grade ?? sectorAndGrade}</p>
+          <p className="mt-1 text-gray-900">{company?.grade?.toUpperCase() ?? sectorAndGrade?.toUpperCase()}</p>
         </div>
       </div>
 
@@ -101,12 +98,66 @@ export function CompanyProfileTab({ company, contractorName, rcNumber, sectorAnd
         </div>
       </div>
 
-      {company?.directors && (
-        <div className="mt-4">
-          <h3 className="text-sm font-semibold text-gray-900">Directors</h3>
-          <p className="mt-1 text-sm text-gray-900">{company.directors}</p>
-        </div>
-      )}
+      {(() => {
+        type Director = {
+          name: string;
+          position?: string;
+          address?: string;
+          nationality?: string;
+          identification?: string;
+          idType: string;
+          id: string;
+          email?: string;
+          phone?: string;
+          expiryDate?: string;
+        };
+        
+        const rawDirectorsContainer = company?.directors;
+        const directorsArray: Director[] = Array.isArray((rawDirectorsContainer as { directors?: Director[] })?.directors)
+          ? (rawDirectorsContainer as { directors: Director[] }).directors
+          : Array.isArray(rawDirectorsContainer)
+            ? rawDirectorsContainer as Director[]
+            : [];
+
+        if (!directorsArray.length) {
+          return null;
+        }
+
+        return (
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold text-gray-900">Directors</h3>
+            <div className="mt-2 space-y-2">
+              {directorsArray.map((director, index) => (
+                <div
+                  key={director?.id ?? director?.email ?? index}
+                  className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900"
+                >
+                  <p className="font-semibold">
+                    {director?.name ?? 'Unnamed director'}
+                  </p>
+                  <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
+                    {director?.idType && director?.id && (
+                      <p className="text-xs text-gray-700">
+                        <span className="font-medium">ID:</span> {director.idType} - {director.id}
+                      </p>
+                    )}
+                    {director?.phone && (
+                      <p className="text-xs text-gray-700">
+                        <span className="font-medium">Phone:</span> {director.phone}
+                      </p>
+                    )}
+                    {director?.email && (
+                      <p className="text-xs text-gray-700">
+                        <span className="font-medium">Email:</span> {director.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {(company?.createdAt || company?.updatedAt) && (
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 text-sm">

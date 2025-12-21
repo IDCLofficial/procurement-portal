@@ -7,6 +7,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { CategoriesResponse, MDAResponse } from '@/store/api/types';
 
 interface Sector {
     id: string;
@@ -14,29 +15,27 @@ interface Sector {
     description: string;
 }
 
-interface Grade {
-    id: string;
-    name: string;
-    label: string;
-    registrationCost: number;
-    financialCapacity: number;
-}
-
 interface Step6CategoryGradeProps {
     selectedSector: string;
     selectedGrade: string;
+    selectedMDA: string;
+    onMDAChange: (mda: string) => void;
     onSectorChange: (sector: string) => void;
     onGradeChange: (grade: string) => void;
     sectors: Sector[];
-    grades: Grade[];
+    grades: CategoriesResponse["grades"];
+    mdas: MDAResponse["mdas"];
 }
 
 export default function Step6CategoryGrade({
     selectedSector,
     selectedGrade,
+    selectedMDA,
+    onMDAChange,
     onSectorChange,
     onGradeChange,
     sectors,
+    mdas,
     grades,
 }: Step6CategoryGradeProps) {
 
@@ -49,7 +48,7 @@ export default function Step6CategoryGrade({
             {/* Sector Selection */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Select Ministry
+                    Select <span>Your Category <span className="text-red-500 text-lg">*</span></span>
                 </h3>
                 <Select value={selectedSector} onValueChange={(value)=>onSectorChange(value)}>
                     <SelectTrigger className="w-full h-auto min-h-12">
@@ -82,20 +81,49 @@ export default function Step6CategoryGrade({
                     </SelectContent>
                 </Select>
             </div>
-
-            {/* Grade Selection */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Select Grade
+                    Select <abbr title="Ministries, Departments, and Agencies (government bodies)">MDA</abbr> <span className="text-red-500 text-lg">*</span>
+                </h3>
+                {mdas && <Select value={selectedMDA} onValueChange={(value)=>onMDAChange(value)}>
+                    <SelectTrigger className="w-full h-auto min-h-12">
+                        <SelectValue placeholder="Select a ministry">
+                            {selectedMDA && (
+                                <div className="flex flex-col items-start gap-1 py-1">
+                                    <span className="font-semibold text-gray-900">
+                                        {mdas.find(s => s.name === selectedMDA)?.name}
+                                    </span>
+                                </div>
+                            )}
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {mdas.map((mda) => (
+                            <SelectItem key={mda.name} value={mda.name}>
+                                <div className="flex flex-col items-start gap-1 py-1">
+                                    <span className="font-semibold text-gray-900">
+                                        {mda.name}
+                                    </span>
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>}
+            </div>
+
+            {/* Grade Selection */}
+            {selectedSector && <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Select Grade <span className="text-red-500 text-lg">*</span>
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {grades.map((grade) => {
-                        const isSelected = selectedGrade === grade.id;
+                    {grades.filter((grade) => grade.category === selectedSector).sort((a, b) => String(a.grade).localeCompare(String(b.grade))).map((grade) => {
+                        const isSelected = selectedGrade === grade._id;
                         return (
                             <button
-                                key={grade.id}
+                                key={grade._id}
                                 type="button"
-                                onClick={() => onGradeChange(grade.id)}
+                                onClick={() => onGradeChange(grade._id)}
                                 className={`p-6 rounded-lg border-2 text-center transition-all cursor-pointer active:scale-[0.98] active:rotate-2 ${
                                     isSelected
                                         ? 'border-theme-green bg-green-50'
@@ -110,17 +138,12 @@ export default function Step6CategoryGrade({
                                             : 'bg-gray-100 text-gray-600'
                                     }`}
                                 >
-                                    {grade.name}
+                                    {grade.grade}
                                 </div>
-
-                                {/* Grade Label */}
-                                <h4 className="font-semibold text-gray-900 mb-4">
-                                    {grade.label}
-                                </h4>
 
                                 {/* Registration Cost */}
                                 <div className="mb-3 pb-3 border-b border-gray-200">
-                                    <p className="text-xs text-gray-600 mb-1">Registration Cost</p>
+                                    <p className="text-xs text-gray-600 mb-1">Certificate Cost</p>
                                     <p className="font-bold text-gray-900">
                                         {formatCurrency(grade.registrationCost)}
                                     </p>
@@ -137,7 +160,7 @@ export default function Step6CategoryGrade({
                         );
                     })}
                 </div>
-            </div>
+            </div>}
 
             {/* Upgrade Policy */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

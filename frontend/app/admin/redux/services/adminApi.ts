@@ -9,6 +9,58 @@ import type {
   DeleteUserResponse,
 } from "@/app/admin/types/api";
 
+type TransactionsApiResponse = {
+  success: boolean;
+  data: unknown[];
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+};
+
+export type GetTransactionsParams = {
+  page?: number;
+  limit?: number;
+  status?: string;
+};
+
+export interface AdminNotificationDto {
+  _id: string;
+  title: string;
+  message: string;
+  priority: string;
+  createdAt: string;
+}
+
+export interface AdminNotificationsApiResponse {
+  message: string;
+  notifications: AdminNotificationDto[];
+  totalNotifications: number;
+  totalUnreadNotifications: number;
+  totalCriticalNotifications: number;
+  totalHighPriorityNotifications: number;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export type GetAuditLogsParams = {
+  entityType?: string;
+  entityId?: string;
+  actor?: string;
+  action?: string;
+  severity?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  skip?: number;
+};
+
 export const adminApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // GET ALL USERS
@@ -54,6 +106,71 @@ export const adminApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Users"],
     }),
+
+    // GET ALL TRANSACTIONS
+    getTransactions: builder.query<TransactionsApiResponse, GetTransactionsParams | void>({
+      query: (params) => {
+        if (!params) {
+          return "/vendor-payments/all";
+        }
+
+        const cleanedParams = Object.fromEntries(
+          Object.entries(params).filter(([, value]) =>
+            value !== undefined && value !== null,
+          ),
+        );
+
+        return {
+          url: "/vendor-payments/all",
+          params: cleanedParams,
+        };
+      },
+      transformResponse: (response: TransactionsApiResponse) => {
+        console.log("Transactions API response:", response);
+        return response;
+      },
+    }),
+
+    // GET ALL AUDIT LOGS
+    getAuditLogs: builder.query<unknown, GetAuditLogsParams | void>({
+      query: (params) => {
+        if (!params) {
+          return "/audit-logs";
+        }
+
+        const cleanedParams = Object.fromEntries(
+          Object.entries(params).filter(([, value]) =>
+            value !== undefined && value !== null,
+          ),
+        );
+
+        return {
+          url: "/audit-logs",
+          params: cleanedParams,
+        };
+      },
+      transformResponse: (response: unknown) => {
+        console.log("Audit logs API response:", response);
+        return response;
+      },
+    }),
+
+    // GET ADMIN NOTIFICATIONS
+    getAdminNotifications: builder.query<AdminNotificationsApiResponse, void>({
+      query: () => "/notifications/admin-notification",
+      transformResponse: (response: AdminNotificationsApiResponse) => {
+        console.log("Admin notifications API response:", response);
+        return response;
+      },
+    }),
+
+    // MARK ADMIN NOTIFICATION AS READ (BY ID)
+    markAdminNotificationAsReadById: builder.mutation<void, string>({
+      query: (notificationId) => ({
+        url: `/notifications/mark-as-read/${notificationId}`,
+        method: "PATCH",
+      }),
+    }),
   }),
 });
 
@@ -63,4 +180,8 @@ export const {
   useUpdateUserRoleMutation,
   useDeleteUserMutation,
   useLoginMutation,
+  useGetTransactionsQuery,
+  useGetAuditLogsQuery,
+  useGetAdminNotificationsQuery,
+  useMarkAdminNotificationAsReadByIdMutation,
 } = adminApi;

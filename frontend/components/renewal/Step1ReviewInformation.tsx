@@ -6,11 +6,6 @@ import VerificationItem from './VerificationItem';
 import SuccessAlert from './SuccessAlert';
 import { FaBuilding } from 'react-icons/fa6';
 
-interface Category {
-    category: string;
-    grade: string;
-}
-
 interface VerificationItem {
     label: string;
     value: string;
@@ -18,16 +13,18 @@ interface VerificationItem {
 
 interface Step1ReviewInformationProps {
     registrationId: string;
+    grade: string;
     companyName: string;
     currentExpiryDate: string;
     newExpiryDate: string;
-    categories: Category[];
+    categories: string;
     verificationItems: VerificationItem[];
     onUpdateCompanyInfo: () => void;
 }
 
 export default function Step1ReviewInformation({
     registrationId,
+    grade,
     companyName,
     currentExpiryDate,
     newExpiryDate,
@@ -71,13 +68,10 @@ export default function Step1ReviewInformation({
                     Registration Categories
                 </h3>
                 <div className="bg-gray-50 rounded-lg border border-gray-200">
-                    {categories.map((item, index) => (
-                        <CategoryBadge
-                            key={index}
-                            category={item.category}
-                            grade={item.grade}
-                        />
-                    ))}
+                    <CategoryBadge
+                        category={categories}
+                        grade={grade}
+                    />
                 </div>
             </div>
 

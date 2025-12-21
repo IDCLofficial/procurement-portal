@@ -77,9 +77,11 @@ export default function PaymentHistoryPage() {
     const transactions = useMemo(() => {
         if (!paymentHistory?.paymentTable) return [];
         
+        console.log(paymentHistory.paymentTable[0])
+        
         return paymentHistory.paymentTable.map((payment) => ({
             id: `${payment.reference}`.toUpperCase(),
-            date: new Date(payment.data).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            date: new Date(payment.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
             description: payment.description,
             category: '', // Not provided by API
             type: payment.type,
@@ -345,7 +347,7 @@ export default function PaymentHistoryPage() {
         const headers = ['Reference', 'Date', 'Description', 'Type', 'Amount', 'Status'];
         const rows = paymentHistory.paymentTable.map(payment => [
             payment.reference,
-            new Date(payment.data).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            new Date(payment.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
             payment.description,
             payment.type === 'new' ? 'Vendor Registration' : payment.type,
             `₦${payment.amount.toLocaleString()}`,

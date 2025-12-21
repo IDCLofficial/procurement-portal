@@ -172,6 +172,10 @@ export const STATUS_MESSAGES = {
     },
 } as const;
 
+export const processingFee = 30_000;
+export const session_key = "auth_session_token";
+export const return_url_key = "return_url";
+
 // Type exports for better TypeScript support
 export type StatusType = keyof typeof STATUS_CONFIG;
 export type SectorType = keyof typeof SECTOR_CONFIG;

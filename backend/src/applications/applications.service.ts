@@ -359,9 +359,9 @@ export class ApplicationsService {
           default:
             notificationType = NotificationType.APPLICATION_APPROVED;
             notificationTitle = 'Application Status Updated';
-            notificationMessage = `Your application status has been updated to ${newStatus}.`;
+            notificationMessage = `Your application been ${newStatus}.`;
             activityType = ActivityType.APPROVED;
-            activityMessage = `Your application status has been updated to ${newStatus}`;
+            activityMessage = `Your application been ${newStatus}`;
         }
 
         // Create activity log

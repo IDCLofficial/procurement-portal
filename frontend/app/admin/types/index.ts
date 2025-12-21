@@ -44,6 +44,7 @@ export interface Company {
   tin?: string;
   address?: string;
   lga?: string;
+  mda?:string;
   categories?: (string | CompanyCategory)[];
   grade?: string;
   documents?: CompanyDocument[];

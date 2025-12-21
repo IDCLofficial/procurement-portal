@@ -20,7 +20,8 @@ export class CertificatesService {
     grade?: string,
     lga?: string,
     status?: string,
-    category?: string
+    category?: string,
+    mda?: string
   ) {
     try {
       // Build filter object with $and to properly combine all conditions
@@ -38,7 +39,8 @@ export class CertificatesService {
             { phone: { $regex: search, $options: 'i' } },
             { tin: { $regex: search, $options: 'i' } },
             { approvedSectors: { $regex: search, $options: 'i' } },
-            { categories: { $regex: search, $options: 'i' } }
+            { categories: { $regex: search, $options: 'i' } },
+            { mda: { $regex: search, $options: 'i' } }
           ]
         });
       }
@@ -61,6 +63,10 @@ export class CertificatesService {
       // Filter by category - search in categories array
       if (category) {
         conditions.push({ categories: { $regex: category, $options: 'i' } });
+      }
+
+      if(mda) {
+        conditions.push({ mda: { $regex: mda, $options: 'i'}})
       }
 
       // Exclude certificates for vendors whose email is blank or missing

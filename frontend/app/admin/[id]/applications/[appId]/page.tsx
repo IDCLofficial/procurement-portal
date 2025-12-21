@@ -61,7 +61,7 @@ function ApplicationDetails() {
     });
 
   const isForwardDisabled =
-    application?.currentStatus !== "Pending Desk Review" || hasUnapprovedDocuments;
+    application?.currentStatus === "Approved" || application?.currentStatus === "Forwarded to Registrar" || hasUnapprovedDocuments;
   const isRegistrar = user?.role === "Registrar";
 
   const slaMetrics = application && slaConfig ? computeApplicationSla(application, slaConfig) : undefined;

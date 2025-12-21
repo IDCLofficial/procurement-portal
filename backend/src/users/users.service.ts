@@ -182,14 +182,20 @@ export class UsersService {
     .exec()
 
     if(!deskOfficers){
-      return {
-        officers:[]
-      }
+      return []
     }
 
-    return {
-      officers:deskOfficers
-    }
+    return deskOfficers.map(user => ({
+      id:user._id,
+      fullName: user.fullName,
+      role: user.role,
+      email: user.email,
+      phoneNo: user.phoneNo,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      assignedApps: user.assignedApps,
+      mda: user.mda
+    }));
 
   }
 

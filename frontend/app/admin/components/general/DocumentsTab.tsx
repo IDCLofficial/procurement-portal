@@ -68,7 +68,7 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
       if (pendingAction === 'approve') {
         await changeDocumentStatus({
           documentId: selectedDocument._id,
-          documentStatus: 'Approved',
+          documentStatus: 'approved',
         }).unwrap();
       } else if (pendingAction === 'clarify') {
         const trimmedCustomMessage = clarificationCustomMessage.trim();
@@ -81,7 +81,7 @@ export function DocumentsTab({ documents, onDocumentsUpdated }: DocumentsTabProp
 
         await changeDocumentStatus({
           documentId: selectedDocument._id,
-          documentStatus: 'Needs Review',
+          documentStatus: 'needs review',
           message: finalMessage,
         }).unwrap();
       }

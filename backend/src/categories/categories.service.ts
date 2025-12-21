@@ -162,4 +162,22 @@ export class CategoriesService {
       throw new BadRequestException('Failed to delete grade');
     }
   }
+
+  /**
+   * Find all grades for a specific category
+   * @param category - The category to filter grades by
+   * @returns Array of grades for the specified category
+   */
+  async findGradesByCategory(category: string): Promise<Grade[]> {
+    try {
+      const grades = await this.gradeModel.find({ category: category.toLowerCase() });
+      if (!grades || grades.length === 0) {
+        throw new NotFoundException(`No grades found for category: ${category}`);
+      }
+      return grades;
+    } catch (error) {
+      this.logger.error(`Error finding grades for category ${category}: ${error.message}`);
+      throw new BadRequestException(`Failed to retrieve grades: ${error.message}`);
+    }
+  }
 }

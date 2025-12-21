@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException, InternalServerErrorException} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Request } from 'express';
@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import TokenHandlers from 'src/lib/generateToken';
 import { updateRegistrationDto } from './dto/update-registration.dto';
 import { Company, CompanyDocument, Directors, DirectorsDocument, Status } from '../companies/entities/company.schema';
-import { verificationDocuments, verificationDocument, Status as DocumentStatus } from '../documents/entities/document.schema';
+import { verificationDocuments, verificationDocument, Status as DocumentStatus, verificationDocPreset } from '../documents/entities/document.schema';
 import { Payment, PaymentDocument } from '../payments/entities/payment.schema';
 import { Application, ApplicationDocument } from '../applications/entities/application.schema';
 import { loginDto } from './dto/logn.dto';
@@ -21,6 +21,9 @@ import { Logger } from '@nestjs/common';
 import { necessaryDocument } from './dto/update-registration.dto';
 import { VendorActivityLog, VendorActivityLogDocument, ActivityType } from './entities/vendor-activity-log.schema';
 import { renewRegistrationDto } from './dto/renew-registration-dto';
+import { replaceDocumentDto } from './dto/replace-document.dto';
+import { changePasswordDto } from './dto/change-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class VendorsService {
@@ -32,6 +35,7 @@ export class VendorsService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Directors.name) private directorsModel: Model<DirectorsDocument>,
     @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>,
+    @InjectModel(verificationDocPreset.name) private verificationDocumentPresetModel: Model<verificationDocPreset>,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
     @InjectModel(VendorActivityLog.name) private activityLogModel: Model<VendorActivityLogDocument>,
@@ -126,24 +130,102 @@ export class VendorsService {
    * - Generates JWT token for authentication
    */
   async login(body:loginDto): Promise<any> {
-      const vendor = await this.vendorModel.findOne({ email:body.email }).exec();
-      if (!vendor) {
-        throw new NotFoundException('Vendor not found');
-      }
-      if(!vendor.isVerified){
-        throw new UnauthorizedException('Email not verified')
-      }
-      const isPasswordValid = await bcrypt.compare(body.password, vendor.password);
-      if (!isPasswordValid) {
-        throw new BadRequestException('Invalid password');
-      }
-      const { password: _, ...user } = vendor.toObject();
-      console.log(user)
-      return {
-        message:"Login Successful",
-        token: this.tokenHandlers.generateToken(user)
-      };
+    const vendor = await this.vendorModel.findOne({ email:body.email }).exec();
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
     }
+    if(!vendor.isVerified){
+      throw new UnauthorizedException('Email not verified')
+    }
+    const isPasswordValid = await bcrypt.compare(body.password, vendor.password);
+    if (!isPasswordValid) {
+      throw new BadRequestException('Invalid password');
+    }
+    const { password: _, ...user } = vendor.toObject();
+    console.log(user)
+    const accessToken =  this.tokenHandlers.generateToken(user)
+    
+    vendor.accessToken = accessToken;
+    await vendor.save();
+
+    return {
+      message:"Login Successful",
+      token:vendor.accessToken
+    };
+  }
+
+  async logout(req:any): Promise<any>{
+    const authHeader = req?.headers?.authorization;
+    
+    if (!authHeader || typeof authHeader !== 'string') {
+      throw new UnauthorizedException('Could not find your authorization token')
+    }
+
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.replace('Bearer ', '').trim()
+      : authHeader.trim();
+
+    if (!token) {
+      throw new UnauthorizedException('Could not find your authorization token')
+    }
+
+    const vendor = await this.vendorModel.findOne({ accessToken: token }).exec();
+    if (!vendor) {
+      throw new UnauthorizedException('Invalid token')
+    }
+
+    vendor.accessToken = undefined;
+    await vendor.save();
+
+    return {
+      message: 'Logout successful',
+    }
+  }
+
+  /**
+   * change password
+   */
+  async changePassword(id:string, body:changePasswordDto, authToken:string){
+    const vendor = await this.vendorModel.findById(id)
+    
+    if(!vendor){
+      throw new NotFoundException('Vendor not found')
+    }
+
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
+    }
+
+    const isCurrentPassword = await bcrypt.compare(body.currentPassword, vendor.password);
+    
+    if(!isCurrentPassword){
+      throw new BadRequestException('Current password does not match')
+    }
+
+    const isCurrentPasswordAndNewSame = await bcrypt.compare(body.newPassword, vendor.password)
+    if(isCurrentPasswordAndNewSame){
+      throw new BadRequestException('New password cannot be thesame as current password')
+    }
+
+    if (body.newPassword !== body.confirmPassword){
+      throw new BadRequestException('new password and confiirm password do not match')
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashNewPassword = await bcrypt.hash(body.newPassword, salt)
+    try{
+      if(hashNewPassword){
+        vendor.password = hashNewPassword;
+        await vendor.save();
+        return {
+          message:"Password changed successfully"
+        }
+      }
+    }catch(e){
+      this.Logger.log(e)
+      throw new InternalServerErrorException('Failed to change password')
+    }
+  }
 
   /**
    * Get all vendor accounts with pagination and filtering
@@ -237,7 +319,7 @@ export class VendorsService {
    * 3. Fetching the vendor profile from the database
    * 4. Returning the profile without the password field
    */
-  async getProfile(userId: string): Promise<Omit<Vendor, 'password'>> {
+  async getProfile(userId: string, authToken:string): Promise<Omit<Vendor, 'password'>> {
     
     if (!userId) {
       throw new UnauthorizedException('An error occured');
@@ -249,6 +331,10 @@ export class VendorsService {
       
       if (!vendor) {
         throw new NotFoundException(`Vendor with ID ${userId} not found`);
+      }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or Expired token')
       }
       
       return vendor.toObject();
@@ -270,11 +356,21 @@ export class VendorsService {
    * - Automatically hashes password if provided
    * - Returns updated document
    */
-  async update(id: string, updateVendorDto: UpdateVendorDto): Promise<Vendor> {
+  async update(id: string, updateVendorDto: UpdateVendorDto, authToken:string): Promise<Vendor> {
     if (updateVendorDto.password) {
       const salt = await bcrypt.genSalt();
       updateVendorDto.password = await bcrypt.hash(updateVendorDto.password, salt);
     }
+    const vendor = await this.vendorModel.findById(id).exec();
+    
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${id} not found`);
+    }
+    
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
+    }
+
     const updatedVendor = await this.vendorModel
       .findByIdAndUpdate(id, updateVendorDto, { new: true })
       .exec();
@@ -301,10 +397,16 @@ export class VendorsService {
    * - Stores bank details and service categories
    * - Sets company status to PENDING for new registrations
    */
-  async registerCompany(userId:string, updateRegistrationDto:updateRegistrationDto): Promise<any> {
+  async registerCompany(userId:string, updateRegistrationDto:updateRegistrationDto, authToken:string): Promise<any> {
+    
     const vendor = await this.vendorModel.findById(userId).exec();
+    
     if (!vendor) {
       throw new NotFoundException(`Vendor not found`);
+    }
+
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
     }
 
     try{
@@ -474,19 +576,44 @@ export class VendorsService {
        * update company registration for documents
        */
       if(updateRegistrationDto.documents){
+        console.log(updateRegistrationDto.documents)
         try{
-          const company = await this.companyModel.findOne({userId:vendor._id})
+          const company = await this.companyModel.findOne({userId:vendor._id});
+          const verificationDocPresets = await this.verificationDocumentPresetModel.find({});
+
+          const hasPresets = verificationDocPresets && verificationDocPresets.length > 0;
+          let documentsToProcess = updateRegistrationDto.documents;
+
+          if (hasPresets) {
+            const validDocTypes = new Set(
+              verificationDocPresets.map((preset) =>
+                preset.documentName.toLowerCase().trim(),
+              ),
+            );
+
+            documentsToProcess = updateRegistrationDto.documents.filter(
+              (doc) =>
+                doc.documentType &&
+                validDocTypes.has(doc.documentType.toLowerCase().trim()),
+            );
+          }
+
+          let firstTimeDocUpload = true;
+
           // Process each document - create or update individual document records
           const savedDocs = await Promise.all(
-            updateRegistrationDto.documents.map(async (doc) => {
+            documentsToProcess.map(async (doc) => {
+              const escapedDocumentType = (doc.documentType || '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
               // Check if document with same type already exists for this vendor
               const existingDoc = await this.verificationDocumentModel.findOne({
                 vendor: vendor._id,
-                documentType: doc.documentType
+                documentType: { $regex: new RegExp(`^${escapedDocumentType}$`, 'i') },
               });
-              
-              if (existingDoc) {
+
+              if (existingDoc ) {
                 // Update existing document
+                const previousFileUrl = existingDoc.fileUrl;
                 existingDoc.fileUrl = doc.fileUrl;
                 existingDoc.validFrom = doc.validFrom;
                 existingDoc.validTo = doc.validTo;
@@ -494,50 +621,92 @@ export class VendorsService {
                 existingDoc.fileName = doc.fileName;
                 existingDoc.fileSize = doc.fileSize;
                 existingDoc.fileType = doc.fileType;
+                existingDoc.documentType = doc.documentType;
                 existingDoc.validFor = doc.validFor;
                 existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
-                existingDoc.status = {
-                  status:DocumentStatus.PENDING,
+                if (previousFileUrl !== doc.fileUrl) {
+                  existingDoc.status = {
+                    status: DocumentStatus.PENDING,
+                  };
                 }
-                
+
                 return await existingDoc.save();
-                
               } else {
                 // Create new document record
-                const newDoc = new this.verificationDocumentModel({
-                  vendor: vendor._id,
-                  fileUrl: doc.fileUrl,
-                  validFrom: doc.validFrom,
-                  validTo: doc.validTo,
-                  documentType: doc.documentType,
-                  uploadedDate: doc.uploadedDate,
-                  fileName: doc.fileName,
-                  fileSize: doc.fileSize,
-                  fileType: doc.fileType,
-                  validFor: doc.validFor,
-                  hasValidityPeriod: doc.hasValidityPeriod,
-                  status: {
-                    status:DocumentStatus.PENDING,
-                  }
-                });
-                const response = await newDoc.save();
-                vendor.companyForm = companyForm.STEP5;
-                await vendor.save();
-                return response;
+                try {
+                  const newDoc = new this.verificationDocumentModel({
+                    vendor: vendor._id,
+                    fileUrl: doc.fileUrl,
+                    validFrom: doc.validFrom,
+                    validTo: doc.validTo,
+                    documentType: doc.documentType,
+                    uploadedDate: doc.uploadedDate,
+                    fileName: doc.fileName,
+                    fileSize: doc.fileSize,
+                    fileType: doc.fileType,
+                    validFor: doc.validFor,
+                    hasValidityPeriod: doc.hasValidityPeriod,
+                    status: {
+                      status: DocumentStatus.PENDING,
+                    },
+                  });
+                  const response = await newDoc.save();
+                  return response
+                } catch (e) {
+                  this.Logger.log(e);
+                  throw new ConflictException('there was an error uploading documents');
+                }
               }
-            })
+            }),
           );
-          if(company){
-            company.documents = savedDocs.map(doc=>doc._id as Types.ObjectId)
-            await company.save()
+
+          const allVendorDocs = await this.verificationDocumentModel.find({
+            vendor: vendor._id,
+          });
+
+          if (company) {
+            company.documents = allVendorDocs.map(
+              (doc) => doc?._id as Types.ObjectId,
+            );
+            await company.save();
           }
-          
+
+          firstTimeDocUpload = false;
+
+          if (hasPresets) {
+            const requiredPresetNames = verificationDocPresets
+              .filter((preset) => preset.isRequired)
+              .map((preset) => preset.documentName.toLowerCase().trim());
+
+            const existingTypes = allVendorDocs.map((doc) =>
+              doc.documentType.toLowerCase().trim(),
+            );
+
+            const missingRequiredDocuments = requiredPresetNames.filter(
+              (name) => !existingTypes.includes(name),
+            );
+
+            if (missingRequiredDocuments.length > 0) {
+              throw new BadRequestException({
+                message: 'Some required documents are missing',
+                missingDocuments: missingRequiredDocuments,
+              });
+            }
+            if(firstTimeDocUpload){
+              vendor.companyForm = companyForm.STEP5;
+              await vendor.save();
+            }
+          }
+
           return {
             message: "Documents uploaded successfully",
-            documents: savedDocs
+            documents: savedDocs,
           };
         }catch(err){
           this.Logger.debug(`${err}`)
+          if (err instanceof BadRequestException) {
+            throw err;
+          }
           throw new ConflictException('Error updating documents: ' + err.message)
         }
       }
@@ -545,22 +714,23 @@ export class VendorsService {
       /**
        * update company registration for categories and grade
        */
-      if(updateRegistrationDto.categoriesAndGrade){
+      if(updateRegistrationDto.categoryAndGrade){
         try{
           const company = await this.companyModel.findOne({userId:vendor._id})
           if(!company){
             new Logger.error("company not found")
             throw new NotFoundException("Company not found. Please register company first.")
           }
-          company.categories = updateRegistrationDto.categoriesAndGrade.categories;
-          company.grade = updateRegistrationDto.categoriesAndGrade.grade;
+          company.category = updateRegistrationDto.categoryAndGrade.category;
+          company.mda = updateRegistrationDto.categoryAndGrade.mda;
+          company.grade = updateRegistrationDto.categoryAndGrade.grade;
           await company.save();
 
           vendor.companyForm = companyForm.STEP6;
           await vendor.save();
 
           return {
-            message: "Categories and grade updated successfully. Proceed to payment",
+            message: "Category, mda and grade updated successfully. Proceed to payment",
             result: company,
             nextStep: vendor.companyForm
           }
@@ -571,6 +741,9 @@ export class VendorsService {
       }
     }catch(error) {
       this.Logger.debug(`${error}`)
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException(`An error occured`);
     }
   }
@@ -578,7 +751,7 @@ export class VendorsService {
 
   /** */
   async renewRegistration(userId:string, renewRegistrationDto:renewRegistrationDto){
-    if(!renewRegistrationDto.documents){
+    if(!renewRegistrationDto.documents || renewRegistrationDto.documents.length === 0){
       this.Logger.log('Please upload at least 1 document')
       throw new BadRequestException('Please upload at least 1 document')
     }
@@ -594,19 +767,21 @@ export class VendorsService {
         vendor:userId
       })
 
-      if(!documents){
+      if(!documents || documents.length === 0){
         this.Logger.log(`No documents found for vendor with id ${userId}`)
         throw new NotFoundException(`No documents found for this vendor`)
       }
 
       const updatedDocuments = await Promise.all(
         renewRegistrationDto.documents.map(async (doc) => {
+          const escapedDocumentType = (doc.documentType || '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           const existingDoc = await this.verificationDocumentModel.findOne({
             vendor: userId,
-            documentType: doc.documentType
+            documentType: { $regex: new RegExp(`^${escapedDocumentType}$`, 'i') },
           });
           
           if (existingDoc) {
+            const previousFileUrl = existingDoc.fileUrl;
             existingDoc.fileUrl = doc.fileUrl;
             existingDoc.validFrom = doc.validFrom;
             existingDoc.validTo = doc.validTo;
@@ -616,18 +791,13 @@ export class VendorsService {
             existingDoc.fileType = doc.fileType;
             existingDoc.validFor = doc.validFor;
             existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
-            existingDoc.status = {
-              status:DocumentStatus.PENDING,
+            if (previousFileUrl !== doc.fileUrl) {
+              existingDoc.status = {
+                status:DocumentStatus.PENDING,
+              }
             }
             await existingDoc.save();
-            
-            vendor.renewalStep = renewalSteps.STEP2;
-            await vendor.save();
-            
-            return {
-              message:'Documents updated successfully',
-              nextStep:vendor.renewalStep
-            }
+            return existingDoc;
             
           } else {
             const newDoc = new this.verificationDocumentModel({
@@ -651,10 +821,23 @@ export class VendorsService {
           }
         })
       );
+      //
+
+      const company = await this.companyModel.findOne({ userId: vendor._id }).exec();
+      if (!company) {
+        throw new NotFoundException('Company not found. Please register company first.')
+      }
+
+      company.documents = updatedDocuments.map((doc) => doc?._id as Types.ObjectId);
+      await company.save();
 
       if(!updatedDocuments){
         throw new ConflictException('Error updating documents')
       }
+
+      vendor.renewalStep = renewalSteps.STEP2;
+      await vendor.save();
+
 
       return {
         message: 'Documents updated successfully',
@@ -760,7 +943,6 @@ export class VendorsService {
       tin:" ",
       address:" ",
       lga:" ",
-      categories:[],
       userId:vendor._id
     })
     const savedCompany = await newCompany.save();
@@ -829,11 +1011,15 @@ export class VendorsService {
     }
   }
 
-  async getRegistrationPayment(vendorId: string) {
+  async getRegistrationPayment(vendorId: string, authToken:string) {
     // Find vendor
     const vendor = await this.vendorModel.findById(vendorId);
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
+    }
+    
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
     }
 
     // Find company
@@ -861,16 +1047,21 @@ export class VendorsService {
 
   async getPaymentHistory(
     vendorId: string, 
+    authToken:string,
     page = 1, 
     limit = 10,
     search?: string,
     year?: number,
-    type?: string
+    type?: string,
   ) {
     // Find vendor
     const vendor = await this.vendorModel.findById(vendorId);
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
+    }
+
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
     }
 
     // Find company
@@ -939,7 +1130,7 @@ export class VendorsService {
         amount: payment.amount,
         reference:payment.transactionReference,
         status:payment.status,
-        data:payment.paymentDate,
+        date:payment.paymentDate,
         description:payment.description,
         type: payment.type
       }
@@ -977,7 +1168,7 @@ export class VendorsService {
    * Retrieves all applications associated with a vendor's company,
    * including populated company details and documents
    */
-  async getVendorApplication(userId:string){
+  async getVendorApplication(userId:string, authToken:string){
     try {
       // Verify company exists
       const vendor = await this.vendorModel.findById(userId);
@@ -985,8 +1176,13 @@ export class VendorsService {
       if(!vendor){
         throw new NotFoundException("Vendor not found")
       }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
+      }
       
       const company = await this.companyModel.findById(vendor.companyId);
+      
       if (!company) {
         throw new NotFoundException('Company not found');
       }
@@ -1007,6 +1203,8 @@ export class VendorsService {
         throw new NotFoundException('No applications found for this company');
       }
 
+      this.Logger.log(application)
+
       return {
         status: application.currentStatus
       }
@@ -1025,13 +1223,17 @@ export class VendorsService {
    * @param userId - The vendor's user ID
    * @returns Array of timeline entries with status, timestamp, and notes
    */
-  async getApplicationTimeline(userId: string) {
+  async getApplicationTimeline(userId: string, authToken:string) {
     try {
       // Verify vendor exists
       const vendor = await this.vendorModel.findById(userId);
 
       if (!vendor) {
         throw new NotFoundException('Vendor not found');
+      }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
       }
       
       // Verify company exists
@@ -1106,13 +1308,17 @@ export class VendorsService {
    * @param userId - Vendor's user ID
    * @returns Latest 5 activity logs
    */
-  async getVendorActivityLogs(userId: string) {
+  async getVendorActivityLogs(userId: string, authToken:string) {
     try {
       // Verify vendor exists
       const vendor = await this.vendorModel.findById(userId);
 
       if (!vendor) {
         throw new NotFoundException('Vendor not found');
+      }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
       }
 
       // Get latest 5 activity logs
@@ -1145,16 +1351,25 @@ export class VendorsService {
     }
   }
 
-  async deactivateMyAccount(id:string){
+  async deactivateMyAccount(id:any, authToken:string){
     try {
       const vendor = await this.vendorModel.findById(id);
+      
       if (!vendor) {
         throw new NotFoundException('Vendor not found');
       }
+
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
+      }
+
       vendor.isActive = false;
       vendor.originalEmail = vendor.email,
-      vendor.email = ""
+      vendor.email = " "
       await vendor.save();
+
+      // 
+    
       return vendor;
     } catch (err) {
       if (err instanceof NotFoundException) {
@@ -1165,5 +1380,140 @@ export class VendorsService {
     }
   }
 
-  
+  async replaceDocument(id:string, replaceDocumentDto:replaceDocumentDto, vendorId:string, authToken:string){
+    try {
+      const newDocument = await this.verificationDocumentModel.create(replaceDocumentDto.document)
+      
+      if(!newDocument){
+        throw new ConflictException('there was an error uploading the document')
+      }
+      const vendor = await this.vendorModel.findById(vendorId);
+      
+      if (!vendor) {
+        throw new NotFoundException('Vendor not found');
+      } 
+      
+      if(vendor.accessToken !== authToken){
+        throw new UnauthorizedException('Invalid or expired token')
+      }
+
+      const company  = await this.companyModel.findOne({userId:new Types.ObjectId(vendorId)})
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+      if (company.documents) {
+        company.documents = company.documents.map((document) => {
+          if (document.toString() === new Types.ObjectId(id).toString()) {
+            return newDocument._id as Types.ObjectId;
+          }
+          return document;
+        });
+      }
+      await company.save();
+      return {
+        message:"document uploaded successfully",
+        document:newDocument
+      };
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      this.Logger.error(`Error replacing document: ${err.message}`);
+      throw new BadRequestException('Failed to replace document');
+    }
+  }
+
+  /**
+   * Initiate password reset process
+   * 
+   * @param email - User's email address
+   * @returns Success message
+   * @throws {NotFoundException} If no vendor found with the email
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const vendor = await this.vendorModel.findOne({ 
+      email:email
+    });
+    if (!vendor) {
+      // For security, don't reveal if the email exists or not
+      return { message: 'If an account with this email exists, a password reset link has been sent' };
+    }
+
+    try {
+      // Generate a password reset token (valid for 1 hour)
+      const resetToken = this.jwtService.sign({
+        id: vendor._id, 
+        email: vendor.email,
+        type: 'password_reset',
+        expiresIn:'15 minutes'
+      },{
+        expiresIn:'15m'
+      });
+
+      // Send password reset email
+      const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+      this.Logger.log(resetToken)
+      await this.emailService.sendResetPasswordLink(resetLink, email);
+      return { message: 'If an account with this email exists, a password reset link has been sent' };
+    } catch (error) {
+      this.Logger.error('Error sending password reset email:', error);
+      throw new InternalServerErrorException('Failed to send password reset email');
+    }
+  }
+
+  /**
+   * Reset user's password using a valid reset token
+   * 
+   * @param token - Password reset token
+   * @param newPassword - New password
+   * @returns Success message
+   * @throws {BadRequestException} If token is invalid or expired
+   * @throws {NotFoundException} If user not found
+   */
+  async resetPassword(body:ResetPasswordDto, token:string): Promise<{ message: string }> {
+    try {
+      //decode token
+      const decodeToken = await this.jwtService.verify(token);
+
+      if(!decodeToken || decodeToken.type !== 'password_reset'){
+        throw new UnauthorizedException('You are unauthorized to access this resource');
+      }
+      // Find the user
+      const vendor = await this.vendorModel.findById(decodeToken.id);
+      
+      if (!vendor) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Verify the token
+      if (body.newPassword !== body.confirmPassword) {
+        throw new BadRequestException('Passwords do not match');
+      }
+      
+      // Hash the new password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(body.newPassword, salt);
+
+      // Update the password
+      vendor.password = hashedPassword;
+      await vendor.save();
+
+      // Log the password reset activity
+      await this.createActivityLog(
+        vendor._id as Types.ObjectId,
+        ActivityType.PASSWORD_CHANGED,
+        'Password was reset using password reset link',
+        { resetVia: 'forgot-password' }
+      );
+
+      this.Logger.log(`${vendor.fullname} has reset his password successfully`)
+      return { message: 'Password has been reset successfully' };
+    } catch (error) {
+      if (error.name === 'JsonWebTokenError') {
+        throw new BadRequestException('Invalid token');
+      }
+      this.Logger.error(error.message)
+      throw new ConflictException(`An error occured: ${error.message}`);
+    }
+  }
 }

@@ -8,7 +8,7 @@ export enum companyForm{
   STEP2="directors",
   STEP3="bankDetails",
   STEP4="documents",
-  STEP5="categoriesAndGrade",
+  STEP5="categoryAndGrade",
   STEP6="Payment",
   COMPLETE="complete"
 }
@@ -17,10 +17,6 @@ export enum renewalSteps{
   STEP1="documents",
   STEP2="payment",
   COMPLETE="complete"
-}
-
-export type settings = {
-
 }
 
 @Schema({ timestamps: true })
@@ -64,8 +60,8 @@ export class Vendor {
   @Prop({ required: false, default: true })
   isActive: boolean;
 
-  @Prop({required:false})
-  settings:settings
+  @Prop({required: false})
+  accessToken?: string;
 }
 
 export const VendorSchema = SchemaFactory.createForClass(Vendor);

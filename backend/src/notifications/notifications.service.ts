@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../users/entities/user.schema';
@@ -19,13 +19,106 @@ export class NotificationsService {
   /**
    * Check and notify for documents expiring within 7 days
    */
+  async getVendorNotifications(
+    vendorId: string,
+    filters: { filter: 'all' | 'read' | 'unread'; search: string },
+    pagination: { page: number; limit: number; skip: number }
+  ) {
+    const { filter, search } = filters;
+    const { limit, skip } = pagination;
+
+    // Build the query
+    const query: any = { 
+      $or: [
+        { vendorId: new Types.ObjectId(vendorId) },
+        { recipientId: new Types.ObjectId(vendorId) }
+      ]
+    };
+
+    // Apply read/unread filter
+    if (filter === 'read') {
+      query.isRead = true;
+    } else if (filter === 'unread') {
+      query.isRead = false;
+    }
+
+    // Apply search if provided
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { message: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Get counts for all, read, and unread notifications
+    const [total, readCount, unreadCount, critical, highPriority] = await Promise.all([
+      this.notificationModel.countDocuments(query),
+      this.notificationModel.countDocuments({ ...query, isRead: true }),
+      this.notificationModel.countDocuments({ ...query, isRead: false }),
+      this.notificationModel.countDocuments({ ...query, priority: priority.CRITICAL }),
+      this.notificationModel.countDocuments({ ...query, priority: priority.HIGH }),
+    ]);
+
+    // Get paginated results
+    const notifications = await this.notificationModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    return {
+      notifications: notifications,
+      total: total,
+      totalRead: readCount,
+      totalUnread: unreadCount,
+      totalHigh: highPriority,
+      totalCritical: critical,
+      pagination: {
+        total,
+        page: pagination.page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      }
+    };
+  }
+
+  /**
+   * Mark a single notification as read
+   * @param notificationId - ID of the notification to mark as read
+   * @param userId - ID of the user making the request
+   * @throws {NotFoundException} If notification is not found or doesn't belong to user
+   */
+  async markAsRead(notificationId: string, userId: string): Promise<void> {
+    try{
+      const notification = await this.notificationModel.findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(notificationId),
+          $or: [
+            { vendorId: new Types.ObjectId(userId) },
+            { recipientId: new Types.ObjectId(userId) }
+          ]
+        },
+        { $set: { isRead: true } },
+        { new: true }
+      );
+      
+      if (!notification) {
+        throw new NotFoundException('Notification not found');
+      }
+    }catch(e){
+      this.logger.error(e)
+      throw new ConflictException('The server encountered a problem executing your request')
+    }
+  }
+
   async checkExpiringDocuments() {
     const now = new Date();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
     
     const documents = await this.documentModel.find({
       validTo: {
-        $gte: now,
+        $gte: now.toISOString().split('T')[0],
         $lte: sevenDaysFromNow,
       },
     }).populate('vendor');
@@ -78,10 +171,10 @@ export class NotificationsService {
     const now = new Date();
     
     const expiredDocuments = await this.documentModel.find({
-      $or: [
-        { validTo: { $eq: now } },
-        { validTo: { $gt: now } }
-      ]
+      validTo: {
+        $lt: now.toISOString().split('T')[0], // Gets today's date in YYYY-MM-DD format
+        $ne: ''
+      },
     }).populate('vendor');
 
     let notificationsSent = 0;
@@ -118,20 +211,20 @@ export class NotificationsService {
           isRead: false,
         });
 
-        // Notify all admins
-        const admins = await this.userModel.find({ role: 'Admin' });
-        for (const admin of admins) {
-          await this.notificationModel.create({
-            type: NotificationType.CERTIFICATE_EXPIRED,
-            title: 'Vendor Document Expired',
-            vendorId: doc.vendor,
-            message: `A vendor's ${doc.documentType} document expired on ${expiredDate}. Immediate action required.`,
-            recipient: NotificationRecipient.ADMIN,
-            recipientId: admin._id,
-            priority: priority.CRITICAL,
-            isRead: false,
-          });
-        }
+        // // Notify all admins
+        // const admins = await this.userModel.find({ role: 'Admin' });
+        // for (const admin of admins) {
+        //   await this.notificationModel.create({
+        //     type: NotificationType.CERTIFICATE_EXPIRED,
+        //     title: 'Vendor Document Expired',
+        //     vendorId: doc.vendor,
+        //     message: `A vendor's ${doc.documentType} document expired on ${expiredDate}. Immediate action required.`,
+        //     recipient: NotificationRecipient.ADMIN,
+        //     recipientId: admin._id,
+        //     priority: priority.CRITICAL,
+        //     isRead: false,
+        //   });
+        // }
 
         notificationsSent++;
       }
@@ -141,7 +234,223 @@ export class NotificationsService {
     return { total: expiredDocuments.length, notificationsSent };
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_10AM)
+  async findVendorNotifications(vendorId: any, query:{
+    isRead?:boolean,
+    page?: number,
+    limit?: number,
+    skip?: number,
+  }): Promise<any> {
+    const filter: any = {
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+    };
+    let isReadFilter: boolean | undefined;
+    if (query && typeof query.isRead !== 'undefined') {
+      const raw = (query as any).isRead;
+      if (raw === true || raw === 'true') {
+        isReadFilter = true;
+      } else if (raw === false || raw === 'false') {
+        isReadFilter = false;
+      }
+    }
+
+    if (typeof isReadFilter === 'boolean') {
+      // Only apply isRead filter when explicitly requested
+      filter.isRead = isReadFilter;
+    }
+
+    const limit = query?.limit ? Math.min(100, Math.max(1, parseInt(query.limit.toString()))) : 10;
+    const skip = query?.skip ? Math.max(0, parseInt(query.skip.toString())) : 0;
+    const page = query?.page ? Math.max(1, parseInt(query.page.toString())) : Math.floor(skip / limit) + 1;
+
+    const [vendorNotifications, filteredTotal] = await Promise.all([
+      this.notificationModel
+        .find(filter)
+        .sort({
+          createdAt: -1
+        })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.notificationModel.countDocuments(filter),
+    ]);
+
+    // Aggregate counts for this vendor
+    const baseVendorFilter = { vendorId: new Types.ObjectId(vendorId as Types.ObjectId) };
+    const [
+      totalNotifications,
+      totalUnreadNotifications,
+      totalCriticalNotifications,
+      totalHighPriorityNotifications,
+    ] = await Promise.all([
+      this.notificationModel.countDocuments(baseVendorFilter),
+      this.notificationModel.countDocuments({ ...baseVendorFilter, isRead: false }),
+      this.notificationModel.countDocuments({ ...baseVendorFilter, priority: priority.CRITICAL }),
+      this.notificationModel.countDocuments({ ...baseVendorFilter, priority: priority.HIGH }),
+    ]);
+
+    const result = vendorNotifications.map((notification) => ({
+      title: notification.title,
+      message: notification.message,
+      priority: notification.priority,
+      createdAt: notification.createdAt,
+      isRead: notification.isRead
+    }));
+    
+    return {
+      message: `you have ${result.length} notifications`,
+      notifications: result,
+      totalNotifications,
+      totalUnreadNotifications,
+      totalCriticalNotifications,
+      totalHighPriorityNotifications,
+      pagination: {
+        total: filteredTotal,
+        page,
+        limit,
+        totalPages: Math.ceil(filteredTotal / limit),
+      },
+    }
+  }
+
+  async markAllVendorAsRead(vendorId: any): Promise<any> {
+    const filter: any = {
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+    };
+    return await this.notificationModel.updateMany(filter, { isRead: true });
+  }
+
+  async deleteVendorNotification(vendorId: any, notificationId: string) {
+    const filter: any = {
+      _id: new Types.ObjectId(notificationId as string),
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+    };
+    return await this.notificationModel.deleteOne(filter);
+  }
+
+  async deleteMultipleVendorNotifications(vendorId: any, notificationIds: string[]) {
+    const ids = (notificationIds || []).map((id) => new Types.ObjectId(id));
+    if (ids.length === 0) {
+      return { acknowledged: true, deletedCount: 0 };
+    }
+    const filter: any = {
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+      _id: { $in: ids },
+    };
+    return await this.notificationModel.deleteMany(filter);
+  }
+
+  async deleteVendorNotifications(vendorId: any){
+    const filter: any = {
+      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
+    };
+    return await this.notificationModel.deleteMany(filter);
+  }
+
+  async findAdminNotifications(query:{
+    isRead?:boolean,
+    page?: number,
+    limit?: number,
+    skip?: number,
+  }, userId: string): Promise<any> {
+    // const adminId = decoded._id;
+    const filter: any = {
+      recipient:NotificationRecipient.ADMIN
+    };
+
+    let isReadFilter: boolean | undefined;
+    if (query && typeof query.isRead !== 'undefined') {
+      const raw = (query as any).isRead;
+      if (raw === true || raw === 'true') {
+        isReadFilter = true;
+      } else if (raw === false || raw === 'false') {
+        isReadFilter = false;
+      }
+    }
+
+    if (typeof isReadFilter === 'boolean') {
+      // Only apply isRead filter when explicitly requested
+      filter.isRead = isReadFilter;
+    }
+    const limit = query?.limit ? Math.min(100, Math.max(1, parseInt(query.limit.toString()))) : 10;
+    const skip = query?.skip ? Math.max(0, parseInt(query.skip.toString())) : 0;
+    const page = query?.page ? Math.max(1, parseInt(query.page.toString())) : Math.floor(skip / limit) + 1;
+
+    const [adminNotifications, filteredTotal] = await Promise.all([
+      this.notificationModel
+      .find(filter)
+      .sort({createdAt: -1})
+      .skip(skip)
+      .limit(limit)
+      .exec(),
+      this.notificationModel.countDocuments(filter),
+    ]);
+    
+    const result = adminNotifications.map((notification) => ({
+      title: notification.title,
+      message: notification.message,
+      priority: notification.priority,
+      createdAt: notification.createdAt,
+      _id: notification._id
+    }));
+
+    // Aggregate counts for this admin
+    const baseAdminFilter = { recipient: NotificationRecipient.ADMIN };
+    const [
+      totalNotifications,
+      totalUnreadNotifications,
+      totalCriticalNotifications,
+      totalHighPriorityNotifications,
+    ] = await Promise.all([
+      this.notificationModel.countDocuments(baseAdminFilter),
+      this.notificationModel.countDocuments({ ...baseAdminFilter, isRead: false }),
+      this.notificationModel.countDocuments({ ...baseAdminFilter, priority: priority.CRITICAL }),
+      this.notificationModel.countDocuments({ ...baseAdminFilter, priority: priority.HIGH }),
+    ]);
+    
+    return {
+      message: `you have ${result.length} notifications`,
+      notifications: result,
+      totalNotifications,
+      totalUnreadNotifications,
+      totalCriticalNotifications,
+      totalHighPriorityNotifications,
+      pagination: {
+        total: filteredTotal,
+        page,
+        limit,
+        totalPages: Math.ceil(filteredTotal / limit),
+      },
+    }
+  }
+
+  async markAllAdminAsRead(){
+    const filter: any = {
+      recipient:NotificationRecipient.ADMIN,
+    };
+    return await this.notificationModel.updateMany(filter, { isRead: true });
+  }
+
+  async markOneAdminAsRead(notificationId: string, uid:string, authToken:string){
+    const user = await this.userModel.findById(uid);
+    
+    if(!user){
+      throw new NotFoundException("No user found")
+    }
+
+    if(user.accessToken!==authToken){
+      throw new UnauthorizedException("Invalid or expired token")
+    }
+
+    const filter: any = {
+      _id: notificationId,
+      recipient:NotificationRecipient.ADMIN,
+    };
+    return await this.notificationModel.updateOne(filter, { isRead: true });
+  }
+
+
+
+   @Cron(CronExpression.EVERY_30_MINUTES)
   async handleCron() {
     this.logger.log('Running scheduled checks...');
     
@@ -156,42 +465,5 @@ export class NotificationsService {
     };
   }
 
-
-  async findVendorNotifications(vendorId: any): Promise<any> {
-    const vendorNotifications = await this.notificationModel.find({
-      vendorId: new Types.ObjectId(vendorId as Types.ObjectId),
-    });
-
-    const result = vendorNotifications.map((notification) => ({
-      title: notification.title,
-      message: notification.message,
-      priority: notification.priority,
-      createdAt: notification.createdAt,
-    }));
-    
-    return {
-      message: `you have ${result.length} notifications`,
-      notifications: result
-    }
-  }
-
-  async findAdminNotifications(): Promise<any> {
-    // const adminId = decoded._id;
-    const adminNotifications = await this.notificationModel.find({
-      recipient:NotificationRecipient.ADMIN,
-    });
-
-    const result = adminNotifications.map((notification) => ({
-      title: notification.title,
-      message: notification.message,
-      priority: notification.priority,
-      createdAt: notification.createdAt,
-    }));
-    
-    return {
-      message: `you have ${result.length} notifications`,
-      notifications: result
-    }
-  }
   
 }

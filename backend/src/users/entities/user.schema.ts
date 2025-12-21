@@ -25,6 +25,9 @@ export class User {
     @Prop({ required: true, enum: Role, type: String })
     role: Role;
 
+    @Prop({required: false, type: String})
+    mda?: string;
+
     @Prop({ required: true, type: String })
     password: string;
 
@@ -36,6 +39,9 @@ export class User {
 
     @Prop({ type: Date })
     lastLogin?: Date;
+
+    @Prop({required: false, type: String})
+    accessToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

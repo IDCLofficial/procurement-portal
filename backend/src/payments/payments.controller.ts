@@ -46,6 +46,19 @@ export class SplitPaymentController {
     return this.splitPaymentService.listSplits(page, perPage);
   }
 
+  @Get('all')
+  @UseGuards(AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all payments (Admin only)' })
+  @ApiResponse({ status: 200, description: 'All payments retrieved successfully' })
+  async getAllPayments(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('status') status?: string,
+  ) {
+    return this.splitPaymentService.getAllPayments(page, limit, status);
+  }
+
   @Get('split/:id')
   async getSplit(@Param('id') id: string) {
     return this.splitPaymentService.getSplit(id);
@@ -115,24 +128,13 @@ export class SplitPaymentController {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = this.jwtService.decode(token);
 
+    console.log(`This is my id: ${decoded._id}`)
+
     if(!decoded){
       throw new UnauthorizedException("Expired or missing token")
     }
     const userId = decoded._id;
-    console.log(decoded)
     return this.splitPaymentService.verifyPayment(reference, userId);
   }
 
-  @Get('all')
-  @UseGuards(AdminGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get all payments (Admin only)' })
-  @ApiResponse({ status: 200, description: 'All payments retrieved successfully' })
-  async getAllPayments(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-    @Query('status') status?: string,
-  ) {
-    return this.splitPaymentService.getAllPayments(page, limit, status);
-  }
 }

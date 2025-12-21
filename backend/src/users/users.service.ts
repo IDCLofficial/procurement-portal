@@ -8,12 +8,14 @@ import { EditUserDto } from './dto/edit-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { User, UserDocument } from './entities/user.schema';
 import TokenHandlers from 'src/lib/generateToken';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private tokenHandlers: TokenHandlers,
+    private emailService: EmailService,
   ) {}
 
   /**
@@ -70,6 +72,16 @@ export class UsersService {
 
     await user.save();
 
+    try {
+      await this.emailService.sendUserCredentialsEmail(
+        createUserDto.email,
+        createUserDto.fullName,
+        createUserDto.password,
+      );
+    } catch (err) {
+      // Intentionally do not fail user creation if email sending fails
+    }
+
     // Return user without password
     const { password: _, ...userWithoutPassword } = user.toObject();
     return userWithoutPassword;
@@ -112,16 +124,18 @@ export class UsersService {
       throw new BadRequestException('Invalid password');
     }
 
+    // Return user without password and generate token
+    const { password: _, ...userWithoutPassword } = user.toObject();
+
+    const token = this.tokenHandlers.generateToken(userWithoutPassword);
+    user.accessToken = token;
     // Update last login timestamp
     user.lastLogin = new Date();
     await user.save();
 
-    // Return user without password and generate token
-    const { password: _, ...userWithoutPassword } = user.toObject();
-    
     return {
       user: userWithoutPassword,
-      token: this.tokenHandlers.generateToken(userWithoutPassword),
+      token
     };
   }
 
@@ -152,7 +166,31 @@ export class UsersService {
       isActive: user.isActive,
       lastLogin: user.lastLogin,
       assignedApps: user.assignedApps,
+      mda: user.mda
     }));
+  }
+
+  async getDeskOfficersByMda(
+    mda:string
+  ): Promise<any>{
+    const deskOfficers = await this.userModel
+    .find({
+      role:'Desk officer',
+      mda
+    })
+    .sort({createdAt: -1})
+    .exec()
+
+    if(!deskOfficers){
+      return {
+        officers:[]
+      }
+    }
+
+    return {
+      officers:deskOfficers
+    }
+
   }
 
   /**
@@ -195,6 +233,9 @@ export class UsersService {
     }
     if (editUserDto.role !== undefined) {
       user.role = editUserDto.role;
+    }
+    if(editUserDto.mda !== undefined){
+      user.mda = editUserDto.mda;
     }
 
     await user.save();

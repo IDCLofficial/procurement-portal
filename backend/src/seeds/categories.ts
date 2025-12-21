@@ -35,10 +35,14 @@ async function seedCategories() {
 
     // Categories data
     const categories: ICategory[] = [
-      { sector: 'works', description: 'Construction & Engineering' },
-      { sector: 'supplies', description: 'Goods & Materials' },
-      { sector: 'ict', description: 'Information & Communication Technology' },
-      { sector: 'services', description: 'Professional Services' }
+      {
+        sector: 'Works and Goods',
+        description: ' '
+      },
+      {
+        sector: 'Consultancy Services and Non Consulting Services ',
+        description: ' '
+      },
     ];
 
     // Insert categories

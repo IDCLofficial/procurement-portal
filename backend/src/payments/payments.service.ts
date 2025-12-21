@@ -8,7 +8,7 @@ import {
   UpdateSplitDto,
   InitializePaymentWithSplitDto,
 } from 'src/payments/dto/split-payment.dto';
-import { Payment, PaymentDocument, PaymentStatus } from './entities/payment.schema';
+import { Payment, PaymentDocument, PaymentStatus, paymentType } from './entities/payment.schema';
 import { Company, CompanyDocument } from 'src/companies/entities/company.schema';
 import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } from 'src/applications/entities/application.schema';
 import { companyForm, renewalSteps, Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
@@ -16,6 +16,7 @@ import { VendorsService } from 'src/vendors/vendors.service';
 import { ActivityType } from 'src/vendors/entities/vendor-activity-log.schema';
 import { Notification, NotificationDocument, NotificationRecipient, NotificationType, priority } from 'src/notifications/entities/notification.entity';
 import { User, UserDocument } from 'src/users/entities/user.schema';
+import { ApplicationsService } from 'src/applications/applications.service';
 
 @Injectable()
 export class SplitPaymentService {
@@ -24,6 +25,7 @@ export class SplitPaymentService {
   constructor(
     private readonly paystackSplitService: PaystackSplitService,
     private vendorService:VendorsService,
+    private applicationService: ApplicationsService,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
@@ -131,8 +133,7 @@ export class SplitPaymentService {
       }
       
       const paymentReference = this.generateReference();
-      console.log(paymentReference)
-
+      console.log(paymentReference);
       const result = await this.paystackSplitService.initializeTransaction(dto, user.email, paymentReference);
 
       //
@@ -141,11 +142,7 @@ export class SplitPaymentService {
       const paymentId = await this.generatePaymentId();
 
       // Convert categories array to comma-separated string
-      const categoryString = company.categories
-        .map(cat => cat.sector)
-        .filter(Boolean)
-        .join(', ')
-        .toUpperCase();
+      const categoryString = company.category
 
       const payment = new this.paymentModel({
         paymentId,
@@ -155,6 +152,7 @@ export class SplitPaymentService {
         grade: company.grade,
         status: PaymentStatus.PENDING,
         type: dto.type,
+        paymentDate: new Date(),
         description: dto.description,
         transactionReference: paymentReference,
       });
@@ -179,50 +177,38 @@ export class SplitPaymentService {
       this.logger.log(`Verifying payment: ${reference}`);
       const result = await this.paystackSplitService.verifyTransaction(reference);
 
+      if(result.data.status !== 'success'){
+        this.logger.log("payment did not go through")
+        throw new BadRequestException("payment did not go through")
+      }
+
       // Update transaction status in database
       if (result.data.status === 'success') {
         // Find the company
         const vendor  = await this.vendorModel.findById(userId);
+        console.log(vendor)
         if(!vendor){
           throw new NotFoundException("Vendor not found") 
         }
+        
         const company = await this.companyModel.findById(vendor.companyId);
         if (!company) {
           throw new NotFoundException("Company not found");
         }
 
         // Get the payment record to extract payment details
-        const payment = await this.paymentModel.findOne({ transactionReference: reference });
+        const payment = await this.paymentModel.findOneAndUpdate({ transactionReference: reference }, 
+          {
+            $set: {
+              paymentDate:new Date(),
+              status: PaymentStatus.VERIFIED,
+              verificationMessage: 'Payment has been confirmed via Paystack gateway',
+            }
+          }
+        );
         if (!payment) {
           throw new NotFoundException("Payment record not found");
-        }
-
-        // Generate unique application ID
-        const applicationId = await this.generateApplicationId();
-
-        // Create new application
-        const newApplication = new this.applicationModel({
-          applicationId,
-          contractorName: company.companyName,
-          companyId: new Types.ObjectId(company._id as Types.ObjectId),
-          rcBnNumber: company.cacNumber,
-          sectorAndGrade: payment.category && payment.grade
-            ? `${payment.category} - ${payment.grade}`
-            : payment.description,
-          grade: payment.grade || 'N/A',
-          type: payment.type as any, // Maps to ApplicationType (Registration, Renewal, Upgrade)
-          submissionDate: new Date(),
-          slaStatus: 'On Time',
-          applicationTimeline: [{
-            status: ApplicationStatus.PENDING_DESK_REVIEW,
-            timestamp: new Date(),
-            notes: 'Application submitted and payment verified'
-          }],
-          currentStatus: ApplicationStatus.PENDING_DESK_REVIEW,
-        });
-
-        await newApplication.save();
-        this.logger.log(`Application created: ${applicationId}`);
+        } 
 
         // Log payment completion activity
         await this.vendorService.createActivityLog(
@@ -238,77 +224,88 @@ export class SplitPaymentService {
           }
         );
 
-        // Log application submission activity
-        await this.vendorService.createActivityLog(
-          userId,
-          ActivityType.APPLICATION_SUBMITTED,
-          `Application ${applicationId} submitted for ${payment.grade} grade`,
-          {
-            applicationId: applicationId,
-            grade: payment.grade,
-            type: payment.type,
-            companyName: company.companyName
-          }
-        );
-
-        this.logger.log(`Activity logs created for payment and application submission`);
-
-        // Update payment record with application ID and status
-        await this.paymentModel.findOneAndUpdate(
-          { transactionReference: reference },
-          {
-            status: PaymentStatus.VERIFIED,
-            paymentDate: new Date(),
-            verificationMessage: 'Payment has been confirmed via Paystack gateway',
-            applicationId: newApplication._id,
-          }
-        );
-        this.logger.log(`Payment verified and updated: ${reference}`);
-
-        if(payment.type === ApplicationType.NEW){
-          try{
-            vendor.companyForm = companyForm.COMPLETE
-            await vendor.save();
-            //notifiy the vendor
+        if(payment.type === paymentType.PROCESSINGFEE){
+          
+          vendor.companyForm = companyForm.COMPLETE
+          await vendor.save();
+          
+          const createApplication = await this.applicationService.createApplicationDoc(
+            ApplicationType.NEW,
+            company,
+            payment
+          )
+          // Log application submission activity
+          await this.vendorService.createActivityLog(
+            userId,
+            ActivityType.APPLICATION_SUBMITTED,
+            `Application ${createApplication.applicationId} submitted for ${payment.grade} grade`,
+            {
+              applicationId: createApplication.applicationId,
+              grade: payment.grade,
+              type: payment.type,
+              companyName: company.companyName
+            }
+          );
+          this.logger.log(`Activity logs created for payment and application submission`);
+          // Update payment record with application ID and status
+          await this.paymentModel.findOneAndUpdate(
+            { transactionReference: reference },
+            {
+              applicationId: createApplication.applicationId,
+            }
+          );
+          
+          //notifiy the vendor
+          await this.notificationModel.create({
+            type: NotificationType.APPLICATION_SUBMITTED,
+            title: 'Application Submitted',
+            message: `Your payment has been recieved and your application has been submitted successfully. It may take around 1-7 working days for your documents to be reviewed.`,
+            recipient: NotificationRecipient.VENDOR,
+            vendorId: vendor._id,
+            priority: priority.LOW,
+            isRead: false,
+          });
+          const admins = await this.userModel.find({ role: 'Admin' });
+          for (const admin of admins){
             await this.notificationModel.create({
               type: NotificationType.APPLICATION_SUBMITTED,
-              title: 'Application Submitted',
-              message: `Your payment has been recieved and your application has been submitted successfully. It may take around 1-7 working days for your documents to be reviewed.`,
-              recipient: NotificationRecipient.VENDOR,
-              recipientId: vendor._id,
-              priority: priority.LOW,
+              title: 'Application Recieved',
+              message: `${vendor.fullname} just submitted an application.`,
+              recipient: NotificationRecipient.ADMIN,
+              recipientId: admin._id,
+              priority: priority.HIGH,
               isRead: false,
             });
-            //notify the Admin
-            const admins = await this.userModel.find({ role: 'Admin' });
-            for (const admin of admins){
-              await this.notificationModel.create({
-                type: NotificationType.APPLICATION_SUBMITTED,
-                title: 'Application Recieved',
-                message: `${vendor.fullname} just submitted an application.`,
-                recipient: NotificationRecipient.ADMIN,
-                recipientId: admin._id,
-                priority: priority.HIGH,
-                isRead: false,
-              });
-            }
-          }catch(err){
-            this.logger.log(err)
-            throw new ConflictException('An Error occured notifying the user')
           }
-          
-        }
-
-        if(payment.type === ApplicationType.RENEWAL){
+        } else if(payment.type === paymentType.RENEWAL){
+          const submitRenewalApp = await this.applicationService.createApplicationDoc(
+            ApplicationType.RENEWAL,
+            company,
+            payment
+          )
           vendor.renewalStep = renewalSteps.COMPLETE
-          await vendor.save()
+          await vendor.save();
+
+          // Log application submission activity
+          await this.vendorService.createActivityLog(
+            userId,
+            ActivityType.APPLICATION_SUBMITTED,
+            `Application ${submitRenewalApp.applicationId} submitted for ${payment.grade} grade`,
+            {
+              applicationId: submitRenewalApp.applicationId,
+              grade: payment.grade,
+              type: payment.type,
+              companyName: company.companyName
+            }
+          );
+
           //notify the vendor
           await this.notificationModel.create({
             type: NotificationType.APPLICATION_SUBMITTED,
             title: 'Renewal Application Submitted',
             message: `Your payment has been recieved and your renewal documents have been submitted successfully. It may take up to 1-7 working days to have your documents reviewed`,
             recipient: NotificationRecipient.VENDOR,
-            recipientId: vendor._id,
+            vendorId: vendor._id,
             priority: priority.LOW,
             isRead: false,
           });
@@ -326,12 +323,91 @@ export class SplitPaymentService {
               isRead: false,
             });
           }
+        }else if(payment.type === paymentType.CERTIFICATEFEE){
+          try{
+            const certificate = await this.applicationService.generateCertificate(company._id);
+            
+            if(!certificate){
+              throw new ConflictException("failed to generate certificate")
+            }
+
+            const updatedApplication = await this.applicationModel
+              .findOneAndUpdate(
+                {
+                  companyId: company._id,
+                },
+                {
+                  $set: { currentStatus: ApplicationStatus.VERIFIED },
+                  $push: {
+                    applicationTimeline: {
+                      status: ApplicationStatus.VERIFIED,
+                      timestamp: new Date(),
+                      notes: 'Payment verified and certificate issued',
+                    },
+                  },
+                },
+                { new: true, sort: { createdAt: -1 } }
+              )
+              .exec();
+
+            await this.vendorModel.findOneAndUpdate({
+              _id:certificate.contractorId
+            }, {
+              $set: {
+                certificateId:certificate.certificateId
+              }
+            })
+
+            if(!updatedApplication){
+              throw new NotFoundException("application not found")
+            }
+
+            // Log application submission activity
+            await this.vendorService.createActivityLog(
+              userId,
+              ActivityType.CERTIFICATE_ISSUED,
+              `Payment recieved, your certificate has been issued`,
+              {
+                grade: payment.grade,
+                type: payment.type,
+                companyName: company.companyName
+              }
+            );
+
+  
+            //notify the vendor
+            await this.notificationModel.create({
+              type: NotificationType.APPLICATION_SUBMITTED,
+              title: 'Certificate Issued',
+              message: `Your payment has been recieved and your certificate has been issued successfully.`,
+              recipient: NotificationRecipient.VENDOR,
+              vendorId: vendor._id,
+              priority: priority.LOW,
+              isRead: false,
+            });
+  
+            //notify the Admin
+            const admins = await this.userModel.find({ role: 'Admin' });
+            for (const admin of admins){
+              await this.notificationModel.create({
+                type: NotificationType.APPLICATION_SUBMITTED,
+                title: 'Certificate Issued',
+                message: `${vendor.fullname} just paid for certificate issuance`,
+                recipient: NotificationRecipient.ADMIN,
+                recipientId: admin._id,
+                priority: priority.LOW,
+                isRead: false,
+              });
+            }
+            this.logger.log(`Payment verified and updated: ${reference}`);
+          }catch(e){
+            this.logger.error(e)
+            throw new ConflictException("failed to update vendor document")
+          }
         }
-        
       }else{
         throw new ConflictException('The payment was not successful')
       }
-
       return result;
     } catch (error) {
       this.logger.error(`Error verifying payment: ${error.message}`);
@@ -368,12 +444,6 @@ export class SplitPaymentService {
     return `PAY-${year}-${paddedCount}`;
   }
 
-  private async generateApplicationId(): Promise<string> {
-    const year = new Date().getFullYear();
-    const count = await this.applicationModel.countDocuments();
-    const paddedCount = String(count + 1).padStart(3, '0');
-    return `APP-${year}-${paddedCount}`;
-  }
 
   async getAllPayments(page = 1, limit = 20, status?: string) {
     try {
@@ -386,7 +456,6 @@ export class SplitPaymentService {
         this.paymentModel
           .find(query)
           .populate('companyId', 'companyName cacNumber email phoneNumber')
-          .populate('applicationId', 'applicationId currentStatus submissionDate')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)

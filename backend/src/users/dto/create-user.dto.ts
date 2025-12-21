@@ -41,6 +41,14 @@ export class CreateUserDto {
   role: Role;
 
   @ApiProperty({
+    description: 'MDA of the user in the system',
+    example: 'Education',
+  })
+  @IsNotEmpty({ message: 'MDA is required' })
+  @IsString({ message: 'MDA must be a string' })
+  mda: string;
+
+  @ApiProperty({
     description: 'Password for the user account',
     example: 'SecurePass123!',
     minLength: 8,

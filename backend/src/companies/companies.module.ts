@@ -8,7 +8,8 @@ import { verificationDocuments } from 'src/documents/entities/document.schema';
 @Module({
   imports:[MongooseModule.forFeature([
     { name: 'Company', schema: CompanySchema },
-    { name: 'verificationDocuments', schema: verificationDocuments }])],
+    { name: 'verificationDocuments', schema: verificationDocuments }
+  ])],
   controllers: [CompaniesController],
   providers: [CompaniesService],
 })

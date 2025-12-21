@@ -7,6 +7,7 @@ import {
   UpdateSplitDto,
   InitializePaymentWithSplitDto,
 } from 'src/payments/dto/split-payment.dto';
+import { paymentType } from 'src/payments/entities/payment.schema';
 
 @Injectable()
 export class PaystackSplitService {
@@ -113,7 +114,7 @@ export class PaystackSplitService {
         amount: dto.amount * 100,
         split_code: splitCode || 'SPL_3yyVlNI9mE',
         reference: reference,
-        callback_url: this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000/payment-callback',
+        callback_url: `${this.configService.get<string>('FRONTEND_URL')}/payment-callback` || 'https://procurement-portal-mu.vercel.app/payment-callback' ,
         metadata: dto.metadata,
       };
 

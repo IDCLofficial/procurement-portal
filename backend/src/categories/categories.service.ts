@@ -29,7 +29,12 @@ export class CategoriesService {
   async findAll() {
     try{
       const categories = await this.categoryModel.find();
-      const grades = await this.gradeModel.find();
+      const grades = await this.gradeModel
+      .find()
+      .sort({
+        createdAt:-1
+      })
+      .exec();
       return {categories, grades};
     }catch(err){
       this.logger.error(`Failed to retrieve categories or grades: ${err.message}`);
@@ -69,7 +74,12 @@ export class CategoriesService {
 
   async findAllGrades(): Promise<Grade[]> {
     try {
-      const grades = await this.gradeModel.find();
+      const grades = await this.gradeModel
+      .find()
+      .sort({
+        createdAt:-1
+      })
+      .exec();
       return grades;
     } catch (err) {
       this.logger.error(`Failed to retrieve grades: ${err.message}`);
@@ -79,12 +89,24 @@ export class CategoriesService {
 
   async createGrade(createGradeDto: CreateGradeDto): Promise<Grade> {
     try {
-      const existingGrade = await this.gradeModel.findOne({ grade: createGradeDto.grade });
+
+      const category = createGradeDto.category.trim().toLowerCase();
+      const grade = createGradeDto.grade.trim().toUpperCase();
+
+      const existingGrade = await this.gradeModel.findOne({
+        grade,
+        category
+      });
+
       if (existingGrade) {
-        throw new BadRequestException(`Grade ${createGradeDto.grade} already exists`);
+        throw new BadRequestException(`Grade ${grade} already exists for category ${category}`);
       }
-      
-      const newGrade = new this.gradeModel(createGradeDto);
+
+      const newGrade = new this.gradeModel({
+        ...createGradeDto,
+        category,
+        grade
+      });
       return await newGrade.save();
     } catch (err) {
       if (err instanceof BadRequestException) {
@@ -110,9 +132,9 @@ export class CategoriesService {
       if (updateGradeDto.financialCapacity !== undefined) {
         grade.financialCapacity = updateGradeDto.financialCapacity;
       }
-      
-      if (updateGradeDto.effectiveDate !== undefined) {
-        grade.effectiveDate = updateGradeDto.effectiveDate;
+
+      if(updateGradeDto.renewalFee !== undefined){
+        grade.renewalFee = updateGradeDto.renewalFee;
       }
 
       return await grade.save();
@@ -138,6 +160,24 @@ export class CategoriesService {
       }
       this.logger.error(`Failed to delete grade: ${err.message}`);
       throw new BadRequestException('Failed to delete grade');
+    }
+  }
+
+  /**
+   * Find all grades for a specific category
+   * @param category - The category to filter grades by
+   * @returns Array of grades for the specified category
+   */
+  async findGradesByCategory(category: string): Promise<Grade[]> {
+    try {
+      const grades = await this.gradeModel.find({ category: category.toLowerCase() });
+      if (!grades || grades.length === 0) {
+        throw new NotFoundException(`No grades found for category: ${category}`);
+      }
+      return grades;
+    } catch (error) {
+      this.logger.error(`Error finding grades for category ${category}: ${error.message}`);
+      throw new BadRequestException(`Failed to retrieve grades: ${error.message}`);
     }
   }
 }

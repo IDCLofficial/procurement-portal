@@ -19,6 +19,7 @@
     "seed:grades": "ts-node src/seeds/grades.ts",
     "seed:sla": "ts-node src/seeds/sla.seed.ts",
     "seed:certificates": "ts-node src/seeds/certificates.seed.ts",
+    "seed:mdas": "ts-node src/seeds/mdas.seed.ts",
     "migrate:application-status": "ts-node scripts/migrate-application-status.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",

@@ -25,7 +25,7 @@ export class EmailService {
       throw new Error('RESEND_API_KEY is required');
     }
     this.resend = new Resend(emailConfig.apiKey);
-    
+
     // Cleanup expired OTPs every 5 minutes to prevent memory leaks
     setInterval(() => this.cleanupExpiredOtps(), 5 * 60 * 1000);
   }
@@ -50,7 +50,7 @@ export class EmailService {
       code,
       expiresAt,
       verified: false,
-      attempts: 0
+      attempts: 0,
     });
 
     // Clean up expired OTPs
@@ -60,15 +60,21 @@ export class EmailService {
   }
 
   // Verify an OTP code for an email
-  verifyOtp(email: string, code: string): { isValid: boolean; message?: string } {
+  verifyOtp(
+    email: string,
+    code: string,
+  ): { isValid: boolean; message?: string } {
     const otpRecord = this.otpStore.get(email);
-    
+
     if (!otpRecord) {
       return { isValid: false, message: 'No OTP found for this email' };
     }
 
     if (otpRecord.attempts >= MAX_OTP_ATTEMPTS) {
-      return { isValid: false, message: 'Maximum verification attempts exceeded' };
+      return {
+        isValid: false,
+        message: 'Maximum verification attempts exceeded',
+      };
     }
 
     if (new Date() > otpRecord.expiresAt) {
@@ -77,9 +83,9 @@ export class EmailService {
 
     if (otpRecord.code !== code) {
       otpRecord.attempts += 1;
-      return { 
-        isValid: false, 
-        message: `Invalid OTP. ${MAX_OTP_ATTEMPTS - otpRecord.attempts} attempts remaining.` 
+      return {
+        isValid: false,
+        message: `Invalid OTP. ${MAX_OTP_ATTEMPTS - otpRecord.attempts} attempts remaining.`,
       };
     }
 
@@ -92,15 +98,80 @@ export class EmailService {
     try {
       const otp = this.createOtp(email);
       const emailConfig = this.configService.get('email');
-      
+
       const emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Email Verification</h2>
-          <p>Hello ${userName},</p>
-          <p>Your verification code is: <strong>${otp}</strong></p>
-          <p>This code will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
-          <p>If you didn't request this code, please ignore this email.</p>
-          <p>Best regards,<br>Procurement Bureau</p>
+        <div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6;">
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); padding: 2rem; text-align: center; border-radius: 8px 8px 0 0;">
+            <img src="https://images.unsplash.com/photo-1748959504388-9eb3143984e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+                 alt="Logo" 
+                 style="width: 80px; height: auto; border-radius: 50%; border: 3px solid #fff; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"/>
+            <h1 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 600;">Verify Your Email</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0; font-size: 1rem;">Enter the following code to complete your signup</p>
+          </div>
+
+          <!-- OTP Section -->
+          <div style="background: #ffffff; padding: 2.5rem; text-align: center;">
+            <p style="margin: 0 0 1.5rem; color: #4b5563; font-size: 1rem;">
+              Hello <strong>${userName.split(' ')[0]}</strong>, your verification code is:
+            </p>
+            
+            <div style="display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 2rem;">
+              ${otp.split('').map(
+                (digit) => `
+                <div style="
+                  width: 56px; 
+                  height: 64px; 
+                  background: #f9fafb; 
+                  border-radius: 8px; 
+                  display: flex; 
+                  align-items: center; 
+                  justify-content: center; 
+                  font-size: 2rem; 
+                  font-weight: 700;
+                  color: #1f2937;
+                  border: 1.5px solid #e5e7eb;
+                  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                ">
+                  ${digit}
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; text-align: left;">
+              <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                <div style="background: #e0e7ff; border-radius: 9999px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <span style="color: #4f46e5; font-size: 1rem;">!</span>
+                </div>
+                <div>
+                  <p style="margin: 0 0 0.5rem; font-weight: 600; color: #1e293b;">Keep this code secure</p>
+                  <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">
+                    This code will expire in <strong>${OTP_EXPIRY_MINUTES} minutes</strong>. Do not share this code with anyone, including our support team.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 1.5rem; color: #6b7280; font-size: 0.875rem;">
+              <p style="margin: 0 0 0.5rem;">
+                <strong>Didn't request this code?</strong>
+              </p>
+              <p style="margin: 0;">
+                This code was requested from <strong>${new Date().toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>.
+                If this wasn't you, please secure your account immediately.
+              </p>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div style="background: #f9fafb; padding: 1.5rem; text-align: center; border-radius: 0 0 8px 8px; font-size: 0.8rem; color: #6b7280;">
+            <p style="margin: 0 0 0.5rem;">
+              © ${new Date().getFullYear()} Procurement Portal. All rights reserved.
+            </p>
+            <p style="margin: 0; font-size: 0.75rem; color: #9ca3af;">
+              This is an automated message, please do not reply.
+            </p>
+          </div>
         </div>
       `;
 
@@ -112,23 +183,254 @@ export class EmailService {
       });
 
       if (result.error) {
-        this.logger.error('Failed to send OTP email:', result.error);        
-        throw new ConflictException(`Failed to send email`)
+        this.logger.error('Failed to send OTP email:', result.error);
+        throw new ConflictException(`Failed to send email`);
       }
 
       this.logger.log(`OTP sent successfully to ${email}`);
       return true;
     } catch (error) {
       this.logger.error('Error sending OTP email:', error);
-      
+
       // Don't hide the actual error in development
       if (error instanceof ConflictException) {
         throw error;
       }
-      
-      throw new ConflictException('Failed to send verification email. Please try again.')
+
+      throw new ConflictException(
+        'Failed to send verification email. Please try again.',
+      );
     }
   }
+
+  async sendApplicationStatusUpdate(email: string, vendorName: string, applicationId: string, status: string, notes?: string) {
+    try {
+      const emailConfig = this.configService.get('email');
+      const statusMessages = {
+        'APPROVED': {
+          subject: 'Application Approved',
+          message: 'Your application has been approved!',
+          color: '#4CAF50'
+        },
+        'REJECTED': {
+          subject: 'Application Rejected',
+          message: 'Your application has been rejected.',
+          color: '#F44336'
+        }
+      };
+
+      const statusInfo = statusMessages[status] || {
+        subject: 'Application Status Update',
+        message: `Your application was ${status}.`,
+        color: '#9C27B0'
+      };
+
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="https://images.unsplash.com/photo-1748959504388-9eb3143984e6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+                 style="width: 120px; height: auto; border-radius: 10px; margin-bottom: 20px;" 
+                 alt="Company Logo">
+          </div>
+          
+          <h2 style="color: ${statusInfo.color}; text-align: center;">${statusInfo.subject}</h2>
+          
+          <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p>Hello ${vendorName.split(' ')[0]},</p>
+            <p>${statusInfo.message}</p>
+            
+            ${notes ? `<div style="background-color: #fff3e0; padding: 12px; border-left: 4px solid ${statusInfo.color}; margin: 15px 0;">
+              <p style="margin: 0; font-style: italic;">${notes}</p>
+            </div>` : ''}
+            
+            <p>Application ID: <strong>${applicationId}</strong></p>
+            <p>Status: <strong style="color: ${statusInfo.color}">${status}</strong></p>
+          </div>
+          
+          <p style="text-align: center; margin-top: 30px;">
+            <a href="${this.configService.get('app.frontendUrl')}/applications/${applicationId}" 
+               style="display: inline-block; padding: 12px 24px; 
+                      background-color: ${statusInfo.color}; 
+                      color: white; text-decoration: none; 
+                      border-radius: 4px;">
+              View Application
+            </a>
+          </p>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #777;">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>If you have any questions, please contact our support team.</p>
+          </div>
+        </div>
+      `;
+
+      const result = await this.resend.emails.send({
+        from: emailConfig?.from || 'noreply@ezconadvisory.com',
+        to: [email],
+        subject: statusInfo.subject,
+        html: emailHtml,
+      });
+
+      if (result.error) {
+        this.logger.error('Failed to send application status email:', result.error);
+        return false;
+      }
+
+      this.logger.log(`Application status email sent to ${email}`);
+      return true;
+    } catch (error) {
+      this.logger.error('Error sending application status email:', error);
+      return false;
+    }
+  }
+
+  async sendResetPasswordLink(resetLink: string, email: string) {
+    const emailConfig = this.configService.get('email');
+    const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2>Password Reset Request</h2>
+              <p>You requested to reset your password. Click the button below to set a new password:</p>
+              <a href="${resetLink}" style="
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #4CAF50;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                margin: 20px 0;
+              ">Reset Password</a>
+              <p>Or copy and paste this link into your browser:</p>
+              <p>${resetLink}</p>
+              <p>This link will expire in 1 hour.</p>
+              <p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>
+            </div>
+          `;
+
+    await this.resend.emails.send({
+      from: emailConfig?.from || 'noreply@procurement.gov.ng',
+      to: [email],
+      subject: 'Password Reset Request',
+      html: emailHtml,
+    });
+
+    return {
+      message:
+        'If an account with this email exists, a password reset link has been sent',
+    };
+  }
+
+  async sendApplicationApprovalEmail(email: string, vendorName: string, paymentLink: string): Promise<void> {
+    try {
+      const emailConfig = this.configService.get('email');
+
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #1a365d; margin: 0;">Application Approved</h2>
+          </div>
+
+          <p>Dear ${vendorName},</p>
+
+          <p>Your application has been approved. Please proceed to payment for certificate issuance.</p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${paymentLink}"
+               style="display: inline-block; padding: 12px 24px; background-color: #3182ce; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              Proceed to Payment
+            </a>
+          </div>
+
+          <p>If you have any questions or need further assistance, please contact support.</p>
+
+          <p>Best regards,<br/>Procurement Portal Team</p>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #666;">
+            <p>This is an automated message. Please do not reply to this email.</p>
+          </div>
+        </div>
+      `;
+
+      const result = await this.resend.emails.send({
+        from: emailConfig?.from || 'noreply@procurement.gov.ng',
+        to: [email],
+        subject: 'Your Application Has Been Approved',
+        html: emailHtml,
+      });
+
+      if (result.error) {
+        this.logger.error('Failed to send approval email:', result.error);
+        throw new ConflictException('Failed to send approval email');
+      }
+
+      this.logger.log(`Approval email sent successfully to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send approval email to ${email}:`, error);
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      throw new ConflictException('Failed to send approval email');
+    }
+  }
+
+  async sendUserCredentialsEmail(email: string, fullName: string, password: string): Promise<boolean> {
+    try {
+      const emailConfig = this.configService.get('email');
+      const portalUrl = this.configService.get('app.frontendUrl');
+
+      const emailHtml = `
+        <div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6;">
+          <div style="background: linear-gradient(135deg, #0f766e, #0891b2); padding: 2rem; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 1.6rem; font-weight: 600;">Your Account Has Been Created</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0; font-size: 1rem;">Use the credentials below to sign in</p>
+          </div>
+
+          <div style="background: #ffffff; padding: 2rem; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="margin: 0 0 1rem; color: #374151;">Hello <strong>${fullName.split(' ')[0]}</strong>,</p>
+            <p style="margin: 0 0 1.25rem; color: #4b5563;">An account has been created for you on the Procurement Portal.</p>
+
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
+              <p style="margin: 0 0 0.5rem;"><strong>Login Email:</strong> ${email}</p>
+              <p style="margin: 0;"><strong>Temporary Password:</strong> ${password}</p>
+            </div>
+
+            <p style="margin: 1.25rem 0 0; color: #6b7280; font-size: 0.95rem;">
+              For security, please change your password after you log in.
+            </p>
+
+            ${portalUrl ? `
+              <div style="text-align: center; margin-top: 1.75rem;">
+                <a href="${portalUrl}" style="display: inline-block; padding: 12px 22px; background-color: #0ea5e9; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Go to Portal</a>
+              </div>
+            ` : ''}
+          </div>
+
+          <div style="background: #f9fafb; padding: 1.25rem; text-align: center; border-radius: 0 0 8px 8px; font-size: 0.8rem; color: #6b7280;">
+            <p style="margin: 0;">This is an automated message. Please do not reply.</p>
+          </div>
+        </div>
+      `;
+
+      const result = await this.resend.emails.send({
+        from: emailConfig?.from || 'noreply@procurement.gov.ng',
+        to: [email],
+        subject: 'Your Procurement Portal Login Credentials',
+        html: emailHtml,
+      });
+
+      if (result.error) {
+        this.logger.error('Failed to send user credentials email:', result.error);
+        return false;
+      }
+
+      this.logger.log(`User credentials email sent to ${email}`);
+      return true;
+    } catch (error) {
+      this.logger.error('Error sending user credentials email:', error);
+      return false;
+    }
+  }
+
+  //
 
   // Clean up expired OTPs from the store
   private cleanupExpiredOtps(): void {
@@ -139,4 +441,54 @@ export class EmailService {
       }
     }
   }
+
+  // async sendApplicationApprovalEmail(email: string, vendorName: string, certificateLink:string): Promise<void> {
+  //   try {
+  //     const emailConfig = this.configService.get('email');
+  //     const fromEmail = emailConfig?.from || 'noreply@procurement.gov.ng';
+  //     const apiUrl = this.configService.get('app.frontendUrl') || 'https://procurement.gov.ng';
+      
+  //     const emailHtml = `
+  //       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+  //         <div style="text-align: center; margin-bottom: 20px;">
+  //           <h1 style="color: #1a365d;">Application Approved! 🎉</h1>
+  //         </div>
+          
+  //         <p>Dear ${vendorName},</p>
+          
+  //         <p>We are pleased to inform you that your procurement application has been successfully approved!</p>
+          
+  //         <p>Your certificate has been issued and is now available for download. This certificate serves as proof of your registration with our procurement portal.</p>
+          
+  //         <div style="text-align: center; margin: 30px 0;">
+  //           <a href="${appUrl}${certificateLink}" 
+  //              style="display: inline-block; padding: 12px 24px; background-color: #3182ce; color: white; 
+  //                     text-decoration: none; border-radius: 4px; font-weight: bold;">
+  //             View Your Certificate
+  //           </a>
+  //         </div>
+          
+  //         <p>If you have any questions or need further assistance, please don't hesitate to contact our support team.</p>
+          
+  //         <p>Best regards,<br>Procurement Portal Team</p>
+          
+  //         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #666;">
+  //           <p>This is an automated message. Please do not reply to this email.</p>
+  //         </div>
+  //       </div>
+  //     `;
+
+  //     await this.resend.emails.send({
+  //       from: `Procurement Portal <${fromEmail}>`,
+  //       to: email,
+  //       subject: 'Your Procurement Application Has Been Approved',
+  //       html: emailHtml,
+  //     });
+
+  //     this.logger.log(`Approval email sent to ${email}`);
+  //   } catch (error) {
+  //     this.logger.error(`Failed to send approval email to ${email}:`, error);
+  //     throw new Error('Failed to send approval email');
+  //   }
+  // }
 }

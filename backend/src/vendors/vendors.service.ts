@@ -18,6 +18,7 @@ import { loginDto } from './dto/logn.dto';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ValidationError } from 'class-validator';
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { necessaryDocument } from './dto/update-registration.dto';
 import { VendorActivityLog, VendorActivityLogDocument, ActivityType } from './entities/vendor-activity-log.schema';
 import { renewRegistrationDto } from './dto/renew-registration-dto';
@@ -31,6 +32,7 @@ export class VendorsService {
   private readonly Logger = new Logger(Vendor.name)
 
   constructor(
+    private readonly configService: ConfigService,
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Directors.name) private directorsModel: Model<DirectorsDocument>,
@@ -599,7 +601,7 @@ export class VendorsService {
           }
 
           let firstTimeDocUpload = true;
-          const sirvCdnUrl = (process.env.SIRV_CDN_URL || '').trim();
+          const sirvCdnUrl = (this.configService.get<string>('SIRV_CDN_URL') || '').trim();
           const normalizedSirvCdnUrl = sirvCdnUrl.endsWith('/') ? sirvCdnUrl.slice(0, -1) : sirvCdnUrl;
           if (!normalizedSirvCdnUrl) {
             throw new InternalServerErrorException('SIRV_CDN_URL is not configured');

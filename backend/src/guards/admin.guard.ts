@@ -40,7 +40,7 @@ export class AdminGuard implements CanActivate {
       // Fetch user from database to verify role
       const user = await this.userModel.findById(decoded.sub).exec();
 
-      if (!user) {
+      if (!user || token !== user.accessToken) {
         throw new UnauthorizedException('User not found');
       }
 

@@ -139,7 +139,7 @@ export class UsersController {
       if(!decoded._id || decoded.role !== 'Admin'){
         throw new UnauthorizedException('Unauthorized')
       }
-      return this.usersService.create(createUserDto);
+      return this.usersService.create(createUserDto, decoded._id, token);
     }catch(err){
       throw new UnauthorizedException('Unauthorized')
     }
@@ -256,7 +256,7 @@ export class UsersController {
       if(!decoded._id || decoded.role !== 'Admin'){
         throw new UnauthorizedException('Unauthorized')
       }
-      return this.usersService.getUsersByName();
+      return this.usersService.getUsersByName(token, decoded._id);
     }catch(err){
       throw new UnauthorizedException('Unauthorized')
     }
@@ -477,7 +477,6 @@ export class UsersController {
    * }
    */
   @Patch(':id')
-  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Edit user name and/or role (Admin only)',
@@ -584,7 +583,7 @@ export class UsersController {
       if (!decoded._id || decoded.role !== 'Admin') {
         throw new UnauthorizedException('Unauthorized');
       }
-      return this.usersService.editUser(id, editUserDto);
+      return this.usersService.editUser(id, editUserDto, token, decoded._id);
     } catch (err) {
       throw new UnauthorizedException('Unauthorized');
     }
@@ -616,7 +615,6 @@ export class UsersController {
    * }
    */
   @Delete(':id')
-  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Delete a user (Admin only)',
@@ -698,7 +696,7 @@ export class UsersController {
       if(!decoded._id || decoded.role !== 'Admin'){
         throw new UnauthorizedException('Unauthorized')
       }
-      return this.usersService.remove(id);
+      return this.usersService.remove(id, token, decoded._id);
     }catch(err){
       throw new UnauthorizedException('Unauthorized')
     }

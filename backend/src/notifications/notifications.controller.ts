@@ -325,16 +325,22 @@ export class NotificationsController {
   ){
     try{
       const header = req.headers.authorization;
+      
       if(!header){
         this.logger.log(`Authorization header missing`);
         throw new UnauthorizedException('Unauthorized');
       }
-      const decoded = this.jwtService.decode(header.split(" ")[1]);
+
+      const token = header.split(" ")[1]
+      
+      const decoded = this.jwtService.decode(token);
+      
       if(!decoded || decoded.role !== 'Admin'){
         this.logger.log(`User is not authorized to access this endpoint`);
         throw new UnauthorizedException('User is not authorized to access this endpoint');
       }
-      return await this.notificationsService.markAllAdminAsRead();
+
+      return await this.notificationsService.markAllAdminAsRead( token, decoded._id);
     }catch(err){
       this.logger.log(`User is not authorized to access this endpoint`);
       throw new UnauthorizedException('User is not authorized to access this endpoint');
@@ -426,12 +432,14 @@ export class NotificationsController {
         this.logger.log(`Authorization header is missing`);
         throw new UnauthorizedException('Unauthorized');
       }
-      const decoded = this.jwtService.decode(header.split(" ")[1]);
+
+      const token = header.split(" ")[1]
+      const decoded = this.jwtService.decode(token);
       if(!decoded.role){
         this.logger.log(`User is not authorized to access this endpoint`);
         throw new UnauthorizedException('User is not authorized to access this endpoint');
       }
-      return await this.notificationsService.findAdminNotifications({ ...query, page, limit, skip } as any, decoded._id);
+      return await this.notificationsService.findAdminNotifications({ ...query, page, limit, skip } as any, decoded._id, token);
     }catch(err){
       this.logger.log(`Unauthorized user trying to access the endpoint`);
       throw new UnauthorizedException('Unauthorized');
@@ -476,7 +484,9 @@ export class NotificationsController {
       throw new UnauthorizedException('Unauthorized');
     }
 
-    const decoded = this.jwtService.decode(header.split(' ')[1]);
+    const token = header.split(' ')[1]
+
+    const decoded = this.jwtService.decode(token);
     if (!decoded || decoded.role !== 'Desk officer') {
       this.logger.log(`User is not authorized to access this endpoint`);
       throw new UnauthorizedException('User is not authorized to access this endpoint');
@@ -490,6 +500,7 @@ export class NotificationsController {
 
     return this.notificationsService.getDeskOfficerNotifications(
       deskOfficerId,
+      token,
       { filter, search },
       { page, limit, skip }
     );
@@ -535,7 +546,9 @@ export class NotificationsController {
       throw new UnauthorizedException('Unauthorized');
     }
 
-    const decoded = this.jwtService.decode(header.split(' ')[1]);
+    const token = header.split(' ')[1]
+
+    const decoded = this.jwtService.decode(token);
     if (!decoded || decoded.role !== 'Registrar') {
       this.logger.log(`User is not authorized to access this endpoint`);
       throw new UnauthorizedException('User is not authorized to access this endpoint');
@@ -549,6 +562,7 @@ export class NotificationsController {
 
     return this.notificationsService.getRegistrarNotifications(
       registrarId,
+      token,
       { filter, search },
       { page, limit, skip }
     );
@@ -582,8 +596,8 @@ export class NotificationsController {
         this.logger.log(`Authorization header is missing`);
         throw new UnauthorizedException('Unauthorized');
       }
-
-      const decoded = this.jwtService.decode(header.split(' ')[1]);
+      const token = header.split(' ')[1]
+      const decoded = this.jwtService.decode(token);
       if (!decoded) {
         this.logger.log(`User is not authorized to access this endpoint`);
         throw new UnauthorizedException('User is not authorized to access this endpoint');
@@ -595,7 +609,7 @@ export class NotificationsController {
         throw new UnauthorizedException('Unauthorized');
       }
 
-      return await this.notificationsService.deleteUserNotification(userId, notificationId);
+      return await this.notificationsService.deleteUserNotification(userId, token, notificationId);
     } catch (err) {
       this.logger.log(`User is not authorized to access this endpoint`);
       throw new UnauthorizedException('User is not authorized to access this endpoint');

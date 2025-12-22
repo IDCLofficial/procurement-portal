@@ -85,9 +85,17 @@ export class NotificationsService {
 
   async getDeskOfficerNotifications(
     deskOfficerId: string,
+    token:string,
     filters: { filter: 'all' | 'read' | 'unread'; search: string },
     pagination: { page: number; limit: number; skip: number }
   ) {
+
+    const admin = await this.userModel.findById(deskOfficerId);
+    
+    if(!admin || token !== admin.accessToken){
+      throw new UnauthorizedException('Unauthorized')
+    }
+
     const { filter, search } = filters;
     const { limit, skip } = pagination;
 
@@ -142,9 +150,17 @@ export class NotificationsService {
 
   async getRegistrarNotifications(
     registrarId: string,
+    token:string,
     filters: { filter: 'all' | 'read' | 'unread'; search: string },
     pagination: { page: number; limit: number; skip: number }
   ) {
+
+    const admin = await this.userModel.findById(registrarId);
+    
+    if(!admin || token !== admin.accessToken){
+      throw new UnauthorizedException('Unauthorized')
+    }
+
     const { filter, search } = filters;
     const { limit, skip } = pagination;
 
@@ -454,7 +470,13 @@ export class NotificationsService {
     return await this.notificationModel.deleteMany(filter);
   }
 
-  async deleteUserNotification(UserId: any, notificationId: string) {
+  async deleteUserNotification(UserId: any, token:string, notificationId: string) {
+    const admin = await this.userModel.findById(UserId);
+    
+    if(!admin || token !== admin.accessToken){
+      throw new UnauthorizedException('Unauthorized')
+    }
+
     const filter: any = {
       _id: new Types.ObjectId(notificationId as string),
       recipientId: new Types.ObjectId(UserId as Types.ObjectId),
@@ -486,8 +508,14 @@ export class NotificationsService {
     page?: number,
     limit?: number,
     skip?: number,
-  }, userId: string): Promise<any> {
+  }, userId: string, token:string): Promise<any> {
     // const adminId = decoded._id;
+    const admin = await this.userModel.findById(userId)
+    
+    if(!admin || token !== admin.accessToken){
+      throw new UnauthorizedException('Unauthorized')
+    }
+    
     const filter: any = {
       recipient:NotificationRecipient.ADMIN
     };
@@ -559,10 +587,16 @@ export class NotificationsService {
     }
   }
 
-  async markAllAdminAsRead(){
+  async markAllAdminAsRead(token:string, userId:string){
+    const admin = await this.userModel.findById(userId)
+    if(!admin || token !== admin.accessToken){
+      throw new UnauthorizedException("Invalid or expired token")
+    }
+
     const filter: any = {
       recipient:NotificationRecipient.ADMIN,
     };
+
     return await this.notificationModel.updateMany(filter, { isRead: true });
   }
 

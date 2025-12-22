@@ -5,6 +5,7 @@ import { Request } from 'express';
 import * as bcrypt from 'bcrypt';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
+import { UpdateVendorSettingsDto } from './dto/update-vendor-settings.dto';
 import { companyForm, renewalSteps, Vendor, VendorDocument } from './entities/vendor.schema';
 import { EmailService } from '../email/email.service';
 import { JwtService } from '@nestjs/jwt';
@@ -1539,5 +1540,49 @@ export class VendorsService {
       this.Logger.error(error.message)
       throw new ConflictException(`An error occured: ${error.message}`);
     }
+  }
+
+  async updateSettings(vendorId: string, dto: UpdateVendorSettingsDto, authToken: string) {
+    const vendor = await this.vendorModel.findById(vendorId).exec();
+
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    if (vendor.accessToken !== authToken) {
+      throw new UnauthorizedException('Invalid or Expired token');
+    }
+
+    const defaultSettings = {
+      notificationChannels: { email: true },
+      notificationPreferences: {
+        documentExpiryAlerts: true,
+        renewalReminders: true,
+        applicationUpdates: true,
+        paymentConfirmations: true,
+        systemUpdates: true,
+        loginAlerts: true,
+      },
+    };
+
+    const current = (vendor.settings as any) || defaultSettings;
+
+    vendor.settings = {
+      notificationChannels: {
+        ...(current.notificationChannels || defaultSettings.notificationChannels),
+        ...(dto.notificationChannels || {}),
+      },
+      notificationPreferences: {
+        ...(current.notificationPreferences || defaultSettings.notificationPreferences),
+        ...(dto.notificationPreferences || {}),
+      },
+    } as any;
+
+    await vendor.save();
+
+    return {
+      message: 'Settings updated successfully',
+      settings: vendor.settings,
+    };
   }
 }

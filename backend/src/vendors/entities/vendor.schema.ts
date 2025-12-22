@@ -19,6 +19,25 @@ export enum renewalSteps{
   COMPLETE="complete"
 }
 
+export type notificationChannels = {
+  email:boolean
+}
+
+export type notificationPreferences = {
+  documentExpiryAlerts:boolean,
+  renewalReminders:boolean,
+  applicationUpdates:boolean,
+  paymentConfirmations:boolean,
+  systemUpdates: boolean,
+  loginAlerts:boolean
+}
+
+export type settings = {
+  //notifications
+  notificationChannels:notificationChannels,
+  notificationPreferences:notificationPreferences
+}
+
 @Schema({ timestamps: true })
 export class Vendor {
   @Prop({ required: true })
@@ -62,6 +81,23 @@ export class Vendor {
 
   @Prop({required:false})
   reg_payment_ref:string;
+    
+  @Prop({
+    required: false,
+    type: Object,
+    default: {
+      notificationChannels: { email: true },
+      notificationPreferences: {
+        documentExpiryAlerts: true,
+        renewalReminders: true,
+        applicationUpdates: true,
+        paymentConfirmations: true,
+        systemUpdates: true,
+        loginAlerts: true,
+      },
+    },
+  })
+  settings: settings;
 
   @Prop({required: false})
   accessToken?: string;

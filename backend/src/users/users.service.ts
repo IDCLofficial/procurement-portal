@@ -31,7 +31,13 @@ export class UsersService {
    * - Creates user with active status by default
    * - Returns user object without password field
    */
-  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
+  async create(createUserDto: CreateUserDto, userId:string, token:string): Promise<Omit<User, 'password'>> {
+    const admin = await this.userModel.findById(userId);
+    
+    if(!admin || token !== admin.accessToken){
+      throw new UnauthorizedException('Unauthorized')
+    }
+    
     // Check if user with email already exists
     const existingUser = await this.userModel.findOne({
       email: createUserDto.email,
@@ -150,7 +156,14 @@ export class UsersService {
    * - Excludes password field from response
    * - Returns empty array if no users found
    */
-  async getUsersByName(): Promise<Omit<User, 'password'>[]> {
+  async getUsersByName(token:string, userId:string): Promise<Omit<User, 'password'>[]> {
+    
+    const admin = await this.userModel.findById(userId);
+    
+    if(!admin || token !== admin.accessToken){
+      throw new UnauthorizedException('Unauthorized')
+    }
+
     const users = await this.userModel
       .find({ role: { $ne: 'Admin' } })
       .select('-password')
@@ -214,7 +227,13 @@ export class UsersService {
    * - Ensures only one Registrar exists in the system
    * - Returns updated user data without password
    */
-  async editUser(id: string, editUserDto: EditUserDto): Promise<Omit<User, 'password'>> {
+  async editUser(id: string, editUserDto: EditUserDto, token:string, userId:string): Promise<Omit<User, 'password'>> {
+    const admin = await this.userModel.findById(userId);
+    
+    if(!admin || token !== admin.accessToken){
+      throw new UnauthorizedException('Unauthorized')
+    }
+      
     const user = await this.userModel.findById(id).exec();
 
     if (!user) {
@@ -265,8 +284,14 @@ export class UsersService {
    * - Permanently removes user from database
    * - Returns deleted user data without password
    */
-  async remove(id: string): Promise<Omit<User, 'password'>> {
+  async remove(id: string, token:string, userId:string): Promise<Omit<User, 'password'>> {
     const user = await this.userModel.findById(id).exec();
+
+    const admin = await this.userModel.findById(userId);
+    
+    if(!admin || token !== admin.accessToken){
+      throw new UnauthorizedException('Unauthorized')
+    }
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);

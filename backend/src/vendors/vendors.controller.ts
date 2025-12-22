@@ -12,6 +12,7 @@ import { replaceDocumentDto } from './dto/replace-document.dto';
 import { changePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateVendorSettingsDto } from './dto/update-vendor-settings.dto';
 
 @ApiTags('vendors')
 @Controller('vendors')
@@ -336,167 +337,6 @@ export class VendorsController {
     return this.vendorsService.getProfile(userId, authToken);
   }
 
-  /**
-   * Register company details for a vendor
-   * 
-   * @param id - Vendor ID (MongoDB ObjectId)
-   * @param updateRegistrationDto - Company registration data including company info, directors, bank details, documents, and categories
-   * @returns Success message with saved company, directors, and document data
-   * 
-   * @example
-   * PATCH /vendors/register-company/507f1f77bcf86cd799439011
-   * Body: {
-   *   "company": {
-   *     "companyName": "Tech Solutions Ltd",
-   *     "cacNumber": "RC123456",
-   *     "tin": "12345678-0001"
-   *   }
-   * }
-   */
-  @Patch('/register-company')
-  @UseInterceptors(FilesInterceptor('files', 10)) // Allow up to 10 files
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ 
-    summary: 'Register company details for a vendor',
-    description: 'Updates vendor registration with company information, directors, bank details, documents, and service categories. All fields are optional to allow partial updates. Files can be uploaded for documents.'
-  })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Company registration updated successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Categories and grade updated successfully. Proceed to payment'
-        },
-        result: {
-          type: 'object',
-          description: 'Company details with updated categories and grade'
-        },
-        nextStep: {
-          type: 'string',
-          enum: ['company', 'directors', 'bankDetails', 'documents', 'categoriesAndGrade', 'complete'],
-          description: 'Current step in the registration process'
-        }
-      }
-    }
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Vendor not found with the provided ID'
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data'
-  })
-  @ApiBody({ 
-    schema: {
-      type: 'object',
-      properties: {
-        company: {
-          type: 'object',
-          properties: {
-            companyName: { type: 'string', example: 'Tech Solutions Ltd' },
-            cacNumber: { type: 'string', example: 'RC123456' },
-            tin: { type: 'string', example: '12345678-0001' },
-            businessAddres: { type: 'string', example: '123 Business Street, Victoria Island' },
-            lga: { type: 'string', example: 'Lagos Island' },
-            website: { type: 'string', example: 'https://techsolutions.com' }
-          }
-        },
-        directors: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              fullName: { type: 'string', example: 'Jane Smith' },
-              idType: { type: 'string', example: 'National ID' },
-              id: { type: 'string', example: 'NIN12345678' },
-              phone: { type: 'number', example: 2348012345678 },
-              email: { type: 'string', example: 'jane.smith@techsolutions.com' }
-            }
-          }
-        },
-        bankDetails: {
-          type: 'object',
-          properties: {
-            bankName: { type: 'string', example: 'First Bank of Nigeria' },
-            accountNumber: { type: 'number', example: 1234567890 },
-            accountName: { type: 'string', example: 'Tech Solutions Ltd' }
-          }
-        },
-        documents: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              documentType: { type: 'string', example: 'CAC Certificate' },
-              documentUrl: {
-                type: 'string',
-                example: 'https://cdn.example.com/documents/cac-certificate.pdf',
-                description: 'URL of the uploaded document file that corresponds to an entry in the files array'
-              },
-              validFrom: { type: 'string', example: '2023-01-01' },
-              validTo: { type: 'string', example: '2028-01-01' }
-            },
-            required: ['documentType', 'documentUrl']
-          },
-          description: 'Document metadata; each item should have a matching uploaded file in the files field'
-        },
-        categoriesAndGrade: {
-          type: 'object',
-          properties: {
-            categories: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  sector: { type: 'string', example: 'Information Technology' },
-                  service: { type: 'string', example: 'Software Development' }
-                }
-              }
-            },
-            grade: { type: 'string', example: 'Grade A' }
-          }
-        },
-        files: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary'
-          },
-          description: 'Upload document files (PDF, images, etc.) - corresponds to documents array'
-        }
-      }
-    }
-  })
-  registerCompany(
-    @Req() req:any, 
-    @Body() updateRegistrationDto:updateRegistrationDto,
-    @UploadedFiles() files: Express.Multer.File[]
-  ) {
-    // Extract and verify JWT token from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      throw new UnauthorizedException('Authorization header is missing');
-    }  
-    const authToken = authHeader.replace('Bearer ', '').trim();
-    if (!authToken) {
-      throw new UnauthorizedException('Token is missing');
-    }   
-    const userId = this.jwtService.verify(authToken)._id;
-    
-    if (!userId) {
-      throw new UnauthorizedException('Invalid token');
-    }
-    
-    if(updateRegistrationDto.mode==mode.RENEWAL){
-      return this.vendorsService.renewRegistration(userId, { documents: updateRegistrationDto.documents });
-    }
-    return this.vendorsService.registerCompany(userId, updateRegistrationDto, authToken);
-  }
-
   //
 
   /**
@@ -810,42 +650,7 @@ export class VendorsController {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
-
-  /**
-   * Update a vendor profile
-   * 
-   * @param id - Vendor ID (MongoDB ObjectId)
-   * @param updateVendorDto - Updated vendor data (fullname, email, phone, password)
-   * @returns Updated vendor profile
-   * 
-   * @example
-   * PATCH /vendors/profile/507f1f77bcf86cd799439011
-   * Body: {
-   *   "fullname": "John Updated Doe",
-   *   "phoneNo": "08098765432"
-   * }
-   */
-  @Patch('profile')
-  update(@Body() updateVendorDto: UpdateVendorDto, @Req() req: any) {
-    try{
-      const authToken = req.headers.authorization?.split(' ')[1];
-      if(!authToken){
-        this.logger.log(`Unauthorized user trying to access the endpoint`);
-        throw new UnauthorizedException('Unauthorized');
-      }
-      const decoded = this.jwtService.decode(authToken);
-
-      const vendorId = decoded._id;
-      if(!vendorId){
-        this.logger.log(`Unauthorized user trying to access the endpoint`);
-        throw new UnauthorizedException('Unauthorized');
-      }
-      return this.vendorsService.update(vendorId, updateVendorDto, authToken);
-    }catch(err){
-      this.logger.log(`Unauthorized user trying to access the endpoint`);
-      throw new UnauthorizedException('Unauthorized');
-    }
-  }
+  //
 
   /**
    * Get registration payment for a vendor
@@ -992,6 +797,230 @@ export class VendorsController {
       return await this.vendorsService.resendVerificationOtp(email);
     } catch (error) {
       throw new BadRequestException(error.message);
+    }
+  }
+
+  /**
+   * Register company details for a vendor
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @param updateRegistrationDto - Company registration data including company info, directors, bank details, documents, and categories
+   * @returns Success message with saved company, directors, and document data
+   * 
+   * @example
+   * PATCH /vendors/register-company/507f1f77bcf86cd799439011
+   * Body: {
+   *   "company": {
+   *     "companyName": "Tech Solutions Ltd",
+   *     "cacNumber": "RC123456",
+   *     "tin": "12345678-0001"
+   *   }
+   * }
+   */
+  @Patch('/register-company')
+  @UseInterceptors(FilesInterceptor('files', 10)) // Allow up to 10 files
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ 
+    summary: 'Register company details for a vendor',
+    description: 'Updates vendor registration with company information, directors, bank details, documents, and service categories. All fields are optional to allow partial updates. Files can be uploaded for documents.'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Company registration updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Categories and grade updated successfully. Proceed to payment'
+        },
+        result: {
+          type: 'object',
+          description: 'Company details with updated categories and grade'
+        },
+        nextStep: {
+          type: 'string',
+          enum: ['company', 'directors', 'bankDetails', 'documents', 'categoriesAndGrade', 'complete'],
+          description: 'Current step in the registration process'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Vendor not found with the provided ID'
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data'
+  })
+  @ApiBody({ 
+    schema: {
+      type: 'object',
+      properties: {
+        company: {
+          type: 'object',
+          properties: {
+            companyName: { type: 'string', example: 'Tech Solutions Ltd' },
+            cacNumber: { type: 'string', example: 'RC123456' },
+            tin: { type: 'string', example: '12345678-0001' },
+            businessAddres: { type: 'string', example: '123 Business Street, Victoria Island' },
+            lga: { type: 'string', example: 'Lagos Island' },
+            website: { type: 'string', example: 'https://techsolutions.com' }
+          }
+        },
+        directors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              fullName: { type: 'string', example: 'Jane Smith' },
+              idType: { type: 'string', example: 'National ID' },
+              id: { type: 'string', example: 'NIN12345678' },
+              phone: { type: 'number', example: 2348012345678 },
+              email: { type: 'string', example: 'jane.smith@techsolutions.com' }
+            }
+          }
+        },
+        bankDetails: {
+          type: 'object',
+          properties: {
+            bankName: { type: 'string', example: 'First Bank of Nigeria' },
+            accountNumber: { type: 'number', example: 1234567890 },
+            accountName: { type: 'string', example: 'Tech Solutions Ltd' }
+          }
+        },
+        documents: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              documentType: { type: 'string', example: 'CAC Certificate' },
+              documentUrl: {
+                type: 'string',
+                example: 'https://cdn.example.com/documents/cac-certificate.pdf',
+                description: 'URL of the uploaded document file that corresponds to an entry in the files array'
+              },
+              validFrom: { type: 'string', example: '2023-01-01' },
+              validTo: { type: 'string', example: '2028-01-01' }
+            },
+            required: ['documentType', 'documentUrl']
+          },
+          description: 'Document metadata; each item should have a matching uploaded file in the files field'
+        },
+        categoriesAndGrade: {
+          type: 'object',
+          properties: {
+            categories: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  sector: { type: 'string', example: 'Information Technology' },
+                  service: { type: 'string', example: 'Software Development' }
+                }
+              }
+            },
+            grade: { type: 'string', example: 'Grade A' }
+          }
+        },
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary'
+          },
+          description: 'Upload document files (PDF, images, etc.) - corresponds to documents array'
+        }
+      }
+    }
+  })
+  registerCompany(
+    @Req() req:any, 
+    @Body() updateRegistrationDto:updateRegistrationDto,
+    @UploadedFiles() files: Express.Multer.File[]
+  ) {
+    // Extract and verify JWT token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header is missing');
+    }  
+    const authToken = authHeader.replace('Bearer ', '').trim();
+    if (!authToken) {
+      throw new UnauthorizedException('Token is missing');
+    }   
+    const userId = this.jwtService.verify(authToken)._id;
+    
+    if (!userId) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    
+    if(updateRegistrationDto.mode==mode.RENEWAL){
+      return this.vendorsService.renewRegistration(userId, { documents: updateRegistrationDto.documents });
+    }
+    return this.vendorsService.registerCompany(userId, updateRegistrationDto, authToken);
+  }
+
+  /**
+   * Update a vendor profile
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @param updateVendorDto - Updated vendor data (fullname, email, phone, password)
+   * @returns Updated vendor profile
+   * 
+   * @example
+   * PATCH /vendors/profile/507f1f77bcf86cd799439011
+   * Body: {
+   *   "fullname": "John Updated Doe",
+   *   "phoneNo": "08098765432"
+   * }
+   */
+  @Patch('profile')
+  update(@Body() updateVendorDto: UpdateVendorDto, @Req() req: any) {
+    try{
+      const authToken = req.headers.authorization?.split(' ')[1];
+      if(!authToken){
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+      const decoded = this.jwtService.decode(authToken);
+
+      const vendorId = decoded._id;
+      if(!vendorId){
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+      return this.vendorsService.update(vendorId, updateVendorDto, authToken);
+    }catch(err){
+      this.logger.log(`Unauthorized user trying to access the endpoint`);
+      throw new UnauthorizedException('Unauthorized');
+    }
+  }
+
+  @Patch('settings')
+  @ApiOperation({ summary: 'Update vendor settings' })
+  @ApiResponse({ status: 200, description: 'Settings updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  updateSettings(@Body() body: UpdateVendorSettingsDto, @Req() req: any) {
+    try {
+      const authToken = req.headers.authorization?.split(' ')[1];
+      if (!authToken) {
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+
+      const decoded = this.jwtService.decode(authToken);
+      const vendorId = decoded?._id;
+
+      if (!vendorId) {
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+
+      return this.vendorsService.updateSettings(vendorId, body, authToken);
+    } catch (err) {
+      this.logger.log(`Unauthorized user trying to access the endpoint`);
+      throw new UnauthorizedException('Unauthorized');
     }
   }
 

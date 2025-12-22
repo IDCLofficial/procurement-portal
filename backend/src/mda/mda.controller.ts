@@ -42,7 +42,7 @@ export class MdaController {
 
   @ApiOperation({ summary: 'Get all MDAs by names' })
   @ApiResponse({ status: HttpStatus.OK, description: 'List of all MDAs' })
-  @Get('mda-names')
+  @Get('mda-no-pag')
   findAllByNames() {
     return this.mdaService.findAllByNames();
   }

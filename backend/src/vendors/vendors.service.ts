@@ -971,11 +971,17 @@ export class VendorsService {
 
     const { password: _, ...user } = newVendor.toObject();
 
+    const token = this.tokenHandlers.generateToken(user)
+    
+    vendor.accessToken = token;
+    
+    await vendor.save();
+
     return { 
       success: true, 
       message: 'Email verified successfully. Your account is now active.',
       data: user as any,
-      token: this.tokenHandlers.generateToken(user)
+      token
     };
   }
 

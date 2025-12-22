@@ -68,6 +68,21 @@ export interface ApplicationsQueryParams {
   limit?: number;
 }
 
+export interface StatusCounts {
+  pendingReview: number;
+  approved: number;
+  rejected: number;
+  forwardedToRegistrar: number;
+}
+
+export interface ApplicationsUserResponse {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  statusCounts: StatusCounts;
+  applications: Application[];
+}
 export interface ApplicationsResponse {
   total: number;
   page: number;
@@ -75,6 +90,7 @@ export interface ApplicationsResponse {
   totalPages: number;
   applications: Application[];
 }
+
 
 export interface AssignApplicationRequest {
   applicationId: string;

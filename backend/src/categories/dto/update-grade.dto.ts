@@ -16,13 +16,13 @@ export class UpdateGradeDto {
         description: "Updated financial capacity requirement",
         required: false
     })
-    @IsNumber()
+    @IsString()
     @IsOptional()
     financialCapacity?: string;
     
     @ApiProperty({ 
         example: 1500000, 
-        description: "Updated financial capacity requirement",
+        description: "Updated renewal fee",
         required: false
     })
     @IsNumber()

@@ -7,7 +7,6 @@ export default function NotificationTab() {
     // Notification preferences state
     const [notifications, setNotifications] = useState({
         emailNotifications: true,
-        smsNotifications: false,
         documentExpiry: true,
         renewalReminders: true,
         applicationUpdates: true,
@@ -23,12 +22,12 @@ export default function NotificationTab() {
         }));
     };
 
-    const handleReminderFrequencyChange = (value: string) => {
-        setNotifications((prev) => ({
-            ...prev,
-            reminderFrequency: value,
-        }));
-    };
+    // const handleReminderFrequencyChange = (value: string) => {
+    //     setNotifications((prev) => ({
+    //         ...prev,
+    //         reminderFrequency: value,
+    //     }));
+    // };
 
     return (
         <div className='grid gap-6'>
@@ -45,13 +44,6 @@ export default function NotificationTab() {
                             description="Receive notifications via email"
                             enabled={notifications.emailNotifications}
                             onChange={(value) => handleNotificationToggle('emailNotifications', value)}
-                        />
-                        <NotificationToggle
-                            icon="sms"
-                            title="SMS Notifications"
-                            description="Receive critical alerts via SMS"
-                            enabled={notifications.smsNotifications}
-                            onChange={(value) => handleNotificationToggle('smsNotifications', value)}
                         />
                     </div>
                 </SettingsSection>
@@ -97,7 +89,7 @@ export default function NotificationTab() {
                     </div>
 
                     {/* Reminder Frequency */}
-                    <div className="mt-6 pt-6 border-t border-gray-100">
+                    {/* <div className="mt-6 pt-6 border-t border-gray-100">
                         <label className="block text-sm font-medium text-gray-900 mb-2">
                             Reminder Frequency
                         </label>
@@ -114,7 +106,7 @@ export default function NotificationTab() {
                         <p className="mt-1.5 text-xs text-gray-500">
                             When to send first reminder for document expiry
                         </p>
-                    </div>
+                    </div> */}
                 </SettingsSection>
             </div>
         </div>

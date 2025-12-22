@@ -380,4 +380,15 @@ interface NotificationResponse {
     }
 }
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor, ActivityLogResponse, NotificationResponse, MDAResponse };
+interface LoginHistory {
+    id: number;
+    device: string;
+    deviceType: string;
+    location: string;
+    ip: string;
+    timestamp: string;
+    date: string;
+    status: string;
+}
+
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor, ActivityLogResponse, NotificationResponse, MDAResponse, LoginHistory };

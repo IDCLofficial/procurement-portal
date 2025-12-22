@@ -227,6 +227,7 @@ export const {
   useLoginMutation,
   useGetAuditLogsQuery,
   useGetAdminNotificationsQuery,
+  useGetTransactionsQuery,
   useMarkAdminNotificationAsReadByIdMutation,
   useMarkAllAdminNotificationAsReadMutation,
   useGetDeskOfficerNotificationsQuery,

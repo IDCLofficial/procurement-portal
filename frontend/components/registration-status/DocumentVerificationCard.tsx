@@ -92,7 +92,7 @@ export default function DocumentVerificationCard({ documents }: DocumentVerifica
                             <div className="flex-1">
                                 <DialogTitle className="text-lg font-semibold">{selectedDoc?.documentType}</DialogTitle>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Uploaded {selectedDoc?.uploadedDate ? format(toValidJSDate(selectedDoc.uploadedDate), 'dd MMMM yyyy') : 'N/A'}
+                                    Uploaded {selectedDoc?.uploadedDate ? format(toValidJSDate(selectedDoc.uploadedDate || ""), 'dd MMMM yyyy') : 'N/A'}
                                 </p>
                                 <div className="mt-2">
                                     {selectedDoc?.status && getStatusBadge(selectedDoc.status.status)}

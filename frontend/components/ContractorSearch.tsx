@@ -169,7 +169,7 @@ export default function ContractorSearch() {
                             <SelectContent>
                                 <SelectItem value="all">All MDA/MDAs</SelectItem>
                                 {mdas.mdas.map((option) => (
-                                    <SelectItem key={option._id} value={option.code}>
+                                    <SelectItem key={option._id} value={option.name}>
                                         {option.name}
                                     </SelectItem>
                                 ))}

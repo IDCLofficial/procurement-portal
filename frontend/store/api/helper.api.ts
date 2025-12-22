@@ -18,7 +18,7 @@ export const helperApi = apiSlice.injectEndpoints({
         }),
         getMDA: builder.query<MDAResponse, void>({
             query: () => ({
-                url: endpoints.getMDA,
+                url: `${endpoints.getMDA}?limit=500 `,
                 method: 'GET',
             }),
         }),

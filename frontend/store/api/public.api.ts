@@ -10,7 +10,7 @@ export const publicApi = apiSlice.injectEndpoints({
             search?: string;
             sector?: string;
             grade?: string;
-            lga?: string;
+            mda?: string;
             status?: string;
         }>({
             query: (params) => ({
@@ -22,7 +22,7 @@ export const publicApi = apiSlice.injectEndpoints({
                     search: params.search?.toLowerCase() || undefined,
                     sector: params.sector?.toLowerCase() || undefined,
                     grade: params.grade?.toLowerCase() || undefined,
-                    lga: params.lga?.toLowerCase() || undefined,
+                    mda: params.mda?.toLowerCase() || undefined,
                     status: params.status?.toLowerCase() || undefined,
                 },
             }),

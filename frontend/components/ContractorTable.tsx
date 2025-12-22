@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FaCheckCircle, FaDownload, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
-import { FaCircleXmark } from 'react-icons/fa6';
+import { FaCircleXmark, FaClock, FaX } from 'react-icons/fa6';
 import { getGradeConfig, getSectorConfig, getStatusConfig } from '@/lib/constants';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCurrentPage, setItemsPerPage } from '@/store/slices/publicSlice';
@@ -15,6 +15,7 @@ import { useGetAllContractorsQuery } from '@/store/api/public.api';
 import { toast } from 'sonner';
 import { toValidJSDate } from '@/lib';
 import { updateSearchParam } from '@/lib/utils';
+import { Loader } from 'lucide-react';
 
 export interface Contractor {
     id: string;
@@ -259,7 +260,7 @@ export default function ContractorTable() {
                                             <TableCell className="font-medium text-gray-600">{startIndex + index + 1}</TableCell>
                                             <TableCell className="font-semibold">{contractor.name}</TableCell>
                                             <TableCell className="font-semibold uppercase text-sm">{contractor.rcbnNumber}</TableCell>
-                                            <TableCell className='grid gap-1'>
+                                            <TableCell className='grid gap-1 capitalize'>
                                                 {contractor.sector.length > 2 ? contractor.sector : "N/A"}
                                             </TableCell>
                                             <TableCell>
@@ -268,9 +269,20 @@ export default function ContractorTable() {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge className={`${getStatusConfig(contractor.status).badgeClass} flex items-center gap-1 w-fit`}>
-                                                    <FaCheckCircle className="text-xs" />
-                                                    {contractor.status.charAt(0).toUpperCase() + contractor.status.slice(1)}
+                                                <Badge className={`${getStatusConfig(contractor.status).badgeClass} flex items-center gap-1 w-fit capitalize`}>
+                                                    {(()=>{
+                                                        switch(contractor.status.toLowerCase()){
+                                                            case "approved":
+                                                                return <FaCheckCircle className="text-xs" />
+                                                            case "expired":
+                                                                return <FaClock className="text-xs" />
+                                                            case "revoked":
+                                                                return <FaX className="text-xs" />
+                                                            default:
+                                                                return <Loader className="text-xs animate-spin" />
+                                                        }
+                                                    })()}
+                                                    {contractor.status}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-sm">{new Date(toValidJSDate(contractor.expiryDate)).toLocaleDateString()}</TableCell>

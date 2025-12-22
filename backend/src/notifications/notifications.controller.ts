@@ -553,4 +553,154 @@ export class NotificationsController {
       { page, limit, skip }
     );
   }
+
+  @ApiOperation({
+    summary: 'Delete a registrar notification',
+    description: 'Deletes a single notification that belongs to the authenticated registrar.',
+  })
+  @ApiParam({
+    name: 'notificationId',
+    description: 'ID of the notification to delete',
+    required: true,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Notification deleted successfully.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  @Delete('user-notifications/:notificationId')
+  async deleteUserNotification(
+    @Req() req: any,
+    @Param('notificationId') notificationId: string,
+  ) {
+    try {
+      const header = req.headers.authorization;
+      if (!header) {
+        this.logger.log(`Authorization header is missing`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+
+      const decoded = this.jwtService.decode(header.split(' ')[1]);
+      if (!decoded) {
+        this.logger.log(`User is not authorized to access this endpoint`);
+        throw new UnauthorizedException('User is not authorized to access this endpoint');
+      }
+
+      const userId = decoded?.['_id'];
+      if (!userId) {
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+
+      return await this.notificationsService.deleteUserNotification(userId, notificationId);
+    } catch (err) {
+      this.logger.log(`User is not authorized to access this endpoint`);
+      throw new UnauthorizedException('User is not authorized to access this endpoint');
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Delete multiple  notifications',
+    description: 'Deletes multiple notifications that belong to the authenticated registrar using a list of notification IDs.',
+  })
+  @ApiBody({
+    description: 'List of notification IDs to delete',
+    schema: {
+      type: 'object',
+      properties: {
+        notificationIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of notification IDs',
+        },
+      },
+      required: ['notificationIds'],
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Notifications deleted successfully.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  @Post('user-notifications/delete-many')
+  async deleteMultipleUserNotifications(
+    @Req() req: any,
+    @Body() body: { notificationIds: string[] },
+  ) {
+    try {
+      const header = req.headers.authorization;
+      if (!header) {
+        this.logger.log(`Authorization header is missing`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+
+      const decoded = this.jwtService.decode(header.split(' ')[1]);
+      if (!decoded) {
+        this.logger.log(`User is not authorized to access this endpoint`);
+        throw new UnauthorizedException('User is not authorized to access this endpoint');
+      }
+
+      const userId = decoded?.['_id'];
+      if (!userId) {
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+
+      return await this.notificationsService.deleteMultipleUserNotifications(
+        userId,
+        body.notificationIds,
+      );
+    } catch (err) {
+      this.logger.log(`User is not authorized to access this endpoint`);
+      throw new UnauthorizedException('User is not authorized to access this endpoint');
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Delete all user notifications',
+    description: 'Deletes all notifications that belong to the authenticated user.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'All user notifications deleted successfully.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  @Delete('user-notifications')
+  async deleteAllUserNotifications(
+    @Req() req: any,
+  ) {
+    try {
+      const header = req.headers.authorization;
+      if (!header) {
+        this.logger.log(`Authorization header is missing`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+
+      const decoded = this.jwtService.decode(header.split(' ')[1]);
+      if (!decoded) {
+        this.logger.log(`User is not authorized to access this endpoint`);
+        throw new UnauthorizedException('User is not authorized to access this endpoint');
+      }
+
+      const userId = decoded?.['_id'];
+      if (!userId) {
+        this.logger.log(`Unauthorized user trying to access the endpoint`);
+        throw new UnauthorizedException('Unauthorized');
+      }
+
+      return await this.notificationsService.deleteUserNotifications(userId);
+    } catch (err) {
+      this.logger.log(`User is not authorized to access this endpoint`);
+      throw new UnauthorizedException('User is not authorized to access this endpoint');
+    }
+  }
 }

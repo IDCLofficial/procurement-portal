@@ -454,6 +454,33 @@ export class NotificationsService {
     return await this.notificationModel.deleteMany(filter);
   }
 
+  async deleteUserNotification(UserId: any, notificationId: string) {
+    const filter: any = {
+      _id: new Types.ObjectId(notificationId as string),
+      recipientId: new Types.ObjectId(UserId as Types.ObjectId),
+    };
+    return await this.notificationModel.deleteOne(filter);
+  }
+
+  async deleteMultipleUserNotifications(userId: any, notificationIds: string[]) {
+    const ids = (notificationIds || []).map((id) => new Types.ObjectId(id));
+    if (ids.length === 0) {
+      return { acknowledged: true, deletedCount: 0 };
+    }
+    const filter: any = {
+      recipientId: new Types.ObjectId(userId as Types.ObjectId),
+      _id: { $in: ids },
+    };
+    return await this.notificationModel.deleteMany(filter);
+  }
+
+  async deleteUserNotifications(userId: any) {
+    const filter: any = {
+      recipientId: new Types.ObjectId(userId as Types.ObjectId),
+    };
+    return await this.notificationModel.deleteMany(filter);
+  }
+
   async findAdminNotifications(query:{
     isRead?:boolean,
     page?: number,

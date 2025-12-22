@@ -202,6 +202,18 @@ export const adminApi = baseApi.injectEndpoints({
         return response;
       },
     }),
+    // GET REGISTRAR NOTIFICATIONS
+      getRegistrarNotifications: builder.query<AdminNotificationsApiResponse, { page?: number; limit?: number }>({
+      query: ({ page = 1, limit = 10 } = {}) => ({
+        url: "/notifications/registrar-notifications",
+        params: { page, limit },
+        credentials: 'include',
+      }),
+      transformResponse: (response: AdminNotificationsApiResponse) => {
+        console.log(" getRegistrar notifications API response:", response);
+        return response;
+      },
+    }),
 
   }),
 });
@@ -218,4 +230,5 @@ export const {
   useMarkAdminNotificationAsReadByIdMutation,
   useMarkAllAdminNotificationAsReadMutation,
   useGetDeskOfficerNotificationsQuery,
+  useGetRegistrarNotificationsQuery,
 } = adminApi;

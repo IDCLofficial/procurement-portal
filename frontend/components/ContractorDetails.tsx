@@ -10,7 +10,7 @@ import VerificationModal from '@/components/VerificationModal';
 import { FaCheckCircle, FaDownload, FaGlobe, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { FaQrcode } from 'react-icons/fa6';
-import { getGradeConfig, getSectorConfig, getStatusConfig } from '@/lib/constants';
+import { getGradeConfig, getStatusConfig } from '@/lib/constants';
 import { copyToClipboard } from '@/lib';
 
 interface ContractorDetailsProps {
@@ -89,7 +89,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                             </div>
                             <div className="flex items-center gap-2 group">
                                 <p className="text-sm text-gray-600">
-                                    Registration ID: {contractor.id}
+                                    Registration ID: <span className='font-semibold'>{contractor.id}</span>
                                 </p>
                                 <button 
                                     onClick={() => copyToClipboard(contractor.id)}
@@ -147,7 +147,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                             <div className="group">
                                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">TIN</p>
                                 <div className="flex items-center gap-2">
-                                    <p className="text-base font-semibold text-gray-900 font-mono">{contractor.tinNumber}</p>
+                                    <p className="text-base font-semibold text-gray-900">{contractor.tinNumber}</p>
                                     <button 
                                         onClick={() => {
                                             navigator.clipboard.writeText(contractor.tinNumber);
@@ -241,16 +241,18 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                         <h2 className="text-xl font-semibold mb-4 opacity-70">Sector & Classification</h2>
                         <div className="space-y-4">
                             <div>
-                                <p className="text-sm text-gray-600 mb-2">Approved Sectors</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {contractor.approvedSectors.map((sector) => (
+                                <p className="text-sm text-gray-600 mb-2">Associated <abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></p>
+                                <div className="flex flex-wrap gap-2 text-lg capitalize font-medium">
+                                    {/* <pre>{JSON.stringify(contractor, null, 2)}</pre> */}
+                                    {/* {contractor.approvedSectors.map((sector) => (
                                         <Badge 
                                             key={sector} 
                                             className={getSectorConfig(sector).badgeClass}
                                         >
                                             {sector}
                                         </Badge>
-                                    ))}
+                                    ))} */}
+                                    {contractor.sector}
                                 </div>
                             </div>
                             <div>

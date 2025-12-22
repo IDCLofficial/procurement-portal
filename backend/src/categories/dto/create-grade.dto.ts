@@ -34,10 +34,10 @@ export class CreateGradeDto {
     renewalFee: number;
 
     @ApiProperty({ 
-        example: 1000000, 
+        example: '500000 - 1000000', 
         description: "Financial capacity requirement for this grade"
     })
-    @IsNumber()
+    @IsString()
     @IsNotEmpty()
-    financialCapacity: number;
+    financialCapacity: string;
 }

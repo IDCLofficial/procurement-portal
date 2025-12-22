@@ -300,37 +300,42 @@ export class UsersService {
    * - Count of Active users
    * - Count of Inactive users
    */
-  async getAllUsersWithCounts(): Promise<{
+  async getAllUsersWithCounts(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
     total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
     deskOfficerCount: number;
     activeCount: number;
     inactiveCount: number;
     users: Omit<User, 'password'>[];
   }> {
-    // Get all users without passwords
-    const users = await this.userModel
-      .find()
-      .select('-password')
-      .sort({ fullName: 1 })
-      .exec();
+    const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 10;
+    const skip = (safePage - 1) * safeLimit;
 
-    // Count Desk Officers
-    const deskOfficerCount = await this.userModel
-      .countDocuments({ role: 'Desk officer' })
-      .exec();
-
-    // Count Active users
-    const activeCount = await this.userModel
-      .countDocuments({ isActive: true })
-      .exec();
-
-    // Count Inactive users
-    const inactiveCount = await this.userModel
-      .countDocuments({ isActive: false })
-      .exec();
+    const [users, total, deskOfficerCount, activeCount, inactiveCount] = await Promise.all([
+      this.userModel
+        .find()
+        .select('-password')
+        .sort({ fullName: 1 })
+        .skip(skip)
+        .limit(safeLimit)
+        .exec(),
+      this.userModel.countDocuments({}).exec(),
+      this.userModel.countDocuments({ role: 'Desk officer' }).exec(),
+      this.userModel.countDocuments({ isActive: true }).exec(),
+      this.userModel.countDocuments({ isActive: false }).exec(),
+    ]);
 
     return {
-      total: users.length,
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages: Math.ceil(total / safeLimit),
       deskOfficerCount,
       activeCount,
       inactiveCount,

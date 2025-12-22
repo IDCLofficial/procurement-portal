@@ -129,7 +129,7 @@ export class CategoriesService {
         grade.registrationCost = updateGradeDto.registrationCost;
       }
       
-      if (updateGradeDto.financialCapacity !== undefined) {
+      if (typeof updateGradeDto.financialCapacity === 'string') {
         grade.financialCapacity = updateGradeDto.financialCapacity;
       }
 

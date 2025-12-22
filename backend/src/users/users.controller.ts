@@ -171,6 +171,9 @@ export class UsersController {
       type: 'object',
       properties: {
         total: { type: 'number', description: 'Total number of users' },
+        page: { type: 'number', description: 'Current page number' },
+        limit: { type: 'number', description: 'Number of users per page' },
+        totalPages: { type: 'number', description: 'Total number of pages' },
         deskOfficerCount: { type: 'number', description: 'Number of Desk Officer users' },
         activeCount: { type: 'number', description: 'Number of active users' },
         inactiveCount: { type: 'number', description: 'Number of inactive users' },
@@ -195,8 +198,14 @@ export class UsersController {
       }
     }
   })
-  async getAllUsersWithCounts() {
-    return this.usersService.getAllUsersWithCounts();
+  async getAllUsersWithCounts(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    const pageNum = page ? Number(page) : 1;
+    const limitNum = limit ? Number(limit) : 10;
+
+    return this.usersService.getAllUsersWithCounts(pageNum, limitNum);
   }
 
   /**

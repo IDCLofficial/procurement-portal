@@ -48,6 +48,20 @@ export class CertificatesController {
     example: 'Approved'
   })
   @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by certificate status',
+    example: 'Approved'
+  })
+  @ApiQuery({
+    name: 'mda',
+    required: false,
+    type: String,
+    description: 'Filter by Ministry/Department/Agency',
+    example: 'Ministry of Works'
+  })
+  @ApiQuery({
     name: 'page',
     required: false,
     type: Number,
@@ -127,11 +141,12 @@ export class CertificatesController {
     @Query('grade') grade?: string,
     @Query('lga') lga?: string,
     @Query('status') status?: string,
-    @Query('category') category?: string
+    @Query('category') category?: string,
+    @Query('mda') mda?: string
   ) {
     const pageNum = page ? Number(page) : 1;
     const limitNum = limit ? Number(limit) : 10;
-    return this.certificatesService.findAll(pageNum, limitNum, search, grade, lga, status, category);
+    return this.certificatesService.findAll(pageNum, limitNum, search, grade, lga, status, category, mda);
   }
 
   @Get('category/:category')

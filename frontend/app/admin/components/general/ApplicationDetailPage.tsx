@@ -91,6 +91,7 @@ export function ApplicationDetailPage({
             assignedTo={assignedTo}
             allowDeskOfficerAssignment={allowDeskOfficerAssignment}
             currentStatus={currentStatus}
+            company={company}
           />
         )}
         {activeTab === 'Registrar' && <RegistrarTab currentStatus={currentStatus} />}

@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, UseGuards, Req, UnauthorizedException, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -266,11 +266,18 @@ export class UsersController {
    * - Returns users with their details (excluding passwords)
    * - Returns empty array if no users found for the MDA
    */
-  @Get('by-mda/:mda')
+  @Get('by-mda')
   @UseGuards(AdminGuard)
   @ApiOperation({ 
     summary: 'Get users by MDA (Admin only)',
     description: 'Retrieves all users for a specific MDA. Requires admin privileges.'
+  })
+  @ApiQuery({
+    name: 'mda',
+    required: true,
+    type: String,
+    description: 'MDA (Ministry, Department, or Agency) to filter users by',
+    example: 'Ministry of Works'
   })
   @ApiResponse({ 
     status: 200, 
@@ -300,7 +307,7 @@ export class UsersController {
     description: 'Unauthorized - Admin access required' 
   })
   @ApiBearerAuth()
-  async getUsersByMda(@Param('mda') mda: string) {
+  async getUsersByMda(@Query('mda') mda: string) {
     return this.usersService.getDeskOfficersByMda(mda);
   }
   

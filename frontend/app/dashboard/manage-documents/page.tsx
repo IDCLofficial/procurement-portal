@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { toValidJSDate } from '@/lib';
+import { useSearchParams } from 'next/navigation';
 
 type TransformedDocument = {
     _id: string;
@@ -45,6 +46,7 @@ type TransformedDocument = {
 export default function CertificatesPage() {
     const { company, documents, isLoading } = useAuth();
     const [previewFile, setPreviewFile] = useState<{ url: string; type: string; title: string; message?: string } | null>(null);
+    const hash = useSearchParams().get('id');
 
     // Transform company documents to certificates format
     const certificates = useMemo<TransformedDocument[]>(() => {
@@ -324,6 +326,8 @@ export default function CertificatesPage() {
                     {missingDocuments.map((missing) => (
                         <DocumentCard
                             key={missing.id}
+                            id={missing.id}
+                            isSelected={hash === missing.id}
                             title={missing.documentName}
                             status="required"
                             certificateNumber="Not Uploaded"
@@ -382,6 +386,8 @@ export default function CertificatesPage() {
                             return (
                                 <DocumentCard
                                     key={certId}
+                                    id={certId}
+                                    isSelected={hash === certId}
                                     title={certTitle}
                                     status={displayStatus}
                                     certificateNumber={certNumber}

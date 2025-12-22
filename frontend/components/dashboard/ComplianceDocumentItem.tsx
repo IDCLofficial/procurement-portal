@@ -1,12 +1,15 @@
 'use client';
 
-import { FaFile } from 'react-icons/fa6';
+import Link from 'next/link';
+import { FaFile, FaGear } from 'react-icons/fa6';
+import { Button } from '../ui/button';
 
 interface ComplianceDocumentItemProps {
     name: string;
     validUntil?: string;
     expiresText?: string;
     status: 'verified' | 'pending' | string;
+    id: string;
 }
 
 export default function ComplianceDocumentItem({
@@ -14,6 +17,7 @@ export default function ComplianceDocumentItem({
     validUntil,
     expiresText,
     status,
+    id,
 }: ComplianceDocumentItemProps) {
     const getStatusBadge = () => {
         switch (status) {
@@ -59,6 +63,15 @@ export default function ComplianceDocumentItem({
             </div>
             <div className="flex items-center gap-3 ml-4">
                 {getStatusBadge()}
+                {(status.toLowerCase() === 'needs review' || status.toLowerCase() === 'expired') && <Link href={`/dashboard/manage-documents?id=${id}`}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-gray-100 cursor-pointer"
+                    >
+                        <FaGear className="text-gray-600" />
+                    </Button>
+                </Link>}
             </div>
         </div>
     );

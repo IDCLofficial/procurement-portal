@@ -16,9 +16,9 @@ export class MdaService {
     return newMda;
   }
 
-  async findAll(page: number = 1, limit: number = 10) {
+  async findAll(page: number = 1, limit: number = 50) {
     const pageNum = page && page > 0 ? page : 1;
-    const limitNum = limit && limit > 0 ? limit : 10;
+    const limitNum = limit && limit > 0 ? limit : 50;
     const skip = (pageNum - 1) * limitNum;
 
     const [mdas, total] = await Promise.all([
@@ -40,6 +40,7 @@ export class MdaService {
   }
 
   async findAllByNames(){
+    
     const Mdas = await this.MdaModel.find({})
 
     return Mdas;

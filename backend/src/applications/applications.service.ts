@@ -618,7 +618,7 @@ export class ApplicationsService {
         website: company.website || '',
         
         // Sector & Classification
-        approvedSector: approvedSector,
+        category:company.category,
         grade: company.grade,
         mda:company.mda,
         

@@ -52,12 +52,8 @@ export class Certificate {
     @Prop({required:false})
     website?: string;
 
-    // Sector & Classification
-    @Prop({ type: [String], default: [] })
-    approvedSectors: string[];
-
-    @Prop({ type: [String], default: [] })
-    categories: string[];
+    @Prop({ type: String, default: "" })
+    category: string;
 
     @Prop({required:true})
     grade: string;

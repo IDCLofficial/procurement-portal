@@ -6,14 +6,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 // Lucide Icons
-import {
-  FileText,
-  Clock,
-  CheckCircle,
-  XCircle,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react';
 import { useAppSelector } from '../../redux/hooks';
 import { useGetApplicationsByUserQuery, useGetApplicationsQuery } from '../../redux/services/appApi';
 import { useGetSlaConfigQuery } from '@/app/admin/redux/services/settingsApi';

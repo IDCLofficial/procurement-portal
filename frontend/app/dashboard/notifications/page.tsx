@@ -280,7 +280,7 @@ export default function NotificationsPage() {
                                 <Loader className="w-4 h-4 animate-spin inline" />
                             </Button>
                         ) : (
-                            data?.pagination?.totalPages ? <Button
+                            data?.pagination?.totalPages && data?.pagination?.totalPages > page ? <Button
                                 variant="outline"
                                 onClick={() => setPage(page + 1)}
                                 className="my-6 cursor-pointer"

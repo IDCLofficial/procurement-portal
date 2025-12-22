@@ -50,9 +50,9 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                 <div className="p-6">
                     <div className="flex items-start justify-between">
                         <div>
-                            <h3 className="text-lg font-medium text-amber-800">Pending Payment Required</h3>
+                            <h3 className="text-lg font-medium text-amber-800">Vendor Certificate Payment Required</h3>
                             <p className="text-sm text-gray-600 mt-1">
-                                Complete your registration by making the required payment
+                                Complete your vendor certificate registration with a one-time payment
                             </p>
                         </div>
                         <div className="bg-amber-50 p-3 rounded-lg">
@@ -62,7 +62,7 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
 
                     <div className="mt-6">
                         <div className="flex items-baseline justify-between">
-                            <span className="text-sm font-medium text-gray-700">Amount Due:</span>
+                            <span className="text-sm font-medium text-gray-700">Certificate Fee:</span>
                             <span className="text-2xl font-bold text-amber-700">₦{amount.toLocaleString()}</span>
                         </div>
 
@@ -93,13 +93,13 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="text-xl">Complete Your Payment</DialogTitle>
+                        <DialogTitle className="text-xl">Vendor Certificate Payment</DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-6 py-4">
                         <div className="bg-amber-50 p-4 rounded-lg">
                             <div className="flex items-center justify-between">
-                                <span className="font-medium">Total Amount:</span>
+                                <span className="font-medium">Certificate Fee:</span>
                                 <span className="text-2xl font-bold text-amber-700">₦{amount.toLocaleString()}</span>
                             </div>
                         </div>
@@ -108,7 +108,7 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                             <h4 className="font-medium">Payment Details:</h4>
                             <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Description:</span>
+                                    <span className="text-gray-600">Purpose:</span>
                                     <span className="font-medium">{description}</span>
                                 </div>
                                 <div className="flex justify-between">
@@ -116,6 +116,10 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                                     <span className="font-medium">Paystack</span>
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-xs text-blue-800">
+                            <p>Please note: Certificate fees are processed immediately and are non-refundable upon successful payment.</p>
                         </div>
 
                         <div className="pt-2">
@@ -130,7 +134,7 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                                         Processing Payment...
                                     </span>
                                 ) : (
-                                    `Pay Now`
+                                    `Proceed to Payment`
                                 )}
                             </Button>
                         </div>

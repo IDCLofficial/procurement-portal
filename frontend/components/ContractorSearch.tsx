@@ -8,14 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FaSearch } from 'react-icons/fa';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectCategoriesData } from '@/store/slices/categoriesSlice';
-import { setSearchQuery, setSectorFilter, setGradeFilter, setLgaFilter, setStatusFilter, setCurrentPage } from '@/store/slices/publicSlice';
-import { lgaObject } from '@/lib/constants.const';
+import { setSearchQuery, setSectorFilter, setGradeFilter, setStatusFilter, setCurrentPage, setMDAsFilter } from '@/store/slices/publicSlice';
+import { useGetMDAQuery } from '@/store/api/helper.api';
 
 export interface SearchFilters {
     query: string;
     sector: string;
     grade: string;
-    lga: string;
+    mda: string;
     status: string;
 }
 
@@ -25,6 +25,8 @@ export default function ContractorSearch() {
     const dispatch = useAppDispatch();
     const categories = useAppSelector(selectCategoriesData);
     
+    const { data: mdas } = useGetMDAQuery();
+    
     // Get Redux state for currentPage
     const { currentPage } = useAppSelector((state) => state.public);
     
@@ -32,7 +34,7 @@ export default function ContractorSearch() {
         query: '',
         sector: 'all',
         grade: 'all',
-        lga: 'all',
+        mda: 'all',
         status: 'all',
     });
 
@@ -41,14 +43,14 @@ export default function ContractorSearch() {
         const query = searchParams.get('q') || '';
         const sector = searchParams.get('sector') || '';
         const grade = searchParams.get('grade') || '';
-        const lga = searchParams.get('lga') || '';
+        const mda = searchParams.get('mda') || '';
         const status = searchParams.get('status') || '';
         const page = Number(searchParams.get('page')) || 1;
 
         if (query) dispatch(setSearchQuery(query));
         if (sector) dispatch(setSectorFilter(sector));
         if (grade) dispatch(setGradeFilter(grade));
-        if (lga) dispatch(setLgaFilter(lga));
+        if (mda) dispatch(setMDAsFilter(mda));
         if (status) dispatch(setStatusFilter(status));
         if (page !== currentPage) dispatch(setCurrentPage(page));
         
@@ -57,7 +59,7 @@ export default function ContractorSearch() {
             query: query,
             sector: sector || 'all',
             grade: grade || 'all',
-            lga: lga || 'all',
+            mda: mda || 'all',
             status: status || 'all',
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,9 +82,9 @@ export default function ContractorSearch() {
             else dispatch(setGradeFilter(''));
         }
         
-        if (key === 'lga') {
-            if (value !== 'all') dispatch(setLgaFilter(value));
-            else dispatch(setLgaFilter(''));
+        if (key === 'mda') {
+            if (value !== 'all') dispatch(setMDAsFilter(value));
+            else dispatch(setMDAsFilter(''));
         }
         
         if (key === 'status') {
@@ -95,7 +97,7 @@ export default function ContractorSearch() {
         if (newFilters.query) params.set('q', newFilters.query);
         if (newFilters.sector !== 'all') params.set('sector', newFilters.sector);
         if (newFilters.grade !== 'all') params.set('grade', newFilters.grade);
-        if (newFilters.lga !== 'all') params.set('lga', newFilters.lga);
+        if (newFilters.mda !== 'all') params.set('mda', newFilters.mda);
         if (newFilters.status !== 'all') params.set('status', newFilters.status);
 
         router.push(`/directory?${params.toString()}`, { scroll: false });
@@ -158,22 +160,22 @@ export default function ContractorSearch() {
                     </div>}
 
                     {/* LGA */}
-                    <div className="space-y-2 flex-1 sm:min-w-64">
-                        <label className="text-sm font-medium text-gray-700 max-sm:text-xs">LGA</label>
-                        <Select value={filters.lga} onValueChange={(value) => handleFilterChange('lga', value)}>
+                    {mdas && mdas.mdas && <div className="space-y-2 flex-1 sm:min-w-64">
+                        <label className="text-sm font-medium text-gray-700 max-sm:text-xs"><abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></label>
+                        <Select value={filters.mda} onValueChange={(value) => handleFilterChange('mda', value)}>
                             <SelectTrigger className="max-sm:h-10 h-10 w-full max-sm:text-sm">
-                                <SelectValue placeholder="All LGAs" />
+                                <SelectValue placeholder="All MDA/MDAs" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All LGAs</SelectItem>
-                                {lgaObject.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
+                                <SelectItem value="all">All MDA/MDAs</SelectItem>
+                                {mdas.mdas.map((option) => (
+                                    <SelectItem key={option._id} value={option.code}>
+                                        {option.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
+                    </div>}
 
                     {/* Status */}
                     <div className="space-y-2 flex-1 sm:min-w-64">

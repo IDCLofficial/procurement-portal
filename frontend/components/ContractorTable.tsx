@@ -13,7 +13,8 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCurrentPage, setItemsPerPage } from '@/store/slices/publicSlice';
 import { useGetAllContractorsQuery } from '@/store/api/public.api';
 import { toast } from 'sonner';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { toValidJSDate } from '@/lib';
+import { updateSearchParam } from '@/lib/utils';
 
 export interface Contractor {
     id: string;
@@ -48,7 +49,7 @@ export default function ContractorTable() {
     }, [isMobile, dispatch]);
     
     // Get Redux state
-    const { searchQuery, sectorFilter, gradeFilter, lgaFilter, statusFilter, currentPage, itemsPerPage } = useAppSelector((state) => state.public);
+    const { searchQuery, sectorFilter, gradeFilter, mdasFilter, statusFilter, currentPage, itemsPerPage } = useAppSelector((state) => state.public);
     
     // Fetch contractors from API
     const { data: contractorsData, isLoading, error: errorContractors, isFetching } = useGetAllContractorsQuery({
@@ -57,7 +58,7 @@ export default function ContractorTable() {
         search: searchQuery,
         sector: sectorFilter !== 'all' ? sectorFilter : undefined,
         grade: gradeFilter !== 'all' ? gradeFilter : undefined,
-        lga: lgaFilter !== 'all' ? lgaFilter : undefined,
+        lga: mdasFilter !== 'all' ? mdasFilter : undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
     });
     
@@ -131,6 +132,7 @@ export default function ContractorTable() {
     const endIndex = Math.min(startIndex + itemsPerPage, totalContractors);
     
     const handlePageChange = (page: number) => {
+        updateSearchParam("page", page.toString());
         dispatch(setCurrentPage(page));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -246,7 +248,6 @@ export default function ContractorTable() {
                                         <TableHead>CAC Number</TableHead>
                                         <TableHead><abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></TableHead>
                                         <TableHead>Grade</TableHead>
-                                        <TableHead>LGA</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Expiry Date</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
@@ -257,34 +258,22 @@ export default function ContractorTable() {
                                         <TableRow key={contractor.id} className={index % 2 === 1 ? 'bg-gray-50' : 'bg-white' + " hover:bg-gray-50"}>
                                             <TableCell className="font-medium text-gray-600">{startIndex + index + 1}</TableCell>
                                             <TableCell className="font-semibold">{contractor.name}</TableCell>
-                                            <TableCell className="font-mono text-sm">{contractor.rcbnNumber}</TableCell>
+                                            <TableCell className="font-semibold uppercase text-sm">{contractor.rcbnNumber}</TableCell>
                                             <TableCell className='grid gap-1'>
-                                                {contractor.sector.length > 0 && contractor.sector.map((sector) => (
-                                                    <Tooltip key={sector}>
-                                                        <TooltipTrigger asChild>
-                                                            <Badge className={`${getSectorConfig(sector).badgeClass} text-xs uppercase`}>
-                                                                {(sector.charAt(0).toUpperCase() + sector.slice(1, 10)).length > 10 ? sector.slice(0, 10) + '...' : sector}
-                                                            </Badge>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>{sector}</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                ))}
+                                                {contractor.sector.length > 2 ? contractor.sector : "N/A"}
                                             </TableCell>
                                             <TableCell>
                                                 <div className={`w-8 h-8 rounded-full flex items-center uppercase justify-center ${getGradeConfig(contractor.grade).badgeClass} font-bold text-sm`}>
                                                     {contractor.grade}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-sm">{contractor.lga}</TableCell>
                                             <TableCell>
                                                 <Badge className={`${getStatusConfig(contractor.status).badgeClass} flex items-center gap-1 w-fit`}>
                                                     <FaCheckCircle className="text-xs" />
                                                     {contractor.status.charAt(0).toUpperCase() + contractor.status.slice(1)}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-sm">{new Date(contractor.expiryDate).toLocaleDateString()}</TableCell>
+                                            <TableCell className="text-sm">{new Date(toValidJSDate(contractor.expiryDate)).toLocaleDateString()}</TableCell>
                                             <TableCell className="text-right">
                                                 <Link href={`/contractor/${contractor.certId}`}>
                                                     <Button 

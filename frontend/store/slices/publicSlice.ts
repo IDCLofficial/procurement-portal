@@ -6,7 +6,7 @@ interface PublicState {
   searchQuery: string;
   sectorFilter: string;
   gradeFilter: string;
-  lgaFilter: string;
+  mdasFilter: string;
   statusFilter: string;
 }
 
@@ -16,7 +16,7 @@ const initialState: PublicState = {
   searchQuery: '',
   sectorFilter: '',
   gradeFilter: '',
-  lgaFilter: '',
+  mdasFilter: '',
   statusFilter: '',
 };
 
@@ -42,8 +42,8 @@ const publicSlice = createSlice({
       state.gradeFilter = action.payload;
       state.currentPage = 1; // Reset to first page on filter change
     },
-    setLgaFilter: (state, action: PayloadAction<string>) => {
-      state.lgaFilter = action.payload;
+    setMDAsFilter: (state, action: PayloadAction<string>) => {
+      state.mdasFilter = action.payload;
       state.currentPage = 1; // Reset to first page on filter change
     },
     setStatusFilter: (state, action: PayloadAction<string>) => {
@@ -54,7 +54,7 @@ const publicSlice = createSlice({
       state.searchQuery = '';
       state.sectorFilter = '';
       state.gradeFilter = '';
-      state.lgaFilter = '';
+      state.mdasFilter = '';
       state.statusFilter = '';
       state.currentPage = 1;
     },
@@ -67,7 +67,7 @@ export const {
   setSearchQuery,
   setSectorFilter,
   setGradeFilter,
-  setLgaFilter,
+  setMDAsFilter,
   setStatusFilter,
   resetFilters,
 } = publicSlice.actions;

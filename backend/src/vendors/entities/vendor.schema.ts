@@ -60,6 +60,9 @@ export class Vendor {
   @Prop({ required: false, default: true })
   isActive: boolean;
 
+  @Prop({required:false})
+  reg_payment_ref:string;
+
   @Prop({required: false})
   accessToken?: string;
 }

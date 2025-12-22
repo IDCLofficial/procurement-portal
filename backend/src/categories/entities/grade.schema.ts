@@ -18,7 +18,7 @@ export class Grade {
     renewalFee:number;
 
     @Prop({ required: true })
-    financialCapacity: number;
+    financialCapacity: string;
 
 }
 

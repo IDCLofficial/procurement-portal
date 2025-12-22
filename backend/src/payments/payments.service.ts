@@ -225,7 +225,7 @@ export class SplitPaymentService {
         );
 
         if(payment.type === paymentType.PROCESSINGFEE){
-          
+          vendor.reg_payment_ref = reference          
           vendor.companyForm = companyForm.COMPLETE
           await vendor.save();
           

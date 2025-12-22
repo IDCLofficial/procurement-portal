@@ -19,9 +19,11 @@ import { useAuth } from '@/components/providers/public-service/AuthProvider';
 type DocumentStatus = 'verified' | 'required' | 'expiring' | 'expired' | 'pending' | 'review';
 
 interface DocumentCardProps {
+    id: string;
     title: string;
     status: DocumentStatus;
     certificateNumber?: string;
+    isSelected?: boolean;
     fileUrl?: string;
     fileSize?: string;
     fileType?: string;
@@ -38,9 +40,11 @@ interface DocumentCardProps {
 }
 
 export default function DocumentCard({
+    id,
     title,
     status: initialStatus,
     certificateNumber,
+    isSelected,
     fileUrl,
     fileSize,
     fileType,
@@ -277,7 +281,10 @@ export default function DocumentCard({
     const config = statusConfig[status];
 
     return (
-        <Card className={`shadow-sm hover:shadow-md transition-shadow border ${config.cardClass}`}>
+        <Card id={id} className={`shadow-sm relative hover:shadow-md transition-shadow scroll-mt-40 border ${config.cardClass} ${isSelected ? 'ring-2 ring-blue-500/50' : ''}`}>
+            {isSelected && (
+                <div className="absolute top-0 left-0 w-full h-full bg-blue-500/50 opacity-5" />
+            )}
             <CardContent>
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">

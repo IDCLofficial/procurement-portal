@@ -7,6 +7,7 @@ export enum NotificationType {
   STATUS_UPDATED = 'Status Updated',
   APPLICATION_APPROVED = 'Application Approved',
   APPLICATION_REJECTED = 'Application Rejected',
+  INCOMING_APPLICATION = 'Application Forwarded to You',
   FORWARDED_TO_REGISTRAR = 'Forwarded to Registrar',
   CLARIFICATION='Clarification Required',
   SLA_BREACH = 'SLA Breach',

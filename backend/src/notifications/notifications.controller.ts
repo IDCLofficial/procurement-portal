@@ -438,5 +438,119 @@ export class NotificationsController {
     }
   }
 
+  @ApiOperation({
+    summary: 'Get desk officer notifications',
+    description: 'Returns all notifications for the currently authenticated desk officer.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Notifications retrieved successfully.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  @Get('desk-officer-notifications')
+  @ApiQuery({ name: 'filter', required: false, enum: ['all', 'read', 'unread'], description: 'Filter notifications by read status' })
+  @ApiQuery({ name: 'search', required: false, description: 'Search term to filter notifications' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (starts from 1)', type: Number })
+  @ApiQuery({ name: 'limit', required: false, description: 'Number of items per page (max 100)', type: Number })
+  async getDeskOfficerNotifications(
+    @Req() req: any,
+    @Query() query: {
+      filter?: 'all' | 'read' | 'unread';
+      search?: string;
+      page?: number;
+      limit?: number;
+    }
+  ) {
+    const filter = query.filter || 'all';
+    const search = query.search || '';
+    const page = query.page ? Math.max(1, parseInt(query.page.toString())) : 1;
+    const limit = query.limit ? Math.min(100, Math.max(1, parseInt(query.limit.toString()))) : 10;
+    const skip = (page - 1) * limit;
+
+    const header = req.headers.authorization;
+    if (!header) {
+      this.logger.log(`Authorization header is missing`);
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    const decoded = this.jwtService.decode(header.split(' ')[1]);
+    if (!decoded || decoded.role !== 'Desk officer') {
+      this.logger.log(`User is not authorized to access this endpoint`);
+      throw new UnauthorizedException('User is not authorized to access this endpoint');
+    }
+
+    const deskOfficerId = decoded?.['_id'];
+    if (!deskOfficerId) {
+      this.logger.log(`Unauthorized user trying to access the endpoint`);
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    return this.notificationsService.getDeskOfficerNotifications(
+      deskOfficerId,
+      { filter, search },
+      { page, limit, skip }
+    );
+  }
+
   //
+
+  @ApiOperation({
+    summary: 'Get registrar notifications',
+    description: 'Returns all notifications for the currently authenticated registrar.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Notifications retrieved successfully.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  @Get('registrar-notifications')
+  @ApiQuery({ name: 'filter', required: false, enum: ['all', 'read', 'unread'], description: 'Filter notifications by read status' })
+  @ApiQuery({ name: 'search', required: false, description: 'Search term to filter notifications' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (starts from 1)', type: Number })
+  @ApiQuery({ name: 'limit', required: false, description: 'Number of items per page (max 100)', type: Number })
+  async getRegistrarNotifications(
+    @Req() req: any,
+    @Query() query: {
+      filter?: 'all' | 'read' | 'unread';
+      search?: string;
+      page?: number;
+      limit?: number;
+    }
+  ) {
+    const filter = query.filter || 'all';
+    const search = query.search || '';
+    const page = query.page ? Math.max(1, parseInt(query.page.toString())) : 1;
+    const limit = query.limit ? Math.min(100, Math.max(1, parseInt(query.limit.toString()))) : 10;
+    const skip = (page - 1) * limit;
+
+    const header = req.headers.authorization;
+    if (!header) {
+      this.logger.log(`Authorization header is missing`);
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    const decoded = this.jwtService.decode(header.split(' ')[1]);
+    if (!decoded || decoded.role !== 'Registrar') {
+      this.logger.log(`User is not authorized to access this endpoint`);
+      throw new UnauthorizedException('User is not authorized to access this endpoint');
+    }
+
+    const registrarId = decoded?.['_id'];
+    if (!registrarId) {
+      this.logger.log(`Unauthorized user trying to access the endpoint`);
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    return this.notificationsService.getRegistrarNotifications(
+      registrarId,
+      { filter, search },
+      { page, limit, skip }
+    );
+  }
 }

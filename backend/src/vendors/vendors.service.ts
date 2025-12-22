@@ -603,6 +603,25 @@ export class VendorsService {
           // Process each document - create or update individual document records
           const savedDocs = await Promise.all(
             documentsToProcess.map(async (doc) => {
+
+              // validate each document sent to ensure that it comes from the right url
+              const sirvCdnUrl = (process.env.SIRV_CDN_URL || '').trim();
+              const normalizedSirvCdnUrl = sirvCdnUrl.endsWith('/') ? sirvCdnUrl.slice(0, -1) : sirvCdnUrl;
+              const fileUrl = (doc.fileUrl || '').trim();
+
+              if (!normalizedSirvCdnUrl) {
+                throw new InternalServerErrorException('SIRV_CDN_URL is not configured');
+              }
+
+              if (!fileUrl) {
+                throw new BadRequestException('Document fileUrl is required');
+              }
+
+              if (!fileUrl.startsWith(normalizedSirvCdnUrl)) {
+                throw new BadRequestException(`Invalid document fileUrl. Expected URL to start with ${normalizedSirvCdnUrl}`);
+              }
+
+              // escape document type
               const escapedDocumentType = (doc.documentType || '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
               // Check if document with same type already exists for this vendor

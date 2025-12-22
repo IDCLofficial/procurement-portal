@@ -83,6 +83,120 @@ export class NotificationsService {
     };
   }
 
+  async getDeskOfficerNotifications(
+    deskOfficerId: string,
+    filters: { filter: 'all' | 'read' | 'unread'; search: string },
+    pagination: { page: number; limit: number; skip: number }
+  ) {
+    const { filter, search } = filters;
+    const { limit, skip } = pagination;
+
+    const query: any = {
+      recipient: NotificationRecipient.DESK_OFFICER,
+      recipientId: new Types.ObjectId(deskOfficerId),
+    };
+
+    if (filter === 'read') {
+      query.isRead = true;
+    } else if (filter === 'unread') {
+      query.isRead = false;
+    }
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { message: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [total, readCount, unreadCount, critical, highPriority] = await Promise.all([
+      this.notificationModel.countDocuments(query),
+      this.notificationModel.countDocuments({ ...query, isRead: true }),
+      this.notificationModel.countDocuments({ ...query, isRead: false }),
+      this.notificationModel.countDocuments({ ...query, priority: priority.CRITICAL }),
+      this.notificationModel.countDocuments({ ...query, priority: priority.HIGH }),
+    ]);
+
+    const notifications = await this.notificationModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    return {
+      notifications: notifications,
+      total: total,
+      totalRead: readCount,
+      totalUnread: unreadCount,
+      totalHigh: highPriority,
+      totalCritical: critical,
+      pagination: {
+        total,
+        page: pagination.page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getRegistrarNotifications(
+    registrarId: string,
+    filters: { filter: 'all' | 'read' | 'unread'; search: string },
+    pagination: { page: number; limit: number; skip: number }
+  ) {
+    const { filter, search } = filters;
+    const { limit, skip } = pagination;
+
+    const query: any = {
+      recipient: NotificationRecipient.REGISTRAR,
+      recipientId: new Types.ObjectId(registrarId),
+    };
+
+    if (filter === 'read') {
+      query.isRead = true;
+    } else if (filter === 'unread') {
+      query.isRead = false;
+    }
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { message: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [total, readCount, unreadCount, critical, highPriority] = await Promise.all([
+      this.notificationModel.countDocuments(query),
+      this.notificationModel.countDocuments({ ...query, isRead: true }),
+      this.notificationModel.countDocuments({ ...query, isRead: false }),
+      this.notificationModel.countDocuments({ ...query, priority: priority.CRITICAL }),
+      this.notificationModel.countDocuments({ ...query, priority: priority.HIGH }),
+    ]);
+
+    const notifications = await this.notificationModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    return {
+      notifications: notifications,
+      total: total,
+      totalRead: readCount,
+      totalUnread: unreadCount,
+      totalHigh: highPriority,
+      totalCritical: critical,
+      pagination: {
+        total,
+        page: pagination.page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   /**
    * Mark a single notification as read
    * @param notificationId - ID of the notification to mark as read
@@ -92,13 +206,7 @@ export class NotificationsService {
   async markAsRead(notificationId: string, userId: string): Promise<void> {
     try{
       const notification = await this.notificationModel.findOneAndUpdate(
-        {
-          _id: new Types.ObjectId(notificationId),
-          $or: [
-            { vendorId: new Types.ObjectId(userId) },
-            { recipientId: new Types.ObjectId(userId) }
-          ]
-        },
+        {_id: new Types.ObjectId(notificationId)},
         { $set: { isRead: true } },
         { new: true }
       );

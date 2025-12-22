@@ -382,6 +382,19 @@ export class ApplicationsService {
           isRead: false,
         });
 
+        if(newStatus === ApplicationStatus.FORWARDED_TO_REGISTRAR){
+          await this.notificationModel.create({
+          type: NotificationType.INCOMING_APPLICATION,
+          title: 'Incoming Application',
+          message: `${application.applicationId} has been forwarded to you`,
+          recipient: NotificationRecipient.ADMIN,
+          vendorId: vendor._id,
+          priority: priority.LOW,
+          applicationId: application._id,
+          isRead: false,
+        });
+        }
+
         // Send email notification
         try {
           await this.emailService.sendApplicationStatusUpdate(

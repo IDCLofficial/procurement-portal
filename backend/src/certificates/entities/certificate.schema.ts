@@ -41,6 +41,9 @@ export class Certificate {
     lga: string;
 
     @Prop({required:true})
+    mda:string;
+
+    @Prop({required:true})
     phone: string;
 
     @Prop({required:true})

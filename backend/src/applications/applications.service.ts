@@ -184,7 +184,7 @@ export class ApplicationsService {
 
       //
 
-      const [pendingReviewCount, approvedCount, rejectedCount] = await Promise.all([
+      const [pendingReviewCount, approvedCount, rejectedCount, forwardedToRegistrar] = await Promise.all([
         this.applicationModel.countDocuments({
           ...filter,
           currentStatus: ApplicationStatus.PENDING_DESK_REVIEW,
@@ -196,6 +196,10 @@ export class ApplicationsService {
         this.applicationModel.countDocuments({
           ...filter,
           currentStatus: ApplicationStatus.REJECTED,
+        }),
+        this.applicationModel.countDocuments({
+          ...filter,
+          currentStatus: ApplicationStatus.FORWARDED_TO_REGISTRAR,
         }),
       ]);
       
@@ -227,6 +231,7 @@ export class ApplicationsService {
           pendingReview: pendingReviewCount,
           approved: approvedCount,
           rejected: rejectedCount,
+          forwardedToRegistrar,
         },
         applications: applications
       };

@@ -38,6 +38,7 @@ interface User {
     fullname: string;
     email: string;
     phoneNo: string;
+    reg_payment_ref: string;
     certificateId: string;
     isVerified: boolean;
     companyForm: VendorSteps;

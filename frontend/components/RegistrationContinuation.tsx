@@ -775,7 +775,7 @@ export default function RegistrationContinuation() {
             case 9:
                 return (
                     <Step9Receipt
-                        transactionRef="TXN-1763132230729-YAR1NN5L9"
+                        transactionRef={user?.reg_payment_ref || "N/A"}
                         dateTime={new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         paymentMethod="Paystack"
                         companyName={formData.companyName}

@@ -8,6 +8,7 @@ import { FaAngleLeft } from 'react-icons/fa6';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { useAuth } from './providers/public-service/AuthProvider';
+import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 
 export default function DashboardHeader({
     companyName = 'ABC Construction Ltd',
@@ -61,18 +62,18 @@ export default function DashboardHeader({
                 {rightButton || (
                     <div className="flex items-center gap-2">
                         {!justLogout && <React.Fragment>
-                            <Link href="/dashboard/notifications">
+                            <Link href="/dashboard/notifications" className='cursor-pointer'>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-9 w-9 text-gray-600 hover:text-gray-900"
+                                    className="h-9 w-9 text-gray-600 hover:text-gray-900 cursor-pointer"
                                     aria-label="Notifications"
                                 >
                                     <Bell className="h-5 w-5" />
                                 </Button>
                             </Link>
                             
-                            <Link href="/dashboard/settings">
+                            <Link href="/dashboard/settings" className='cursor-pointer'>
                                 <Button
                                     variant="ghost"
                                     size="icon"
@@ -86,19 +87,56 @@ export default function DashboardHeader({
                             <div className="h-6 w-px bg-gray-300 mx-1" />
                         </React.Fragment>}
 
-                        <Button
-                            variant="ghost"
-                            className="h-9 px-3 text-gray-700 hover:text-gray-900 font-medium cursor-pointer"
-                            onClick={logout}
-                            disabled={logoutLoading}
-                        >
-                            {logoutLoading ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                                <LogOut className="h-4 w-4 mr-2" />
-                            )}
-                            Logout
-                        </Button>
+                        <Dialog>
+                            <DialogTrigger>
+                                <Button
+                                    variant="ghost"
+                                    className="h-9 px-3 text-gray-700 hover:text-gray-900 font-medium cursor-pointer"
+                                    // onClick={logout}
+                                    disabled={logoutLoading}
+                                >
+                                    {logoutLoading ? (
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <LogOut className="h-4 w-4 mr-2" />
+                                    )}
+                                    Logout
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <div className="space-y-6">
+                                    <div className="flex flex-col items-center text-center space-y-4">
+                                        <div className="rounded-full bg-red-100 p-3 border border-red-300">
+                                            <LogOut className="h-6 w-6 text-red-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                Are you sure you want to sign out of your account?
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row-reverse sm:justify-center sm:space-x-2 sm:space-x-reverse space-y-2 sm:space-y-0">
+                                        <Button
+                                            variant="destructive"
+                                            className="w-full sm:w-auto flex-1 cursor-pointer"
+                                            onClick={logout}
+                                            disabled={logoutLoading}
+                                        >
+                                            {logoutLoading ? (
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            ) : null}
+                                            Yes, Logout
+                                        </Button>
+                                        <DialogTrigger asChild className='flex-1 cursor-pointer'>
+                                            <Button variant="outline" className="w-full sm:w-auto">
+                                                Cancel
+                                            </Button>
+                                        </DialogTrigger>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 )}
             </div>

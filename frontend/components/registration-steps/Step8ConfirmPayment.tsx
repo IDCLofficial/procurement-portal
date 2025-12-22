@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib';
 import { FaExclamationCircle, FaCheckCircle } from 'react-icons/fa';
 
 interface Step8ConfirmPaymentProps {
@@ -15,10 +16,6 @@ export default function Step8ConfirmPayment({
     phone,
     totalAmount,
 }: Step8ConfirmPaymentProps) {
-    const formatCurrency = (amount: number) => {
-        return `₦${amount.toLocaleString()}`;
-    };
-
     return (
         <div className="space-y-6">
             {/* Important Notice */}
@@ -64,7 +61,7 @@ export default function Step8ConfirmPayment({
             </div>
 
             {/* Total Amount */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                     <span className="text-base font-semibold text-gray-900">Total Amount</span>
                     <span className="text-2xl font-bold text-theme-green">

@@ -208,6 +208,7 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                     id={`validFrom-${doc.id}`}
                                     type="date"
                                     value={doc.validFrom || ''}
+                                    disabled={doc.status === DocumentStatus.UPLOADING}
                                     onChange={(e) => handleValidityChange(doc.id, 'validFrom', e.target.value)}
                                     className="mt-1"
                                 />
@@ -220,6 +221,7 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                     id={`validTo-${doc.id}`}
                                     type="date"
                                     value={doc.validTo || ''}
+                                    disabled={doc.status === DocumentStatus.UPLOADING || !doc.validFrom}
                                     onChange={(e) => handleValidityChange(doc.id, 'validTo', e.target.value)}
                                     min={doc.validFrom ? (() => {
                                         const date = new Date(doc.validFrom);
@@ -240,6 +242,7 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                 id={`file-${doc.id}`}
                                 accept=".pdf,.png,.jpg,.jpeg"
                                 onChange={(e) => handleFileUpload(doc.id, e)}
+                                disabled={doc.status === DocumentStatus.UPLOADING}
                                 className="hidden"
                             />
                             <label
@@ -288,7 +291,7 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                         <FaEye className="mr-1" />
                                         Preview
                                     </Button>
-                                    <Button
+                                    {doc.status !== DocumentStatus.UPLOADING && <Button
                                         type="button"
                                         variant="ghost"
                                         size="sm"
@@ -296,7 +299,7 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                     >
                                         <FaTrash />
-                                    </Button>
+                                    </Button>}
                                 </div>
                             </div>
 
@@ -308,7 +311,7 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                             )}
 
                             {/* Replace Document Option */}
-                            <div className="mt-3 pt-3 border-t border-green-200">
+                            {doc.status !== DocumentStatus.UPLOADING && <div className="mt-3 pt-3 border-t border-green-200">
                                 {doc.status === DocumentStatus.ERROR ? (
                                     <Button
                                         type="button"
@@ -335,7 +338,7 @@ export default function Step5Documents({ documents, onDocumentsChange }: Step5Do
                                         </label>
                                     </>
                                 )}
-                            </div>
+                            </div>}
                         </div>
                     )}
                 </div>

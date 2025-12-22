@@ -88,7 +88,7 @@ export const APPLICATION_TABS = [
   'Clarifications',
   'Registrar',
   'Completed',
-  'SLA',
+ 
 ] as const;
 
 export type ApplicationTabId = (typeof APPLICATION_TABS)[number];
@@ -104,7 +104,7 @@ export const APPLICATION_TAB_FILTERS: Record<
   clarifications: { statusFilter: 'Clarification Requested', typeFilter: undefined },
   registrar: { statusFilter: 'Forwarded to Registrar', typeFilter: undefined },
   completed: { statusFilter: 'Approved', typeFilter: undefined },
-  sla: { statusFilter: 'sla_breach', typeFilter: undefined },
+ 
 };
 
 // ============================================================================

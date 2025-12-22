@@ -61,6 +61,7 @@ export function NotificationList({
 
       <div className="space-y-4 pt-4">
         {notifications.map((notification) => (
+          console.log(" not:", notification),
           <NotificationCard
             key={notification.id}
             icon={notification.icon}

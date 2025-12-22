@@ -4,8 +4,10 @@ import { mapApiApplicationToApplication, type ApiApplication } from "@/app/admin
 import type {
     ApplicationsQueryParams,
     ApplicationsResponse,
+    ApplicationsUserResponse,
     AssignApplicationRequest,
     ChangeApplicationStatusRequest,
+    StatusCounts,
 } from "@/app/admin/types/api";
 
 export const appApi = baseApi.injectEndpoints({
@@ -61,7 +63,7 @@ export const appApi = baseApi.injectEndpoints({
         }),
 
         // GET APPLICATIONS ASSIGNED TO CURRENT USER
-        getApplicationsByUser: builder.query<ApplicationsResponse, void>({
+        getApplicationsByUser: builder.query<ApplicationsUserResponse, void>({
             query: () => `/applications/my-assignments`,
             transformResponse: (response: {
                 total: number;
@@ -69,7 +71,8 @@ export const appApi = baseApi.injectEndpoints({
                 limit: number;
                 totalPages: number;
                 applications: unknown[];
-            }): ApplicationsResponse => {
+                statusCounts: StatusCounts;
+            }): ApplicationsUserResponse => {
                 const mappedApplications: Application[] = (response.applications ?? []).map(
                     (app) => mapApiApplicationToApplication(app as ApiApplication)
                 );
@@ -78,6 +81,7 @@ export const appApi = baseApi.injectEndpoints({
                     page: response.page,
                     limit: response.limit,
                     totalPages: response.totalPages,
+                    statusCounts: response.statusCounts,
                     applications: mappedApplications,
                 };
             },

@@ -6,14 +6,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 // Lucide Icons
-import {
-  FileText,
-  Clock,
-  CheckCircle,
-  XCircle,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react';
 import { useAppSelector } from '../../redux/hooks';
 import { useGetApplicationsByUserQuery, useGetApplicationsQuery } from '../../redux/services/appApi';
 import { useGetSlaConfigQuery } from '@/app/admin/redux/services/settingsApi';
@@ -58,6 +50,7 @@ function AdminApplications() {
     isError: isUserError,
   } = useGetApplicationsByUserQuery(undefined, {
     skip: !!isRegistrar,
+     refetchOnMountOrArgChange: true,
   });
 
   const data = isRegistrar ? registrarData : userData;
@@ -130,7 +123,7 @@ function AdminApplications() {
           
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {[
               { title: 'Total Applications', value: '0', change: '0%', trend: 'up', icon: FileText },
               { title: 'Pending Review', value: '0', change: '0%', trend: 'up', icon: Clock },
@@ -157,7 +150,7 @@ function AdminApplications() {
                 </div>
               </div>
             ))}
-          </div>
+          </div> */}
  
           <div className="bg-white rounded-lg shadow">
             <div className="p-6">
@@ -226,7 +219,7 @@ function AdminApplications() {
                       </tr>
                     ) : (
                       applications.map((app) => (
-                        console.log(app),
+                      
                         <tr key={app.id}>
                           <td className="px-4 py-3 whitespace-nowrap text-gray-900">{app.id}</td>
                           <td className="px-4 py-3 whitespace-nowrap text-gray-900">{app.name}</td>

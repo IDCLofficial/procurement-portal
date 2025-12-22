@@ -498,6 +498,7 @@ export class NotificationsService {
       message: notification.message,
       priority: notification.priority,
       createdAt: notification.createdAt,
+      applicationId:notification.applicationId,
       _id: notification._id
     }));
 

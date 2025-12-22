@@ -53,6 +53,12 @@ export default function RegistrationContinuation() {
     const setStartPoint = useMemo(() => {
         if (!user) return 2;
 
+        console.log({
+            user,
+            companyForm: user.companyForm,
+            companyFormLower: user.companyForm.toLowerCase()
+        })
+
         const companyForm = user.companyForm.toLowerCase();
         switch(companyForm){
             case VendorSteps.COMPANY:
@@ -85,6 +91,8 @@ export default function RegistrationContinuation() {
         lga: companyData?.lga?.trimEnd() || '',
         website: companyData?.website?.trimEnd() || '',
     });
+
+    console.log({setStartPoint});
 
     // Step 3: Directors
     const [directors, setDirectors] = useState(companyData?.directors ? (companyData.directors).map((director) => ({
@@ -142,7 +150,6 @@ export default function RegistrationContinuation() {
         // Prefill from companyData if available
         if (companyData?.documents) {
             companyData.documents.forEach(uploadedDoc => {
-                console.clear()
                 const matchingDoc = docsFromPresets.find(doc => {
                     const match = doc.id === uploadedDoc._id || doc.name === uploadedDoc.documentType;
                     return match;
@@ -775,7 +782,7 @@ export default function RegistrationContinuation() {
             case 9:
                 return (
                     <Step9Receipt
-                        transactionRef={user?.reg_payment_ref || "N/A"}
+                        transactionRef={user?.reg_payment_ref.toUpperCase() || "N/A"}
                         dateTime={new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         paymentMethod="Paystack"
                         companyName={formData.companyName}

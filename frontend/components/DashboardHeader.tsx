@@ -129,11 +129,11 @@ export default function DashboardHeader({
                                             ) : null}
                                             Yes, Logout
                                         </Button>
-                                        <DialogTrigger asChild className='flex-1 cursor-pointer'>
+                                        {!logoutLoading && <DialogTrigger asChild className='flex-1 cursor-pointer'>
                                             <Button variant="outline" className="w-full sm:w-auto">
                                                 Cancel
                                             </Button>
-                                        </DialogTrigger>
+                                        </DialogTrigger>}
                                     </div>
                                 </div>
                             </DialogContent>

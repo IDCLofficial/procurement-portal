@@ -307,13 +307,13 @@ interface ContractorsResponse {
         phone: string;
         email: string;
         website: string;
-        approvedSectors: string[];
-        categories: string[];
+        category: string;
         grade: string;
         status: string;
         validUntil: string;
         createdAt: string;
         updatedAt: string;
+        mda: string;
         __v: number;
     }>;
 }
@@ -332,12 +332,12 @@ interface Contractor {
     phone: string;
     email: string;
     website: string;
-    approvedSectors: string[];
-    categories: string[];
     grade: string;
     status: string;
     validUntil: string;
     validFrom: string;
+    mda: string;
+    category: string;
     __v: number;
     createdAt: string;
     updatedAt: string;

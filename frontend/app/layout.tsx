@@ -7,6 +7,7 @@ import NextTopLoader from "nextjs-toploader";
 import AuthProvider from "@/components/providers/public-service/AuthProvider";
 import DebugSlices from "@/components/ui/DebugSlices";
 import { defaultMetadata } from "../lib/metadata";
+import ExternalUrlInterceptor from "@/components/ExternalUrlInterceptor";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased satoshi-font`}
             >
+                <ExternalUrlInterceptor />
                 <NextTopLoader
                     color="#047857"
                     showSpinner={false}

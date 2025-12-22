@@ -253,9 +253,10 @@ export default function ContractorPage({ params }: { params: Promise<{ id: strin
                     id: contractor.certificateId,
                     name: contractor.contractorName,
                     rcbnNumber: contractor.rcBnNumber,
+                    companyName: contractor.companyName,
                     tinNumber: contractor.tin,
-                    sector: contractor.approvedSectors[0] || 'N/A',
-                    category: contractor.categories.join(', ') || 'N/A',
+                    sector: contractor.mda || 'N/A',
+                    category: contractor.category || 'N/A',
                     grade: contractor.grade,
                     lga: contractor.lga,
                     status: contractor.status as 'approved' | 'pending' | 'suspended',
@@ -268,7 +269,6 @@ export default function ContractorPage({ params }: { params: Promise<{ id: strin
                     phone: contractor.phone,
                     email: contractor.email,
                     website: contractor.website,
-                    approvedSectors: contractor.approvedSectors,
                 }} />
             </Suspense>
         </div>

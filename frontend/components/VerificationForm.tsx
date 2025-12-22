@@ -63,11 +63,11 @@ export default function VerificationForm() {
             contractorName: contractorData.contractorName,
             registrationId: contractorData.certificateId,
             rcbnNumber: contractorData.rcBnNumber,
-            grade: `Grade ${contractorData.grade}`,
+            grade: `Grade ${contractorData.grade.toUpperCase()}`,
             lga: contractorData.lga,
             status: contractorData.status.charAt(0).toUpperCase() + contractorData.status.slice(1),
             validUntil: new Date(contractorData.validUntil).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-            category: contractorData.approvedSectors.join(', ') || 'N/A',
+            category: contractorData.category || 'N/A',
         };
     }, [contractorData, currentRequestId]);
 

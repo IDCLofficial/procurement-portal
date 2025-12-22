@@ -32,27 +32,27 @@ export interface Contractor {
 export default function ContractorTable() {
     const dispatch = useAppDispatch();
     const [isMobile, setIsMobile] = useState(false);
-    
+
     // Detect screen size
     useEffect(() => {
         const checkMobile = () => {
             setIsMobile(window.innerWidth < 640);
         };
-        
+
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
-    
+
     // Set items per page based on screen size
     useEffect(() => {
         const newLimit = isMobile ? 5 : 10;
         dispatch(setItemsPerPage(newLimit));
     }, [isMobile, dispatch]);
-    
+
     // Get Redux state
     const { searchQuery, sectorFilter, gradeFilter, mdasFilter, statusFilter, currentPage, itemsPerPage } = useAppSelector((state) => state.public);
-    
+
     // Fetch contractors from API
     const { data: contractorsData, isLoading, error: errorContractors, isFetching } = useGetAllContractorsQuery({
         page: currentPage,
@@ -60,28 +60,28 @@ export default function ContractorTable() {
         search: searchQuery,
         sector: sectorFilter !== 'all' ? sectorFilter : undefined,
         grade: gradeFilter !== 'all' ? gradeFilter : undefined,
-        lga: mdasFilter !== 'all' ? mdasFilter : undefined,
+        mda: mdasFilter !== 'all' ? mdasFilter : undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
     });
-    
+
     // Transform API data to match Contractor interface
     const contractors = useMemo(() => {
         if (!contractorsData?.certificates) return [];
-        
+
         return contractorsData.certificates.map((cert) => ({
             id: cert._id,
             name: cert.contractorName,
             company: cert.companyName,
             certId: cert.certificateId,
             rcbnNumber: cert.rcBnNumber || 'N/A',
-            sector: cert.approvedSectors || [], // TODO: Get from API
+            sector: cert.mda || "N/A", // TODO: Get from API
             grade: cert.grade || 'N/A', // TODO: Get from API
             lga: cert.lga || 'N/A', // TODO: Get from API
             status: cert.status || 'approved' as const, // TODO: Get from API
             expiryDate: new Date(cert.validUntil).toLocaleDateString('en-GB'),
         }));
     }, [contractorsData]);
-    
+
     const error = errorContractors ? 'Failed to fetch contractors' : null;
     // CSV Export Handler
     const handleExportCSV = () => {
@@ -127,24 +127,24 @@ export default function ContractorTable() {
             duration: 3000,
         });
     };
-    
+
     // Server-side pagination
     const totalPages = contractorsData?.totalPages || 1;
     const totalContractors = contractorsData?.total || 0;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, totalContractors);
-    
+
     const handlePageChange = (page: number) => {
         updateSearchParam("page", page.toString());
         dispatch(setCurrentPage(page));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-    
+
     // Generate page numbers for pagination
     const getPageNumbers = () => {
         const pages = [];
         const maxVisible = isMobile ? 3 : 5;
-        
+
         if (totalPages <= maxVisible) {
             for (let i = 1; i <= totalPages; i++) {
                 pages.push(i);
@@ -171,7 +171,7 @@ export default function ContractorTable() {
                 pages.push(totalPages);
             }
         }
-        
+
         return pages;
     };
 
@@ -183,8 +183,8 @@ export default function ContractorTable() {
                         <CardTitle className="sm:text-xl text-base">Search Results</CardTitle>
                         <p className="max-sm:text-xs text-sm text-gray-600 mt-1">{totalContractors} contractors found</p>
                     </div>
-                    <Button 
-                        variant="outline" 
+                    <Button
+                        variant="outline"
                         onClick={handleExportCSV}
                         className="cursor-pointer max-sm:text-xs max-sm:h-9 max-sm:px-3 sm:text-base text-xs active:scale-95 transition-transform duration-300"
                     >
@@ -210,8 +210,8 @@ export default function ContractorTable() {
                         </div>
                         <p className="text-gray-900 font-semibold max-sm:text-base text-lg mb-2">Error Loading Data</p>
                         <p className="text-gray-600 text-center max-w-md max-sm:text-sm">{error}</p>
-                        <Button 
-                            onClick={() => window.location.reload()} 
+                        <Button
+                            onClick={() => window.location.reload()}
                             className="mt-4 bg-theme-green hover:bg-theme-green/90 max-sm:text-sm max-sm:h-9"
                         >
                             Try Again
@@ -240,7 +240,7 @@ export default function ContractorTable() {
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* Desktop Table View */}
                         <div className="overflow-x-auto max-sm:hidden">
                             <Table>
@@ -274,8 +274,8 @@ export default function ContractorTable() {
                                             </TableCell>
                                             <TableCell>
                                                 <Badge className={`${getStatusConfig(contractor.status).badgeClass} flex items-center gap-1 w-fit capitalize`}>
-                                                    {(()=>{
-                                                        switch(contractor.status.toLowerCase()){
+                                                    {(() => {
+                                                        switch (contractor.status.toLowerCase()) {
                                                             case "approved":
                                                                 return <FaCheckCircle className="text-xs" />
                                                             case "expired":
@@ -292,8 +292,8 @@ export default function ContractorTable() {
                                             <TableCell className="text-sm">{new Date(toValidJSDate(contractor.expiryDate)).toLocaleDateString()}</TableCell>
                                             <TableCell className="text-right">
                                                 <Link href={`/contractor/${contractor.certId}`}>
-                                                    <Button 
-                                                        variant="ghost" 
+                                                    <Button
+                                                        variant="ghost"
                                                         size="sm"
                                                         className="cursor-pointer active:scale-95 transition-transform duration-300"
                                                     >
@@ -306,7 +306,7 @@ export default function ContractorTable() {
                                 </TableBody>
                             </Table>
                         </div>
-                        
+
                         {/* Mobile & Tablet Card View */}
                         <div className="sm:hidden space-y-3">
                             {contractors.map((contractor, index) => (
@@ -325,16 +325,12 @@ export default function ContractorTable() {
                                                 <p className="text-xs text-gray-600 font-mono">{contractor.rcbnNumber}</p>
                                             </div>
                                         </div>
-                                        
-                                        {contractor.sector.length > 0 && (
-                                            <div className="flex flex-wrap gap-1.5 mb-3">
-                                                {contractor.sector.map((sector) => (
-                                                    <Badge key={sector} className={`${getSectorConfig(sector).badgeClass} text-xs uppercase font-medium`}>
-                                                        {sector}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        )}
+
+                                        <div className="flex flex-wrap gap-1.5 mb-3">
+                                            <Badge className={`${getSectorConfig(contractor.sector).badgeClass} text-xs max-w-5 truncate uppercase font-medium`}>
+                                                {contractor.sector}
+                                            </Badge>
+                                        </div>
                                         
                                         <div className="grid grid-cols-2 gap-3 mb-3 p-3 bg-gray-50 rounded-lg">
                                             <div>

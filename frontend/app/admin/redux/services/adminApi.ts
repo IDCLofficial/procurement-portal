@@ -71,7 +71,7 @@ export const adminApi = baseApi.injectEndpoints({
 
     // GET USERS BASED ON MDA
     getUsersByMda: builder.query<User[], string | undefined>({
-      query: (mda) => `/users/usersByMda?mda=${mda}`,
+      query: (mda) => `/users/by-Mda?mda=${mda}`,
       providesTags: ["Users"],
     }),
 

@@ -29,11 +29,13 @@ export interface DashboardHandlers {
   handleDelete: (id: string) => void;
   handleTabChange: (tab: NotificationTabKey) => void;
   handleSearchChange: (term: string) => void;
+  handlePageChange: (page: number) => void;
 }
 
 export interface UseDashboardReturn {
   user: { id: string; name: string; email: string; role: string } | null;
   isAuthenticated: boolean;
+  isFetching: boolean;
   notifications: Notification[];
   filteredNotifications: Notification[];
   activeTab: NotificationTabKey;
@@ -41,6 +43,9 @@ export interface UseDashboardReturn {
   stats: DashboardStats;
   handlers: DashboardHandlers;
   tabs: { key: NotificationTabKey; label: string; count: number }[];
+  page: number;
+  limit: number;
+  totalNotifications: number;
 }
 
 export function useDashboard(): UseDashboardReturn {
@@ -50,23 +55,25 @@ export function useDashboard(): UseDashboardReturn {
   const [hiddenNotificationIds, setHiddenNotificationIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<NotificationTabKey>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
 
-  const { data: apiNotifications } = useGetAdminNotificationsQuery();
+  const { data: apiNotifications, isFetching } = useGetAdminNotificationsQuery({ page, limit });
   const [markAdminNotificationAsReadById] = useMarkAdminNotificationAsReadByIdMutation();
 
   const notifications = useMemo<Notification[]>(() => {
     if (!apiNotifications?.notifications) return [];
 
     return apiNotifications.notifications
-      .map((n, index) => {
+      .map((n) => {
         const created = new Date(n.createdAt);
         const dateStr = Number.isNaN(created.getTime())
           ? n.createdAt
           : created.toLocaleDateString();
 
-        const priority = n.priority?.toLowerCase() ?? '';
+        const priority = n.priority?.toLowerCase() || 'high';
         const isCritical = priority === 'critical';
-        const id = String(index + 1);
+        const id = n._id;
 
         if (hiddenNotificationIds.includes(id)) {
           return null;
@@ -94,13 +101,27 @@ export function useDashboard(): UseDashboardReturn {
 
   // Calculate stats
   const stats = useMemo<DashboardStats>(() => {
-    const totalCount = notifications.length;
-    const unreadCount = notifications.filter((n) => n.isUnread).length;
-    const criticalCount = notifications.filter((n) => n.priorityLevel === 'critical').length;
-    const highPriorityCount = notifications.filter((n) => n.priorityLevel === 'high').length;
+    const totalCountFromApi = apiNotifications?.totalNotifications;
+    const unreadCountFromApi = apiNotifications?.totalUnreadNotifications;
+    const criticalCountFromApi = apiNotifications?.totalCriticalNotifications;
+    const highPriorityCountFromApi = apiNotifications?.totalHighPriorityNotifications;
+
+    const totalCount = typeof totalCountFromApi === 'number' ? totalCountFromApi : notifications.length;
+    const unreadCount =
+      typeof unreadCountFromApi === 'number'
+        ? unreadCountFromApi
+        : notifications.filter((n) => n.isUnread).length;
+    const criticalCount =
+      typeof criticalCountFromApi === 'number'
+        ? criticalCountFromApi
+        : notifications.filter((n) => n.priorityLevel === 'critical').length;
+    const highPriorityCount =
+      typeof highPriorityCountFromApi === 'number'
+        ? highPriorityCountFromApi
+        : notifications.filter((n) => n.priorityLevel === 'high').length;
 
     return { totalCount, unreadCount, criticalCount, highPriorityCount };
-  }, [notifications]);
+  }, [apiNotifications, notifications]);
 
   // Filter notifications based on tab and search
   const filteredNotifications = useMemo(() => {
@@ -150,6 +171,13 @@ export function useDashboard(): UseDashboardReturn {
 
   const handleSearchChange = useCallback((term: string) => {
     setSearchTerm(term);
+    setPage(1); // Reset to first page when searching
+  }, []);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   // Tab configuration
@@ -170,12 +198,17 @@ export function useDashboard(): UseDashboardReturn {
     activeTab,
     searchTerm,
     stats,
+    isFetching,
     handlers: {
       handleMarkRead,
       handleDelete,
       handleTabChange,
       handleSearchChange,
+      handlePageChange,
     },
     tabs,
+    page,
+    limit,
+    totalNotifications: apiNotifications?.totalNotifications || 0,
   };
 }

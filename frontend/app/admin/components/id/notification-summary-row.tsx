@@ -9,7 +9,7 @@ interface NotificationSummaryRowProps {
   critical: number;
   highPriority: number;
 }
-
+ 
 interface SummaryCardProps {
   label: string;
   value: number;

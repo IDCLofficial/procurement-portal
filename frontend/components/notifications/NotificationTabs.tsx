@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 
 interface NotificationTabsProps {
-    activeTab: string;
+    activeTab: 'unread';
     onTabChange: (value: string) => void;
     counts: {
         all: number;

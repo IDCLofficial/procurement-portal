@@ -76,6 +76,13 @@ export class ApplicationsController {
     description: 'Number of items per page',
     example: 10
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search applications by name, contractorName, companyName, or mda',
+    example: 'Ministry of Works'
+  })
   @ApiResponse({ 
     status: HttpStatus.OK, 
     description: 'Applications retrieved successfully',
@@ -134,6 +141,7 @@ export class ApplicationsController {
     @Query('type') type?:ApplicationType,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('search') search?: string,
   ) {
     const pageNum = page ? Number(page) : 1;
     const limitNum = limit ? Number(limit) : 10;
@@ -147,7 +155,7 @@ export class ApplicationsController {
         throw new UnauthorizedException('Unauthorized')
       }
 
-      return this.applicationsService.findAll(status, type, pageNum, limitNum);
+      return this.applicationsService.findAll(status, type, search, pageNum, limitNum);
     }catch(err){
       throw new UnauthorizedException('Unauthorized')
     }
@@ -394,6 +402,7 @@ export class ApplicationsController {
       // Fetch applications with "Forwarded to Registrar" status
       return this.applicationsService.findAll(
         ApplicationStatus.FORWARDED_TO_REGISTRAR,
+        undefined,
         undefined,
         pageNum,
         limitNum

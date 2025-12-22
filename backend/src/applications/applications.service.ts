@@ -34,9 +34,11 @@ export class ApplicationsService {
     private emailService: EmailService,
   ) {}
 
-  async findAll(status?: ApplicationStatus, type?:ApplicationType, page: number = 1, limit: number = 10) {
+  async findAll(status?: ApplicationStatus, type?: ApplicationType, search?: string, page: number = 1, limit: number = 10) {
     try {
       const filter: any = {};
+
+      const baseFilter: any = {};
       
       // Add status filter if provided
       if (status) {
@@ -46,6 +48,38 @@ export class ApplicationsService {
       // add type filter if provided
       if(type){
         filter.type = type
+        baseFilter.type = type
+      }
+
+      const trimmedSearch = (search || '').trim();
+      if (trimmedSearch) {
+        const escapedSearch = trimmedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const searchRegex = new RegExp(escapedSearch, 'i');
+
+        const matchingCompanies = await this.companyModel
+          .find({
+            $or: [
+              { companyName: { $regex: searchRegex } },
+              { mda: { $regex: searchRegex } },
+            ],
+          })
+          .select('_id')
+          .lean();
+
+        const companyIds = matchingCompanies.map((c: any) => c._id);
+
+        const searchOr: any[] = [
+          { applicationId: { $regex: searchRegex } },
+          { contractorName: { $regex: searchRegex } },
+          { assignedToName: { $regex: searchRegex } },
+        ];
+
+        if (companyIds.length > 0) {
+          searchOr.push({ companyId: { $in: companyIds } });
+        }
+
+        filter.$or = searchOr;
+        baseFilter.$or = searchOr;
       }
       
       // Calculate pagination
@@ -56,7 +90,7 @@ export class ApplicationsService {
 
       // Count applications by status
       const statusCounts = await this.applicationModel.aggregate([
-        { $match: type ? { type } : {} }, // Apply type filter if provided, but count all statuses
+        { $match: Object.keys(baseFilter).length ? baseFilter : {} },
         {
           $group: {
             _id: '$currentStatus',
@@ -73,9 +107,9 @@ export class ApplicationsService {
 
       // Get specific status counts in parallel for better performance
       const [forwardedCount, approvedCount, rejectedCount] = await Promise.all([
-        this.applicationModel.countDocuments({ currentStatus: ApplicationStatus.FORWARDED_TO_REGISTRAR }),
-        this.applicationModel.countDocuments({ currentStatus: ApplicationStatus.APPROVED }),
-        this.applicationModel.countDocuments({ currentStatus: ApplicationStatus.REJECTED })
+        this.applicationModel.countDocuments({ ...baseFilter, currentStatus: ApplicationStatus.FORWARDED_TO_REGISTRAR }),
+        this.applicationModel.countDocuments({ ...baseFilter, currentStatus: ApplicationStatus.APPROVED }),
+        this.applicationModel.countDocuments({ ...baseFilter, currentStatus: ApplicationStatus.REJECTED })
       ]);
       
       // Get paginated results

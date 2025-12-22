@@ -26,6 +26,11 @@ export default function ExternalUrlInterceptor() {
             if (anchor && anchor.href) {
                 const url = new URL(anchor.href, window.location.href)
                 const isExternal = url.hostname !== window.location.hostname
+                const escapable = anchor.href.startsWith('mailto:') || anchor.href.startsWith('tel:') || anchor.href.endsWith('.imo.gov.ng')
+
+                if (escapable) {
+                    return
+                }
                 
                 if (isExternal) {
                     event.preventDefault()
@@ -44,12 +49,16 @@ export default function ExternalUrlInterceptor() {
             window.open(pendingUrl, '_blank', 'noopener,noreferrer')
         }
         setDialogOpen(false)
-        setPendingUrl("")
+        setTimeout(() => {
+            setPendingUrl("");
+        }, 100);
     }
 
     const handleCancel = () => {
         setDialogOpen(false)
-        setPendingUrl("")
+        setTimeout(() => {
+            setPendingUrl("");
+        }, 100);
     }
 
     const isSecure = pendingUrl.startsWith('https://');

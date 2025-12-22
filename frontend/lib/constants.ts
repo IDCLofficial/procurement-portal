@@ -47,17 +47,6 @@ export const STATUS_CONFIG = {
         lightBg: 'bg-yellow-200/80',
     },
     [ContractorStatus.EXPIRED]: {
-        label: 'Expired',
-        bgColor: 'bg-gray-100',
-        textColor: 'text-gray-800',
-        borderColor: 'border-gray-200',
-        iconColor: '#dc2626',
-        badgeClass: 'bg-gray-100 text-gray-800 border-gray-200',
-        cardBg: 'bg-gray-50',
-        cardBorder: 'border-gray-200',
-        lightBg: 'bg-gray-200/80',
-    },
-    [ContractorStatus.REVOKED]: {
         label: 'Revoked',
         bgColor: 'bg-red-100',
         textColor: 'text-red-800',
@@ -67,6 +56,17 @@ export const STATUS_CONFIG = {
         cardBg: 'bg-red-50',
         cardBorder: 'border-red-200',
         lightBg: 'bg-red-200/80',
+    },
+    [ContractorStatus.REVOKED]: {
+        label: 'Revoked',
+        bgColor: 'bg-red-500',
+        textColor: 'text-white',
+        borderColor: 'border-none',
+        iconColor: '#FFFFFF',
+        badgeClass: 'bg-red-500 text-white border-none',
+        cardBg: 'bg-red-100',
+        cardBorder: 'border-red-300',
+        lightBg: 'bg-red-300/80',
     },
 
 } as const;

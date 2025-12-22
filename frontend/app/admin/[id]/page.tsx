@@ -12,14 +12,12 @@ function DeskOfficerDashboard() {
   const { 
     user, 
     isAuthenticated, 
-    notifications,
     filteredNotifications,
     stats,
     tabs,
     activeTab,
     searchTerm,
     handlers,
-    isFetching
   } = useDeskOfficerDashboard();
 
   if (!isAuthenticated) {

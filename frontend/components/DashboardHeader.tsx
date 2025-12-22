@@ -8,7 +8,7 @@ import { FaAngleLeft } from 'react-icons/fa6';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { useAuth } from './providers/public-service/AuthProvider';
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog';
 
 export default function DashboardHeader({
     companyName = 'ABC Construction Ltd',
@@ -109,6 +109,7 @@ export default function DashboardHeader({
                                         <div className="rounded-full bg-red-100 p-3 border border-red-300">
                                             <LogOut className="h-6 w-6 text-red-600" />
                                         </div>
+                                        <DialogTitle className='sr-only'>Logout Confirmation</DialogTitle>
                                         <div>
                                             <p className="text-sm text-gray-500 mt-1">
                                                 Are you sure you want to sign out of your account?

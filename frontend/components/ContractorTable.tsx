@@ -20,6 +20,7 @@ import { Loader } from 'lucide-react';
 export interface Contractor {
     id: string;
     name: string;
+    company: string;
     rcbnNumber: string;
     sector: string[];
     grade: string;
@@ -70,6 +71,7 @@ export default function ContractorTable() {
         return contractorsData.certificates.map((cert) => ({
             id: cert._id,
             name: cert.contractorName,
+            company: cert.companyName,
             certId: cert.certificateId,
             rcbnNumber: cert.rcBnNumber || 'N/A',
             sector: cert.approvedSectors || [], // TODO: Get from API
@@ -245,6 +247,7 @@ export default function ContractorTable() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-12">S/N</TableHead>
+                                        <TableHead>Company Name</TableHead>
                                         <TableHead>Contractor Name</TableHead>
                                         <TableHead>CAC Number</TableHead>
                                         <TableHead><abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></TableHead>
@@ -258,6 +261,7 @@ export default function ContractorTable() {
                                     {contractors.map((contractor, index) => (
                                         <TableRow key={contractor.id} className={index % 2 === 1 ? 'bg-gray-50' : 'bg-white' + " hover:bg-gray-50"}>
                                             <TableCell className="font-medium text-gray-600">{startIndex + index + 1}</TableCell>
+                                            <TableCell className="font-semibold">{contractor.company}</TableCell>
                                             <TableCell className="font-semibold">{contractor.name}</TableCell>
                                             <TableCell className="font-semibold uppercase text-sm">{contractor.rcbnNumber}</TableCell>
                                             <TableCell className='grid gap-1 capitalize'>

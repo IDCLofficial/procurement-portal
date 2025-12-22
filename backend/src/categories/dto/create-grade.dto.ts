@@ -1,16 +1,21 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNotEmpty, IsNumber, IsString } from "class-validator";
-import { GradeType } from "../entities/grade.schema";
+import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class CreateGradeDto {
+    @ApiProperty({
+        example:"Works",
+        description:"Category name"
+    })
+    @IsNotEmpty()
+    @IsString()
+    category:string;
+
     @ApiProperty({ 
         example: "A", 
-        enum: GradeType,
         description: "Grade type (A, B, C, or D)"
     })
-    @IsEnum(GradeType)
     @IsNotEmpty()
-    grade: GradeType;
+    grade: string;
 
     @ApiProperty({ 
         example: 50000, 
@@ -20,6 +25,14 @@ export class CreateGradeDto {
     @IsNotEmpty()
     registrationCost: number;
 
+    @ApiProperty({
+        example: 25000,
+        description: "Renewal fee for this grade"
+    })
+    @IsNumber()
+    @IsNotEmpty()
+    renewalFee: number;
+
     @ApiProperty({ 
         example: 1000000, 
         description: "Financial capacity requirement for this grade"
@@ -27,12 +40,4 @@ export class CreateGradeDto {
     @IsNumber()
     @IsNotEmpty()
     financialCapacity: number;
-
-    @ApiProperty({ 
-        example: "2025-01-01", 
-        description: "Effective date for this grade"
-    })
-    @IsString()
-    @IsNotEmpty()
-    effectiveDate: string;
 }

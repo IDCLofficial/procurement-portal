@@ -342,6 +342,47 @@ export class CategoriesController {
   }
 
   /**
+   * Get all grades for a specific category
+   * 
+   * @description
+   * Retrieves all grades associated with a specific category.
+   * The category name is case-insensitive.
+   * 
+   * @param category - The name of the category to get grades for
+   * @returns Array of grade objects for the specified category
+   * 
+   * @throws {NotFoundException} If no grades are found for the specified category
+   * @throws {BadRequestException} If there's an error retrieving the grades
+   * 
+   * @example
+   * GET /categories/works/grades
+   * 
+   * Response:
+   * [
+   *   {
+   *     "_id": "60d21b4667d0d8992e610c85",
+   *     "category": "works",
+   *     "grade": "A",
+   *     "registrationCost": 50000,
+   *     "renewalFee": 25000,
+   *     "financialCapacity": 1000000,
+   *     "createdAt": "2023-03-25T10:00:00.000Z",
+   *     "updatedAt": "2023-03-25T10:00:00.000Z"
+   *   },
+   *   ...
+   * ]
+   */
+  @ApiOperation({ summary: 'Get grades by category', description: 'Retrieves all grades for a specific category' })
+  @ApiParam({ name: 'category', description: 'The name of the category to get grades for', example: 'works' })
+  @ApiResponse({ status: 200, description: 'Successfully retrieved grades for the category' })
+  @ApiResponse({ status: 404, description: 'No grades found for the specified category' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @Get(':category/grades')
+  async getGradesByCategory(@Param('category') category: string) {
+    return this.categoriesService.findGradesByCategory(category);
+  }
+
+  /**
    * Update a grade
    * 
    * @description

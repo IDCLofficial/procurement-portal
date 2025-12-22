@@ -22,9 +22,12 @@ import { PaymentType, VendorSteps } from '@/store/api/enum';
 import { useCompleteVendorRegistrationMutation, useInitPaymentMutation } from '@/store/api/vendor.api';
 import { Loader2 } from 'lucide-react';
 import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
-import { deepEqual } from '@/lib';
+import { deepEqual, formatCurrency } from '@/lib';
 import { useRouter } from 'next/navigation';
 import { processingFee, return_url_key } from '@/lib/constants';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -43,6 +46,9 @@ export default function RegistrationContinuation() {
     const { user, company: companyData, documents: presets, categories: categoriesData, mdas } = useAuth();
     const [isUploadingDocuments, setIsUploadingDocuments] = useState(false);
     const router = useRouter();
+    const [open, setOpen] = useState(false);
+    const [agreed, setAgreed] = useState(false);
+    const [paymentInitiated, setPaymentInitiated] = useState(false);
 
     const setStartPoint = useMemo(() => {
         if (!user) return 2;
@@ -248,6 +254,7 @@ export default function RegistrationContinuation() {
             toast.dismiss("payment");
             localStorage.setItem(return_url_key, "/dashboard/complete-registration");
             if (response.data) {
+                setPaymentInitiated(true);
                 router.push(response.data.authorization_url);
             }
         } catch (error) {
@@ -535,7 +542,6 @@ export default function RegistrationContinuation() {
                 setIsUploadingDocuments(false);
             }
 
-            // FINAL VALIDATION
             const allDocsValid = updatedDocuments.filter(doc => doc.fileName).every(
                 (doc) =>
                     (!doc.required || doc.uploaded) &&
@@ -550,9 +556,6 @@ export default function RegistrationContinuation() {
                 return;
             }
 
-            // ------------------------
-            // PAYLOAD GENERATION
-            // ------------------------
             const payload = {
                 [VendorSteps.DOCUMENTS]: updatedDocuments
                     .filter(doc => doc.fileName)
@@ -627,9 +630,11 @@ export default function RegistrationContinuation() {
             const madeAnUpdate = !deepEqual({
                 category: selectedSector,
                 grade: selectedGrade,
+                mdas: selectedMDA,
             }, {
                 category: companyData?.category,
                 grade: companyData?.grade || '',
+                mdas: companyData?.mda || '',
             });
 
             if (!madeAnUpdate) {
@@ -666,7 +671,7 @@ export default function RegistrationContinuation() {
         }
 
         if (currentStep === 8) {
-            handleConfirmPayment();
+            setOpen(true)
             return;
         }
 
@@ -967,7 +972,7 @@ export default function RegistrationContinuation() {
                             </Button>
                             <Button
                                 onClick={handleContinue}
-                                disabled={isLoading || !presets || isUploadingDocuments || isInitPaymentLoading}
+                                disabled={isLoading || !presets || isUploadingDocuments || isInitPaymentLoading || paymentInitiated}
                                 className="bg-theme-green hover:bg-theme-green/90 min-w-[100px] cursor-pointer"
                             >
                                 {isLoading || isUploadingDocuments || isInitPaymentLoading
@@ -991,6 +996,80 @@ export default function RegistrationContinuation() {
                         )}
                     </CardContent>
                 </Card>
+                <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold text-gray-900">
+                                Confirm Payment
+                            </DialogTitle>
+                        </DialogHeader>
+
+                        <div className="space-y-6 py-4">
+                            {/* Payment Summary */}
+                            <div className="space-y-4">
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-base font-semibold text-gray-900">Total Amount</span>
+                                        <span className="text-2xl font-bold text-green-600">
+                                            {formatCurrency(processingFee)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <h4 className="font-medium text-gray-900">Payment Details:</h4>
+                                    <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Company:</span>
+                                            <span className="font-medium">{formData.companyName}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Agreement Checkbox */}
+                            <div className="space-y-2">
+                                <div className="flex items-start space-x-3">
+                                    <Checkbox
+                                        id="terms"
+                                        checked={agreed}
+                                        onCheckedChange={(checked) => setAgreed(checked === true)}
+                                    />
+                                    <div className="space-y-1">
+                                        <Label htmlFor="terms" className="text-sm font-medium leading-none">
+                                            I confirm that&nbsp;
+                                        </Label>
+                                        <ul className="text-sm text-gray-600 space-y-1 list-disc pl-5">
+                                            <li>I have reviewed all the information provided</li>
+                                            <li>This is a non-refundable payment</li>
+                                            <li>I agree to the Terms of Service</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex justify-end space-x-3 pt-4">
+                                {!isInitPaymentLoading && <Button
+                                    variant="outline"
+                                    onClick={() => setOpen(false)}
+                                    className='cursor-pointer'
+                                    type="button"
+                                >
+                                    Cancel
+                                </Button>}
+                                <Button
+                                    type="button"
+                                    onClick={handleConfirmPayment}
+                                    disabled={!agreed || isInitPaymentLoading || paymentInitiated}
+                                    className="bg-theme-green hover:bg-theme-green/90"
+                                >
+                                    {isInitPaymentLoading ? 'Processing...' : 'Confirm Payment'}
+                                </Button>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     );

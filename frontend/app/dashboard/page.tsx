@@ -120,7 +120,7 @@ export default function DashboardPage() {
                         {/* Pending Payment */}
                         {categories && registrationStatus === 'approved' && <PendingPaymentCard
                             amount={categories?.grades.find((grade) => grade.grade.toLowerCase() === company?.grade.toLowerCase())?.registrationCost || 0} // Set your amount here
-                            description="Registration Fee for Contractor Registration"
+                            description="Vendor Certificate Fee for Registration"
                             onPay={handlePayment}
                         />}
                         {/* Registration Status */}

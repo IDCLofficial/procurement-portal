@@ -298,6 +298,7 @@ interface ContractorsResponse {
         contractorId: string;
         company: string;
         contractorName: string;
+        companyName: string;
         rcBnNumber: string;
         tin: string;
         address: string;

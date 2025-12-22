@@ -9,6 +9,8 @@ import { User, UserSchema } from '../users/entities/user.schema';
 import { VendorsModule } from '../vendors/vendors.module';
 import { Vendor, VendorSchema } from 'src/vendors/entities/vendor.schema';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { Notification, NotificationSchema } from 'src/notifications/entities/notification.entity';
+import { EmailService } from 'src/email/email.service';
 
 @Module({
   imports: [
@@ -17,12 +19,14 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
       { name: Certificate.name, schema: CertificateSchema },
       { name: Company.name, schema: CompanySchema },
       { name: User.name, schema: UserSchema },
-      {name:Vendor.name, schema:VendorSchema}
+      { name: Vendor.name, schema: VendorSchema },
+      { name:Notification.name, schema:NotificationSchema}
     ]),
     VendorsModule,
     AuditLogsModule
   ],
   controllers: [ApplicationsController],
-  providers: [ApplicationsService],
+  providers: [ApplicationsService, EmailService],
+  exports: [ApplicationsService],
 })
 export class ApplicationsModule {}

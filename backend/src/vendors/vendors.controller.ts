@@ -2,12 +2,16 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadReque
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
-import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiBearerAuth, ApiHeader, ApiConsumes } from '@nestjs/swagger';
-import { mode, updateRegistrationDto } from './dto/update-registration.dto';
+import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiBearerAuth, ApiHeader, ApiConsumes, ApiParam } from '@nestjs/swagger';
+import { mode, necessaryDocument, updateRegistrationDto } from './dto/update-registration.dto';
 import { loginDto } from './dto/logn.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtService } from '@nestjs/jwt';
+import { replaceDocumentDto } from './dto/replace-document.dto';
+import { changePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('vendors')
 @Controller('vendors')
@@ -99,6 +103,116 @@ export class VendorsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   login(@Body() body: loginDto) {
     return this.vendorsService.login(body);
+  }
+
+  /** Logout vendor */
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout vendor' })
+  @Delete('logout')
+  logout(@Req() req:any){
+    return this.vendorsService.logout(req)
+  }
+
+  /** 
+   * Change Password for vendor
+  */
+  @Patch('change-password')
+  changePassword(@Body() body:changePasswordDto, @Req() req:any){
+    const authToken = req.headers?.authorization?.replace("Bearer ", "")
+    if(!authToken){
+      throw new UnauthorizedException('Could not find your authorization token')
+    }
+
+    const decoded = this.jwtService.decode(authToken)
+    if(!decoded){
+      throw new UnauthorizedException('You are not authorized to access this resource')
+    }
+    
+    return this.vendorsService.changePassword(decoded._id, body, authToken)
+    
+  }
+
+  /**
+   * Request a password reset link
+   * 
+   * @param body - Email address for password reset
+   * @returns Success message
+   * 
+   * @example
+   * POST /vendors/forgot-password
+   * Body: {
+   *   "email": "user@example.com"
+   * }
+   */
+  @Post('forgot-password')
+  @ApiOperation({ 
+    summary: 'Request password reset', 
+    description: 'Sends a password reset link to the provided email address if an account exists'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'If the email exists, a password reset link has been sent',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'If an account with this email exists, a password reset link has been sent'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: 'Failed to send password reset email' 
+  })
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    return this.vendorsService.forgotPassword(body.email);
+  }
+
+  /**
+   * Reset password using a valid reset token
+   * 
+   * @param body - Reset password data including token and new password
+   * @returns Success message
+   * 
+   * @example
+   * POST /vendors/reset-password
+   * Body: {
+   *   "token": "valid-jwt-token",
+   *   "password": "NewSecurePassword123!",
+   *   "confirmPassword": "NewSecurePassword123!"
+   * }
+   */
+  @Post('reset-password')
+  @ApiOperation({ 
+    summary: 'Reset password', 
+    description: 'Reset password using a valid reset token'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Password has been reset successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Password has been reset successfully'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'Invalid/expired token or passwords do not match' 
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'User not found' 
+  })
+  async resetPassword(@Body() body: ResetPasswordDto, @Query('token') token:string) {   
+    
+    return this.vendorsService.resetPassword(body, token);
   }
 
   /**
@@ -211,8 +325,15 @@ export class VendorsController {
   })
   findOne(@Req() req:any) {
     const authHeader = req.headers.authorization;
-    const userId = this.jwtService.decode(authHeader.split(' ')[1])._id;
-    return this.vendorsService.getProfile(userId);
+    if (!authHeader || typeof authHeader !== 'string') {
+      throw new UnauthorizedException('Could not find your authorization header')
+    }
+    const authToken = authHeader.split(' ')[1];
+    if (!authToken) {
+      throw new UnauthorizedException('Could not find your authorization token')
+    }
+    const userId = this.jwtService.decode(authToken)._id;
+    return this.vendorsService.getProfile(userId, authToken);
   }
 
   /**
@@ -360,25 +481,20 @@ export class VendorsController {
     if (!authHeader) {
       throw new UnauthorizedException('Authorization header is missing');
     }  
-    const token = authHeader.replace('Bearer ', '').trim();
-    if (!token) {
+    const authToken = authHeader.replace('Bearer ', '').trim();
+    if (!authToken) {
       throw new UnauthorizedException('Token is missing');
     }   
-    let userId: string;
-    try {
-      const decoded = this.jwtService.verify(token);
-      userId = decoded.sub || decoded._id || decoded.id;
-      
-      if (!userId) {
-        throw new UnauthorizedException('Invalid token payload');
-      }
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
+    const userId = this.jwtService.verify(authToken)._id;
+    
+    if (!userId) {
+      throw new UnauthorizedException('Invalid token');
     }
+    
     if(updateRegistrationDto.mode==mode.RENEWAL){
-        return this.vendorsService.renewRegistration(userId, { documents: updateRegistrationDto.documents });
+      return this.vendorsService.renewRegistration(userId, { documents: updateRegistrationDto.documents });
     }
-    return this.vendorsService.registerCompany(userId, updateRegistrationDto);
+    return this.vendorsService.registerCompany(userId, updateRegistrationDto, authToken);
   }
 
   //
@@ -396,7 +512,6 @@ export class VendorsController {
    * @example
    * GET /vendors/applications/company/507f1f77bcf86cd799439011
    */
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get('applications/my-company')
   @ApiOperation({ 
@@ -447,27 +562,19 @@ export class VendorsController {
       throw new UnauthorizedException('Authorization header is required');
     }
 
-    try {
-      const authHeader = req.headers.authorization;
-      const token = authHeader.split(' ')[1];
-      
-      if (!token) {
-        throw new UnauthorizedException('Invalid authorization token format');
-      }
-
-      const decoded = this.jwtService.decode(token);
-      
-      if (!decoded?._id) {
-        throw new UnauthorizedException('Invalid token payload');
-      }
-
-      return this.vendorsService.getVendorApplication(decoded._id);
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new UnauthorizedException('Invalid or expired token');
+    const authToken = req.headers?.authorization?.split(' ')[1];
+    
+    if (!authToken) {
+      throw new UnauthorizedException('Invalid authorization token format');
     }
+
+    const decoded = this.jwtService.decode(authToken);
+    
+    if (!decoded?._id) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
+
+    return this.vendorsService.getVendorApplication(decoded._id, authToken);
   }
 
   /**
@@ -561,20 +668,19 @@ export class VendorsController {
     }
 
     try {
-      const authHeader = req.headers.authorization;
-      const token = authHeader.split(' ')[1];
+      const authToken = req.headers?.authorization?.split(' ')[1];
       
-      if (!token) {
+      if (!authToken) {
         throw new UnauthorizedException('Invalid authorization token format');
       }
 
-      const decoded = this.jwtService.decode(token);
+      const decoded = this.jwtService.decode(authToken);
       
       if (!decoded?._id) {
         throw new UnauthorizedException('Invalid token payload');
       }
 
-      return this.vendorsService.getApplicationTimeline(decoded._id);
+      return this.vendorsService.getApplicationTimeline(decoded._id, authToken);
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -684,20 +790,19 @@ export class VendorsController {
     }
 
     try {
-      const authHeader = req.headers.authorization;
-      const token = authHeader.split(' ')[1];
+      const authToken = req.headers?.authorization?.split(' ')[1];
 
-      if (!token) {
+      if (!authToken) {
         throw new UnauthorizedException('Invalid authorization token format');
       }
 
-      const decoded = this.jwtService.decode(token);
+      const decoded = this.jwtService.decode(authToken);
 
       if (!decoded?._id) {
         throw new UnauthorizedException('Invalid token payload');
       }
 
-      return this.vendorsService.getVendorActivityLogs(decoded._id);
+      return this.vendorsService.getVendorActivityLogs(decoded._id, authToken);
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -721,37 +826,25 @@ export class VendorsController {
    * }
    */
   @Patch('profile')
-  update(@Param('id') id: string, @Body() updateVendorDto: UpdateVendorDto, @Req() req: any) {
+  update(@Body() updateVendorDto: UpdateVendorDto, @Req() req: any) {
     try{
-      const header = req.headers.authorization;
-      if(!header){
+      const authToken = req.headers.authorization?.split(' ')[1];
+      if(!authToken){
         this.logger.log(`Unauthorized user trying to access the endpoint`);
         throw new UnauthorizedException('Unauthorized');
       }
-      const id = this.jwtService.decode(header.split(' ')[1])._id;
-      if(!id){
+      const decoded = this.jwtService.decode(authToken);
+
+      const vendorId = decoded._id;
+      if(!vendorId){
         this.logger.log(`Unauthorized user trying to access the endpoint`);
         throw new UnauthorizedException('Unauthorized');
       }
-      return this.vendorsService.update(id, updateVendorDto);
+      return this.vendorsService.update(vendorId, updateVendorDto, authToken);
     }catch(err){
       this.logger.log(`Unauthorized user trying to access the endpoint`);
       throw new UnauthorizedException('Unauthorized');
     }
-  }
-
-  /**
-   * Delete a vendor account
-   * 
-   * @param id - Vendor ID (MongoDB ObjectId)
-   * @returns Deleted vendor record
-   * 
-   * @example
-   * DELETE /vendors/507f1f77bcf86cd799439011
-   */
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.vendorsService.remove(id);
   }
 
   /**
@@ -778,7 +871,7 @@ export class VendorsController {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    return this.vendorsService.getRegistrationPayment(decoded._id);
+    return this.vendorsService.getRegistrationPayment(decoded._id, token);
   }
 
   /**
@@ -817,7 +910,14 @@ export class VendorsController {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    return this.vendorsService.getPaymentHistory(decoded._id, page, limit, search, year, type);
+    return this.vendorsService.getPaymentHistory(
+      decoded._id, 
+      token,
+      page, 
+      limit, 
+      search, 
+      year, 
+      type);
   }
 
   /**
@@ -895,7 +995,87 @@ export class VendorsController {
     }
   }
 
-  @Patch('deactivate-my-account')
+  @Patch('replace-document/:id')
+  @ApiBearerAuth()
+  @ApiOperation({ 
+    summary: 'Replace a company document',
+    description: 'Replaces an existing company verification document with a new one for the authenticated vendor. The :id path parameter is the ObjectId of the existing document reference stored on the company.' 
+  })
+  @ApiBody({
+    type: replaceDocumentDto,
+    description: 'Payload containing the new document metadata to be uploaded',
+    schema: {
+      type: 'object',
+      properties: {
+        document: {
+          type: 'object',
+          properties: {
+            documentType: { type: 'string', example: 'CAC' },
+            fileUrl: { type: 'string', example: 'https://cdn.example.com/docs/cac-new.pdf' },
+            validFrom: { type: 'string', example: '2025-01-01' },
+            validTo: { type: 'string', example: '2030-01-01' },
+            uploadedDate: { type: 'string', example: '2025-01-05' },
+            fileName: { type: 'string', example: 'cac-certificate-new.pdf' },
+            fileSize: { type: 'string', example: '245KB' },
+            fileType: { type: 'string', example: 'application/pdf' },
+            validFor: { type: 'string', example: '5 years' },
+            hasValidityPeriod: { type: 'boolean', example: true }
+          },
+          required: ['documentType', 'fileUrl', 'uploadedDate', 'fileName', 'fileSize', 'fileType', 'hasValidityPeriod']
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Document replaced successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'document uploaded successfully' },
+        document: { type: 'object', description: 'The newly created verification document record' }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: HttpStatus.NOT_FOUND, 
+    description: 'Vendor or company not found' 
+  })
+  @ApiResponse({ 
+    status: HttpStatus.BAD_REQUEST, 
+    description: 'Failed to replace document (validation error or invalid token)' 
+  })
+  async replaceDocument(
+    @Req() req:any,
+    @Param('id') id: string,
+    @Body() replaceDocumentDto: replaceDocumentDto
+  ) {
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException('Authorization header is missing');
+    }
+
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = this.jwtService.decode(token);
+
+    if (!decoded) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    const vendorId = decoded._id;
+
+    try {
+      return await this.vendorsService.replaceDocument(
+        id, 
+        replaceDocumentDto, 
+        vendorId, 
+        token
+      );
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Delete('deactivate-my-account')
   @ApiOperation({ summary: 'Deactivate vendor account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Vendor account deactivated successfully' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Vendor not found' })
@@ -909,10 +1089,24 @@ export class VendorsController {
     const token = req.headers.authorization.split(' ')[1];
     const decoded = this.jwtService.decode(token);
 
-    if (!decoded) {
+    if (!decoded || !decoded._id) {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    return this.vendorsService.deactivateMyAccount(decoded._id);
+    return this.vendorsService.deactivateMyAccount(decoded._id, token);
+  }
+
+  /**
+   * Delete a vendor account
+   * 
+   * @param id - Vendor ID (MongoDB ObjectId)
+   * @returns Deleted vendor record
+   * 
+   * @example
+   * DELETE /vendors/507f1f77bcf86cd799439011
+   */
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.vendorsService.remove(id);
   }
 }

@@ -14,17 +14,21 @@ enum GradeType {
 
 // Define schema interface
 interface IGrade {
-  grade: GradeType;
+  grade: string;
   registrationCost: number;
   financialCapacity: number;
+  category: string;
+  renewalFee: number;
 }
 
 // Define Mongoose schema
 const gradeSchema = new mongoose.Schema<IGrade>(
   {
-    grade: { type: String, enum: Object.values(GradeType), required: true, unique: true },
+    grade: { type: String, required: true, unique: true },
     registrationCost: { type: Number, required: true },
-    financialCapacity: { type: Number, required: true }
+    financialCapacity: { type: Number, required: true },
+    category:{type: String, required:true},
+    renewalFee:{type:Number, required:true}
   },
   { timestamps: true }
 );
@@ -46,24 +50,32 @@ async function seedGrades() {
     // Grades data based on the UI
     const grades: IGrade[] = [
       {
-        grade: GradeType.A,
+        grade: "A",
         registrationCost: 150000,
-        financialCapacity: 150000
+        financialCapacity: 150000,
+        category:"Consultancy Services and Non Consulting Services",
+        renewalFee: 50000
       },
       {
-        grade: GradeType.B,
+        grade: "B",
         registrationCost: 100000,
-        financialCapacity: 150000
+        financialCapacity: 150000,
+        category:"Consultancy Services and Non Consulting Services",
+        renewalFee: 40000
       },
       {
-        grade: GradeType.C,
+        grade: "C",
         registrationCost: 70000,
-        financialCapacity: 150000
+        financialCapacity: 150000,
+        category:"Consultancy Services and Non Consulting Services",
+        renewalFee: 30000
       },
       {
-        grade: GradeType.D,
+        grade: "D",
         registrationCost: 40000,
-        financialCapacity: 150000
+        financialCapacity: 150000,
+        category:"Consultancy Services and Non Consulting Services",
+        renewalFee: 20000
       }
     ];
 

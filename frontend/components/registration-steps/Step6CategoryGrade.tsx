@@ -118,12 +118,12 @@ export default function Step6CategoryGrade({
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {grades.filter((grade) => grade.category === selectedSector).sort((a, b) => String(a.grade).localeCompare(String(b.grade))).map((grade) => {
-                        const isSelected = selectedGrade === grade._id;
+                        const isSelected = selectedGrade === grade.grade;
                         return (
                             <button
                                 key={grade._id}
                                 type="button"
-                                onClick={() => onGradeChange(grade._id)}
+                                onClick={() => onGradeChange(grade.grade)}
                                 className={`p-6 rounded-lg border-2 text-center transition-all cursor-pointer active:scale-[0.98] active:rotate-2 ${
                                     isSelected
                                         ? 'border-theme-green bg-green-50'

@@ -63,7 +63,7 @@ export class AuditLogsService {
     endDate?: Date;
     limit?: number;
     skip?: number;
-  }): Promise<{ data: AuditLog[]; total: number }> {
+  }): Promise<{ data: AuditLog[]; total: number; page: number; pageSize: number; totalPages: number; count: number; limit: number; skip: number }> {
     try {
       const query: any = {};
 
@@ -92,7 +92,20 @@ export class AuditLogsService {
         this.auditLogModel.countDocuments(query).exec()
       ]);
 
-      return { data, total };
+      const pageSize = limit;
+      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
+      const totalPages = pageSize > 0 ? Math.ceil(total / pageSize) : 1;
+
+      return { 
+        data, 
+        total, 
+        page, 
+        pageSize, 
+        totalPages, 
+        count: data.length, 
+        limit, 
+        skip 
+      };
     } catch (error) {
       this.logger.error(`Failed to fetch audit logs: ${error.message}`, error.stack);
       throw error;

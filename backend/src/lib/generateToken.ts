@@ -13,6 +13,8 @@ export default class TokenHandlers {
             role: user.role,
             firstName: user.firstName,
             lastName: user.lastName,
+        },{
+            expiresIn:'24h'
         });
         return token;
     }  

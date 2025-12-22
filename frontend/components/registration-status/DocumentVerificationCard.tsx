@@ -7,6 +7,8 @@ import { getStatusBadge } from '@/components/registration-status/utils';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { toValidJSDate } from '@/lib';
+import { FaGear } from 'react-icons/fa6';
+import Link from 'next/link';
 
     export interface Document {
         _id: string;
@@ -53,12 +55,21 @@ export default function DocumentVerificationCard({ documents }: DocumentVerifica
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center">
                                         {getStatusBadge(doc.status.status)}
+                                        {(doc.status.status === 'needs review') && <Link href={`manage-documents?id=${doc._id}`}>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 w-8 p-0 hover:bg-gray-100 cursor-pointer"
+                                            >
+                                                <FaGear className="text-gray-600" />
+                                            </Button>
+                                        </Link>}
                                         <Button 
                                             variant="ghost" 
                                             size="sm" 
-                                            className="h-8 w-8 p-0 hover:bg-gray-100"
+                                            className="h-8 w-8 p-0 hover:bg-gray-100 cursor-pointer"
                                             onClick={() => setSelectedDoc(doc)}
                                         >
                                             <FaEye className="text-gray-600" />
@@ -81,7 +92,7 @@ export default function DocumentVerificationCard({ documents }: DocumentVerifica
                             <div className="flex-1">
                                 <DialogTitle className="text-lg font-semibold">{selectedDoc?.documentType}</DialogTitle>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Uploaded {selectedDoc?.uploadedDate ? format(toValidJSDate(selectedDoc.uploadedDate), 'dd MMMM yyyy') : 'N/A'}
+                                    Uploaded {selectedDoc?.uploadedDate ? format(toValidJSDate(selectedDoc.uploadedDate || ""), 'dd MMMM yyyy') : 'N/A'}
                                 </p>
                                 <div className="mt-2">
                                     {selectedDoc?.status && getStatusBadge(selectedDoc.status.status)}

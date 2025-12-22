@@ -49,6 +49,7 @@ export default function ComplianceDocumentsCard({
                             validUntil={doc.validUntil}
                             expiresText={doc.expiresText}
                             status={doc.status}
+                            id={doc.id}
                         />
                     ))}
                 </div>

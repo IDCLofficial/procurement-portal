@@ -69,6 +69,12 @@ export const adminApi = baseApi.injectEndpoints({
       providesTags: ["Users"],
     }),
 
+    // GET USERS BASED ON MDA
+    getUsersByMda: builder.query<User[], string | undefined>({
+      query: (mda) => `/users/by-Mda?mda=${mda}`,
+      providesTags: ["Users"],
+    }),
+
     // CREATE USER
     createUser: builder.mutation<CreateUserResponse, CreateUserRequest>({
       query: (body) => ({
@@ -202,6 +208,7 @@ export const adminApi = baseApi.injectEndpoints({
 
 export const {
   useGetUsersQuery,
+  useGetUsersByMdaQuery,
   useCreateUserMutation,
   useUpdateUserRoleMutation,
   useDeleteUserMutation,

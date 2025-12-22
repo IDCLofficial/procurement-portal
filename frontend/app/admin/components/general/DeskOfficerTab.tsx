@@ -1,18 +1,20 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useGetUsersQuery } from '@/app/admin/redux/services/adminApi';
+import { useGetUsersByMdaQuery, useGetUsersQuery } from '@/app/admin/redux/services/adminApi';
 import type { User } from '@/app/admin/types/user';
 import { ConfirmationDialog } from '@/app/admin/components/general/confirmation-dialog';
 import { useAssignApplicationMutation } from '@/app/admin/redux/services/appApi';
 import { useAppSelector } from '@/app/admin/redux/hooks';
 import type { RootState } from '@/app/admin/redux/store';
+import { Company } from '../../types';
 
 interface DeskOfficerTabProps {
   applicationId: string;
   assignedTo?: string;
   allowDeskOfficerAssignment: boolean;
   currentStatus?: string;
+  company?:Company
 }
 
 export function DeskOfficerTab({
@@ -20,6 +22,7 @@ export function DeskOfficerTab({
   assignedTo,
   allowDeskOfficerAssignment,
   currentStatus,
+  company
 }: DeskOfficerTabProps) {
   const [selectedDeskOfficer, setSelectedDeskOfficer] = useState('');
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
@@ -50,7 +53,7 @@ export function DeskOfficerTab({
   ].includes(normalizedStatus);
 
   // Only fetch users if the current user is not a registrar
-  const { data: users = [], isLoading: isUsersLoading, error: usersError } = useGetUsersQuery(undefined, {
+  const { data: users = [], isLoading: isUsersLoading, error: usersError } = useGetUsersByMdaQuery(company?.mda, {
     skip: isRegistrar
   });
   

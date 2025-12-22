@@ -13,6 +13,8 @@ import { Application, ApplicationSchema } from '../applications/entities/applica
 import { Vendor, VendorSchema } from 'src/vendors/entities/vendor.schema';
 import { User, UserSchema } from '../users/entities/user.schema';
 import { AdminGuard } from '../guards/admin.guard';
+import { Notification, NotificationSchema } from 'src/notifications/entities/notification.entity';
+import { ApplicationsModule } from '../applications/applications.module';
 
 @Module({
   imports: [
@@ -23,7 +25,8 @@ import { AdminGuard } from '../guards/admin.guard';
       { name: Company.name, schema: CompanySchema },
       { name: Application.name, schema: ApplicationSchema },
       { name: Vendor.name, schema: VendorSchema },
-      { name: User.name, schema: UserSchema }
+      { name: User.name, schema: UserSchema },
+      { name:Notification.name, schema:NotificationSchema }
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -33,10 +36,11 @@ import { AdminGuard } from '../guards/admin.guard';
       }),
       inject: [ConfigService],
     }),
-    VendorsModule
+    VendorsModule,
+    ApplicationsModule
   ],
   controllers: [SplitPaymentController],
   providers: [SplitPaymentService, PaystackSplitService, AdminGuard],
-  exports: [SplitPaymentService]
+  exports: [SplitPaymentService, ApplicationsModule]
 })
 export class PaymentsModule {}

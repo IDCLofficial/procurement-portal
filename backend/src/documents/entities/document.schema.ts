@@ -11,7 +11,7 @@ export enum renewalFreq {
 }
 export enum Status{
     PENDING="pending",
-    NEED_REVIEW="needs_review",
+    NEED_REVIEW="needs review",
     APPROVED="approved",
     EXPIRING="Expiring",
     EXPIRED="Expired"

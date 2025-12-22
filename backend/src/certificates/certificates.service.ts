@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Certificate, CertificateDocument } from './entities/certificate.schema';
@@ -20,7 +20,8 @@ export class CertificatesService {
     grade?: string,
     lga?: string,
     status?: string,
-    category?: string
+    category?: string,
+    mda?: string
   ) {
     try {
       // Build filter object with $and to properly combine all conditions
@@ -38,7 +39,8 @@ export class CertificatesService {
             { phone: { $regex: search, $options: 'i' } },
             { tin: { $regex: search, $options: 'i' } },
             { approvedSectors: { $regex: search, $options: 'i' } },
-            { categories: { $regex: search, $options: 'i' } }
+            { categories: { $regex: search, $options: 'i' } },
+            { mda: { $regex: search, $options: 'i' } }
           ]
         });
       }
@@ -62,7 +64,38 @@ export class CertificatesService {
       if (category) {
         conditions.push({ categories: { $regex: category, $options: 'i' } });
       }
-      
+
+      if(mda) {
+        conditions.push({ mda: { $regex: mda, $options: 'i'}})
+      }
+
+      // Exclude certificates for vendors whose email is blank or missing
+      const vendorsWithEmail = await this.vendorModel
+        .find({
+          email: { $exists: true, $nin: ['', ' '] },
+        })
+        .select('_id')
+        .lean();
+
+      const vendorIdsWithEmail = vendorsWithEmail.map(v => v._id);
+
+      if (vendorIdsWithEmail.length === 0) {
+        return {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          statusCounts: {
+            approved: 0,
+            expired: 0,
+            revoked: 0,
+          },
+          certificates: [],
+        };
+      }
+
+      conditions.push({ contractorId: { $in: vendorIdsWithEmail } });
+
       // Build final filter
       const filter = conditions.length > 0 ? { $and: conditions } : {};
       
@@ -111,6 +144,13 @@ export class CertificatesService {
         throw new NotFoundException(`Certificate with ID ${certificateId} not found`);
       }
       
+      const vendor = await this.vendorModel.findById(certificate.contractorId).exec();
+      if(!vendor){
+        throw new NotFoundException('no vendor exists for this certificate')
+      }else if(vendor.email === " " || !vendor.email){
+        throw new BadRequestException("No valid certificate found")
+      }
+      
       return certificate;
     } catch (err) {
       if (err instanceof NotFoundException) {
@@ -131,6 +171,13 @@ export class CertificatesService {
       
       if (!certificate) {
         throw new NotFoundException(`Certificate with ID ${certificateId} not found`);
+      }
+
+      const vendor = await this.vendorModel.findById(certificate.contractorId).exec();
+      if(!vendor){
+        throw new NotFoundException('no vendor exists for this certificate')
+      }else if(vendor.email === " " || !vendor.email){
+        throw new BadRequestException("No valid certificate found")
       }
 
       return certificate;
@@ -155,9 +202,43 @@ export class CertificatesService {
 
       const companyIds = companies.map(c => c._id);
 
-      // Build filter for certificates
+      // If no companies match, return empty result
+      if (companyIds.length === 0) {
+        return {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          category,
+          certificates: [],
+        };
+      }
+
+      // Find vendors with valid (non-blank) email
+      const vendorsWithEmail = await this.vendorModel
+        .find({
+          email: { $exists: true, $nin: ['', ' '] },
+        })
+        .select('_id')
+        .lean();
+
+      const vendorIdsWithEmail = vendorsWithEmail.map(v => v._id);
+
+      if (vendorIdsWithEmail.length === 0) {
+        return {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          category,
+          certificates: [],
+        };
+      }
+
+      // Build filter for certificates, restricting to vendors with valid email
       const filter: any = {
-        company: { $in: companyIds }
+        company: { $in: companyIds },
+        contractorId: { $in: vendorIdsWithEmail },
       };
 
       // Calculate pagination
@@ -182,7 +263,7 @@ export class CertificatesService {
         limit,
         totalPages: Math.ceil(total / limit),
         category,
-        certificates
+        certificates,
       };
     } catch (err) {
       throw new BadRequestException('Failed to get certificates by category', err.message);

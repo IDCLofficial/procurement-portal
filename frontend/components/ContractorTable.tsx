@@ -7,17 +7,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FaCheckCircle, FaDownload, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
-import { FaCircleXmark } from 'react-icons/fa6';
+import { FaCircleXmark, FaClock, FaX } from 'react-icons/fa6';
 import { getGradeConfig, getSectorConfig, getStatusConfig } from '@/lib/constants';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCurrentPage, setItemsPerPage } from '@/store/slices/publicSlice';
 import { useGetAllContractorsQuery } from '@/store/api/public.api';
 import { toast } from 'sonner';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { toValidJSDate } from '@/lib';
+import { updateSearchParam } from '@/lib/utils';
+import { Loader } from 'lucide-react';
 
 export interface Contractor {
     id: string;
     name: string;
+    company: string;
     rcbnNumber: string;
     sector: string[];
     grade: string;
@@ -48,7 +51,7 @@ export default function ContractorTable() {
     }, [isMobile, dispatch]);
     
     // Get Redux state
-    const { searchQuery, sectorFilter, gradeFilter, lgaFilter, statusFilter, currentPage, itemsPerPage } = useAppSelector((state) => state.public);
+    const { searchQuery, sectorFilter, gradeFilter, mdasFilter, statusFilter, currentPage, itemsPerPage } = useAppSelector((state) => state.public);
     
     // Fetch contractors from API
     const { data: contractorsData, isLoading, error: errorContractors, isFetching } = useGetAllContractorsQuery({
@@ -57,7 +60,7 @@ export default function ContractorTable() {
         search: searchQuery,
         sector: sectorFilter !== 'all' ? sectorFilter : undefined,
         grade: gradeFilter !== 'all' ? gradeFilter : undefined,
-        lga: lgaFilter !== 'all' ? lgaFilter : undefined,
+        lga: mdasFilter !== 'all' ? mdasFilter : undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
     });
     
@@ -68,6 +71,7 @@ export default function ContractorTable() {
         return contractorsData.certificates.map((cert) => ({
             id: cert._id,
             name: cert.contractorName,
+            company: cert.companyName,
             certId: cert.certificateId,
             rcbnNumber: cert.rcBnNumber || 'N/A',
             sector: cert.approvedSectors || [], // TODO: Get from API
@@ -131,6 +135,7 @@ export default function ContractorTable() {
     const endIndex = Math.min(startIndex + itemsPerPage, totalContractors);
     
     const handlePageChange = (page: number) => {
+        updateSearchParam("page", page.toString());
         dispatch(setCurrentPage(page));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -242,11 +247,11 @@ export default function ContractorTable() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-12">S/N</TableHead>
+                                        <TableHead>Company Name</TableHead>
                                         <TableHead>Contractor Name</TableHead>
                                         <TableHead>CAC Number</TableHead>
                                         <TableHead><abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></TableHead>
                                         <TableHead>Grade</TableHead>
-                                        <TableHead>LGA</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Expiry Date</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
@@ -256,35 +261,35 @@ export default function ContractorTable() {
                                     {contractors.map((contractor, index) => (
                                         <TableRow key={contractor.id} className={index % 2 === 1 ? 'bg-gray-50' : 'bg-white' + " hover:bg-gray-50"}>
                                             <TableCell className="font-medium text-gray-600">{startIndex + index + 1}</TableCell>
+                                            <TableCell className="font-semibold">{contractor.company}</TableCell>
                                             <TableCell className="font-semibold">{contractor.name}</TableCell>
-                                            <TableCell className="font-mono text-sm">{contractor.rcbnNumber}</TableCell>
-                                            <TableCell className='grid gap-1'>
-                                                {contractor.sector.length > 0 && contractor.sector.map((sector) => (
-                                                    <Tooltip key={sector}>
-                                                        <TooltipTrigger asChild>
-                                                            <Badge className={`${getSectorConfig(sector).badgeClass} text-xs uppercase`}>
-                                                                {(sector.charAt(0).toUpperCase() + sector.slice(1, 10)).length > 10 ? sector.slice(0, 10) + '...' : sector}
-                                                            </Badge>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>{sector}</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                ))}
+                                            <TableCell className="font-semibold uppercase text-sm">{contractor.rcbnNumber}</TableCell>
+                                            <TableCell className='grid gap-1 capitalize'>
+                                                {contractor.sector.length > 2 ? contractor.sector : "N/A"}
                                             </TableCell>
                                             <TableCell>
                                                 <div className={`w-8 h-8 rounded-full flex items-center uppercase justify-center ${getGradeConfig(contractor.grade).badgeClass} font-bold text-sm`}>
                                                     {contractor.grade}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-sm">{contractor.lga}</TableCell>
                                             <TableCell>
-                                                <Badge className={`${getStatusConfig(contractor.status).badgeClass} flex items-center gap-1 w-fit`}>
-                                                    <FaCheckCircle className="text-xs" />
-                                                    {contractor.status.charAt(0).toUpperCase() + contractor.status.slice(1)}
+                                                <Badge className={`${getStatusConfig(contractor.status).badgeClass} flex items-center gap-1 w-fit capitalize`}>
+                                                    {(()=>{
+                                                        switch(contractor.status.toLowerCase()){
+                                                            case "approved":
+                                                                return <FaCheckCircle className="text-xs" />
+                                                            case "expired":
+                                                                return <FaClock className="text-xs" />
+                                                            case "revoked":
+                                                                return <FaX className="text-xs" />
+                                                            default:
+                                                                return <Loader className="text-xs animate-spin" />
+                                                        }
+                                                    })()}
+                                                    {contractor.status}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-sm">{new Date(contractor.expiryDate).toLocaleDateString()}</TableCell>
+                                            <TableCell className="text-sm">{new Date(toValidJSDate(contractor.expiryDate)).toLocaleDateString()}</TableCell>
                                             <TableCell className="text-right">
                                                 <Link href={`/contractor/${contractor.certId}`}>
                                                     <Button 

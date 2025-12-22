@@ -64,3 +64,7 @@ export function toValidJSDate(dateString: string): string {
     const [day, month, year] = dateString.split('/');
     return new Date(Number(year), Number(month) - 1, Number(day)).toISOString();
 }
+
+export const formatCurrency = (amount: number) => {
+    return `₦${amount.toLocaleString()}`;
+};

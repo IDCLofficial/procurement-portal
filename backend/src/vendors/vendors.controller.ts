@@ -102,8 +102,8 @@ export class VendorsController {
   })
   @ApiResponse({ status: 200, description: 'Login successful', schema: { type: 'object', properties: { token: { type: 'string' } } } })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  login(@Body() body: loginDto) {
-    return this.vendorsService.login(body);
+  login(@Body() body: loginDto, @Req() req:any) {
+    return this.vendorsService.login(body, req);
   }
 
   /** Logout vendor */
@@ -650,7 +650,80 @@ export class VendorsController {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
+  
   //
+
+  /**
+   * Get login history for a vendor
+   * 
+   * @param req - Request object containing JWT token
+   * @returns Latest 5 login attempts
+   * 
+   * @example
+   * GET /vendors/login-history
+   */
+  @Get('login-history')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get vendor login history' })
+  @ApiResponse({ status: 200, description: 'Login history retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Vendor not found' })
+  async getLoginHistory(@Req() req: any) {
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException('Authorization token required');
+    }
+
+    const token = req.headers.authorization.replace('Bearer ', '');
+    const decoded = this.jwtService.verify(token);
+    const vendorId = decoded.sub;
+
+    const vendor = await this.vendorsService.getProfile(vendorId, req.headers.authorization);
+    if (!vendor) {
+      throw new UnauthorizedException('Vendor not found');
+    }
+
+    // Return latest 5 login attempts, sorted by timestamp (most recent first)
+    const loginHistory = vendor.loginHistory || [];
+    const latestAttempts = loginHistory
+      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 5);
+
+    return {
+      message: 'Login history retrieved successfully',
+      data: latestAttempts
+    };
+  }
+
+  //
+
+  /**
+   * Get vendor settings
+   * 
+   * @param req - Request object containing JWT token
+   * @returns Vendor notification settings
+   * 
+   * @example
+   * GET /vendors/settings
+   */
+  @Get('settings')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get vendor settings' })
+  @ApiResponse({ status: 200, description: 'Settings retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Vendor not found' })
+  async getSettings(@Req() req: any) {
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException('Authorization token required');
+    }
+
+    const token = req.headers.authorization.replace('Bearer ', '');
+    const decoded = this.jwtService.verify(token);
+    if(!decoded){
+      throw new UnauthorizedException('Invalid or expired token')
+    }
+    const vendorId = decoded.sub;
+
+    return await this.vendorsService.getSettings(vendorId, token);
+  }
 
   /**
    * Get registration payment for a vendor

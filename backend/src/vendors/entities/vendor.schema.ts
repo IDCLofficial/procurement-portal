@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { LoginHistory } from 'src/types/types';
 
 export type VendorDocument = Vendor & Document;
 
@@ -17,6 +18,11 @@ export enum renewalSteps{
   STEP1="documents",
   STEP2="payment",
   COMPLETE="complete"
+}
+
+export enum loginStatus{
+  SUCCESS='success',
+  FAILED='failed'
 }
 
 export type notificationChannels = {
@@ -37,6 +43,7 @@ export type settings = {
   notificationChannels:notificationChannels,
   notificationPreferences:notificationPreferences
 }
+
 
 @Schema({ timestamps: true })
 export class Vendor {
@@ -98,6 +105,13 @@ export class Vendor {
     },
   })
   settings: settings;
+
+  @Prop({ 
+    required: false,
+    type: [Object],
+    default: []
+  })
+  loginHistory:LoginHistory[];
 
   @Prop({required: false})
   accessToken?: string;

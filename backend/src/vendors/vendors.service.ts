@@ -26,6 +26,9 @@ import { renewRegistrationDto } from './dto/renew-registration-dto';
 import { replaceDocumentDto } from './dto/replace-document.dto';
 import { changePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { LoginHistory } from 'src/types/types';
+import { parseUserAgent } from 'src/helpers/loginHelpers';
+import { enrichWithLocation } from '../helpers/loginHelpers';
 
 @Injectable()
 export class VendorsService {
@@ -132,7 +135,7 @@ export class VendorsService {
    * - Compares password with hashed version
    * - Generates JWT token for authentication
    */
-  async login(body:loginDto): Promise<any> {
+  async login(body:loginDto, req:Request): Promise<any> {
     const vendor = await this.vendorModel.findOne({ email:body.email }).exec();
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
@@ -142,6 +145,16 @@ export class VendorsService {
     }
     const isPasswordValid = await bcrypt.compare(body.password, vendor.password);
     if (!isPasswordValid) {
+      let loginData = await this.getLoginHistoryFromRequest(req);
+      loginData = await enrichWithLocation(loginData);
+
+      // Save to database with generated ID
+      const loginHistory: LoginHistory = {
+        ...loginData as Required<LoginHistory>,
+        status: 'failed'
+      };
+      vendor.loginHistory.push(loginHistory);
+      await vendor.save();
       throw new BadRequestException('Invalid password');
     }
     const { password: _, ...user } = vendor.toObject();
@@ -149,6 +162,18 @@ export class VendorsService {
     const accessToken =  this.tokenHandlers.generateToken(user)
     
     vendor.accessToken = accessToken;
+    await vendor.save();
+
+    let loginData = await this.getLoginHistoryFromRequest(req);
+    loginData = await enrichWithLocation(loginData);
+
+    // Save to database with generated ID
+    const loginHistory: LoginHistory = {
+      ...loginData as Required<LoginHistory>,
+      status: 'success'
+    };
+
+    vendor.loginHistory.push(loginHistory);
     await vendor.save();
 
     return {
@@ -1585,4 +1610,62 @@ export class VendorsService {
       settings: vendor.settings,
     };
   }
+
+  async getSettings(vendorId: string, authToken: string) {
+    const vendor = await this.vendorModel.findById(vendorId).exec();
+
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    if (vendor.accessToken !== authToken) {
+      throw new UnauthorizedException('Invalid or Expired token');
+    }
+
+    const defaultSettings = {
+      notificationChannels: { email: true },
+      notificationPreferences: {
+        documentExpiryAlerts: true,
+        renewalReminders: true,
+        applicationUpdates: true,
+        paymentConfirmations: true,
+        systemUpdates: true,
+        loginAlerts: true,
+      },
+    };
+
+    const currentSettings = (vendor.settings as any) || defaultSettings;
+
+    return {
+      message: 'Settings retrieved successfully',
+      settings: currentSettings,
+    };
+  }
+
+  async getLoginHistoryFromRequest(req: Request): Promise<Partial<LoginHistory>> {
+    // Get IP address (handles proxies)
+    const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() 
+        || req.headers['x-real-ip']?.toString()
+        || req.socket.remoteAddress 
+        || '';
+
+    // Parse User-Agent for device info
+    const userAgent = req.headers['user-agent'] || '';
+    const deviceInfo = await parseUserAgent(userAgent);
+
+    // Get timestamp
+    const now = new Date();
+    const timestamp = now.toISOString();
+    const date = now.toLocaleDateString();
+
+    return {
+        device: deviceInfo.device,
+        deviceType: deviceInfo.deviceType,
+        ip: ip,
+        timestamp: timestamp,
+        date: date,
+        status: 'success', // or determine based on auth result
+    };
+  }
+
 }

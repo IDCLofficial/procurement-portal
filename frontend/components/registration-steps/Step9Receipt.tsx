@@ -1,6 +1,6 @@
 'use client';
 
-import { FaCheckCircle, FaDownload, FaEnvelope, FaArrowRight } from 'react-icons/fa';
+import { FaCheckCircle, FaDownload, FaArrowRight } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import jsPDF from 'jspdf';
@@ -137,11 +137,6 @@ export default function Step9Receipt({
         doc.save(`Receipt-${transactionRef}.pdf`);
     };
 
-    const handleEmailReceipt = () => {
-        // TODO: Implement email receipt
-        console.log('Email receipt');
-    };
-
     const handleViewApplicationStatus = () => {
         router.push('/dashboard/registration-status');
     };
@@ -249,24 +244,15 @@ export default function Step9Receipt({
             </div>
 
             {/* Action Buttons */}
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid">
                 <Button
                     type="button"
                     variant="outline"
                     onClick={handleDownloadReceipt}
-                    className="w-full"
+                    className="w-full cursor-pointer"
                 >
                     <FaDownload className="mr-2" />
                     Download Receipt
-                </Button>
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleEmailReceipt}
-                    className="w-full"
-                >
-                    <FaEnvelope className="mr-2" />
-                    Email Receipt
                 </Button>
             </div>
 

@@ -32,7 +32,7 @@ export function ApplicationsTable({ applications, total, page, limit, onPageChan
                   </th>
                 
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-medium text-gray-900">
-                    Sector & Grade
+                    MDA
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-medium text-gray-900">
                     Type
@@ -69,8 +69,8 @@ export function ApplicationsTable({ applications, total, page, limit, onPageChan
                       <td className="px-3 py-4 text-sm text-gray-500 max-w-[350px] whitespace-normal wrap-break-word">{app.name}</td>
                      
                       <td className="px-3 py-4 text-sm text-gray-500 max-w-[350px] whitespace-normal wrap-break-word">
-  {app.sector}
-</td>
+                        {app.companyId && typeof app.companyId === 'object' && 'mda' in app.companyId ? app.companyId.mda : '-'}
+                      </td>
 
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{app.type}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{FormatDate(app.submissionDate)}</td>

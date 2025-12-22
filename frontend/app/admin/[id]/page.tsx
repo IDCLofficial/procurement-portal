@@ -9,7 +9,18 @@ import {
 } from '@/app/admin/_shared';
 
 function DeskOfficerDashboard() {
-  const { user, isAuthenticated, notifications } = useDeskOfficerDashboard();
+  const { 
+    user, 
+    isAuthenticated, 
+    notifications,
+    filteredNotifications,
+    stats,
+    tabs,
+    activeTab,
+    searchTerm,
+    handlers,
+    isFetching
+  } = useDeskOfficerDashboard();
 
   if (!isAuthenticated) {
     return <LoadingSpinner fullScreen />;
@@ -20,15 +31,15 @@ function DeskOfficerDashboard() {
       <WelcomeSection userName={user?.name} />
 
       <NotificationList
-        notifications={notifications.filteredNotifications}
-        stats={notifications.stats}
-        tabs={notifications.tabs}
-        activeTab={notifications.activeTab}
-        searchTerm={notifications.searchTerm}
-        onTabChange={notifications.handlers.handleTabChange}
-        onSearchChange={notifications.handlers.handleSearchChange}
-        onMarkRead={notifications.handlers.handleMarkRead}
-        onDelete={notifications.handlers.handleDelete}
+        notifications={filteredNotifications}
+        stats={stats}
+        tabs={tabs}
+        activeTab={activeTab}
+        searchTerm={searchTerm}
+        onTabChange={handlers.handleTabChange}
+        onSearchChange={handlers.handleSearchChange}
+        onMarkRead={handlers.handleMarkRead}
+        onDelete={handlers.handleDelete}
       />
     </main>
   );

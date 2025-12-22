@@ -162,8 +162,11 @@ export const adminApi = baseApi.injectEndpoints({
     }),
 
     // GET ADMIN NOTIFICATIONS
-    getAdminNotifications: builder.query<AdminNotificationsApiResponse, void>({
-      query: () => "/notifications/admin-notification",
+    getAdminNotifications: builder.query<AdminNotificationsApiResponse, { page?: number; limit?: number }>({
+      query: ({ page = 1, limit = 10 } = {}) => ({
+        url: "/notifications/admin-notification",
+        params: { page, limit }
+      }),
       transformResponse: (response: AdminNotificationsApiResponse) => {
         console.log("Admin notifications API response:", response);
         return response;
@@ -173,10 +176,33 @@ export const adminApi = baseApi.injectEndpoints({
     // MARK ADMIN NOTIFICATION AS READ (BY ID)
     markAdminNotificationAsReadById: builder.mutation<void, string>({
       query: (notificationId) => ({
-        url: `/notifications/mark-as-read/${notificationId}`,
+        url: `/notifications/mark-one-admin-as-read/${notificationId}`,
         method: "PATCH",
+        credentials: 'include',
       }),
     }),
+
+    // MARK ALL ADMIN NOTIFICATION AS READ 
+    markAllAdminNotificationAsRead: builder.mutation<void, string>({
+      query: () => ({
+        url: `/notifications/mark-all-admin-as-read`,
+        method: "POST",
+        credentials: 'include',
+      }),
+    }),
+    // GET DESK OFFICER NOTIFICATIONS
+    getDeskOfficerNotifications: builder.query<AdminNotificationsApiResponse, { page?: number; limit?: number }>({
+      query: ({ page = 1, limit = 10 } = {}) => ({
+        url: "/notifications/desk-officer-notifications",
+        params: { page, limit },
+        credentials: 'include',
+      }),
+      transformResponse: (response: AdminNotificationsApiResponse) => {
+        console.log("Desk officer notifications API response:", response);
+        return response;
+      },
+    }),
+
   }),
 });
 
@@ -187,8 +213,9 @@ export const {
   useUpdateUserRoleMutation,
   useDeleteUserMutation,
   useLoginMutation,
-  useGetTransactionsQuery,
   useGetAuditLogsQuery,
   useGetAdminNotificationsQuery,
   useMarkAdminNotificationAsReadByIdMutation,
+  useMarkAllAdminNotificationAsReadMutation,
+  useGetDeskOfficerNotificationsQuery,
 } = adminApi;

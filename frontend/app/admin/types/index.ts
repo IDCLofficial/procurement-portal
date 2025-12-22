@@ -41,6 +41,7 @@ export interface Company {
   userId?: string;
   companyName?: string;
   cacNumber?: string;
+  mda?: string;
   tin?: string;
   address?: string;
   lga?: string;

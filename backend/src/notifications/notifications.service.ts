@@ -558,7 +558,7 @@ export class NotificationsService {
     }));
 
     // Aggregate counts for this admin
-    const baseAdminFilter = { recipient: NotificationRecipient.ADMIN };
+    const baseAdminFilter = { recipientId: new Types.ObjectId(userId)};
     const [
       totalNotifications,
       totalUnreadNotifications,

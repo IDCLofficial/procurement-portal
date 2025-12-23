@@ -612,7 +612,7 @@ export class NotificationsService {
     }
 
     const filter: any = {
-      _id: notificationId,
+      _id: new Types.ObjectId(notificationId),
       recipientId: new Types.ObjectId(uid),
     };
     return await this.notificationModel.updateOne(filter, { isRead: true });

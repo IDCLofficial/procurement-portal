@@ -21,7 +21,7 @@ export default function SecurityPreference({
                 type="button"
                 onClick={() => onChange(!enabled)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
-                    enabled ? 'bg-teal-600' : 'bg-gray-200'
+                    enabled ? 'bg-theme-green' : 'bg-gray-200'
                 }`}
             >
                 <span

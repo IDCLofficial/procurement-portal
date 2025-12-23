@@ -93,12 +93,13 @@ export default function PlaygroundPage() {
             <div className="mb-6 pb-6 border-b">
               <h3 className="text-sm font-semibold mb-3">Familiar Endpoints</h3>
               <div className="flex flex-wrap gap-2">
-                {Object.entries(endpoints).map(([key, value]) => (
+                {Object.entries(endpoints).sort((a, b) => a[0].localeCompare(b[0])).map(([key, value]) => (
                   <Button
                     key={key}
                     type="button"
                     variant="outline"
                     size="sm"
+                    className='cursor-pointer'
                     onClick={() => loadEndpoint(String(value))}
                   >
                     {key}

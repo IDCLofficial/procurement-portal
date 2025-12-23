@@ -24,6 +24,9 @@ export default {
     markNotificationAsRead: "/notifications/mark-all-vendor-as-read",
     markNotificationAsReadById: (id: string) => `/notifications/mark-as-read/${id}`,
     deleteNotificationById: (id: string) => `/notifications/vendor-notification/${id}`,
+    vendorSettings: "/vendors/settings",
+    getVendorSettings: "/vendors/settings",
+    loginHistory: "/vendors/login-history",
     
     // Helper Endpoints
     getCategories: "/categories",

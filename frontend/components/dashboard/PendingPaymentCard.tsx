@@ -66,7 +66,7 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                             <span className="text-2xl font-bold text-amber-700">₦{amount.toLocaleString()}</span>
                         </div>
 
-                        <div className="mt-4 p-3 bg-amber-50 rounded-lg text-sm text-amber-800 flex items-start gap-2">
+                        <div className="mt-4 p-3 bg-linear-to-b from-transparent to-amber-100 rounded-lg text-sm text-amber-800 flex items-start gap-2 border border-amber-200">
                             <FaInfoCircle className="h-4 w-4 mt-0.5 shrink-0" />
                             <span>{description}</span>
                         </div>
@@ -97,7 +97,7 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                     </DialogHeader>
 
                     <div className="space-y-6 py-4">
-                        <div className="bg-amber-50 p-4 rounded-lg">
+                        <div className="bg-linear-to-b from-transparent to-amber-50 p-4 rounded-lg border border-amber-200">
                             <div className="flex items-center justify-between">
                                 <span className="font-medium">Certificate Fee:</span>
                                 <span className="text-2xl font-bold text-amber-700">₦{amount.toLocaleString()}</span>
@@ -106,7 +106,7 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
 
                         <div className="space-y-3">
                             <h4 className="font-medium">Payment Details:</h4>
-                            <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                            <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm border border-gray-200">
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Purpose:</span>
                                     <span className="font-medium">{description}</span>
@@ -118,7 +118,7 @@ export default function PendingPaymentCard({ amount, description, onPay }: Pendi
                             </div>
                         </div>
 
-                        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-xs text-blue-800">
+                        <div className="bg-linear-to-b from-transparent to-blue-50 border border-blue-200 p-3 rounded-lg text-xs text-blue-800">
                             <p>Please note: Certificate fees are processed immediately and are non-refundable upon successful payment.</p>
                         </div>
 

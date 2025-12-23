@@ -391,4 +391,28 @@ interface LoginHistory {
     status: string;
 }
 
-export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor, ActivityLogResponse, NotificationResponse, MDAResponse, LoginHistory };
+interface NotificationChannels {
+    email: boolean;
+}
+
+interface NotificationPreferences {
+    documentExpiryAlerts: boolean;
+    renewalReminders: boolean;
+    applicationUpdates: boolean;
+    paymentConfirmations: boolean;
+    systemUpdates: boolean;
+    loginAlerts: boolean;
+}
+
+interface NotificationSettings {
+    notificationChannels: NotificationChannels;
+    notificationPreferences: NotificationPreferences;
+}
+
+interface VendorSettingsResponse {
+    message: string;
+    settings: NotificationSettings;
+}
+
+
+export { CreateVendorRequest, VerifyVendorRequest, ResendVerificationOtpRequest, LoginVendorRequest, LoginVendorResponse, ResponseSuccess, ResponseError, User, CompleteVendorRegistrationRequest, RegisterCompanyResponse, CompanyDetailsResponse, DocumentRequirement, CategoriesResponse, InitPaymentRequest, InitPaymentResponse, Application, ApplicationTimeline, PaymentHistoryResponse, ContractorsResponse, Contractor, ActivityLogResponse, NotificationResponse, MDAResponse, LoginHistory, NotificationSettings, VendorSettingsResponse };

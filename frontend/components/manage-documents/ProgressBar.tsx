@@ -8,7 +8,7 @@ interface ProgressBarProps {
 
 export default function ProgressBar({ label, percentage, color = 'teal' }: ProgressBarProps) {
     const colorClasses = {
-        teal: 'bg-teal-600',
+        teal: 'bg-theme-green',
         blue: 'bg-blue-600',
         green: 'bg-green-600',
         yellow: 'bg-yellow-600',

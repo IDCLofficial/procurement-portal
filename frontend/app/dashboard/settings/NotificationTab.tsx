@@ -1,36 +1,98 @@
 import SettingsSection from "@/components/settings/SettingsSection";
 import NotificationToggle from "@/components/settings/NotificationToggle";
 import NotificationPreference from "@/components/settings/NotificationPreference";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useUpdateNotificationSettingsMutation } from "@/store/api/vendor.api";
+import { NotificationSettings } from "@/store/api/types";
+import { useDebounce } from "@/hooks/useDebounce";
+import { toast } from "sonner";
+import { FaCheck, FaMoneyBillWave } from "react-icons/fa6";
+import { FaSync, FaSyncAlt } from "react-icons/fa";
 
-export default function NotificationTab() {
-    // Notification preferences state
-    const [notifications, setNotifications] = useState({
-        emailNotifications: true,
-        documentExpiry: true,
-        renewalReminders: true,
-        applicationUpdates: true,
-        paymentConfirmations: true,
-        systemUpdates: false,
-        reminderFrequency: '7days',
-    });
+export default function NotificationTab({ notifications: initialNotifications }: { notifications: NotificationSettings }) {
+    const [notifications, setNotifications] = useState(initialNotifications);
 
-    const handleNotificationToggle = (field: string, value: boolean) => {
-        setNotifications((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
+    // Debounce the notifications state
+    const debouncedNotifications = useDebounce(notifications, 500);
 
-    // const handleReminderFrequencyChange = (value: string) => {
-    //     setNotifications((prev) => ({
-    //         ...prev,
-    //         reminderFrequency: value,
-    //     }));
-    // };
+    const [updateNotificationSettings, { isLoading: isUpdatingNotificationSettings, isSuccess }] = useUpdateNotificationSettingsMutation();
+    const isInitialMount = useRef(true);
+    const lastChangedField = useRef<string>('');
+    const skipUpdate = useRef<boolean>(true);
+
+    // Update API whenever debounced notifications change
+    useEffect(() => {
+        // Skip API call on initial mount
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
+        if (skipUpdate.current) {
+            return;
+        }
+
+        const updateSettings = async () => {
+            await updateNotificationSettings(debouncedNotifications);
+        };
+
+        updateSettings();
+    }, [debouncedNotifications, updateNotificationSettings, skipUpdate]);
+
+    // Show success toast when update completes
+    useEffect(() => {
+        if (isSuccess && lastChangedField.current) {
+            const fieldLabels: Record<string, string> = {
+                email: 'Email Notifications',
+                documentExpiryAlerts: 'Document Expiry Alerts',
+                renewalReminders: 'Renewal Reminders',
+                applicationUpdates: 'Application Updates',
+                paymentConfirmations: 'Payment Confirmations',
+                systemUpdates: 'System Updates',
+                loginAlerts: 'Login Alerts',
+            };
+            skipUpdate.current = true;
+
+            const fieldLabel = fieldLabels[lastChangedField.current] || 'Notification settings';
+            toast.success(`${fieldLabel} updated successfully`);
+        }
+    }, [isSuccess]);
+
+    const handleNotificationToggle = useCallback((field: string, value: boolean) => {
+        lastChangedField.current = field;
+        skipUpdate.current = false;
+        setNotifications(prev => {
+            // Handle nested structure for notificationChannels and notificationPreferences
+            if (field === 'email') {
+                return {
+                    ...prev,
+                    notificationChannels: {
+                        ...prev.notificationChannels,
+                        email: value
+                    }
+                };
+            } else {
+                return {
+                    ...prev,
+                    notificationPreferences: {
+                        ...prev.notificationPreferences,
+                        [field]: value
+                    }
+                };
+            }
+        });
+    }, []);
 
     return (
         <div className='grid gap-6'>
+            {/* Loading indicator */}
+            {isUpdatingNotificationSettings && (
+                <div className="bg-linear-to-b from-transparent to-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center gap-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                    <span className="text-sm text-blue-700">Saving notification preferences...</span>
+                </div>
+            )}
+
             {/* Notification Channels */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <SettingsSection
@@ -42,8 +104,8 @@ export default function NotificationTab() {
                             icon="email"
                             title="Email Notifications"
                             description="Receive notifications via email"
-                            enabled={notifications.emailNotifications}
-                            onChange={(value) => handleNotificationToggle('emailNotifications', value)}
+                            enabled={notifications.notificationChannels.email}
+                            onChange={(value) => handleNotificationToggle('email', value)}
                         />
                     </div>
                 </SettingsSection>
@@ -58,55 +120,40 @@ export default function NotificationTab() {
                     <div className="space-y-1">
                         <NotificationPreference
                             title="Document Expiry Alerts"
+                            Icon={FaMoneyBillWave}
                             description="Get notified when documents are about to expire"
-                            enabled={notifications.documentExpiry}
-                            onChange={(value) => handleNotificationToggle('documentExpiry', value)}
+                            enabled={notifications.notificationPreferences.documentExpiryAlerts}
+                            onChange={(value) => handleNotificationToggle('documentExpiryAlerts', value)}
                         />
                         <NotificationPreference
                             title="Renewal Reminders"
+                            Icon={FaSync}
                             description="Reminders for annual registration renewal"
-                            enabled={notifications.renewalReminders}
+                            enabled={notifications.notificationPreferences.renewalReminders}
                             onChange={(value) => handleNotificationToggle('renewalReminders', value)}
                         />
                         <NotificationPreference
                             title="Application Updates"
+                            Icon={FaMoneyBillWave}
                             description="Status updates on your applications"
-                            enabled={notifications.applicationUpdates}
+                            enabled={notifications.notificationPreferences.applicationUpdates}
                             onChange={(value) => handleNotificationToggle('applicationUpdates', value)}
                         />
                         <NotificationPreference
                             title="Payment Confirmations"
+                            Icon={FaCheck}
                             description="Receipts and payment confirmations"
-                            enabled={notifications.paymentConfirmations}
+                            enabled={notifications.notificationPreferences.paymentConfirmations}
                             onChange={(value) => handleNotificationToggle('paymentConfirmations', value)}
                         />
                         <NotificationPreference
                             title="System Updates"
+                            Icon={FaSyncAlt}
                             description="Platform maintenance and new features"
-                            enabled={notifications.systemUpdates}
+                            enabled={notifications.notificationPreferences.systemUpdates}
                             onChange={(value) => handleNotificationToggle('systemUpdates', value)}
                         />
                     </div>
-
-                    {/* Reminder Frequency */}
-                    {/* <div className="mt-6 pt-6 border-t border-gray-100">
-                        <label className="block text-sm font-medium text-gray-900 mb-2">
-                            Reminder Frequency
-                        </label>
-                        <select
-                            value={notifications.reminderFrequency}
-                            onChange={(e) => handleReminderFrequencyChange(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                        >
-                            <option value="7days">7 days before expiry</option>
-                            <option value="14days">14 days before expiry</option>
-                            <option value="30days">30 days before expiry</option>
-                            <option value="60days">60 days before expiry</option>
-                        </select>
-                        <p className="mt-1.5 text-xs text-gray-500">
-                            When to send first reminder for document expiry
-                        </p>
-                    </div> */}
                 </SettingsSection>
             </div>
         </div>

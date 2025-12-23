@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -10,11 +10,12 @@ import {
 import { Monitor, Smartphone, MapPin, Clock } from 'lucide-react';
 import SettingsSection from '@/components/settings/SettingsSection';
 import ComingSoonSection from '@/components/settings/ComingSoonSection';
-import { LoginHistory } from '@/store/api/types';
+import { LoginHistory, NotificationSettings } from '@/store/api/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
-import { useDeactivateVendorMutation } from '@/store/api/vendor.api';
+import { useDeactivateVendorMutation, useUpdateNotificationSettingsMutation } from '@/store/api/vendor.api';
 import DangerZone from '@/components/settings/DangerZone';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Dummy login history data
 const loginHistoryData: LoginHistory[] = [
@@ -70,23 +71,62 @@ const loginHistoryData: LoginHistory[] = [
     },
 ];
 
-export default function SecurityTab() {
+interface SecurityTabProps {
+    notifications: NotificationSettings;
+}
+
+export default function SecurityTab({ notifications }: SecurityTabProps) {
     const [isLoginHistoryOpen, setIsLoginHistoryOpen] = React.useState(false);
     const { logout } = useAuth();
     const [deactivateVendor, { isLoading: isDeactivating }] = useDeactivateVendorMutation();
+    const [updateNotificationSettings, { isLoading: isUpdatingSettings, isSuccess }] = useUpdateNotificationSettingsMutation();
 
     // Security preferences state
-    const [security, setSecurity] = React.useState({
-        twoFactorEnabled: false,
-        loginAlerts: true,
-    });
+    const [loginAlerts, setLoginAlerts] = React.useState(notifications.notificationPreferences.loginAlerts);
 
-    const handleSecurityToggle = (field: string, value: boolean) => {
-        setSecurity((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
+    // Debounce the login alerts state
+    const debouncedLoginAlerts = useDebounce(loginAlerts, 500);
+    
+    const skipUpdate = useRef<boolean>(true);
+    const isInitialMount = useRef(true);
+
+    // Update API whenever debounced login alerts change
+    useEffect(() => {
+        // Skip API call on initial mount
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
+        if (skipUpdate.current) {
+            return;
+        }
+
+        const updateSettings = async () => {
+            await updateNotificationSettings({
+                notificationPreferences: {
+                    ...notifications.notificationPreferences,
+                    loginAlerts: debouncedLoginAlerts,
+                },
+                notificationChannels: notifications.notificationChannels
+            });
+        };
+
+        updateSettings();
+    }, [debouncedLoginAlerts, updateNotificationSettings, notifications, skipUpdate]);
+
+    // Show success toast when update completes
+    useEffect(() => {
+        if (isSuccess) {
+            skipUpdate.current = true;
+            toast.success('Login Alerts updated successfully');
+        }
+    }, [isSuccess]);
+
+    const handleLoginAlertsToggle = useCallback(() => {
+        skipUpdate.current = false;
+        setLoginAlerts(prev => !prev);
+    }, []);
 
     const handleViewLoginHistory = () => {
         setIsLoginHistoryOpen(true);
@@ -114,6 +154,14 @@ export default function SecurityTab() {
 
     return (
         <div className="grid gap-6 max-w-4xl mx-auto p-6">
+            {/* Loading indicator */}
+            {isUpdatingSettings && (
+                <div className="bg-linear-to-b from-transparent to-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center gap-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                    <span className="text-sm text-blue-700">Saving security preferences...</span>
+                </div>
+            )}
+
             {/* Two-Factor Authentication */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <SettingsSection
@@ -141,12 +189,12 @@ export default function SecurityTab() {
                             <p className="text-sm text-gray-500">Get notified of new login attempts</p>
                         </div>
                         <button
-                            onClick={() => handleSecurityToggle('loginAlerts', !security.loginAlerts)}
-                            className={`relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors ${security.loginAlerts ? 'bg-blue-600' : 'bg-gray-200'
+                            onClick={handleLoginAlertsToggle}
+                            className={`relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors ${loginAlerts ? 'bg-theme-green' : 'bg-gray-200'
                                 }`}
                         >
                             <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${security.loginAlerts ? 'translate-x-6' : 'translate-x-1'
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${loginAlerts ? 'translate-x-6' : 'translate-x-1'
                                     }`}
                             />
                         </button>

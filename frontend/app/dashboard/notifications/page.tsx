@@ -155,7 +155,7 @@ export default function NotificationsPage() {
                         variant="outline"
                         onClick={handleMarkAllAsRead}
                         disabled={isMarkingNotificationAsRead}
-                        className="bg-teal-600 hover:bg-teal-700 text-white hover:text-white cursor-pointer"
+                        className="bg-theme-green hover:bg-teal-700 text-white hover:text-white cursor-pointer"
                     >
                         {isMarkingNotificationAsRead ? <span>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />

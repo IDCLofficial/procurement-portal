@@ -1,6 +1,6 @@
 import { apiSlice } from './';
 import endpoints from './endpoints.const';
-import { ActivityLogResponse, Application, ApplicationTimeline, CompanyDetailsResponse, CompleteVendorRegistrationRequest, CreateVendorRequest, InitPaymentRequest, InitPaymentResponse, LoginVendorRequest, LoginVendorResponse, PaymentHistoryResponse, RegisterCompanyResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest, NotificationResponse } from './types';
+import { ActivityLogResponse, Application, ApplicationTimeline, CompanyDetailsResponse, CompleteVendorRegistrationRequest, CreateVendorRequest, InitPaymentRequest, InitPaymentResponse, LoginVendorRequest, LoginVendorResponse, PaymentHistoryResponse, RegisterCompanyResponse, ResendVerificationOtpRequest, User, VerifyVendorRequest, NotificationResponse, NotificationSettings, VendorSettingsResponse } from './types';
 
 export const vendorApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -160,6 +160,25 @@ export const vendorApi = apiSlice.injectEndpoints({
                 method: 'DELETE',
             }),
         }),
+        updateNotificationSettings: builder.mutation<void, NotificationSettings>({
+            query: (body) => ({
+                url: endpoints.vendorSettings,
+                method: 'PATCH',
+                body,
+            }),
+        }),
+        getVendorSettings: builder.query<VendorSettingsResponse, void>({
+            query: () => ({
+                url: endpoints.getVendorSettings,
+                method: 'GET',
+            }),
+        }),
+        getLoginHistory: builder.query<unknown, void>({
+            query: () => ({
+                url: endpoints.loginHistory,
+                method: 'GET',
+            }),
+        }),
     })
 })
 
@@ -190,5 +209,8 @@ export const {
     useMarkNotificationAsReadByIdMutation,
     useDeleteNotificationByIdMutation,
     useDeactivateVendorMutation,
+    useUpdateNotificationSettingsMutation,
+    useGetVendorSettingsQuery,
+    useGetLoginHistoryQuery,
     useCompleteVendorRegistrationMutation,
 } = vendorApi;

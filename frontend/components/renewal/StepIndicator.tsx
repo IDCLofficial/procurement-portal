@@ -31,7 +31,7 @@ export default function StepIndicator({ steps }: StepIndicatorProps) {
                                 <div
                                     className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${
                                         step.status === 'completed'
-                                            ? 'bg-teal-600 text-white'
+                                            ? 'bg-theme-green text-white'
                                             : step.status === 'active'
                                             ? 'bg-theme-green text-white'
                                             : 'bg-gray-200 text-gray-500'

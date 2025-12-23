@@ -9,7 +9,7 @@ interface BankVerificationBadgeProps {
 
 export default function BankVerificationBadge({ accountName, bankName }: BankVerificationBadgeProps) {
     return (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-linear-to-b from-transparent to-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-600 text-lg mt-0.5 shrink-0" />
                 <div className="flex-1">

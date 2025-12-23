@@ -301,7 +301,7 @@ export class ApplicationsService {
             message: `${application.applicationId} has been assigned to you${assignApplicationDto.assignedByName ? ` by ${assignApplicationDto.assignedByName}` : ''}.`,
             recipient,
             recipientId: new Types.ObjectId(newAssignedTo),
-            applicationId: application._id,
+            applicationId: new Types.ObjectId(application._id as Types.ObjectId),
             priority: priority.MEDIUM,
             isRead: false,
           });
@@ -432,7 +432,7 @@ export class ApplicationsService {
           recipientId: findRegistrar?._id,
           vendorId: vendor._id,
           priority: priority.LOW,
-          applicationId: application._id,
+          applicationId: new Types.ObjectId(application._id as Types.ObjectId),
           isRead: false,
         });
         }

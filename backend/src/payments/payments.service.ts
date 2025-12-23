@@ -274,6 +274,7 @@ export class SplitPaymentService {
               message: `${vendor.fullname} just submitted an application.`,
               recipient: NotificationRecipient.ADMIN,
               recipientId: admin._id,
+              applicationId:createApplication._id,
               priority: priority.HIGH,
               isRead: false,
             });

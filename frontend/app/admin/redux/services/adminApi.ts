@@ -32,6 +32,7 @@ export interface AdminNotificationDto {
   message: string;
   priority: string;
   createdAt: string;
+  isRead: boolean;
 }
 
 export interface AdminNotificationsApiResponse {
@@ -162,10 +163,10 @@ export const adminApi = baseApi.injectEndpoints({
     }),
 
     // GET ADMIN NOTIFICATIONS
-    getAdminNotifications: builder.query<AdminNotificationsApiResponse, { page?: number; limit?: number }>({
-      query: ({ page = 1, limit = 10 } = {}) => ({
+    getAdminNotifications: builder.query<AdminNotificationsApiResponse, { page?: number; limit?: number; isRead?: boolean }>({
+      query: ({ page = 1, limit = 10, isRead } = {}) => ({
         url: "/notifications/admin-notification",
-        params: { page, limit }
+        params: { page, limit, ...(isRead !== undefined && { isRead }) }
       }),
       transformResponse: (response: AdminNotificationsApiResponse) => {
         console.log("Admin notifications API response:", response);

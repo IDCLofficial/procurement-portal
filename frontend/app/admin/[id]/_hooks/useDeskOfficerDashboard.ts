@@ -211,6 +211,7 @@ import { useAppSelector } from '@/app/admin/redux/hooks';
 import {
   useGetDeskOfficerNotificationsQuery,
    useGetRegistrarNotificationsQuery,
+   useGetAdminNotificationsQuery
 } from '@/app/admin/redux/services/adminApi';
 
 import type { Notification } from '../../systemadmin/_constants';
@@ -273,7 +274,7 @@ console.log(user?.role)
   const {
     data: registrarData,
     isFetching: isRegistrarFetching,
-  } =  useGetRegistrarNotificationsQuery(
+  } =  useGetAdminNotificationsQuery(
     { page: 1, limit: 10 },
     {
       skip: !user || !isRegistrar,

@@ -72,10 +72,10 @@ export function NotificationList({
             priorityLevel={notification.priorityLevel}
             tag={notification.tag}
             applicationRef={notification.applicationRef}
+            notificationId={notification.id}
             isUnread={notification.isUnread}
             actionLabel={notification.actionLabel}
             onPrimaryAction={() => onPrimaryAction?.(notification.id)}
-            onMarkRead={() => onMarkRead(notification.id)}
             onDelete={() => onDelete(notification.id)}
           />
         ))}

@@ -18,9 +18,9 @@ interface NotificationListProps {
   tabs: { key: NotificationTabKey; label: string; count: number }[];
   activeTab: NotificationTabKey;
   searchTerm: string;
+  isFetching?: boolean;
   onTabChange: (tab: NotificationTabKey) => void;
   onSearchChange: (term: string) => void;
-  onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
   onPrimaryAction?: (id: string) => void;
 }
@@ -31,9 +31,9 @@ export function NotificationList({
   tabs,
   activeTab,
   searchTerm,
+  isFetching,
   onTabChange,
   onSearchChange,
-  onMarkRead,
   onDelete,
   onPrimaryAction,
 }: NotificationListProps) {
@@ -60,26 +60,31 @@ export function NotificationList({
       </div>
 
       <div className="space-y-4 pt-4">
-        {notifications.map((notification) => (
-          console.log(" not:", notification),
-          <NotificationCard
-            key={notification.id}
-            icon={notification.icon}
-            tone={notification.tone}
-            title={notification.title}
-            description={notification.description}
-            date={notification.date}
-            priorityLabel={notification.priorityLabel}
-            priorityLevel={notification.priorityLevel}
-            tag={notification.tag}
-            applicationRef={notification.applicationRef}
-            isUnread={notification.isUnread}
-            actionLabel={notification.actionLabel}
-            onPrimaryAction={() => onPrimaryAction?.(notification.id)}
-            onMarkRead={() => onMarkRead(notification.id)}
-            onDelete={() => onDelete(notification.id)}
-          />
-        ))}
+        {isFetching ? (
+          <div className="flex justify-center items-center p-8">
+            <div className="loader"></div>
+          </div>
+        ) : (
+          notifications.map((notification) => (
+            <NotificationCard
+              key={notification.id}
+              icon={notification.icon}
+              tone={notification.tone}
+              title={notification.title}
+              description={notification.description}
+              date={notification.date}
+              priorityLabel={notification.priorityLabel}
+              priorityLevel={notification.priorityLevel}
+              tag={notification.tag}
+              applicationRef={notification.applicationRef}
+              notificationId={notification.id}
+              isUnread={notification.isUnread}
+              actionLabel={notification.actionLabel}
+              onPrimaryAction={() => onPrimaryAction?.(notification.id)}
+              onDelete={() => onDelete(notification.id)}
+            />
+          ))
+        )}
       </div>
     </div>
   );

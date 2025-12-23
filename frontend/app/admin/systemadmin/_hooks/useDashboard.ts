@@ -2,20 +2,19 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { AlertTriangle, FileText } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useAppDispatch } from '@/app/admin/redux/hooks';
+
 import { useAppSelector } from '@/app/admin/redux/hooks';
 import {
   useGetAdminNotificationsQuery,
   useMarkAdminNotificationAsReadByIdMutation,
+  adminApi,
 } from '@/app/admin/redux/services/adminApi';
+
 import type { Notification } from '../_constants';
 
 export type NotificationTabKey = 'all' | 'unread' | 'read';
-
-export interface DashboardState {
-  notifications: Notification[];
-  activeTab: NotificationTabKey;
-  searchTerm: string;
-}
 
 export interface DashboardStats {
   totalCount: number;
@@ -30,6 +29,7 @@ export interface DashboardHandlers {
   handleTabChange: (tab: NotificationTabKey) => void;
   handleSearchChange: (term: string) => void;
   handlePageChange: (page: number) => void;
+  handlePrimaryAction: (id: string) => void;
 }
 
 export interface UseDashboardReturn {
@@ -49,22 +49,57 @@ export interface UseDashboardReturn {
 }
 
 export function useDashboard(): UseDashboardReturn {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
-  const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const [hiddenNotificationIds, setHiddenNotificationIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<NotificationTabKey>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
 
-  const { data: apiNotifications, isFetching } = useGetAdminNotificationsQuery({ page, limit });
-  const [markAdminNotificationAsReadById] = useMarkAdminNotificationAsReadByIdMutation();
+  /* -----------------------------
+     QUERY ARGS
+  ------------------------------ */
+  const queryArgs = useMemo(
+    () => ({
+      page,
+      limit,
+      isRead:
+        activeTab === 'all'
+          ? undefined
+          : activeTab === 'read'
+          ? true
+          : activeTab === 'unread'
+          ? false
+          : undefined,
+    }),
+    [page, limit, activeTab]
+  );
 
+  /* -----------------------------
+     RTK QUERY
+  ------------------------------ */
+  const { data: apiNotifications, isFetching } =
+    useGetAdminNotificationsQuery(queryArgs, {
+      skip: !user,
+      refetchOnMountOrArgChange: true,
+    });
+
+  const [markAdminNotificationAsReadById] =
+    useMarkAdminNotificationAsReadByIdMutation();
+
+  /* -----------------------------
+     MAP NOTIFICATIONS
+  ------------------------------ */
   const notifications = useMemo<Notification[]>(() => {
     if (!apiNotifications?.notifications) return [];
 
+    console.log('API Response for tab', activeTab, ':', apiNotifications.notifications);
+
     return apiNotifications.notifications
+      .filter((n) => !hiddenNotificationIds.includes(n._id))
       .map((n) => {
         const created = new Date(n.createdAt);
         const dateStr = Number.isNaN(created.getTime())
@@ -73,16 +108,12 @@ export function useDashboard(): UseDashboardReturn {
 
         const priority = n.priority?.toLowerCase() || 'high';
         const isCritical = priority === 'critical';
-        const id = n._id;
 
-        if (hiddenNotificationIds.includes(id)) {
-          return null;
-        }
-
-        const isUnread = !readNotificationIds.includes(id);
+        const isUnread = activeTab === 'unread';
+        console.log(`Notification ${n._id}: activeTab=${activeTab}, isUnread=${isUnread}`);
 
         return {
-          id,
+          id: n._id,
           title: n.title,
           description: n.message,
           date: dateStr,
@@ -91,96 +122,148 @@ export function useDashboard(): UseDashboardReturn {
           tone: isCritical ? 'critical' : 'warning',
           tag: 'SYSTEM',
           applicationRef: 'SYSTEM',
-          isUnread,
+          isUnread: isUnread,
           icon: isCritical ? AlertTriangle : FileText,
           actionLabel: 'View Details',
-        } as Notification;
-      })
-      .filter((notification): notification is Notification => notification !== null);
-  }, [apiNotifications, readNotificationIds, hiddenNotificationIds]);
+        };
+      });
+  }, [apiNotifications, hiddenNotificationIds]);
 
-  // Calculate stats
+  /* -----------------------------
+     STATS
+  ------------------------------ */
   const stats = useMemo<DashboardStats>(() => {
-    const totalCountFromApi = apiNotifications?.totalNotifications;
-    const unreadCountFromApi = apiNotifications?.totalUnreadNotifications;
-    const criticalCountFromApi = apiNotifications?.totalCriticalNotifications;
-    const highPriorityCountFromApi = apiNotifications?.totalHighPriorityNotifications;
-
-    const totalCount = typeof totalCountFromApi === 'number' ? totalCountFromApi : notifications.length;
-    const unreadCount =
-      typeof unreadCountFromApi === 'number'
-        ? unreadCountFromApi
-        : notifications.filter((n) => n.isUnread).length;
-    const criticalCount =
-      typeof criticalCountFromApi === 'number'
-        ? criticalCountFromApi
-        : notifications.filter((n) => n.priorityLevel === 'critical').length;
-    const highPriorityCount =
-      typeof highPriorityCountFromApi === 'number'
-        ? highPriorityCountFromApi
-        : notifications.filter((n) => n.priorityLevel === 'high').length;
-
-    return { totalCount, unreadCount, criticalCount, highPriorityCount };
+    return {
+      totalCount: apiNotifications?.totalNotifications ?? notifications.length,
+      unreadCount:
+        apiNotifications?.totalUnreadNotifications ??
+        notifications.filter((n) => n.isUnread).length,
+      criticalCount:
+        apiNotifications?.totalCriticalNotifications ??
+        notifications.filter((n) => n.priorityLevel === 'critical').length,
+      highPriorityCount:
+        apiNotifications?.totalHighPriorityNotifications ??
+        notifications.filter((n) => n.priorityLevel === 'high').length,
+    };
   }, [apiNotifications, notifications]);
 
-  // Filter notifications based on tab and search
+  /* -----------------------------
+     FILTER BY SEARCH
+  ------------------------------ */
   const filteredNotifications = useMemo(() => {
-    return notifications
-      .filter((notification) => {
-        if (activeTab === 'unread') return notification.isUnread;
-        if (activeTab === 'read') return !notification.isUnread;
-        return true;
-      })
-      .filter((notification) => {
-        if (!searchTerm.trim()) return true;
-        const term = searchTerm.toLowerCase();
-        return (
-          notification.title.toLowerCase().includes(term) ||
-          notification.description.toLowerCase().includes(term) ||
-          notification.applicationRef.toLowerCase().includes(term)
-        );
-      });
-  }, [notifications, activeTab, searchTerm]);
+    if (!searchTerm.trim()) return notifications;
 
-  // Handlers
-  const handleMarkRead = useCallback(
-    (id: string) => {
-      // Optimistic update: mark as read locally first
-      setReadNotificationIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    const term = searchTerm.toLowerCase();
+    return notifications.filter(
+      (n) =>
+        n.title.toLowerCase().includes(term) ||
+        n.description.toLowerCase().includes(term) ||
+        n.applicationRef.toLowerCase().includes(term)
+    );
+  }, [notifications, searchTerm]);
 
-      // Persist change on the server
-      markAdminNotificationAsReadById(id)
-        .unwrap()
-        .catch((error) => {
-          // Roll back on failure
-          setReadNotificationIds((prev) => prev.filter((existingId) => existingId !== id));
+  /* -----------------------------
+     HANDLERS
+  ------------------------------ */
 
-          console.error('Failed to mark admin notification as read', error);
-        });
-    },
-    [markAdminNotificationAsReadById]
-  );
+ const handleMarkRead = useCallback(
+  async (id: string) => {
+    /* 1️⃣ Remove from UNREAD cache immediately */
+    const patchUnread = dispatch(
+      adminApi.util.updateQueryData(
+        'getAdminNotifications',
+        { page, limit, isRead: false },
+        (draft: any) => {
+          draft.notifications = draft.notifications.filter(
+            (n: any) => n._id !== id
+          );
+          draft.totalUnreadNotifications =
+            Math.max(0, draft.totalUnreadNotifications - 1);
+        }
+      )
+    );
+
+    /* 2️⃣ Update ALL cache */
+    const patchAll = dispatch(
+      adminApi.util.updateQueryData(
+        'getAdminNotifications',
+        { page, limit, isRead: undefined },
+        (draft: any) => {
+          const notification = draft.notifications.find(
+            (n: any) => n._id === id
+          );
+          if (notification) {
+            notification.isRead = true;
+            draft.totalUnreadNotifications =
+              Math.max(0, draft.totalUnreadNotifications - 1);
+          }
+        }
+      )
+    );
+
+    try {
+      /* 3️⃣ Persist to backend */
+      await markAdminNotificationAsReadById(id).unwrap();
+    } catch (error) {
+      /* 4️⃣ Rollback on failure */
+      patchUnread.undo();
+      patchAll.undo();
+      console.error('Failed to mark notification as read', error);
+    }
+  },
+  [dispatch, markAdminNotificationAsReadById, page, limit]
+);
+
 
   const handleDelete = useCallback((id: string) => {
-    setHiddenNotificationIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setHiddenNotificationIds((prev) =>
+      prev.includes(id) ? prev : [...prev, id]
+    );
   }, []);
+
+  const handlePrimaryAction = useCallback(async (id: string) => {
+    try {
+      // Navigate to application detail
+      router.push(`/admin/systemadmin/applications/${id}`);
+      
+      // Wait a bit for the page to potentially load
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Check if we're on a 404 page by looking for common 404 indicators
+      const title = document.title;
+      const hasNotFoundText = document.body.textContent?.includes('404') || 
+                              document.body.textContent?.includes('Not Found') ||
+                              document.body.textContent?.includes('Page not found');
+      
+      // If we detect a 404, navigate back to applications list
+      if (hasNotFoundText || title.includes('404')) {
+        console.error('Application not found, falling back to applications list');
+        router.push('/admin/systemadmin/applications/');
+      }
+    } catch (error) {
+      console.error('Navigation error, falling back to applications list');
+      router.push('/admin/systemadmin/applications/');
+    }
+  }, [router]);
 
   const handleTabChange = useCallback((tab: NotificationTabKey) => {
     setActiveTab(tab);
+    setPage(1);
   }, []);
 
   const handleSearchChange = useCallback((term: string) => {
     setSearchTerm(term);
-    setPage(1); // Reset to first page when searching
+    setPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
-    // Scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Tab configuration
+  /* -----------------------------
+     TABS
+  ------------------------------ */
   const tabs = useMemo(
     () => [
       { key: 'all' as const, label: 'All', count: stats.totalCount },
@@ -193,22 +276,23 @@ export function useDashboard(): UseDashboardReturn {
   return {
     user,
     isAuthenticated,
+    isFetching,
     notifications,
     filteredNotifications,
     activeTab,
     searchTerm,
     stats,
-    isFetching,
     handlers: {
       handleMarkRead,
       handleDelete,
       handleTabChange,
       handleSearchChange,
       handlePageChange,
+      handlePrimaryAction,
     },
     tabs,
     page,
     limit,
-    totalNotifications: apiNotifications?.totalNotifications || 0,
+    totalNotifications: apiNotifications?.totalNotifications ?? 0,
   };
 }

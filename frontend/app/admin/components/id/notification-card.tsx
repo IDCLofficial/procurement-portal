@@ -1,7 +1,8 @@
 "use client";
 
 import type { ComponentType, SVGProps } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { Check } from "lucide-react";
+import { useMarkAdminNotificationAsReadByIdMutation } from "@/app/admin/redux/services/adminApi";
 
 type NotificationTone = "info" | "warning" | "critical";
 type PriorityLevel = "high" | "critical";
@@ -16,10 +17,10 @@ interface NotificationCardProps {
   priorityLevel: PriorityLevel;
   tag: string;
   applicationRef: string;
+  notificationId: string;
   isUnread?: boolean;
   actionLabel: string;
   onPrimaryAction?: () => void;
-  onMarkRead?: () => void;
   onDelete?: () => void;
 }
 
@@ -54,13 +55,22 @@ export default function NotificationCard({
   priorityLevel,
   tag,
   applicationRef,
+  notificationId,
   isUnread,
   actionLabel,
   onPrimaryAction,
-  onMarkRead,
   onDelete,
 }: NotificationCardProps) {
   const toneStyle = toneStyles[tone];
+  const [markAsRead] = useMarkAdminNotificationAsReadByIdMutation();
+
+  const handleMarkAsRead = async () => {
+    try {
+      await markAsRead(notificationId).unwrap();
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
 
   const priorityClasses =
     priorityLevel === "critical"
@@ -111,20 +121,22 @@ export default function NotificationCard({
           {actionLabel}
         </button>
         <div className="flex items-center gap-2 text-gray-400">
-          <button
-            type="button"
-            onClick={onMarkRead}
-            className="rounded-full p-1 hover:bg-gray-100 hover:text-gray-700"
-          >
-            <Check className="h-4 w-4" />
-          </button>
-          <button
+          {isUnread && (
+            <button
+              type="button"
+              onClick={handleMarkAsRead}
+              className="rounded-full border border-gray-300 px-2 py-1 bg-white hover:bg-gray-100  hover:text-gray-700 flex  items-center gap-2"
+            >
+            Mark as Read  <Check className="h-4 w-4" />
+            </button>
+          )}
+          {/* <button
             type="button"
             onClick={onDelete}
             className="rounded-full p-1 hover:bg-gray-100 hover:text-red-600"
           >
             <Trash2 className="h-4 w-4" />
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

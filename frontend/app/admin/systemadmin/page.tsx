@@ -31,22 +31,18 @@ function AdminDashboard() {
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
           <WelcomeSection userName={user?.name} />
           <div className="space-y-4">
-            {isFetching ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="loader"></div>
-              </div>
-            ) : (
-              <>
+           
                 <NotificationList
                   notifications={filteredNotifications}
                   stats={stats}
                   tabs={tabs}
                   activeTab={activeTab}
                   searchTerm={searchTerm}
+                  isFetching={isFetching}
                   onTabChange={handlers.handleTabChange}
                   onSearchChange={handlers.handleSearchChange}
-                  onMarkRead={handlers.handleMarkRead}
                   onDelete={handlers.handleDelete}
+                  onPrimaryAction={handlers.handlePrimaryAction}
                 />
                 {totalNotifications > 0 && (
                   <div className="mt-4">
@@ -58,8 +54,7 @@ function AdminDashboard() {
                     />
                   </div>
                 )}
-              </>
-            )}
+            
           </div>
         </main>
       </div>

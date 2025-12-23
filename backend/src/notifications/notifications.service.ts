@@ -594,7 +594,7 @@ export class NotificationsService {
     }
 
     const filter: any = {
-      recipient:NotificationRecipient.ADMIN,
+      recipientId: new Types.ObjectId(userId),
     };
 
     return await this.notificationModel.updateMany(filter, { isRead: true });
@@ -613,7 +613,7 @@ export class NotificationsService {
 
     const filter: any = {
       _id: notificationId,
-      recipient:NotificationRecipient.ADMIN,
+      recipientId: new Types.ObjectId(uid),
     };
     return await this.notificationModel.updateOne(filter, { isRead: true });
   }

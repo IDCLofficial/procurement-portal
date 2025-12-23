@@ -1,8 +1,0 @@
-{
-  "devDependencies": {
-    "baseline-browser-mapping": "^2.8.32"
-  },
-  "dependencies": {
-    "geoip-lite": "^1.4.10"
-  }
-}

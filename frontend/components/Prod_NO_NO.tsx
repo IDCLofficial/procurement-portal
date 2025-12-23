@@ -3,6 +3,7 @@ import { Terminal, Zap, Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useShortcuts, { KeyboardKey } from '@useverse/useshortcuts';
 import JSConfetti from 'js-confetti';
+import { toast } from 'sonner';
 
 interface Particle {
     id: number;
@@ -127,6 +128,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("You pressed the wrong key!");
                         break;
                     case 2:
                         if (jsConfettiRef.current) {
@@ -136,6 +138,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("You pressed the wrong key!");
                         break;
                     case 3:
                         if (jsConfettiRef.current) {
@@ -145,6 +148,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("You pressed the wrong key!");
                         break;
                     case 4:
                         if (jsConfettiRef.current) {
@@ -154,6 +158,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("Almost got it!");
                         break;
                     case 5:
                         if (jsConfettiRef.current) {
@@ -163,6 +168,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("Almost got it!");
                         break;
                     case 6:
                         if (jsConfettiRef.current) {
@@ -172,6 +178,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("Almost got it!");
                         break;
                     case 7:
                         if (jsConfettiRef.current) {
@@ -181,6 +188,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("Almost there!");
                         break;
                     case 8:
                         if (jsConfettiRef.current) {
@@ -190,6 +198,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("Almost there!");
                         break;
                     case 9:
                         if (jsConfettiRef.current) {
@@ -199,6 +208,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("That was close!");
                         break;
                     case 10:
                         if (jsConfettiRef.current) {
@@ -208,6 +218,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
                                 confettiNumber: 20,
                             });
                         }
+                        toast("You almost found the secret!");
                         break;
                 }
                 setKonamiSequence([]);
@@ -249,7 +260,6 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
         const interval = setInterval(() => {
             if (Math.random() > 0.95) {
                 setIsGlitching(true);
-                console.log("Glitching");
                 setTimeout(() => setIsGlitching(false), 200);
             }
         }, 2000);

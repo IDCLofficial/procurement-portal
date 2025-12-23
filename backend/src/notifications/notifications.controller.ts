@@ -385,7 +385,7 @@ export class NotificationsController {
 
       const decoded = this.jwtService.decode(authToken);
       
-      if (!decoded || decoded.role !== 'Admin') {
+      if (!decoded) {
         this.logger.log(`User is not authorized to access this endpoint`);
         throw new UnauthorizedException('User is not authorized to access this endpoint');
       }

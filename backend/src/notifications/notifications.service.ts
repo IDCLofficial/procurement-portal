@@ -554,6 +554,7 @@ export class NotificationsService {
       priority: notification.priority,
       createdAt: notification.createdAt,
       applicationId:notification.applicationId,
+      isRead:notification.isRead,
       _id: notification._id
     }));
 

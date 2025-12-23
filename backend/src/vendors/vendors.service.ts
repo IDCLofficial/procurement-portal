@@ -16,11 +16,9 @@ import { verificationDocuments, verificationDocument, Status as DocumentStatus, 
 import { Payment, PaymentDocument } from '../payments/entities/payment.schema';
 import { Application, ApplicationDocument } from '../applications/entities/application.schema';
 import { loginDto } from './dto/logn.dto';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { ValidationError } from 'class-validator';
+import { S3Client } from '@aws-sdk/client-s3';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { necessaryDocument } from './dto/update-registration.dto';
 import { VendorActivityLog, VendorActivityLogDocument, ActivityType } from './entities/vendor-activity-log.schema';
 import { renewRegistrationDto } from './dto/renew-registration-dto';
 import { replaceDocumentDto } from './dto/replace-document.dto';
@@ -145,6 +143,7 @@ export class VendorsService {
     }
     const isPasswordValid = await bcrypt.compare(body.password, vendor.password);
     if (!isPasswordValid) {
+      
       let loginData = await this.getLoginHistoryFromRequest(req);
       loginData = await enrichWithLocation(loginData);
 
@@ -155,6 +154,7 @@ export class VendorsService {
       };
       vendor.loginHistory.push(loginHistory);
       await vendor.save();
+
       throw new BadRequestException('Invalid password');
     }
     const { password: _, ...user } = vendor.toObject();
@@ -367,9 +367,38 @@ export class VendorsService {
       
       return vendor.toObject();
     }catch(err){
-      throw new BadRequestException("An erorr occured")
+      this.Logger.error(err)
+      throw new InternalServerErrorException("An error occured")
     }
   }
+
+  async getLoginHistory(vendorId:string, token:string){
+    try{
+      // Fetch vendor profile without password
+      const vendor = await this.vendorModel.findById(vendorId);
+      
+      if (!vendor) {
+        throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
+      }
+
+      if(vendor.accessToken !== token){
+        throw new UnauthorizedException('Invalid or Expired token')
+      }
+
+      const loginHistory = vendor.loginHistory;
+    
+      const latestAttempts = loginHistory
+        .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 5);
+
+      return latestAttempts;
+      
+    }catch(err){
+      this.Logger.error(err)
+      throw new InternalServerErrorException("An error occured")
+    }
+  } 
+    
 
   /**
    * Update vendor profile information

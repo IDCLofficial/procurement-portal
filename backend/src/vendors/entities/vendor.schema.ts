@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { LoginHistory } from 'src/types/types';
 
 export type VendorDocument = Vendor & Document;

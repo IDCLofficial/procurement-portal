@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, HttpStatus, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Query, HttpStatus, Req, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { ApplicationsService } from './applications.service';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { AssignApplicationDto } from './dto/assign-application.dto';
-import { ApplicationStatus, ApplicationType, CurrentStatus } from './entities/application.schema';
+import { ApplicationStatus, ApplicationType } from './entities/application.schema';
 import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('Applications')

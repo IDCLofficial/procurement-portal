@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Logger, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Application, ApplicationDocument, ApplicationStatus, ApplicationType } from './entities/application.schema';
@@ -13,7 +13,6 @@ import { ActivityType } from '../vendors/entities/vendor-activity-log.schema';
 import { Vendor, VendorDocument } from 'src/vendors/entities/vendor.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction, AuditSeverity, EntityType } from '../audit-logs/entities/audit-log.schema';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { PaymentDocument } from 'src/payments/entities/payment.schema';
 import { Notification, NotificationDocument, NotificationRecipient, NotificationType, priority } from 'src/notifications/entities/notification.entity';
 import { EmailService } from 'src/email/email.service';

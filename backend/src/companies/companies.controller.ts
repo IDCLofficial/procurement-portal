@@ -1,14 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Query, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Query, Req, UnauthorizedException } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { UpdateStatusDto } from './dto/update-status.dto';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Status } from './entities/company.schema';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { User } from '../decorators/user.decorator';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
 
 @Controller('companies')
 export class CompaniesController {
@@ -249,62 +245,5 @@ export class CompaniesController {
       console.log(err)
       throw new UnauthorizedException('Invalid or expired token');
     }
-  }
-
-  /**
-   * Get a single company by ID
-   * 
-   * @param id - Company ID (MongoDB ObjectId)
-   * @returns Company details
-   * 
-   * @example
-   * GET /companies/507f1f77bcf86cd799439011
-   */
-  @Get(':id')
-  @ApiOperation({summary:"Get a company by id"})
-  @ApiQuery({name:"id",required:true,description:"Id of the vendor"})
-  @ApiResponse({status:200,description:"Company fetched successfully"})
-  findOne(@Param('id') id: string) {
-    return this.companiesService.findOne(id);
-  }
-
-  /**
-   * Update company information
-   * 
-   * @param id - Company ID (MongoDB ObjectId)
-   * @param updateCompanyDto - Updated company data
-   * @returns Updated company record
-   * 
-   * @example
-   * PATCH /companies/507f1f77bcf86cd799439011
-   * Body: {
-   *   "companyName": "Updated Tech Solutions Ltd",
-   *   "website": "https://newtechsolutions.com"
-   * }
-   */
-  @Patch(':id')
-  @ApiOperation({summary:"Update a company by id"})
-  @ApiQuery({name:"id",required:true,description:"Id of the vendor"})
-  @ApiBody({type:UpdateCompanyDto})
-  @ApiResponse({status:200,description:"Company updated successfully"})
-  update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companiesService.update(+id, updateCompanyDto);
-  }
-
-  /**
-   * Delete a company by ID
-   * 
-   * @param id - Company ID (MongoDB ObjectId)
-   * @returns Deleted company record
-   * 
-   * @example
-   * DELETE /companies/507f1f77bcf86cd799439011
-   */
-  @Delete(':id')
-  @ApiOperation({summary:"Delete a company by id"})
-  @ApiQuery({name:"id",required:true,description:"Id of the vendor"})
-  @ApiResponse({status:200,description:"Company deleted successfully"})
-  remove(@Param('id') id: string) {
-    return this.companiesService.remove(+id);
   }
 }

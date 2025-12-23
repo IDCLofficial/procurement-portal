@@ -1,17 +1,13 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateCompanyDto } from './dto/create-company.dto';
-import { UpdateCompanyDto } from './dto/update-company.dto';
-import { UpdateStatusDto } from './dto/update-status.dto';
 import { Company, CompanyDocument, Status } from './entities/company.schema';
-import { verificationDocuments } from 'src/documents/entities/document.schema';
 
 @Injectable()
 export class CompaniesService {
   constructor(
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
-    @InjectModel(verificationDocuments.name) private documentModel: Model<verificationDocuments>
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
@@ -102,12 +98,4 @@ export class CompaniesService {
   //     throw new BadRequestException('Failed to update company status', err.message);
   //   }
   // }
-
-  update(id: number, updateCompanyDto: UpdateCompanyDto) {
-    return `This action updates a #${id} company`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} company`;
-  }
 }

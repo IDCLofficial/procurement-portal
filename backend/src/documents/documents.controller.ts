@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, HttpStatus, Req, UnauthorizedException } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/upload-document.dto';
-import { UpdateDocumentDto } from './dto/update-document.dto';
 import { UpdateDocumentStatusDto } from './dto/update-document-status.dto';
 import { createDocumentPresetDto } from './dto/create-document-preset.dto';
 import { UpdateDocumentPresetDto } from './dto/update-document-preset.dto';

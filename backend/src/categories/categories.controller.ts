@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UnauthorizedException, HttpStatus } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto, UpdateCategoryFieldsDto } from './dto/update-category.dto';
+import { UpdateCategoryFieldsDto } from './dto/update-category.dto';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { CreateGradeDto } from './dto/create-grade.dto';

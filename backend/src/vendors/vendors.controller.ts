@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException, Req, Headers, UseGuards, UseInterceptors, UploadedFiles, UnauthorizedException, Query, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, BadRequestException, Req, Headers, UseGuards, UseInterceptors, UploadedFiles, UnauthorizedException, Query, Logger, ConflictException } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
-import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiBearerAuth, ApiHeader, ApiConsumes, ApiParam } from '@nestjs/swagger';
-import { mode, necessaryDocument, updateRegistrationDto } from './dto/update-registration.dto';
+import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import { mode, updateRegistrationDto } from './dto/update-registration.dto';
 import { loginDto } from './dto/logn.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -507,26 +507,20 @@ export class VendorsController {
       throw new UnauthorizedException('Authorization header is required');
     }
 
-    try {
-      const authToken = req.headers?.authorization?.split(' ')[1];
-      
-      if (!authToken) {
-        throw new UnauthorizedException('Invalid authorization token format');
-      }
-
-      const decoded = this.jwtService.decode(authToken);
-      
-      if (!decoded?._id) {
-        throw new UnauthorizedException('Invalid token payload');
-      }
-
-      return this.vendorsService.getApplicationTimeline(decoded._id, authToken);
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new UnauthorizedException('Invalid or expired token');
+    const authToken = req.headers?.authorization?.split(' ')[1];
+    
+    if (!authToken) {
+      throw new UnauthorizedException('Invalid authorization token format');
     }
+
+    const decoded = this.jwtService.decode(authToken);
+    
+    if (!decoded?._id) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
+
+    return this.vendorsService.getApplicationTimeline(decoded._id, authToken);
+  
   }
 
   /**
@@ -628,27 +622,19 @@ export class VendorsController {
     if (!req?.headers?.authorization) {
       throw new UnauthorizedException('Authorization header is required');
     }
+    const authToken = req.headers?.authorization?.split(' ')[1];
 
-    try {
-      const authToken = req.headers?.authorization?.split(' ')[1];
-
-      if (!authToken) {
-        throw new UnauthorizedException('Invalid authorization token format');
-      }
-
-      const decoded = this.jwtService.decode(authToken);
-
-      if (!decoded?._id) {
-        throw new UnauthorizedException('Invalid token payload');
-      }
-
-      return this.vendorsService.getVendorActivityLogs(decoded._id, authToken);
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new UnauthorizedException('Invalid or expired token');
+    if (!authToken) {
+      throw new UnauthorizedException('Invalid authorization token format');
     }
+
+    const decoded = this.jwtService.decode(authToken);
+
+    if (!decoded?._id) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
+
+    return this.vendorsService.getVendorActivityLogs(decoded._id, authToken);
   }
   
   //
@@ -663,35 +649,26 @@ export class VendorsController {
    * GET /vendors/login-history
    */
   @Get('login-history')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get vendor login history' })
   @ApiResponse({ status: 200, description: 'Login history retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Vendor not found' })
   async getLoginHistory(@Req() req: any) {
-    if (!req.headers.authorization) {
-      throw new UnauthorizedException('Authorization token required');
+    const token = req.headers?.authorization?.split(' ')[1]
+  
+    if(!token){
+      throw new UnauthorizedException("You are unauthorized");
     }
-
-    const token = req.headers.authorization.replace('Bearer ', '');
+    
     const decoded = this.jwtService.verify(token);
-    const vendorId = decoded.sub;
-
-    const vendor = await this.vendorsService.getProfile(vendorId, req.headers.authorization);
-    if (!vendor) {
-      throw new UnauthorizedException('Vendor not found');
+    
+    if(!decoded){
+      throw new UnauthorizedException("Invalid or expired token")
     }
-
+    
     // Return latest 5 login attempts, sorted by timestamp (most recent first)
-    const loginHistory = vendor.loginHistory || [];
-    const latestAttempts = loginHistory
-      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 5);
+    return await this.vendorsService.getLoginHistory(decoded._id, token)
 
-    return {
-      message: 'Login history retrieved successfully',
-      data: latestAttempts
-    };
   }
 
   //

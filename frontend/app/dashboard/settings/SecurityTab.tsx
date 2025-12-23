@@ -7,69 +7,18 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Monitor, Smartphone, MapPin, Clock } from 'lucide-react';
+import { Monitor, Smartphone, MapPin, Clock, Loader2, AlertCircle, Shield, Loader } from 'lucide-react';
 import SettingsSection from '@/components/settings/SettingsSection';
 import ComingSoonSection from '@/components/settings/ComingSoonSection';
-import { LoginHistory, NotificationSettings } from '@/store/api/types';
+import { NotificationSettings } from '@/store/api/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
-import { useDeactivateVendorMutation, useUpdateNotificationSettingsMutation } from '@/store/api/vendor.api';
+import { useDeactivateVendorMutation, useGetLoginHistoryQuery, useUpdateNotificationSettingsMutation } from '@/store/api/vendor.api';
 import DangerZone from '@/components/settings/DangerZone';
 import { useDebounce } from '@/hooks/useDebounce';
+import { toValidJSDate } from '@/lib';
+import { formatDate } from 'date-fns';
 
-// Dummy login history data
-const loginHistoryData: LoginHistory[] = [
-    {
-        id: 1,
-        device: 'Chrome on Windows',
-        deviceType: 'desktop',
-        location: 'Lagos, Nigeria',
-        ip: '197.210.xxx.xxx',
-        timestamp: '2 hours ago',
-        date: 'Dec 22, 2025 at 2:30 PM',
-        status: 'success',
-    },
-    {
-        id: 2,
-        device: 'Safari on iPhone',
-        deviceType: 'mobile',
-        location: 'Lagos, Nigeria',
-        ip: '197.210.xxx.xxx',
-        timestamp: '1 day ago',
-        date: 'Dec 21, 2025 at 9:15 AM',
-        status: 'success',
-    },
-    {
-        id: 3,
-        device: 'Chrome on MacOS',
-        deviceType: 'desktop',
-        location: 'Abuja, Nigeria',
-        ip: '105.112.xxx.xxx',
-        timestamp: '3 days ago',
-        date: 'Dec 19, 2025 at 4:45 PM',
-        status: 'success',
-    },
-    {
-        id: 4,
-        device: 'Firefox on Windows',
-        deviceType: 'desktop',
-        location: 'Port Harcourt, Nigeria',
-        ip: '102.89.xxx.xxx',
-        timestamp: '5 days ago',
-        date: 'Dec 17, 2025 at 11:20 AM',
-        status: 'success',
-    },
-    {
-        id: 5,
-        device: 'Chrome on Android',
-        deviceType: 'mobile',
-        location: 'Lagos, Nigeria',
-        ip: '197.210.xxx.xxx',
-        timestamp: '1 week ago',
-        date: 'Dec 15, 2025 at 6:30 PM',
-        status: 'success',
-    },
-];
 
 interface SecurityTabProps {
     notifications: NotificationSettings;
@@ -80,13 +29,14 @@ export default function SecurityTab({ notifications }: SecurityTabProps) {
     const { logout } = useAuth();
     const [deactivateVendor, { isLoading: isDeactivating }] = useDeactivateVendorMutation();
     const [updateNotificationSettings, { isLoading: isUpdatingSettings, isSuccess }] = useUpdateNotificationSettingsMutation();
+    const { data: loginHistory, isLoading: isLoginHistoryLoading, isError: isLoginHistoryError, refetch: refetchLoginHistory, isFetching: isLoginHistoryFetching } = useGetLoginHistoryQuery();
 
     // Security preferences state
     const [loginAlerts, setLoginAlerts] = React.useState(notifications.notificationPreferences.loginAlerts);
 
     // Debounce the login alerts state
     const debouncedLoginAlerts = useDebounce(loginAlerts, 500);
-    
+
     const skipUpdate = useRef<boolean>(true);
     const isInitialMount = useRef(true);
 
@@ -130,6 +80,7 @@ export default function SecurityTab({ notifications }: SecurityTabProps) {
 
     const handleViewLoginHistory = () => {
         setIsLoginHistoryOpen(true);
+        refetchLoginHistory();
     };
 
     const handleDeactivateAccount = async () => {
@@ -150,6 +101,119 @@ export default function SecurityTab({ notifications }: SecurityTabProps) {
             toast.dismiss('deactivate-account');
             toast.error('Failed to deactivate account. Please try again.');
         }
+    };
+
+    const handleRetryLoginHistory = () => {
+        refetchLoginHistory();
+    };
+
+    const renderLoginHistoryContent = () => {
+        // Loading State
+        if (isLoginHistoryLoading) {
+            return (
+                <div className="flex flex-col items-center justify-center py-16 px-6">
+                    <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
+                    <p className="mt-4 text-sm font-medium text-gray-900">Loading login history...</p>
+                    <p className="mt-1 text-xs text-gray-500">Please wait while we fetch your activity</p>
+                </div>
+            );
+        }
+
+        // Error State
+        if (isLoginHistoryError) {
+            return (
+                <div className="flex flex-col items-center justify-center py-16 px-6">
+                    <div className="rounded-full bg-red-100 p-3">
+                        <AlertCircle className="h-8 w-8 text-red-600" />
+                    </div>
+                    <p className="mt-4 text-sm font-medium text-gray-900">Failed to load login history</p>
+                    <p className="mt-1 text-xs text-gray-500 text-center max-w-sm">
+                        We couldn&apos;t retrieve your login history. Please check your connection and try again.
+                    </p>
+                    <Button
+                        onClick={handleRetryLoginHistory}
+                        className="mt-6"
+                    >
+                        Try Again
+                    </Button>
+                </div>
+            );
+        }
+
+        // Empty State
+        if (!loginHistory || loginHistory.length === 0) {
+            return (
+                <div className="flex flex-col items-center justify-center py-16 px-6">
+                    <div className="rounded-full bg-gray-100 p-3">
+                        <Shield className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <p className="mt-4 text-sm font-medium text-gray-900">No login history found</p>
+                    <p className="mt-1 text-xs text-gray-500 text-center max-w-sm">
+                        There are no recorded login attempts for your account yet.
+                    </p>
+                </div>
+            );
+        }
+
+        // Success State with Data
+        return (
+            <>
+                <div className="space-y-3 mt-4">
+                    {isLoginHistoryFetching && <div className="flex justify-center items-center">
+                        <span className='animate-pulse'>Updating login history...</span>
+                        <Loader className="ml-2 h-4 w-4 animate-spin" />
+                    </div>}
+                    {loginHistory.map((login) => (
+                        <div
+                            key={login.id}
+                            className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                        >
+                            <div className="flex items-start gap-3">
+                                <div className="mt-1">
+                                    {login.deviceType.toLowerCase().includes('mobile') ? (
+                                        <Smartphone className="h-5 w-5 text-gray-600" />
+                                    ) : (
+                                        <Monitor className="h-5 w-5 text-gray-600" />
+                                    )}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <p className="font-medium text-gray-900">{login.device}</p>
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
+                                                <span className="flex items-center gap-1">
+                                                    <MapPin className="h-3.5 w-3.5" />
+                                                    {login.location}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <Clock className="h-3.5 w-3.5" />
+                                                    {formatDate(toValidJSDate(login.timestamp), 'HH:mm:ss')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full whitespace-nowrap">
+                                            Success
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-2 text-xs text-gray-400">
+                                        <p>{formatDate(toValidJSDate(login.date), 'dd MMM yyyy')}</p>
+                                        <p>IP Address: {login.ip}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 text-center">
+                        If you notice any suspicious activity, please change your password immediately
+                    </p>
+                </div>
+            </>
+        );
     };
 
     return (
@@ -201,7 +265,7 @@ export default function SecurityTab({ notifications }: SecurityTabProps) {
                     </div>
 
                     {/* View Login History */}
-                    <div className="pt-4 border-t border-gray-100">
+                    {loginAlerts && <div className="pt-4 border-t border-gray-100">
                         <Button
                             onClick={handleViewLoginHistory}
                             variant="outline"
@@ -209,7 +273,7 @@ export default function SecurityTab({ notifications }: SecurityTabProps) {
                         >
                             View Login History
                         </Button>
-                    </div>
+                    </div>}
                 </div>
             </div>
 
@@ -229,56 +293,7 @@ export default function SecurityTab({ notifications }: SecurityTabProps) {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-3 mt-4">
-                        {loginHistoryData.map((login) => (
-                            <div
-                                key={login.id}
-                                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-1">
-                                        {login.deviceType === 'desktop' ? (
-                                            <Monitor className="h-5 w-5 text-gray-600" />
-                                        ) : (
-                                            <Smartphone className="h-5 w-5 text-gray-600" />
-                                        )}
-                                    </div>
-
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div>
-                                                <p className="font-medium text-gray-900">{login.device}</p>
-                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
-                                                    <span className="flex items-center gap-1">
-                                                        <MapPin className="h-3.5 w-3.5" />
-                                                        {login.location}
-                                                    </span>
-                                                    <span className="flex items-center gap-1">
-                                                        <Clock className="h-3.5 w-3.5" />
-                                                        {login.timestamp}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full whitespace-nowrap">
-                                                Success
-                                            </span>
-                                        </div>
-
-                                        <div className="mt-2 text-xs text-gray-400">
-                                            <p>{login.date}</p>
-                                            <p>IP: {login.ip}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-6 pt-4 border-t border-gray-200">
-                        <p className="text-xs text-gray-500 text-center">
-                            If you notice any suspicious activity, please change your password immediately
-                        </p>
-                    </div>
+                    {renderLoginHistoryContent()}
                 </DialogContent>
             </Dialog>
         </div>

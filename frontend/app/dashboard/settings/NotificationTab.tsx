@@ -7,7 +7,7 @@ import { NotificationSettings } from "@/store/api/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 import { FaCheck, FaMoneyBillWave } from "react-icons/fa6";
-import { FaSync, FaSyncAlt } from "react-icons/fa";
+import { FaFileAlt, FaSync, FaSyncAlt } from "react-icons/fa";
 
 export default function NotificationTab({ notifications: initialNotifications }: { notifications: NotificationSettings }) {
     const [notifications, setNotifications] = useState(initialNotifications);
@@ -120,7 +120,7 @@ export default function NotificationTab({ notifications: initialNotifications }:
                     <div className="space-y-1">
                         <NotificationPreference
                             title="Document Expiry Alerts"
-                            Icon={FaMoneyBillWave}
+                            Icon={FaFileAlt}
                             description="Get notified when documents are about to expire"
                             enabled={notifications.notificationPreferences.documentExpiryAlerts}
                             onChange={(value) => handleNotificationToggle('documentExpiryAlerts', value)}

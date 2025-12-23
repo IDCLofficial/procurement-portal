@@ -517,7 +517,7 @@ export class NotificationsService {
     }
     
     const filter: any = {
-      recipient:NotificationRecipient.ADMIN
+      recipientId:new Types.ObjectId(userId)
     };
 
     let isReadFilter: boolean | undefined;

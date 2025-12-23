@@ -411,6 +411,7 @@ export class NotificationsController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized.',
   })
+  
   @Get('admin-notification')
   @ApiQuery({ name: 'isRead', required: false, type: Boolean })
   @ApiQuery({ name: 'page', required: false, description: 'Page number (starts from 1)', type: Number })

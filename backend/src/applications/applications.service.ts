@@ -421,11 +421,15 @@ export class ApplicationsService {
         });
 
         if(newStatus === ApplicationStatus.FORWARDED_TO_REGISTRAR){
+          const findRegistrar = await this.userModel.findOne({
+            role: Role.REGISTRAR
+          });
           await this.notificationModel.create({
           type: NotificationType.INCOMING_APPLICATION,
           title: 'Incoming Application',
           message: `${application.applicationId} has been forwarded to you`,
-          recipient: NotificationRecipient.ADMIN,
+          recipient: NotificationRecipient.REGISTRAR,
+          recipientId: findRegistrar?._id,
           vendorId: vendor._id,
           priority: priority.LOW,
           applicationId: application._id,

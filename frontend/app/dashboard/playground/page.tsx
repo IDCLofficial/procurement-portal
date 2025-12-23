@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth as useAuthPublic } from '@/components/providers/public-service/AuthProvider';
 import endpoints from '@/store/api/endpoints.const';
+import ApiPlaygroundEasterEgg from '@/components/Prod_NO_NO';
 
 interface ApiResponse {
   status: number;
@@ -78,6 +79,8 @@ export default function PlaygroundPage() {
       setLoading(false);
     }
   };
+
+  if (process.env.NEXT_PUBLIC_ENV !== 'development') return <ApiPlaygroundEasterEgg />;
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -180,68 +180,6 @@ export default function RegistrationContinuation() {
         setBankDetails(prev => ({ ...prev, [field]: value }));
     };
 
-    // Auto-fill helper for simulation mode
-    const autoFillCurrentStep = () => {
-        if (currentStep === 2) {
-            setFormData({
-                companyName: 'ABC Construction Limited',
-                cacNumber: 'RC123456',
-                tinNumber: '12345678-0001',
-                address: '123 Main Street, Victoria Island',
-                lga: 'Orlu',
-                website: 'https://www.abcconstruction.com',
-            });
-            toast.success('Step 2 auto-filled');
-        } else if (currentStep === 3) {
-            setDirectors([
-                {
-                    id: '1',
-                    fullName: 'John Doe',
-                    phone: '08012345678',
-                    email: 'john.doe@example.com',
-                    documentType: 'NIN',
-                    documentValue: '12345678901',
-                },
-                {
-                    id: '2',
-                    fullName: 'Jane Smith',
-                    phone: '08087654321',
-                    email: 'jane.smith@example.com',
-                    documentType: 'NIN',
-                    documentValue: '22334455667',
-                },
-            ]);
-            toast.success('Step 3 auto-filled');
-        } else if (currentStep === 4) {
-            setBankDetails({
-                bankName: 'First Bank of Nigeria',
-                accountNumber: '1234567890',
-                accountName: 'ABC Construction Limited',
-            });
-            toast.success('Step 4 auto-filled');
-        } else if (currentStep === 5) {
-            // Mark all documents as uploaded
-            const autoFilledDocs = documents.map(doc => ({
-                ...doc,
-                uploaded: true,
-                fileName: `${doc.id}_sample.pdf`,
-                fileSize: '245.67 KB',
-                uploadedDate: new Date().toISOString().split('T')[0],
-                fileType: 'application/pdf',
-                validFrom: doc.hasValidityPeriod ? '2024-01-01' : '',
-                validTo: doc.hasValidityPeriod ? '2025-01-01' : '',
-            }));
-            setDocuments(autoFilledDocs);
-            toast.success('Step 5 auto-filled - All documents marked as uploaded');
-        } else if (currentStep === 6) {
-            setSelectedSector('services');
-            setSelectedGrade('b');
-            toast.success('Step 6 auto-filled');
-        } else {
-            toast.info('No auto-fill available for this step');
-        }
-    };
-
     const [completeVendorRegistration, { isLoading }] = useCompleteVendorRegistrationMutation();
 
     const [initPayment, { isLoading: isInitPaymentLoading }] = useInitPaymentMutation();
@@ -937,33 +875,6 @@ export default function RegistrationContinuation() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {/* Auto-fill Helper (Simulation Mode Only) */}
-                        {process.env.NEXT_PUBLIC_ENV === 'sim' && currentStep >= 2 && currentStep <= 6 && (
-                            <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-yellow-600 text-lg">⚡</span>
-                                        <div>
-                                            <p className="text-sm font-semibold text-yellow-900">
-                                                Simulation Mode - Quick Fill
-                                            </p>
-                                            <p className="text-xs text-yellow-700">
-                                                Auto-fill this step with sample data
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        type="button"
-                                        onClick={autoFillCurrentStep}
-                                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                                        size="sm"
-                                    >
-                                        Fill Step {currentStep}
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
                         {renderStepContent()}
 
                         {/* Navigation Buttons - Hide on receipt page */}

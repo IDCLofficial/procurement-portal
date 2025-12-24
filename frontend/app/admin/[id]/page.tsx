@@ -38,6 +38,7 @@ function DeskOfficerDashboard() {
         onSearchChange={handlers.handleSearchChange}
         onMarkRead={handlers.handleMarkRead}
         onDelete={handlers.handleDelete}
+        onPrimaryAction={handlers.handlePrimaryAction}
       />
     </main>
   );

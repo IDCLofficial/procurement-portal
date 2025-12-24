@@ -75,7 +75,8 @@ export function NotificationList({
             notificationId={notification.id}
             isUnread={notification.isUnread}
             actionLabel={notification.actionLabel}
-            onPrimaryAction={() => onPrimaryAction?.(notification.id)}
+            applicationId={notification.applicationId}
+            onPrimaryAction={() => onPrimaryAction?.(notification.applicationId || '')}
             onDelete={() => onDelete(notification.id)}
           />
         ))}

@@ -219,7 +219,7 @@ function AdminApplications() {
                       </tr>
                     ) : (
                       applications.map((app) => (
-                      
+                    
                         <tr key={app.id}>
                           <td className="px-4 py-3 whitespace-nowrap text-gray-900">{app.id}</td>
                           <td className="px-4 py-3 whitespace-nowrap text-gray-900">{app.name}</td>

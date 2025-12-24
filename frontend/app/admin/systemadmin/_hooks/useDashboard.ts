@@ -101,6 +101,9 @@ export function useDashboard(): UseDashboardReturn {
     return apiNotifications.notifications
       .filter((n) => !hiddenNotificationIds.includes(n._id))
       .map((n) => {
+        console.log('Processing notification:', n);
+        console.log('applicationId:', n.applicationId);
+        
         const created = new Date(n.createdAt);
         const dateStr = Number.isNaN(created.getTime())
           ? n.createdAt
@@ -114,6 +117,7 @@ export function useDashboard(): UseDashboardReturn {
 
         return {
           id: n._id,
+          applicationId: n.applicationId,
           title: n.title,
           description: n.message,
           date: dateStr,
@@ -223,28 +227,21 @@ export function useDashboard(): UseDashboardReturn {
 
   const handlePrimaryAction = useCallback(async (id: string) => {
     try {
-      // Navigate to application detail
-      router.push(`/admin/systemadmin/applications/${id}`);
-      
-      // Wait a bit for the page to potentially load
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Check if we're on a 404 page by looking for common 404 indicators
-      const title = document.title;
-      const hasNotFoundText = document.body.textContent?.includes('404') || 
-                              document.body.textContent?.includes('Not Found') ||
-                              document.body.textContent?.includes('Page not found');
-      
-      // If we detect a 404, navigate back to applications list
-      if (hasNotFoundText || title.includes('404')) {
-        console.error('Application not found, falling back to applications list');
-        router.push('/admin/systemadmin/applications/');
+      // Navigate based on user role
+      if (user?.role === 'Admin') {
+        router.push(`/admin/systemadmin/applications/${id}`);
+      } else {
+        router.push(`/admin/${user?.id}/applications/${id}`);
       }
     } catch (error) {
       console.error('Navigation error, falling back to applications list');
-      router.push('/admin/systemadmin/applications/');
+      if (user?.role === 'Admin') {
+        router.push('/admin/systemadmin/applications/');
+      } else {
+        router.push(`/admin/${user?.id}/applications/`);
+      }
     }
-  }, [router]);
+  }, [router, user]);
 
   const handleTabChange = useCallback((tab: NotificationTabKey) => {
     setActiveTab(tab);

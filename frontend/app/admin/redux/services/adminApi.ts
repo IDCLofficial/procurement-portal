@@ -27,6 +27,7 @@ export type GetTransactionsParams = {
 };
 
 export interface AdminNotificationDto {
+  applicationId: string;
   _id: string;
   title: string;
   message: string;

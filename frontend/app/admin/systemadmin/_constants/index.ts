@@ -14,6 +14,7 @@ export type NotificationTone = 'info' | 'warning' | 'critical';
 export type NotificationPriority = 'high' | 'critical';
 
 export interface Notification {
+  applicationId?: string;
   id: string;
   title: string;
   description: string;

@@ -20,6 +20,7 @@ interface NotificationCardProps {
   notificationId: string;
   isUnread?: boolean;
   actionLabel: string;
+  applicationId?: string;
   onPrimaryAction?: () => void;
   onDelete?: () => void;
 }
@@ -58,6 +59,7 @@ export default function NotificationCard({
   notificationId,
   isUnread,
   actionLabel,
+  applicationId,
   onPrimaryAction,
   onDelete,
 }: NotificationCardProps) {
@@ -76,7 +78,7 @@ export default function NotificationCard({
     priorityLevel === "critical"
       ? "bg-red-100 text-red-700"
       : "bg-amber-100 text-amber-700";
-
+console.log(applicationId)
   return (
     <div
       className={`flex items-start justify-between gap-4 rounded-xl border px-5 py-4 text-sm shadow-sm ${toneStyle.border} ${toneStyle.bg}`}
@@ -113,13 +115,15 @@ export default function NotificationCard({
       </div>
 
       <div className="flex flex-col items-end gap-3">
-        <button
-          type="button"
-          onClick={onPrimaryAction}
-          className="inline-flex items-center rounded-full border border-gray-300 bg-white px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-        >
-          {actionLabel}
-        </button>
+        {applicationId && (
+          <button
+            type="button"
+            onClick={onPrimaryAction}
+            className="inline-flex items-center rounded-full border border-gray-300 bg-white px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          >
+            {actionLabel}
+          </button>
+        )}
         <div className="flex items-center gap-2 text-gray-400">
           {isUnread && (
             <button

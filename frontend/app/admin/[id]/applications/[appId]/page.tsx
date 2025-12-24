@@ -61,7 +61,7 @@ function ApplicationDetails() {
     });
 
   const isForwardDisabled =
-    application?.currentStatus === "Approved" || application?.currentStatus === "Forwarded to Registrar" || hasUnapprovedDocuments;
+    application?.currentStatus === "Approved"  || application?.currentStatus === "Rejected"  || application?.currentStatus === "Verified" || application?.currentStatus === "Forwarded to Registrar" || hasUnapprovedDocuments;
   const isRegistrar = user?.role === "Registrar";
 
   const slaMetrics = application && slaConfig ? computeApplicationSla(application, slaConfig) : undefined;

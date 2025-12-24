@@ -243,7 +243,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Website</p>
                                             <div className="inline-flex gap-2 items-center">
                                                 {contractor.website && <a
-                                                    href={`${contractor.website}`}
+                                                    href={`https://${contractor.website}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-sm font-medium text-theme-green hover:underline break-all inline-flex items-center gap-1"

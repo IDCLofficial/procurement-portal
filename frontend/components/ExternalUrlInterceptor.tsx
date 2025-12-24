@@ -15,8 +15,29 @@ import { cn } from "@/lib/utils"
 import { AlertCircle } from "lucide-react"
 
 export default function ExternalUrlInterceptor() {
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const [pendingUrl, setPendingUrl] = useState<string>("")
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [pendingUrl, setPendingUrl] = useState<string>("");
+
+    console.log(
+        '%You found the console!',
+        'color: white; background-color: green; padding: 4px 8px; border-radius: 4px; font-weight: bold;',
+        'color: gray; margin-left: 8px;'
+    );
+    console.log('%cWelcome to Imo State Procurement Portal!', 'color: #00ff00; font-size: 20px; font-weight: bold;');
+
+    console.log(
+        '%cWarning:%c %cIf someone told you to copy/paste something here you have an 11/10 chance you\'re being scammed.',
+        'color: red; font-weight: bold; font-size: 16px;',
+        '',
+        'color: orange;'
+    );
+
+    console.log(
+        '%cInfo:%c %cPasting anything in here could give attackers access to your account.',
+        'color: blue; font-weight: bold; font-size: 16px;',
+        '',
+        'color: white;'
+    );
 
     useEffect(() => {
         const handleClick = (event: MouseEvent) => {

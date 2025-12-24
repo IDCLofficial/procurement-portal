@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGetProfileQuery, useVerifyPaymentQuery } from '@/store/api/vendor.api';
+import { useGetApplicationQuery, useGetCompanyDetailsQuery, useGetProfileQuery, useVerifyPaymentQuery } from '@/store/api/vendor.api';
 import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { return_url_key } from '@/lib/constants';
 
@@ -19,10 +19,14 @@ export default function PaymentVerification({ reference }: PaymentVerificationPr
     });
 
     const { refetch: refetchProfile } = useGetProfileQuery();
+    const { refetch: refetchCompanyDetails } = useGetCompanyDetailsQuery();
+    const { refetch: refetchApplication } = useGetApplicationQuery();
 
     useEffect(() => {
         if (isSuccess) {
             refetchProfile();
+            refetchCompanyDetails();
+            refetchApplication();
             const return_url = localStorage.getItem(return_url_key);
             // Start countdown
             const interval = setInterval(() => {
@@ -43,7 +47,7 @@ export default function PaymentVerification({ reference }: PaymentVerificationPr
 
             return () => clearInterval(interval);
         }
-    }, [isSuccess, router, refetchProfile]);
+    }, [isSuccess, router, refetchProfile, refetchCompanyDetails, refetchApplication]);
 
     const renderContent = () => {
         if (isLoading || !reference) {

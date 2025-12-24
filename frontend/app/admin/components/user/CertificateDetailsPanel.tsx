@@ -41,9 +41,9 @@ export function CertificateDetailsPanel({
 
   useEffect(() => {
     // Handle both populated object and string ID formats
-    const contractorId = typeof certificate.contractorId === 'string' 
-      ? certificate.contractorId 
-      : certificate.contractorId?._id;
+    const contractorId = typeof certificate.certificateId === 'string' 
+      ? certificate.certificateId 
+      : "n/a";
 
     if (!contractorId) {
       setQrDataUrl(null);
@@ -67,7 +67,7 @@ export function CertificateDetailsPanel({
         setQrDataUrl(url);
       }
     );
-  }, [certificate.contractorId]);
+  }, [certificate.certificateId]);
 
 
    const downloadAsImage = useCallback(async () => {
@@ -261,10 +261,10 @@ export function CertificateDetailsPanel({
                 <p className="text-[#A0AEC0]">Certificate ID</p>
                 <p className="text-gray-900 font-medium">{certificate.certificateId}</p>
               </div>
-              <div className="space-y-1">
+              {/* <div className="space-y-1">
                 <p className="text-[#A0AEC0]">QR Code</p>
                 <p className="text-gray-900 font-medium">QR-{certificate.certificateId}</p>
-              </div>
+              </div> */}
               <div className="space-y-1">
                 <p className="text-[#A0AEC0]">Issue Date</p>
                 <p className="text-gray-900 font-medium">{certificate.createdAt}</p>

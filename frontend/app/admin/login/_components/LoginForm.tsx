@@ -85,11 +85,7 @@ export function LoginForm({
           </label>
         </div>
 
-        <div className="text-sm">
-          <a href="#" className="font-medium text-green-600 hover:text-green-500">
-            Forgot password?
-          </a>
-        </div>
+       
       </div>
 
       <div>

@@ -148,7 +148,7 @@ export default function Step2CompanyDetails({ formData, onInputChange }: Step2Co
                     <Input
                         id="website"
                         type="url"
-                        placeholder="www.abcconstruction.com"
+                        placeholder="https://www.yourcompany.com"
                         value={formData.website}
                         onChange={(e) => onInputChange('website', e.target.value)}
                         className="mt-1.5"

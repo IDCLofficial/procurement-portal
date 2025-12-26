@@ -18,27 +18,6 @@ export default function ExternalUrlInterceptor() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [pendingUrl, setPendingUrl] = useState<string>("");
 
-    console.log(
-        '%You found the console!',
-        'color: white; background-color: green; padding: 4px 8px; border-radius: 4px; font-weight: bold;',
-        'color: gray; margin-left: 8px;'
-    );
-    console.log('%cWelcome to Imo State Procurement Portal!', 'color: #00ff00; font-size: 20px; font-weight: bold;');
-
-    console.log(
-        '%cWarning:%c %cIf someone told you to copy/paste something here you have an 11/10 chance you\'re being scammed.',
-        'color: red; font-weight: bold; font-size: 16px;',
-        '',
-        'color: orange;'
-    );
-
-    console.log(
-        '%cInfo:%c %cPasting anything in here could give attackers access to your account.',
-        'color: blue; font-weight: bold; font-size: 16px;',
-        '',
-        'color: white;'
-    );
-
     useEffect(() => {
         const handleClick = (event: MouseEvent) => {
             const target = event.target as HTMLElement
@@ -88,7 +67,7 @@ export default function ExternalUrlInterceptor() {
         <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>You&apos;re about to leave this site</AlertDialogTitle>
+                    <AlertDialogTitle className="text-destructive">You&apos;re about to leave this site</AlertDialogTitle>
                     <AlertDialogDescription>
                         You&apos;re being redirected to an external website. We&apos;re not responsible for the content or privacy practices of external sites.
                     </AlertDialogDescription>
@@ -102,7 +81,7 @@ export default function ExternalUrlInterceptor() {
                     >
                         <p className="text-sm font-medium mb-1">Destination URL:</p>
                         <p className={cn(
-                            "break-all text-2xl font-semibold",
+                            "break-all text-lg font-semibold",
                             isSecure ? "text-blue-500" : "text-red-600"
                         )}
                         >{pendingUrl}</p>

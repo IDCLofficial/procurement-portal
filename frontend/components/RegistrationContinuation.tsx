@@ -53,12 +53,6 @@ export default function RegistrationContinuation() {
     const setStartPoint = useMemo(() => {
         if (!user) return 2;
 
-        console.log({
-            user,
-            companyForm: user.companyForm,
-            companyFormLower: user.companyForm.toLowerCase()
-        })
-
         const companyForm = user.companyForm.toLowerCase();
         switch(companyForm){
             case VendorSteps.COMPANY:
@@ -91,8 +85,6 @@ export default function RegistrationContinuation() {
         lga: companyData?.lga?.trimEnd() || '',
         website: companyData?.website?.trimEnd() || '',
     });
-
-    console.log({setStartPoint});
 
     // Step 3: Directors
     const [directors, setDirectors] = useState(companyData?.directors ? (companyData.directors).map((director) => ({
@@ -223,6 +215,10 @@ export default function RegistrationContinuation() {
                 return;
             }
 
+            const hasWebsite = formData.website.trim().length > 0;
+            const generatedWebsite = (formData.website.startsWith('http://') || formData.website.startsWith('https://')) ? formData.website : `https://${formData.website}`;
+            const websiteValue = hasWebsite ? generatedWebsite : "";
+
             const payload = {
                 [VendorSteps.COMPANY]: {
                     companyName: formData.companyName,
@@ -230,7 +226,7 @@ export default function RegistrationContinuation() {
                     tin: formData.tinNumber,
                     businessAddres: formData.address,
                     lga: formData.lga,
-                    website: formData.website,
+                    website: websiteValue,
                 }
             }
 

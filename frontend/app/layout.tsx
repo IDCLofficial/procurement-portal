@@ -8,6 +8,7 @@ import AuthProvider from "@/components/providers/public-service/AuthProvider";
 import DebugSlices from "@/components/ui/DebugSlices";
 import { defaultMetadata } from "../lib/metadata";
 import ExternalUrlInterceptor from "@/components/ExternalUrlInterceptor";
+import Logger from "@/components/Logger";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased satoshi-font`}
             >
+                <Logger />
                 <ExternalUrlInterceptor />
                 <NextTopLoader
                     color="#047857"

@@ -1,3 +1,5 @@
+"use client"
+
 export default function Logger() {
     console.log(
         '%You found the console!',

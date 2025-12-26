@@ -8,26 +8,26 @@ import { generateQRCode } from '@/lib/qr';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { FaPlus } from 'react-icons/fa6';
-import { removeSearchParam, updateSearchParam } from '@/lib/utils';
-import { useSearchParams } from 'next/navigation';
 
 interface QRCodePopoverProps {
     url: string;
     label?: string;
     buttonVariant?: 'default' | 'outline' | 'ghost' | 'link' | 'destructive' | 'secondary';
     buttonSize?: 'default' | 'sm' | 'lg' | 'icon';
+    isOpen?: boolean;
+    onToggle?: (open: boolean) => void;
 }
 
 export default function QRCodePopover({
     url,
     label = 'Show QR',
     buttonVariant = 'outline',
-    buttonSize = 'default'
+    buttonSize = 'default',
+    isOpen = false,
+    onToggle
 }: QRCodePopoverProps) {
     const [qrCode, setQrCode] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
-    const searchParams = useSearchParams();
-    const [isOpen, setIsOpen] = useState(!!searchParams.get('viewing-qr'));
 
     const generateQR = useCallback(async () => {
         setIsLoading(true);
@@ -66,12 +66,7 @@ export default function QRCodePopover({
 
     return (
         <Popover open={isOpen} onOpenChange={(open) => {
-            setIsOpen(open);
-            if (open) {
-                updateSearchParam('viewing-qr', 'true');
-            } else if (!open) {
-                removeSearchParam('viewing-qr');
-            }
+            onToggle?.(open);
         }}>
             <PopoverTrigger className='z-20' asChild>
                 <Button

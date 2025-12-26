@@ -43,9 +43,8 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
             searchParams.get('scan') === 'true' ||
             searchParams.get('v') === '1';
     }, [searchParams]);
-    const isViewingQR = useMemo(() => {
-        return searchParams.get('viewing-qr') === 'true';
-    }, [searchParams]);
+    const [isQrOpen, setIsQrOpen] = useState(false);
+    
 
     const [showModal, setShowModal] = useState(isFromQR);
 
@@ -106,12 +105,14 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {isViewingQR && <div className='bg-black/25 h-screen w-screen absolute top-0 left-0 z-10 pointer-events-none' />}
+                                {isQrOpen && <div className='bg-black/25 h-screen w-screen absolute top-0 left-0 z-10 pointer-events-none' />}
 
                                 <QRCodePopover
                                     url={verificationUrl}
-                                    label={isViewingQR ? "Hide QR" : "Show QR"}
+                                    label={isQrOpen ? "Hide QR" : "Show QR"}
                                     buttonVariant="outline"
+                                    onToggle={(open: boolean) => setIsQrOpen(open)}
+                                    isOpen={isQrOpen}
                                 />
 
                                 <Button

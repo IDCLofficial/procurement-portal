@@ -126,7 +126,7 @@ export default function VerificationForm() {
 
     return (
         <div className="max-w-xl mx-auto">
-            <Card className="shadow-lg">
+            <Card className="shadow-lg bg-white/75">
                 <CardHeader>
                     <CardTitle className="sm:text-xl text-base">Enter Registration Details</CardTitle>
                     <CardDescription className='sm:text-base text-xs'>

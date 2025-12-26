@@ -176,7 +176,7 @@ export default function ContractorTable() {
     };
 
     return (
-        <Card>
+        <Card className='bg-white/75'>
             <CardHeader className="max-sm:p-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div>
@@ -184,13 +184,13 @@ export default function ContractorTable() {
                         <p className="max-sm:text-xs text-sm text-gray-600 mt-1">{totalContractors} contractors found</p>
                     </div>
                     <Button
-                        variant="outline"
                         onClick={handleExportCSV}
-                        className="cursor-pointer max-sm:text-xs max-sm:h-9 max-sm:px-3 sm:text-base text-xs active:scale-95 transition-transform duration-300"
+                        size={"icon-sm"}
+                        title='Export contractors to CSV file'
+                        className="cursor-pointer max-sm:text-xs bg-theme-green hover:bg-theme-green transition-all max-sm:h-9 max-sm:px-3 sm:text-base text-xs active:scale-95 duration-300"
                     >
-                        <FaDownload className="max-sm:mr-1 mr-2 max-sm:h-3 max-sm:w-3" />
-                        <span className="max-sm:hidden">Export CSV</span>
-                        <span className="sm:hidden">Export</span>
+                        <FaDownload className="text-sm" />
+                        <span className="sr-only">Export contractors to CSV file</span>
                     </Button>
                 </div>
             </CardHeader>

@@ -24,9 +24,9 @@ export default function ExternalUrlInterceptor() {
             const anchor = target.closest('a')
             
             if (anchor && anchor.href) {
-                const url = new URL(anchor.href, window.location.href)
-                const isExternal = url.hostname !== window.location.hostname
-                const escapable = anchor.href.startsWith('mailto:') || anchor.href.startsWith('tel:') || anchor.href.endsWith('.imo.gov.ng')
+                const url = new URL(anchor.href, window.location.href);
+                const isExternal = url.hostname !== window.location.hostname;
+                const escapable = anchor.href.startsWith('mailto:') || anchor.href.startsWith('tel:') || anchor.href.endsWith('.imo.gov.ng') || url.protocol === 'blob:';
 
                 if (escapable) {
                     return
@@ -39,6 +39,8 @@ export default function ExternalUrlInterceptor() {
                 }
             }
         }
+
+        
 
         document.addEventListener('click', handleClick)
         return () => document.removeEventListener('click', handleClick)

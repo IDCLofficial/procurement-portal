@@ -21,9 +21,13 @@ export default function VerifyCertificatePage() {
                     </Link>
                 }
             />
+            <div className="fixed top-0 right-0 w-full h-full pointer-events-none">
+                <div className="blob absolute -right-64 -bottom-64 pointer-events-none scale-x-[-1] opacity-25" />
+                <div className="blob absolute -left-96 -top-96 pointer-events-none scale-x-[-1] opacity-5" />
+            </div>
 
             {/* Main Content */}
-            <div className="container mx-auto px-4 py-12">
+            <div className="container mx-auto px-4 py-12 relative z-10">
                 <VerificationForm />
             </div>
         </div>

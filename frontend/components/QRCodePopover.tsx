@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { FaQrcode, FaDownload } from 'react-icons/fa';
@@ -8,6 +8,8 @@ import { generateQRCode } from '@/lib/qr';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { FaPlus } from 'react-icons/fa6';
+import { removeSearchParam, updateSearchParam } from '@/lib/utils';
+import { useSearchParams } from 'next/navigation';
 
 interface QRCodePopoverProps {
     url: string;
@@ -24,7 +26,8 @@ export default function QRCodePopover({
 }: QRCodePopoverProps) {
     const [qrCode, setQrCode] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
+    const searchParams = useSearchParams();
+    const [isOpen, setIsOpen] = useState(!!searchParams.get('viewing-qr'));
 
     const generateQR = useCallback(async () => {
         setIsLoading(true);
@@ -62,8 +65,15 @@ export default function QRCodePopover({
     };
 
     return (
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <PopoverTrigger asChild>
+        <Popover open={isOpen} onOpenChange={(open) => {
+            setIsOpen(open);
+            if (open) {
+                updateSearchParam('viewing-qr', 'true');
+            } else if (!open) {
+                removeSearchParam('viewing-qr');
+            }
+        }}>
+            <PopoverTrigger className='z-20' asChild>
                 <Button
                     variant={buttonVariant}
                     size={buttonSize}
@@ -74,7 +84,7 @@ export default function QRCodePopover({
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80" align="end">
-                <div className="space-y-4">
+                <div className="space-y-4 relative z-10">
                     <div className="space-y-2">
                         <h4 className="font-semibold text-sm">QR Code</h4>
                         <p className="text-xs text-gray-500">

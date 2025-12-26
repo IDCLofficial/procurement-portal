@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,11 @@ export default function ContractorSearch() {
     const searchParams = useSearchParams();
     const dispatch = useAppDispatch();
     const categories = useAppSelector(selectCategoriesData);
+    const viewFromMDA = searchParams.get('mda_sqiik');
+
+    const isValidMDAID = useMemo(() => {
+        return viewFromMDA !== null;
+    }, [viewFromMDA]);
     
     const { data: mdas } = useGetMDAQuery();
     
@@ -160,7 +165,7 @@ export default function ContractorSearch() {
                     </div>}
 
                     {/* LGA */}
-                    {mdas && mdas.mdas && <div className="space-y-2 flex-1 sm:min-w-64">
+                    {!isValidMDAID && mdas && mdas.mdas && <div className="space-y-2 flex-1 sm:min-w-64">
                         <label className="text-sm font-medium text-gray-700 max-sm:text-xs"><abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></label>
                         <Select value={filters.mda} onValueChange={(value) => handleFilterChange('mda', value)}>
                             <SelectTrigger className="max-sm:h-10 h-10 w-full max-sm:text-sm">

@@ -288,21 +288,12 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                 <div>
                                     <p className="text-sm text-gray-600 mb-2">Associated <abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></p>
                                     <div className="flex flex-wrap gap-2 text-lg capitalize font-medium">
-                                        {/* <pre>{JSON.stringify(contractor, null, 2)}</pre> */}
-                                        {/* {contractor.approvedSectors.map((sector) => (
-                                        <Badge 
-                                            key={sector} 
-                                            className={getSectorConfig(sector).badgeClass}
-                                        >
-                                            {sector}
-                                        </Badge>
-                                    ))} */}
                                         {contractor.sector}
                                     </div>
                                 </div>
                                 <div className="h-px bg-gray-100"></div>
                                 <div>
-                                    <p className="text-sm text-gray-600 mb-2">Category</p>
+                                    <p className="text-sm text-gray-600 mb-2">Contractor Category</p>
                                     <p className="text-base font-medium">{contractor.category}</p>
                                 </div>
                                 <div className="h-px bg-gray-100"></div>

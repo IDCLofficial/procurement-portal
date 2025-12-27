@@ -180,7 +180,7 @@ export default function VerificationForm() {
                         </Button>
 
                         {/* Info Alert */}
-                        <Alert className="bg-blue-50 border-blue-200">
+                        <Alert className="bg-linear-to-b from-transparent to-blue-50 border-blue-200">
                             <FaQrcode color='#1c398e' />
                             <AlertDescription className="text-sm text-blue-900">
                                 <span>

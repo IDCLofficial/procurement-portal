@@ -106,12 +106,12 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {isQrOpen && <div className='bg-black/25 h-screen w-screen absolute top-0 left-0 z-10 pointer-events-none' />}
+                                {isQrOpen && <div className='bg-black/25 h-screen w-screen fixed top-0 left-0 z-10 pointer-events-none' />}
 
                                 <QRCodePopover
                                     url={verificationUrl}
                                     label={isQrOpen ? "Hide QR" : "Show QR"}
-                                    buttonVariant="outline"
+                                    buttonVariant={isQrOpen ? "destructive" :"outline"}
                                     onToggle={(open: boolean) => setIsQrOpen(open)}
                                     isOpen={isQrOpen}
                                 />

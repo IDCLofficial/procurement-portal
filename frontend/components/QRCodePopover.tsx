@@ -72,7 +72,7 @@ export default function QRCodePopover({
                 <Button
                     variant={buttonVariant}
                     size={buttonSize}
-                    className="cursor-pointer active:scale-95 transition-transform duration-300"
+                    className="cursor-pointer active:scale-95 transition-all duration-300"
                 >
                     <FaQrcode className="h-4 w-4" />
                     <span>{label}</span>

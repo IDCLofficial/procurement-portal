@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { FaQrcode } from 'react-icons/fa6';
 import { getGradeConfig, getStatusConfig } from '@/lib/constants';
 import { copyToClipboard } from '@/lib';
+import { isUrl } from '@/lib/utils';
 
 interface ContractorDetailsProps {
     contractor: {
@@ -249,7 +250,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Website</p>
                                             <div className="inline-flex gap-2 items-center">
-                                                {contractor.website && <a
+                                                {isUrl(contractor.website) && <a
                                                     href={`${(contractor.website.startsWith('http://') || contractor.website.startsWith('https://')) ? '' : 'https://'}${contractor.website}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
@@ -260,7 +261,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                     </svg>
                                                 </a>}
-                                                {!contractor.website && <p className="text-sm font-medium text-gray-900">Not Available</p>}
+                                                {!isUrl(contractor.website) && <p className="text-sm font-medium text-gray-900">Not Available</p>}
                                                 <button
                                                     onClick={() => copyToClipboard(contractor.website)}
                                                     className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded cursor-pointer"

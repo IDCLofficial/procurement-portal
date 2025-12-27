@@ -28,6 +28,7 @@ import { processingFee, return_url_key } from '@/lib/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
+import { isUrl } from '@/lib/utils';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -212,6 +213,11 @@ export default function RegistrationContinuation() {
         if (currentStep === 2) {
             if (!formData.companyName || !formData.cacNumber || !formData.tinNumber || !formData.address || !formData.lga) {
                 toast.error('Please fill in all required fields');
+                return;
+            }
+
+            if (formData.website && !isUrl(formData.website)) {
+                toast.error('Please enter a valid website URL');
                 return;
             }
 

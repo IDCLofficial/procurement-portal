@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useDebounce } from '@/hooks/useDebounce';
 import { lgaObject } from '@/lib/constants.const';
+import { cn, isUrl } from '@/lib/utils';
 
 interface Step2CompanyDetailsProps {
     formData: {
@@ -151,8 +152,14 @@ export default function Step2CompanyDetails({ formData, onInputChange }: Step2Co
                         placeholder="https://www.yourcompany.com"
                         value={formData.website}
                         onChange={(e) => onInputChange('website', e.target.value)}
-                        className="mt-1.5"
+                        className={cn(
+                            "mt-1.5",
+                            formData.website && !isUrl(formData.website) ? "border-red-500" : ""
+                        )}
                     />
+                    {formData.website && !isUrl(formData.website) && (
+                        <p className="text-xs text-red-500 mt-1">Please enter a valid website URL</p>
+                    )}
                 </div>
             </div>
         </div>

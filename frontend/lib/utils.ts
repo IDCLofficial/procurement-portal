@@ -22,3 +22,30 @@ export function removeSearchParam(key: string) {
 
   window.history.pushState({}, "", url.toString());
 }
+
+interface UrlValidationOptions {
+  requireProtocol?: boolean;
+  allowedProtocols?: string[];
+}
+
+export function isUrl(value: string, options: UrlValidationOptions = {requireProtocol: false, allowedProtocols: ['http', 'https']}): boolean {
+  const { requireProtocol = true, allowedProtocols } = options;
+
+  try {
+    // If protocol not required, try adding one first
+    const testString = requireProtocol
+      ? value
+      : (value.match(/^[a-z]+:\/\//i) ? value : `https://${value}`);
+
+    const url = new URL(testString);
+
+    // Check if protocol is allowed
+    if (allowedProtocols && allowedProtocols.length > 0) {
+      return allowedProtocols.includes(url.protocol.replace(':', ''));
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}

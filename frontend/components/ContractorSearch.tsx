@@ -136,7 +136,7 @@ export default function ContractorSearch() {
     };
 
     return (
-        <Card className='bg-white/75'>
+        <Card className='bg-white/90'>
             <CardHeader className="max-sm:p-4">
                 <CardTitle className="sm:text-xl text-base">Search Contractors</CardTitle>
             </CardHeader>

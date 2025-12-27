@@ -176,7 +176,7 @@ export default function ContractorTable() {
     };
 
     return (
-        <Card className='bg-white/75'>
+        <Card className="" gradient='bg-linear-to-r from-white/95 to-white/75'>
             <CardHeader className="max-sm:p-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div>

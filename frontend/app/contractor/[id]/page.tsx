@@ -138,7 +138,7 @@ export default function ContractorPage({ params }: { params: Promise<{ id: strin
 
             <div className="fixed top-0 right-0 w-full h-full pointer-events-none">
                 <div className="blob absolute -right-64 -bottom-64 pointer-events-none scale-x-[-1] opacity-25" />
-                <div className="blob absolute -left-96 -top-96 pointer-events-none scale-x-[-1] opacity-5" />
+                <div className="blob absolute -left-96 -top-96 pointer-events-none scale-x-[-1] one" />
             </div>
 
             <Suspense fallback={<Loader />}>

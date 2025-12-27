@@ -77,7 +77,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
             />
             <div className="container mx-auto px-4 py-8 space-y-6 relative z-10">
                 {/* Header Section */}
-                <Card className='bg-white/75 relative z-10'>
+                <Card className='relative z-10' gradient='bg-linear-to-r from-white/95 to-white/75'>
                     <CardContent className="pt-0">
                         <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                             <div className="space-y-2">
@@ -130,7 +130,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Company Information */}
-                    <Card className="hover:shadow-lg transition-shadow duration-300 bg-white/75">
+                    <Card className="hover:shadow-lg transition-shadow duration-300" gradient="bg-linear-to-r from-white/95 to-white/75">
                         <CardContent className="pt-0">
                             <div className="flex items-center gap-2 mb-5">
                                 <h2 className="text-xl font-medium text-gray-900/50">Company Information</h2>
@@ -182,7 +182,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                     </Card>
 
                     {/* Contact Information */}
-                    <Card className="hover:shadow-lg transition-shadow duration-300 bg-white/75">
+                    <Card className="hover:shadow-lg transition-shadow duration-300" gradient="bg-linear-to-r from-white/95 to-white/75">
                         <CardContent className="pt-0">
                             <div className="flex items-center gap-2 mb-5">
                                 <h2 className="text-xl font-medium text-gray-900/50">Contact Information</h2>
@@ -282,7 +282,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Sector & Classification */}
-                    <Card className="bg-white/75">
+                    <Card className="" gradient="bg-linear-to-r from-white/95 to-white/75">
                         <CardContent className="pt-0">
                             <h2 className="text-xl font-medium mb-4 opacity-50">Sector & Classification</h2>
                             <div className="space-y-4">
@@ -312,7 +312,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                     </Card>
 
                     {/* Registration Status */}
-                    <Card className="bg-white/75">
+                    <Card className="" gradient="bg-linear-to-r from-white/95 to-white/75">
                         <CardContent className="pt-0">
                             <h2 className="text-xl font-medium mb-4 opacity-50">Registration Status</h2>
                             <div className="space-y-4">

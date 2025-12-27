@@ -158,7 +158,7 @@ export default function Step2CompanyDetails({ formData, onInputChange }: Step2Co
                         )}
                     />
                     {formData.website && !isUrl(formData.website) && (
-                        <p className="text-xs text-red-500 mt-1">Please enter a valid website URL</p>
+                        <p className="text-xs text-red-500 mt-1">Please enter a valid website URL (e.g., https://www.example.com)</p>
                     )}
                 </div>
             </div>

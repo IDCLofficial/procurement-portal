@@ -32,8 +32,11 @@ export default function DashboardPage() {
     };
 
     const handleReapply = () => {
-        console.log('Reapply for registration');
         router.push('/dashboard/register');
+    };
+
+    const handleRenew = () => {
+        router.push('/dashboard/renewal');
     };
 
     const handleContactSupport = () => {
@@ -99,7 +102,8 @@ export default function DashboardPage() {
     const registrationStatus = getRegistrationStatus();
     
     // Get decline/suspension reason from application notes if available
-    const statusReason = application?.notes || undefined;
+    // const statusReason = application?.notes || undefined;
+    const statusReason = 'Your application was declined due to non-compliance with the registration requirements.';
 
     const handlePayment = async () => {
         localStorage.setItem(return_url_key, "/dashboard");
@@ -133,7 +137,8 @@ export default function DashboardPage() {
                             suspensionReason={registrationStatus === 'suspended' ? statusReason : undefined}
                             onDownloadCertificate={registrationStatus === 'verified' ? handleDownloadCertificate : undefined}
                             onUpdateProfile={handleUpdateProfile}
-                            onReapply={registrationStatus === 'declined' || registrationStatus === 'expired' ? handleReapply : undefined}
+                            onReapply={registrationStatus === 'declined' ? handleReapply : undefined}
+                            onRenew={registrationStatus === 'verified' ? handleRenew : undefined}
                             onContactSupport={registrationStatus === 'declined' || registrationStatus === 'suspended' ? handleContactSupport : undefined}
                         />}
 

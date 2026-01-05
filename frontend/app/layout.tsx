@@ -32,7 +32,7 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased satoshi-font`}
             >
-                <Logger />
+                <Logger key={"logger"} />
                 <ExternalUrlInterceptor />
                 <NextTopLoader
                     color="#047857"

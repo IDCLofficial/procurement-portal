@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException, InternalServerErrorException} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef, UnauthorizedException, InternalServerErrorException, NotImplementedException} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Request } from 'express';
@@ -470,65 +470,64 @@ export class VendorsService {
       if(updateRegistrationDto.company){
         const checkIfNameExists = await this.companyModel.findOne({companyName:updateRegistrationDto.company.companyName});
         
-        if(checkIfNameExists?.userId !== vendor._id){
-          throw new ConflictException('company name already exists')
-        }
+        if(checkIfNameExists?.userId === vendor._id){
+          try{
+            // Check if company already exists for this vendor
+            let company = await this.companyModel.findOne({ userId: vendor._id }).exec();
 
-        try{
-          // Check if company already exists for this vendor
-          let company = await this.companyModel.findOne({ userId: vendor._id }).exec();
-
-          let result:any;
-          if (company) {
-            // Update existing company
-            company.companyName = updateRegistrationDto.company.companyName;
-            company.cacNumber = updateRegistrationDto.company.cacNumber;
-            company.tin = updateRegistrationDto.company.tin;
-            company.address = updateRegistrationDto.company.businessAddres;
-            company.lga = updateRegistrationDto.company.lga;
-            company.website = updateRegistrationDto.company.website || "not specified";
-            
-            result = await company.save();
-            
-            // Update vendor form step to directors if still on company step
-            if (vendor.companyForm === companyForm.STEP1) {
+            let result:any;
+            if (company) {
+              // Update existing company
+              company.companyName = updateRegistrationDto.company.companyName;
+              company.cacNumber = updateRegistrationDto.company.cacNumber;
+              company.tin = updateRegistrationDto.company.tin;
+              company.address = updateRegistrationDto.company.businessAddres;
+              company.lga = updateRegistrationDto.company.lga;
+              company.website = updateRegistrationDto.company.website || "not specified";
+              
+              result = await company.save();
+              
+              // Update vendor form step to directors if still on company step
+              if (vendor.companyForm === companyForm.STEP1) {
+                vendor.companyForm = companyForm.STEP2;
+                await vendor.save();
+              }
+              
+              return {
+                message: "Company information updated successfully",
+                result: result,
+                nextStep: vendor.companyForm
+              }
+            } else {
+              // Create new company
+              const newCompany = new this.companyModel({
+                companyName: updateRegistrationDto.company.companyName,
+                cacNumber: updateRegistrationDto.company.cacNumber,
+                tin: updateRegistrationDto.company.tin,
+                address: updateRegistrationDto.company.businessAddres,
+                lga: updateRegistrationDto.company.lga,
+                website: updateRegistrationDto.company.website || "not specified",
+                userId: vendor._id,
+              })
+              result = await newCompany.save();
+              
               vendor.companyForm = companyForm.STEP2;
-              await vendor.save();
+              vendor.companyId = result._id as Types.ObjectId;
+              await vendor.save()
+              
+              return {
+                message: "Company registered successfully",
+                result: result,
+                nextStep: vendor.companyForm
+              }
             }
-            
-            return {
-              message: "Company information updated successfully",
-              result: result,
-              nextStep: vendor.companyForm
-            }
-          } else {
-            // Create new company
-            const newCompany = new this.companyModel({
-              companyName: updateRegistrationDto.company.companyName,
-              cacNumber: updateRegistrationDto.company.cacNumber,
-              tin: updateRegistrationDto.company.tin,
-              address: updateRegistrationDto.company.businessAddres,
-              lga: updateRegistrationDto.company.lga,
-              website: updateRegistrationDto.company.website || "not specified",
-              userId: vendor._id,
-            })
-            result = await newCompany.save();
-            
-            vendor.companyForm = companyForm.STEP2;
-            vendor.companyId = result._id as Types.ObjectId;
-            await vendor.save()
-            
-            return {
-              message: "Company registered successfully",
-              result: result,
-              nextStep: vendor.companyForm
-            }
+          }catch(err){
+            this.Logger.debug(`${err}`)
+            throw new NotImplementedException('There was an error registering/updating company')
           }
-        }catch(err){
-          this.Logger.debug(`${err}`)
-          throw new ConflictException('There was an error registering/updating company')
+        }else{
+          this.Logger.debug(`incoming id:${vendor._id} / existing name vid: ${checkIfNameExists?.userId}`)
         }
-        
       }
       /**
        * update company registration for directors
@@ -829,7 +828,7 @@ export class VendorsService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException(`An error occured`);
+      throw new NotImplementedException(`An error occured`);
     }
   }
 

@@ -32,7 +32,7 @@ export type Director = {
 @Schema({ timestamps: true })
 export class Company {
     @ApiProperty({ description: 'ObjectId of the user', example: '507f1f77bcf86cd799439011' })
-    @Prop({ type: Types.ObjectId, required: true })
+    @Prop({ type: Types.ObjectId, ref:"Vendor", required: true })
     userId: Types.ObjectId;
 
     @ApiProperty({ description: 'Name of the company', example: 'Tech Innovators Inc.' })

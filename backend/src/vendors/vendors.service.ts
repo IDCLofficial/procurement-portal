@@ -702,7 +702,7 @@ export class VendorsService {
                 existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
                 // if (previousFileUrl !== doc.fileUrl) {
                   existingDoc.status = {
-                    status: DocumentStatus.APPROVED,
+                    status: DocumentStatus.PENDING,
                   };
                 // }
 

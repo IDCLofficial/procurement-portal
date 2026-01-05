@@ -189,7 +189,7 @@ export class UsersService {
     const deskOfficers = await this.userModel
     .find({
       role:'Desk officer',
-      mda:decodeURIComponent(mda)
+      mda,
     })
     .sort({createdAt: -1})
     .exec()

@@ -316,7 +316,8 @@ export class UsersController {
   })
   @ApiBearerAuth()
   async getUsersByMda(@Query('mda') mda: string) {
-    return this.usersService.getDeskOfficersByMda(mda);
+    const mdaFormatted = decodeURIComponent(mda);
+    return this.usersService.getDeskOfficersByMda(mdaFormatted);
   }
   
   /**

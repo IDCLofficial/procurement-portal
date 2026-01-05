@@ -700,11 +700,11 @@ export class VendorsService {
                 existingDoc.documentType = doc.documentType;
                 existingDoc.validFor = doc.validFor;
                 existingDoc.hasValidityPeriod = doc.hasValidityPeriod;
-                // if (previousFileUrl !== doc.fileUrl) {
+                if (previousFileUrl !== doc.fileUrl) {
                   existingDoc.status = {
                     status: DocumentStatus.PENDING,
                   };
-                // }
+                }
 
                 return await existingDoc.save();
               } else {

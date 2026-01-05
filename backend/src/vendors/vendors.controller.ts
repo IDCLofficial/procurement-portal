@@ -1011,10 +1011,30 @@ export class VendorsController {
     return this.vendorsService.registerCompany(userId, updateRegistrationDto, authToken);
   }
 
-  /** */
-  @Patch('restart-registration')
+  /**
+   * Restart vendor registration process
+   * 
+   * @description Allows a vendor to restart their registration process from the beginning. This endpoint clears any existing registration data and allows the vendor to start fresh.
+   * 
+   * @param req - Request object containing the JWT token in the Authorization header
+   * @returns Restarted registration process response
+   * 
+   * @example
+   * POST /vendors/restart-registration
+   * Headers: {
+   *   "Authorization": "Bearer <jwt_token>"
+   * }
+   * 
+   * @response {200} Registration process restarted successfully
+   * @response {401} Unauthorized - Missing or invalid token
+   */
+  @ApiOperation({ summary: 'Restart vendor registration process' })
+  @ApiResponse({ status: 200, description: 'Registration process restarted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Missing or invalid token' })
+  @ApiBearerAuth()
+  @Post('restart-registration')
   restartRegistration(@Req() req:any){
-     // Extract and verify JWT token from Authorization header
+    // Extract and verify JWT token from Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       throw new UnauthorizedException('Authorization header is missing');

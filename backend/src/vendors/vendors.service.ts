@@ -355,7 +355,12 @@ export class VendorsService {
 
     try{
       // Fetch vendor profile without password
-      const vendor = await this.vendorModel.findById(userId).select('-password').exec();
+      const vendor = await this.vendorModel.findById(userId).select({
+        password:0,
+        settings:0,
+        accessToken:0,
+        loginHistory:0,
+      }).exec();
       
       if (!vendor) {
         throw new NotFoundException(`Vendor with ID ${userId} not found`);
@@ -802,8 +807,8 @@ export class VendorsService {
           company.grade = updateRegistrationDto.categoryAndGrade.grade;
           await company.save();
 
-          const hasAlreadyPaid = await this.paymentModel.findOne({vendorId:new Types.ObjectId(vendor._id as Types.ObjectId), type:paymentType.PROCESSINGFEE, status:PaymentStatus.VERIFIED})
-
+          const hasAlreadyPaid = await this.paymentModel.findOne({vendorId:(vendor._id as Types.ObjectId), type:paymentType.PROCESSINGFEE, status:PaymentStatus.VERIFIED})
+          
           if(hasAlreadyPaid){
             vendor.companyForm = companyForm.COMPLETE;
             await vendor.save();
@@ -812,6 +817,9 @@ export class VendorsService {
               result: company,
               nextStep: vendor.companyForm
             }
+          }else{
+            vendor.companyForm = companyForm.STEP6;
+            await vendor.save();
           }
 
           return {

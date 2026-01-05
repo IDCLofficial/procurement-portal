@@ -468,8 +468,8 @@ export class VendorsService {
 
     try{
       if(updateRegistrationDto.company){
-        const checkIfNameExists = await this.companyModel.findOne({companyName:updateRegistrationDto.company.companyName}).exec();
-        if(checkIfNameExists && checkIfNameExists.userId !== new Types.ObjectId(vendor._id as Types.ObjectId)){
+        const checkIfNameExists = await this.companyModel.findOne({companyName:updateRegistrationDto.company.companyName, userId:new Types.ObjectId(vendor._id as Types.ObjectId)}).exec();
+        if(checkIfNameExists){
           throw new BadRequestException('company name already exists')
         }
         try{

@@ -1011,6 +1011,29 @@ export class VendorsController {
     return this.vendorsService.registerCompany(userId, updateRegistrationDto, authToken);
   }
 
+  /** */
+  @Patch('restart-registration')
+  restartRegistration(@Req() req:any){
+     // Extract and verify JWT token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header is missing');
+    } 
+
+    const authToken = authHeader.replace('Bearer ', '').trim();
+    if (!authToken) {
+      throw new UnauthorizedException('Token is missing');
+    }  
+
+    const userId = this.jwtService.verify(authToken)._id;
+    
+    if (!userId) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    
+    return this.vendorsService.restartRegistration(userId, authToken);
+  }
+
   /**
    * Update a vendor profile
    * 

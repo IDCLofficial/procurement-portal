@@ -13,7 +13,7 @@ import TokenHandlers from 'src/lib/generateToken';
 import { updateRegistrationDto } from './dto/update-registration.dto';
 import { Company, CompanyDocument, Directors, DirectorsDocument, Status } from '../companies/entities/company.schema';
 import { verificationDocuments, verificationDocument, Status as DocumentStatus, verificationDocPreset } from '../documents/entities/document.schema';
-import { Payment, PaymentDocument } from '../payments/entities/payment.schema';
+import { Payment, PaymentDocument, PaymentStatus, paymentType } from '../payments/entities/payment.schema';
 import { Application, ApplicationDocument } from '../applications/entities/application.schema';
 import { loginDto } from './dto/logn.dto';
 import { S3Client } from '@aws-sdk/client-s3';
@@ -799,8 +799,17 @@ export class VendorsService {
           company.grade = updateRegistrationDto.categoryAndGrade.grade;
           await company.save();
 
-          vendor.companyForm = companyForm.STEP6;
-          await vendor.save();
+          const hasAlreadyPaid = await this.paymentModel.findOne({vendorId:new Types.ObjectId(vendor._id as Types.ObjectId), type:paymentType.PROCESSINGFEE, status:PaymentStatus.VERIFIED})
+
+          if(hasAlreadyPaid){
+            vendor.companyForm = companyForm.COMPLETE;
+            await vendor.save();
+            return {
+              message: "Category, mda and grade updated successfully",
+              result: company,
+              nextStep: vendor.companyForm
+            }
+          }
 
           return {
             message: "Category, mda and grade updated successfully. Proceed to payment",
@@ -821,6 +830,27 @@ export class VendorsService {
     }
   }
 
+  /**Restart registration */
+  async restartRegistration(userId:string, authToken:string){
+    const vendor = await this.vendorModel.findById(new Types.ObjectId(userId));
+
+    if(!vendor){
+      throw new NotFoundException("vendor not found")
+    }
+
+    if(vendor.accessToken !== authToken){
+      throw new UnauthorizedException('Invalid or Expired token')
+    }
+
+    vendor.companyForm = companyForm.STEP1;
+    await vendor.save();
+
+    return {
+      message: "Registration restarted successfully",
+      nextStep: vendor.companyForm
+    }
+
+  }
 
   /** */
   async renewRegistration(userId:string, renewRegistrationDto:renewRegistrationDto){

@@ -21,6 +21,9 @@ export class Payment {
     @Prop({ required: true, unique: true })
     paymentId: string; // e.g., PAY-2024-001
 
+    @Prop({ type: Types.ObjectId, ref: 'Vendor', required: true })
+    vendorId: Types.ObjectId;
+
     @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
     companyId: Types.ObjectId;
 

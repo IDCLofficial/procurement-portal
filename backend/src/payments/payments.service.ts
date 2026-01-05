@@ -146,6 +146,7 @@ export class SplitPaymentService {
 
       const payment = new this.paymentModel({
         paymentId,
+        vendorId: new Types.ObjectId(user._id),
         companyId: new Types.ObjectId(company._id as Types.ObjectId),
         amount: dto.amount, // Convert from kobo to naira,
         category: categoryString || 'N/A',

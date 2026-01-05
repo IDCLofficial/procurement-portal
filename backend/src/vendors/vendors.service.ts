@@ -36,7 +36,7 @@ export class VendorsService {
   constructor(
     private readonly configService: ConfigService,
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
-    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    @InjectModel(Company.name) private readonly companyModel: Model<CompanyDocument>,
     @InjectModel(Directors.name) private directorsModel: Model<DirectorsDocument>,
     @InjectModel(verificationDocuments.name) private verificationDocumentModel: Model<verificationDocument>,
     @InjectModel(verificationDocPreset.name) private verificationDocumentPresetModel: Model<verificationDocPreset>,
@@ -470,7 +470,7 @@ export class VendorsService {
       if(updateRegistrationDto.company){
         const checkIfNameExists = await this.companyModel.findOne({companyName:updateRegistrationDto.company.companyName});
         
-        if(checkIfNameExists?.userId.toString() === (vendor._id as string)){
+        if(!checkIfNameExists || checkIfNameExists?.userId.equals(vendor._id as Types.ObjectId)){
           try{
             // Check if company already exists for this vendor
             let company = await this.companyModel.findOne({ userId: vendor._id }).exec();
@@ -527,6 +527,7 @@ export class VendorsService {
           }
         }else{
           this.Logger.debug(`incoming id:${vendor._id} / existing name vid: ${checkIfNameExists?.userId}`)
+          throw new ConflictException('company name already exists')
         }
       }
       /**

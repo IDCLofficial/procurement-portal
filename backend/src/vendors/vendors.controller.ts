@@ -1020,7 +1020,7 @@ export class VendorsController {
    * @returns Restarted registration process response
    * 
    * @example
-   * POST /vendors/restart-registration
+   * PATCH /vendors/restart-registration
    * Headers: {
    *   "Authorization": "Bearer <jwt_token>"
    * }
@@ -1032,7 +1032,7 @@ export class VendorsController {
   @ApiResponse({ status: 200, description: 'Registration process restarted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Missing or invalid token' })
   @ApiBearerAuth()
-  @Post('restart-registration')
+  @Patch('restart-registration')
   restartRegistration(@Req() req:any){
     // Extract and verify JWT token from Authorization header
     const authHeader = req.headers.authorization;

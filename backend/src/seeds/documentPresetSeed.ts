@@ -43,7 +43,7 @@ const VerificationDocPresetModel = mongoose.model<IVerificationDocPreset>(
 async function seedDocumentPresets() {
   try {
     // Connect to MongoDB
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/procurement';
+    const mongoUri = process.env.MONGO_URI || '';
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
 

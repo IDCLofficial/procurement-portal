@@ -30,7 +30,7 @@ function generateCode(length: number = 6): string {
 
 async function seedMdas() {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/procurement';
+    const mongoUri = process.env.MONGO_URI || '';
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
 

@@ -39,7 +39,7 @@ const GradeModel = mongoose.model<IGrade>('grades', gradeSchema);
 async function seedGrades() {
   try {
     // Connect to MongoDB
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/procurement';
+    const mongoUri = process.env.MONGO_URI || '';
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
 

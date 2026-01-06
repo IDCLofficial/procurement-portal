@@ -7,7 +7,7 @@ import { Company, CompanySchema } from '../companies/entities/company.schema';
 import { Vendor, VendorSchema } from '../vendors/entities/vendor.schema';
 
 // Configuration
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://idcl:Imodcl%401..@v1.uzw7hnn.mongodb.net/primary';
+const MONGO_URI = process.env.MONGO_URI || '';
 
 async function updateCompanyDocumentStatus() {
   try {

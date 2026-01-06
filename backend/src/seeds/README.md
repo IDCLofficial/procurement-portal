@@ -18,11 +18,6 @@ Seeds a demo super admin user for initial system access.
 npm run seed:admin
 ```
 
-**Default Credentials:**
-- **Email:** `admin@procurement.gov.ng`
-- **Password:** `Admin@123456`
-- **Role:** Admin (highest role)
-
 ⚠️ **Important:** Change the password immediately after first login!
 
 ### 3. Document Presets Seed

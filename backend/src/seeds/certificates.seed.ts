@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/procurement';
+const MONGO_URI = process.env.MONGO_URI || '';
 
 // Define Certificate schema directly (matching the actual schema)
 const certificateSchema = new mongoose.Schema({

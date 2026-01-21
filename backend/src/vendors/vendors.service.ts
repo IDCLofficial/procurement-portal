@@ -158,12 +158,12 @@ export class VendorsService {
       throw new BadRequestException('Invalid password');
     }
     const { password: _, ...user } = vendor.toObject();
-    console.log(user)
     const accessToken =  this.tokenHandlers.generateToken(user)
     
     vendor.accessToken = accessToken;
     await vendor.save();
-
+    console.log(vendor)
+    
     let loginData = await this.getLoginHistoryFromRequest(req);
     loginData = await enrichWithLocation(loginData);
 
@@ -352,25 +352,28 @@ export class VendorsService {
     if (!userId) {
       throw new UnauthorizedException('An error occured');
     }
+    console.log(userId)
 
     try{
       // Fetch vendor profile without password
       const vendor = await this.vendorModel.findById(userId).select({
         password:0,
         settings:0,
-        accessToken:0,
         loginHistory:0,
       }).exec();
+
       
       if (!vendor) {
         throw new NotFoundException(`Vendor with ID ${userId} not found`);
       }
-
+      
       if(vendor.accessToken !== authToken){
         throw new UnauthorizedException('Invalid or Expired token')
       }
       
-      return vendor.toObject();
+      const vendorObject = vendor.toObject();
+      delete vendorObject.accessToken;
+      return vendorObject;
     }catch(err){
       this.Logger.error(err)
       throw new InternalServerErrorException("An error occured")

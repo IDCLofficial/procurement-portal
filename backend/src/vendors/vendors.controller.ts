@@ -330,6 +330,10 @@ export class VendorsController {
     }
 
     const userId = this.jwtService.decode(authToken)._id;
+    if(!userId){
+      this.logger.error('JWT failed to decode token or no id found')
+      throw new UnauthorizedException('An error Occured')
+    }
     return this.vendorsService.getProfile(userId, authToken);
   }
 

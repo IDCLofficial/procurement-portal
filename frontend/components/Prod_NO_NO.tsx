@@ -243,7 +243,7 @@ const ApiPlaygroundEasterEgg: React.FC = () => {
             { key: KeyboardKey.KeyT, ctrlKey: true, enabled: true }, // Ctrl+T for theme
             { key: KeyboardKey.KeyT, metaKey: true, enabled: true }, // CMD+T for theme
             { key: KeyboardKey.KeyH, ctrlKey: true, shiftKey: true, enabled: true }, // Ctrl+Shift+H for secret
-            { key: KeyboardKey.Escape, isSpecialKey: true, enabled: showSecret }, // ESC to close secret
+            { key: KeyboardKey.Escape, enabled: showSecret }, // ESC to close secret
         ],
         onTrigger: (shortcut) => {
             if (shortcut.key === KeyboardKey.KeyT) {

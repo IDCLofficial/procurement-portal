@@ -324,14 +324,11 @@ export class VendorsController {
     }
   })
   findOne(@Req() req:any) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || typeof authHeader !== 'string') {
+    const authToken = req.headers.authorization.split(' ')[1];
+    if (!authToken || typeof authToken !== 'string') {
       throw new UnauthorizedException('Could not find your authorization header')
     }
-    const authToken = authHeader.split(' ')[1];
-    if (!authToken) {
-      throw new UnauthorizedException('Could not find your authorization token')
-    }
+
     const userId = this.jwtService.decode(authToken)._id;
     return this.vendorsService.getProfile(userId, authToken);
   }

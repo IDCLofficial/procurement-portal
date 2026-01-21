@@ -33,10 +33,10 @@ const User = mongoose.model('User', userSchema);
 // Demo SuperAdmin user data
 const superAdminData = {
   fullName: 'Super Admin',
-  email: 'admin@procurement.gov.ng',
+  email: 'super.admin@procurement.im.gov.ng',
   phoneNo: '+234-800-000-0000',
   role: Role.ADMIN, // Admin as the highest role
-  password: 'Admin@123456', // Will be hashed before saving
+  password: 'Admin@proc123456', // Will be hashed before saving
   isActive: true,
   assignedApps: 0
 };

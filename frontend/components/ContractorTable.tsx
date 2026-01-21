@@ -293,9 +293,9 @@ export default function ContractorTable() {
                                             <TableCell className="text-right">
                                                 <Link href={`/contractor/${contractor.certId}`}>
                                                     <Button
-                                                        variant="ghost"
+                                                        variant="outline"
                                                         size="sm"
-                                                        className="cursor-pointer active:scale-95 transition-transform duration-300"
+                                                        className="cursor-pointer border-theme-green text-theme-green active:scale-95 transition-transform duration-300"
                                                     >
                                                         View Details
                                                     </Button>

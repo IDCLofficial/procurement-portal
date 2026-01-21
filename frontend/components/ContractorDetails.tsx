@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import QRCodePopover from '@/components/QRCodePopover';
 import VerificationModal from '@/components/VerificationModal';
+import { CertificateDetailsPanel, Certificate } from '@/components/CertificateDetailsPanel';
 import { FaCheckCircle, FaDownload, FaGlobe, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { FaQrcode } from 'react-icons/fa6';
@@ -45,16 +46,30 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
             searchParams.get('v') === '1';
     }, [searchParams]);
     const [isQrOpen, setIsQrOpen] = useState(false);
-    
+    const [showCertificatePanel, setShowCertificatePanel] = useState(false);
 
     const [showModal, setShowModal] = useState(isFromQR);
 
 
     const handleDownloadCertificate = () => {
-        toast.success('Certificate downloaded successfully', {
-            description: `Certificate for ${contractor.name}`,
-            duration: 3000,
-        });
+        setShowCertificatePanel(true);
+    };
+
+    const certificateData: Certificate = {
+        certificateId: contractor.id,
+        contractorName: contractor.name,
+        companyName: contractor.companyName,
+        rcBnNumber: contractor.rcbnNumber,
+        tin: contractor.tinNumber,
+        address: contractor.address,
+        phone: contractor.phone,
+        email: contractor.email,
+        website: contractor.website,
+        grade: contractor.grade,
+        lga: contractor.lga,
+        status: contractor.status as 'approved' | 'expired' | 'revoked',
+        validUntil: contractor.expiryDate,
+        approvedSectors: [contractor.sector],
     };
 
     const handleOnClose = () => {
@@ -74,6 +89,12 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                 contractor={contractor}
                 isOpen={showModal}
                 onClose={handleOnClose}
+            />
+            <CertificateDetailsPanel
+                certificate={certificateData}
+                open={showCertificatePanel}
+                onOpenChange={setShowCertificatePanel}
+                showWatermark={true}
             />
             <div className="container mx-auto px-4 py-8 space-y-6 relative z-10">
                 {/* Header Section */}

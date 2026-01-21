@@ -178,9 +178,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }, [token, refetchProfile, refetchCompanyDetails, refetchDocumentsPresets, refetchCategories, refetchMDA, refetchApplication]); 
 
     const handleLogin = useCallback((token: string) => {
+        console.log('handleLogin', token);
         const enc_token = encrypt(token);
+
         const returnTo = localStorage.getItem('returnTo');
         setToken(token);
+
         localStorage.setItem(session_key, enc_token);
         dispatch(login(token));
 

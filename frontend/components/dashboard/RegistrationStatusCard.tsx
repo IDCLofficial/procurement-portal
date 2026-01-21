@@ -6,6 +6,12 @@ import { FaCheckCircle, FaDownload, FaEdit, FaTimesCircle, FaExclamationCircle, 
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { FaInfo } from 'react-icons/fa6';
+import { useRestartApplicationRegistrationMutation } from '@/store/api/vendor.api';
+import { toast } from 'sonner';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ResponseError } from '@/store/api/types';
+import { Loader2 } from 'lucide-react';
 
 interface RegistrationStatusCardProps {
     registrationId: string;
@@ -16,8 +22,7 @@ interface RegistrationStatusCardProps {
     suspensionReason?: string;
     onDownloadCertificate?: () => void;
     onUpdateProfile?: () => void;
-    onReapply?: () => void;
-    onRenew?: () => void;
+    onStartRenewal?: () => void;
     onContactSupport?: () => void;
 }
 
@@ -30,10 +35,29 @@ export default function RegistrationStatusCard({
     suspensionReason,
     onDownloadCertificate,
     onUpdateProfile,
-    onReapply,
-    onRenew,
+    onStartRenewal,
     onContactSupport,
 }: RegistrationStatusCardProps) {
+    const router = useRouter();
+    const [restartApplicationRegistration, { isLoading: isRestartApplicationRegistrationLoading, isSuccess: isRestartApplicationRegistrationSuccess, isError: isRestartApplicationRegistrationError }] = useRestartApplicationRegistrationMutation();
+
+    const handleRestartApplicationRegistration = async () => {
+        if (isRestartApplicationRegistrationLoading) return;
+        
+        toast.loading('Restarting application registration...', { id: "restartApplicationRegistration" });
+        await restartApplicationRegistration();
+        toast.dismiss("restartApplicationRegistration");
+    };
+
+    useEffect(() => {
+        if (isRestartApplicationRegistrationSuccess) {
+            router.push('/dashboard/complete-registration');
+            toast.success('Application registration restarted successfully');
+        }
+        if (isRestartApplicationRegistrationError) {
+            toast.error((isRestartApplicationRegistrationError as unknown as ResponseError["error"]).data.message || 'An error occurred while restarting application registration');
+        }
+    }, [isRestartApplicationRegistrationSuccess, isRestartApplicationRegistrationError, router]);
     // Status badge configuration
     const statusConfig = {
         verified: {
@@ -142,7 +166,7 @@ export default function RegistrationStatusCard({
 
                 {/* Decline/Suspension Reason Alert */}
                 {(status === 'declined' && declineReason) && (
-                    <div className="bg-linear-to-b from-white to-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="bg-linear-to-b from-white to-red-50 border border-red-200 rounded-lg p-4 mb-5">
                         <div className="flex items-start gap-3">
                             <div className="h-8 w-8 grid place-items-center bg-white rounded-full border border-blue-200">
                                 <FaInfo className="text-blue-600 text-md shrink-0" />
@@ -220,7 +244,7 @@ export default function RegistrationStatusCard({
                         <>
                             <Button
                                 className="min-w-64 flex-1 bg-teal-700 hover:bg-teal-800 text-white"
-                                onClick={onRenew}
+                                onClick={onStartRenewal}
                             >
                                 <FaEdit className="mr-2 text-sm" />
                                 Renew Registration
@@ -240,11 +264,12 @@ export default function RegistrationStatusCard({
                     {status === 'declined' && (
                         <>
                             <Button
-                                className="min-w-64 flex-1 bg-teal-700 hover:bg-teal-800 text-white mt-2"
-                                onClick={onReapply}
+                                className="min-w-64 flex-1 bg-teal-700 hover:bg-teal-800 text-white"
+                                onClick={handleRestartApplicationRegistration}
+                                disabled={isRestartApplicationRegistrationLoading}
                             >
-                                <FaEdit className="mr-2 text-sm" />
-                                Reapply for Registration
+                                {isRestartApplicationRegistrationLoading ? <Loader2 className="mr-2 text-sm animate-spin" /> : <FaEdit className="mr-2 text-sm" />}
+                                {isRestartApplicationRegistrationLoading ? "Restarting Application Registration..." : "Renew Registration"}
                             </Button>
                         </>
                     )}

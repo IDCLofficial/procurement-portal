@@ -72,7 +72,7 @@ export default function DashboardHeader({
                                     <Bell className="h-5 w-5" />
                                 </Button>
                             </Link>
-                            
+
                             <Link href="/dashboard/settings" className='cursor-pointer'>
                                 <Button
                                     variant="ghost"
@@ -83,25 +83,21 @@ export default function DashboardHeader({
                                     <Settings className="h-5 w-5" />
                                 </Button>
                             </Link>
-                        
+
                             <div className="h-6 w-px bg-gray-300 mx-1" />
                         </React.Fragment>}
 
                         <Dialog>
-                            <DialogTrigger>
-                                <Button
-                                    variant="ghost"
-                                    className="h-9 px-3 text-gray-700 hover:text-gray-900 font-medium cursor-pointer"
-                                    // onClick={logout}
-                                    disabled={logoutLoading}
-                                >
-                                    {logoutLoading ? (
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    ) : (
-                                        <LogOut className="h-4 w-4 mr-2" />
-                                    )}
-                                    Logout
-                                </Button>
+                            <DialogTrigger
+                                className="h-9 px-3 font-medium cursor-pointer flex items-center border border-red-300 rounded-md text-red-600 hover:bg-red-600 hover:text-white text-sm"
+                                disabled={logoutLoading}
+                            >
+                                {logoutLoading ? (
+                                    <Loader2 className="sm:h-4 sm:w-4 h-3 w-3 mr-2 animate-spin" />
+                                ) : (
+                                    <LogOut className="sm:h-4 sm:w-4 h-3 w-3 mr-2" />
+                                )}
+                                Logout
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[425px]">
                                 <div className="space-y-6">

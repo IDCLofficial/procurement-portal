@@ -91,6 +91,12 @@ export const vendorApi = apiSlice.injectEndpoints({
                 body,
             }),
         }),
+        restartApplicationRegistration: builder.mutation<void, void>({
+            query: () => ({
+                url: endpoints.restartApplicationRegistration,
+                method: 'PATCH',
+            }),
+        }),
         initPayment: builder.mutation<InitPaymentResponse, InitPaymentRequest>({
             query: (body) => ({
                 url: endpoints.initPayment,
@@ -213,4 +219,5 @@ export const {
     useGetVendorSettingsQuery,
     useGetLoginHistoryQuery,
     useCompleteVendorRegistrationMutation,
+    useRestartApplicationRegistrationMutation,
 } = vendorApi;

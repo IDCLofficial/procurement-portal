@@ -29,6 +29,7 @@ interface ContractorDetailsProps {
         status: 'approved' | 'pending' | 'suspended';
         expiryDate: string;
         address: string;
+        issueDate: string;
         phone: string;
         email: string;
         website: string;
@@ -69,6 +70,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
         lga: contractor.lga,
         status: contractor.status as 'approved' | 'expired' | 'revoked',
         validUntil: contractor.expiryDate,
+        issueDate: contractor.issueDate,
         approvedSectors: [contractor.sector],
     };
 

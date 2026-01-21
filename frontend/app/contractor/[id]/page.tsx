@@ -158,6 +158,7 @@ export default function ContractorPage({ params }: { params: Promise<{ id: strin
                         month: 'short',
                         year: 'numeric'
                     }),
+                    issueDate: contractor.createdAt,
                     address: contractor.address,
                     phone: contractor.phone,
                     email: contractor.email,

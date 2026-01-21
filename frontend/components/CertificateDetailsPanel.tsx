@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import useShortcuts, { KeyboardKey, ShortcutsPresets } from '@useverse/useshortcuts';
 
 export type CertificateStatus = 'approved' | 'expired' | 'revoked';
 
@@ -215,13 +216,35 @@ export function CertificateDetailsPanel({
     run();
   }, [autoDownloadFormat, downloadAsImage, downloadAsPDF, onAutoDownloadComplete]);
 
+  useShortcuts({
+    shortcuts: [
+      ShortcutsPresets.SAVE(open),
+      {
+        key: KeyboardKey.Escape,
+        enabled: open,
+      }
+    ],
+    onTrigger: (shortcut) => {
+      switch(shortcut.key) {
+        case "Escape": 
+          onOpenChange(false);
+          break;
+        case "S":
+          downloadAsPDF();
+          break;
+        default:
+          break;
+      }
+    }
+  }, [open, onOpenChange]);
+
   return (
     <AnimatePresence>
       {open && (
         <>
           {/* Backdrop */}
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 0}}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
@@ -235,11 +258,11 @@ export function CertificateDetailsPanel({
               onClick={() => onOpenChange(false)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20, rotate: 5 }}
+              animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20, rotate: 5 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="bg-white rounded-lg relative z-10 shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+              className="bg-white rounded-lg relative z-10 origin-bottom-left shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}

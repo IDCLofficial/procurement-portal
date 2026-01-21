@@ -352,7 +352,6 @@ export class VendorsService {
     if (!userId) {
       throw new UnauthorizedException('An error occured');
     }
-    console.log(userId)
 
     try{
       // Fetch vendor profile without password

@@ -283,7 +283,7 @@ export default function DocumentCard({
     return (
         <Card id={id} className={`shadow-sm relative hover:shadow-md transition-shadow scroll-mt-40 border ${config.cardClass} ${isSelected ? 'ring-2 ring-blue-500/50' : ''}`}>
             {isSelected && (
-                <div className="absolute top-0 left-0 w-full h-full bg-blue-500/50" />
+                <div className="absolute top-0 left-0 w-full h-full bg-yellowblue-500/10 pointer-events-none" />
             )}
             <CardContent>
                 {/* Header */}

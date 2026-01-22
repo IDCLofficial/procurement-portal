@@ -304,7 +304,7 @@ function ErrorUI({ id, idValidation }: { id: string; idValidation: ValidationRes
                                 {/* Contact Support */}
                                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <p className="text-sm text-gray-600">
-                                        <span className="font-semibold text-gray-900">Need help?</span> Contact the Imo State Bureau of Public Private Partnerships & Investments (BPPPI) for assistance with contractor verification.
+                                        <span className="font-semibold text-gray-900">Need help?</span> Contact the Imo State Bureau of Public Procurement & Price Inteligence (BPPPI) for assistance with contractor verification.
                                     </p>
                                 </div>
                             </div>

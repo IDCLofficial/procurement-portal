@@ -152,22 +152,22 @@ export const getGradeConfig = (grade: string) => {
 export const STATUS_MESSAGES = {
     [ContractorStatus.APPROVED]: {
         title: 'Verified Contractor',
-        description: 'This contractor is registered with the Imo State Bureau of Public Private Partnerships & Investments (BPPPI) and has met all compliance requirements. The information displayed is accurate as of the last verification date.',
+        description: 'This contractor is registered with the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI) and has met all compliance requirements. The information displayed is accurate as of the last verification date.',
         note: 'Always verify the registration status before engaging in any contract. For additional verification, scan the QR code on the contractor\'s certificate.',
     },
     [ContractorStatus.PENDING]: {
         title: 'Pending Verification',
-        description: 'This contractor registration is currently pending approval by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please check back later for updated status.',
+        description: 'This contractor registration is currently pending approval by the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI). Please check back later for updated status.',
         note: 'Always verify the registration status before engaging in any contract. For additional verification, scan the QR code on the contractor\'s certificate.',
     },
     [ContractorStatus.EXPIRED]: {
         title: 'Expired Contractor',
-        description: 'This contractor has been suspended by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please contact BPPPI for more information before engaging with this contractor.',
+        description: 'This contractor has been suspended by the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI). Please contact BPPPI for more information before engaging with this contractor.',
         note: 'Always verify the registration status before engaging in any contract. For additional verification, scan the QR code on the contractor\'s certificate.',
     },
     [ContractorStatus.REVOKED]: {
         title: 'Revoked Contractor',
-        description: 'This contractor has been suspended by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please contact BPPPI for more information before engaging with this contractor.',
+        description: 'This contractor has been suspended by the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI). Please contact BPPPI for more information before engaging with this contractor.',
         note: 'Always verify the registration status before engaging in any contract. For additional verification, scan the QR code on the contractor\'s certificate.',
     },
 } as const;

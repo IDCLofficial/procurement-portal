@@ -60,7 +60,7 @@ export default function VerificationModal({ contractor, isOpen, onClose }: Verif
                     textColor: 'text-green-900',
                     badgeClass: 'bg-green-100 text-green-800 border-green-200',
                     title: 'Verified Contractor',
-                    message: 'This contractor is registered and approved by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI).',
+                    message: 'This contractor is registered and approved by the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI).',
                 };
             case 'pending':
                 return {

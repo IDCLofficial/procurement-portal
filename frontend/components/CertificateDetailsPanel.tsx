@@ -409,7 +409,7 @@ export function CertificateDetailsPanel({
                       Imo State Government
                     </h2>
                     <p className="text-sm text-gray-700 font-medium">
-                      Bureau of Public Private Partnerships & Investments
+                      Bureau of Public Procurement  & Price Inteligence
                     </p>
                     <p className="text-xs text-gray-600 mt-1">Contractor Registration Certificate</p>
                   </div>

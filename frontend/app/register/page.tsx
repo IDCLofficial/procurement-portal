@@ -6,7 +6,7 @@ import { getPageMetadata } from '../../lib/metadata';
 
 export const metadata = getPageMetadata({
     title: 'Contractor Registration - Imo State BPPPI',
-    description: 'Register as a contractor with the Imo State Bureau of Public Private Partnerships & Investments',
+    description: 'Register as a contractor with the Imo State Bureau of Public Procurement & Price Inteligence',
 });
 
 export default function RegisterPage() {

@@ -414,13 +414,13 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                             : 'text-red-800'
                                     }`}>
                                     {contractor.status === 'approved' &&
-                                        'This contractor is registered with the Imo State Bureau of Public Private Partnerships & Investments (BPPPI) and has met all compliance requirements. The information displayed is accurate as of the last verification date.'
+                                        'This contractor is registered with the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI) and has met all compliance requirements. The information displayed is accurate as of the last verification date.'
                                     }
                                     {contractor.status === 'pending' &&
-                                        'This contractor registration is currently pending approval by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please check back later for updated status.'
+                                        'This contractor registration is currently pending approval by the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI). Please check back later for updated status.'
                                     }
                                     {contractor.status === 'suspended' &&
-                                        'This contractor has been suspended by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please contact BPPPI for more information before engaging with this contractor.'
+                                        'This contractor has been suspended by the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI). Please contact BPPPI for more information before engaging with this contractor.'
                                     }
                                 </p>
                                 <div className="pt-2">

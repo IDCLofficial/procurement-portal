@@ -21,7 +21,7 @@ export default function LandingPage() {
     return (
         <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
             <Header
-                title="Imo State Public Procurement and Price Intelligence"
+                title="Imo State Bureau of Public Procurement and Price Intelligence"
                 description="Contractor Registration & Renewal Portal"
             />
 

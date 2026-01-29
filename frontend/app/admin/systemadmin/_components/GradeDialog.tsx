@@ -147,8 +147,7 @@ export function GradeDialog({
             </label>
             <input
               id="grade-capacity"
-              type="number"
-              min="0"
+              type="text"
               value={gradeForm.financialCapacity}
               onChange={(e) =>
                 onChange('financialCapacity', e.target.value)

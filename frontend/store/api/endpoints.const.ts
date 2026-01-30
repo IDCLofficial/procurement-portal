@@ -27,6 +27,7 @@ export default {
     vendorSettings: "/vendors/settings",
     getVendorSettings: "/vendors/settings",
     loginHistory: "/vendors/login-history",
+    restartApplicationRegistration: "/vendors/restart-registration",
     
     // Helper Endpoints
     getCategories: "/categories",

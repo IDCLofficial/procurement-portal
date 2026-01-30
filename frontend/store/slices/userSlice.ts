@@ -35,6 +35,11 @@ const userSlice = createSlice({
           state.data.companyForm = VendorSteps.COMPLETE;
         }
       })
+      .addMatcher(vendorApi.endpoints.restartApplicationRegistration.matchFulfilled, (state) => {
+        if (state.data) {
+          state.data.companyForm = VendorSteps.COMPANY;
+        }
+      })
       .addMatcher(vendorApi.endpoints.updateVendorProfile.matchFulfilled, (state, action) => {
         if (state.data) {
           state.data = action.payload;

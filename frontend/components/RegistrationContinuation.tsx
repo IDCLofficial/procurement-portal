@@ -19,7 +19,7 @@ import { FaTag } from 'react-icons/fa6';
 import { useAuth } from './providers/public-service/AuthProvider';
 import sirvClient from '@/lib/sirv.class';
 import { PaymentType, VendorSteps } from '@/store/api/enum';
-import { useCompleteVendorRegistrationMutation, useInitPaymentMutation } from '@/store/api/vendor.api';
+import { useCompleteVendorRegistrationMutation, useGetProfileQuery, useGetApplicationQuery, useInitPaymentMutation } from '@/store/api/vendor.api';
 import { Loader2 } from 'lucide-react';
 import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
 import { deepEqual, formatCurrency } from '@/lib';
@@ -28,6 +28,7 @@ import { processingFee, return_url_key } from '@/lib/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
+import { isUrl } from '@/lib/utils';
 
 const steps = [
     { id: 1, name: 'Create Account', icon: FaUser, description: 'Verify Contact', completed: true },
@@ -43,24 +44,21 @@ const steps = [
 
 
 export default function RegistrationContinuation() {
-    const { user, company: companyData, documents: presets, categories: categoriesData, mdas } = useAuth();
+    const { user, company: companyData, documents: presets, categories: categoriesData, mdas, application } = useAuth();
     const [isUploadingDocuments, setIsUploadingDocuments] = useState(false);
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [agreed, setAgreed] = useState(false);
     const [paymentInitiated, setPaymentInitiated] = useState(false);
 
+    const { refetch: refetchProfile } = useGetProfileQuery();
+
+
     const setStartPoint = useMemo(() => {
         if (!user) return 2;
 
-        console.log({
-            user,
-            companyForm: user.companyForm,
-            companyFormLower: user.companyForm.toLowerCase()
-        })
-
         const companyForm = user.companyForm.toLowerCase();
-        switch(companyForm){
+        switch (companyForm) {
             case VendorSteps.COMPANY:
                 return 2;
             case VendorSteps.DIRECTORS:
@@ -91,8 +89,6 @@ export default function RegistrationContinuation() {
         lga: companyData?.lga?.trimEnd() || '',
         website: companyData?.website?.trimEnd() || '',
     });
-
-    console.log({setStartPoint});
 
     // Step 3: Directors
     const [directors, setDirectors] = useState(companyData?.directors ? (companyData.directors).map((director) => ({
@@ -211,10 +207,12 @@ export default function RegistrationContinuation() {
     };
 
     const handleContinue = async () => {
-        if(!presets) return;
+        if (!presets) return;
         if (isInitPaymentLoading) return;
         if (isUploadingDocuments) return;
         if (isLoading) return;
+
+        const isUserReApplying = application?.status  === 'Rejected';
 
         // Validate current step
         if (currentStep === 2) {
@@ -223,6 +221,15 @@ export default function RegistrationContinuation() {
                 return;
             }
 
+            if (formData.website && !isUrl(formData.website)) {
+                toast.error('Please enter a valid website URL');
+                return;
+            }
+
+            const hasWebsite = formData.website.trim().length > 0;
+            const generatedWebsite = (formData.website.startsWith('http://') || formData.website.startsWith('https://')) ? formData.website : `https://${formData.website}`;
+            const websiteValue = hasWebsite ? generatedWebsite : "";
+
             const payload = {
                 [VendorSteps.COMPANY]: {
                     companyName: formData.companyName,
@@ -230,7 +237,7 @@ export default function RegistrationContinuation() {
                     tin: formData.tinNumber,
                     businessAddres: formData.address,
                     lga: formData.lga,
-                    website: formData.website,
+                    website: websiteValue,
                 }
             }
 
@@ -249,10 +256,14 @@ export default function RegistrationContinuation() {
                 try {
                     toast.loading('Saving your company details...', { id: "company" });
                     const response = await completeVendorRegistration(payload);
-    
+
                     if (response.error) {
-                        throw new Error((response.error as ResponseError["error"]).data.message);
+                        throw new Error(
+                            (response.error as ResponseError["error"]).data.message
+                            || 'Failed to save your company details'
+                        );
                     }
+
                     toast.dismiss("company");
                     toast.success('Company details saved successfully');
                     setCurrentStep(currentStep + 1);
@@ -582,7 +593,7 @@ export default function RegistrationContinuation() {
                 mdas: companyData?.mda || '',
             });
 
-            if (!madeAnUpdate) {
+            if (!madeAnUpdate && !isUserReApplying) {
                 setCurrentStep(7);
                 toast.success('Progress saved');
                 return;
@@ -600,12 +611,20 @@ export default function RegistrationContinuation() {
                 toast.loading('Saving your sectors and grade...', { id: "sectorsAndGrade" });
                 // throw new Error('Test error');
                 const response = await completeVendorRegistration(payload);
+                refetchProfile();
 
                 if (response.error) {
                     throw new Error((response.error as ResponseError["error"]).data.message);
                 }
                 toast.dismiss("sectorsAndGrade");
                 toast.success('Sectors and grade saved successfully!');
+
+                if (isUserReApplying) {
+                    toast.success('Progress saved');
+                    setCurrentStep(9);
+                    return;
+                }
+
                 setCurrentStep(7);
             } catch (error) {
                 toast.dismiss("sectorsAndGrade");
@@ -651,7 +670,7 @@ export default function RegistrationContinuation() {
                         onInputChange={handleInputChange}
                     />
                 );
-            
+
             case 3:
                 return (
                     <Step3Directors
@@ -659,7 +678,7 @@ export default function RegistrationContinuation() {
                         onDirectorsChange={setDirectors}
                     />
                 );
-            
+
             case 4:
                 return (
                     <Step4BankDetails
@@ -667,7 +686,7 @@ export default function RegistrationContinuation() {
                         onInputChange={handleBankDetailsChange}
                     />
                 );
-            
+
             case 5:
                 return (
                     <Step5Documents
@@ -675,7 +694,7 @@ export default function RegistrationContinuation() {
                         onDocumentsChange={setDocuments}
                     />
                 );
-            
+
             case 6:
                 const sectors = categoriesData?.categories?.map(category => ({
                     id: category.sector,
@@ -696,7 +715,7 @@ export default function RegistrationContinuation() {
                         grades={grades || []}
                     />
                 );
-            
+
             case 7:
                 return (
                     <Step7PaymentSummary
@@ -706,7 +725,7 @@ export default function RegistrationContinuation() {
                         selectedGrade={selectedGrade}
                     />
                 );
-            
+
             case 8:
                 return (
                     <Step8ConfirmPayment
@@ -716,11 +735,11 @@ export default function RegistrationContinuation() {
                         totalAmount={processingFee}
                     />
                 );
-            
+
             case 9:
                 return (
                     <Step9Receipt
-                        transactionRef={user?.reg_payment_ref.toUpperCase() || "N/A"}
+                        transactionRef={user && user.reg_payment_ref ? user.reg_payment_ref.toUpperCase() : "N/A"}
                         dateTime={new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         paymentMethod="Paystack"
                         companyName={formData.companyName}
@@ -730,11 +749,11 @@ export default function RegistrationContinuation() {
                         processingFee={processingFee}
                     />
                 );
-            
+
             default:
                 return (
-                    <StepPlaceholder 
-                        stepNumber={currentStep} 
+                    <StepPlaceholder
+                        stepNumber={currentStep}
                         stepName={steps[currentStep - 1].name}
                     />
                 );
@@ -751,14 +770,14 @@ export default function RegistrationContinuation() {
                         <div className="relative">
                             {/* Background Line */}
                             <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200" style={{ zIndex: 0 }} />
-                            
+
                             {/* Progress Line */}
-                            <div 
-                                className="absolute top-6 left-0 h-0.5 bg-theme-green transition-all duration-500" 
-                                style={{ 
+                            <div
+                                className="absolute top-6 left-0 h-0.5 bg-theme-green transition-all duration-500"
+                                style={{
                                     width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
-                                    zIndex: 1 
-                                }} 
+                                    zIndex: 1
+                                }}
                             />
 
                             {/* Steps */}
@@ -766,25 +785,22 @@ export default function RegistrationContinuation() {
                                 {steps.map((step) => (
                                     <div key={step.id} className="flex flex-col items-center">
                                         <div
-                                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-4 ${
-                                                currentStep > step.id
+                                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-4 ${currentStep > step.id
                                                     ? 'border-theme-green bg-theme-green'
                                                     : currentStep === step.id
-                                                    ? 'border-theme-green shadow-lg shadow-green-200 bg-white'
-                                                    : 'border-gray-300 bg-gray-50'
-                                            }`}
+                                                        ? 'border-theme-green shadow-lg shadow-green-200 bg-white'
+                                                        : 'border-gray-300 bg-gray-50'
+                                                }`}
                                         >
                                             {currentStep > step.id ? (
                                                 <FaCheckCircle className="text-white text-xl" />
                                             ) : (
-                                                <step.icon className={`text-lg ${
-                                                    currentStep === step.id ? 'text-theme-green' : 'text-gray-400'
-                                                }`} />
+                                                <step.icon className={`text-lg ${currentStep === step.id ? 'text-theme-green' : 'text-gray-400'
+                                                    }`} />
                                             )}
                                         </div>
-                                        <p className={`text-xs mt-3 text-center font-medium max-w-[90px] leading-tight ${
-                                            currentStep >= step.id ? 'text-gray-900' : 'text-gray-500'
-                                        }`}>
+                                        <p className={`text-xs mt-3 text-center font-medium max-w-[90px] leading-tight ${currentStep >= step.id ? 'text-gray-900' : 'text-gray-500'
+                                            }`}>
                                             {step.description}
                                         </p>
                                     </div>
@@ -832,13 +848,12 @@ export default function RegistrationContinuation() {
                             {steps.map((step) => (
                                 <div
                                     key={step.id}
-                                    className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                                        currentStep > step.id
+                                    className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${currentStep > step.id
                                             ? 'bg-theme-green text-white'
                                             : currentStep === step.id
-                                            ? 'bg-theme-green text-white ring-2 ring-green-200'
-                                            : 'bg-gray-200 text-gray-500'
-                                    }`}
+                                                ? 'bg-theme-green text-white ring-2 ring-green-200'
+                                                : 'bg-gray-200 text-gray-500'
+                                        }`}
                                 >
                                     {currentStep > step.id ? '✓' : step.id}
                                 </div>
@@ -857,20 +872,20 @@ export default function RegistrationContinuation() {
                             {currentStep === 2
                                 ? 'Provide your company registration details'
                                 : currentStep === 3
-                                ? 'Add information for all company directors'
-                                : currentStep === 4
-                                ? 'Add bank information for future transactions'
-                                : currentStep === 5
-                                ? 'Upload all required certificates and documents (PDF, PNG, or JPEG format)'
-                                : currentStep === 6
-                                ? 'Choose your sectors and classification grade'
-                                : currentStep === 7
-                                ? 'Review your registration details and fees'
-                                : currentStep === 8
-                                ? 'Please review and confirm your payment details'
-                                : currentStep === 9
-                                ? 'Your payment receipt and next steps'
-                                : `Complete step ${currentStep} of your registration`
+                                    ? 'Add information for all company directors'
+                                    : currentStep === 4
+                                        ? 'Add bank information for future transactions'
+                                        : currentStep === 5
+                                            ? 'Upload all required certificates and documents (PDF, PNG, or JPEG format)'
+                                            : currentStep === 6
+                                                ? 'Choose your sectors and classification grade'
+                                                : currentStep === 7
+                                                    ? 'Review your registration details and fees'
+                                                    : currentStep === 8
+                                                        ? 'Please review and confirm your payment details'
+                                                        : currentStep === 9
+                                                            ? 'Your payment receipt and next steps'
+                                                            : `Complete step ${currentStep} of your registration`
                             }
                         </CardDescription>
                     </CardHeader>
@@ -879,38 +894,38 @@ export default function RegistrationContinuation() {
 
                         {/* Navigation Buttons - Hide on receipt page */}
                         {currentStep !== 9 && (
-                        <div className="flex justify-between mt-8 pt-6 border-t">
-                            <Button
-                                variant="outline"
-                                onClick={handleBack}
-                                disabled={currentStep === 2 || isLoading}
-                                className="min-w-[100px]"
-                            >
-                                {currentStep === 8 ? 'Back to Summary' : 'Back'}
-                            </Button>
-                            <Button
-                                onClick={handleContinue}
-                                disabled={isLoading || !presets || isUploadingDocuments || isInitPaymentLoading || paymentInitiated}
-                                className="bg-theme-green hover:bg-theme-green/90 min-w-[100px] cursor-pointer"
-                            >
-                                {isLoading || isUploadingDocuments || isInitPaymentLoading
-                                    ?
-                                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                                    :
-                                    <Fragment>
-                                        {currentStep === steps.length
-                                            ? 'Complete'
-                                            : currentStep === 8
-                                                ? 'Confirm & Pay Now'
-                                                : currentStep === 7
-                                                    ? 'Continue to Confirm'
-                                                    : 'Continue'}
-                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </Fragment>}
-                            </Button>
-                        </div>
+                            <div className="flex justify-between mt-8 pt-6 border-t">
+                                <Button
+                                    variant="outline"
+                                    onClick={handleBack}
+                                    disabled={currentStep === 2 || isLoading}
+                                    className="min-w-[100px]"
+                                >
+                                    {currentStep === 8 ? 'Back to Summary' : 'Back'}
+                                </Button>
+                                <Button
+                                    onClick={handleContinue}
+                                    disabled={isLoading || !presets || isUploadingDocuments || isInitPaymentLoading || paymentInitiated}
+                                    className="bg-theme-green hover:bg-theme-green/90 min-w-[100px] cursor-pointer"
+                                >
+                                    {isLoading || isUploadingDocuments || isInitPaymentLoading
+                                        ?
+                                        <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                                        :
+                                        <Fragment>
+                                            {currentStep === steps.length
+                                                ? 'Complete'
+                                                : currentStep === 8
+                                                    ? 'Confirm & Pay Now'
+                                                    : currentStep === 7
+                                                        ? 'Continue to Confirm'
+                                                        : 'Continue'}
+                                            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </Fragment>}
+                                </Button>
+                            </div>
                         )}
                     </CardContent>
                 </Card>

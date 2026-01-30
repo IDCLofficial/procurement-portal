@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils"
 import { AlertCircle } from "lucide-react"
 
 export default function ExternalUrlInterceptor() {
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const [pendingUrl, setPendingUrl] = useState<string>("")
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [pendingUrl, setPendingUrl] = useState<string>("");
 
     useEffect(() => {
         const handleClick = (event: MouseEvent) => {
@@ -24,9 +24,9 @@ export default function ExternalUrlInterceptor() {
             const anchor = target.closest('a')
             
             if (anchor && anchor.href) {
-                const url = new URL(anchor.href, window.location.href)
-                const isExternal = url.hostname !== window.location.hostname
-                const escapable = anchor.href.startsWith('mailto:') || anchor.href.startsWith('tel:') || anchor.href.endsWith('.imo.gov.ng')
+                const url = new URL(anchor.href, window.location.href);
+                const isExternal = url.hostname !== window.location.hostname;
+                const escapable = anchor.href.startsWith('mailto:') || anchor.href.startsWith('tel:') || anchor.href.endsWith('.imo.gov.ng') || url.protocol === 'blob:';
 
                 if (escapable) {
                     return
@@ -39,6 +39,8 @@ export default function ExternalUrlInterceptor() {
                 }
             }
         }
+
+        
 
         document.addEventListener('click', handleClick)
         return () => document.removeEventListener('click', handleClick)
@@ -67,7 +69,7 @@ export default function ExternalUrlInterceptor() {
         <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>You&apos;re about to leave this site</AlertDialogTitle>
+                    <AlertDialogTitle className="text-destructive">You&apos;re about to leave this site</AlertDialogTitle>
                     <AlertDialogDescription>
                         You&apos;re being redirected to an external website. We&apos;re not responsible for the content or privacy practices of external sites.
                     </AlertDialogDescription>
@@ -81,7 +83,7 @@ export default function ExternalUrlInterceptor() {
                     >
                         <p className="text-sm font-medium mb-1">Destination URL:</p>
                         <p className={cn(
-                            "break-all text-2xl font-semibold",
+                            "break-all text-lg font-semibold",
                             isSecure ? "text-blue-500" : "text-red-600"
                         )}
                         >{pendingUrl}</p>

@@ -7,11 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import QRCodePopover from '@/components/QRCodePopover';
 import VerificationModal from '@/components/VerificationModal';
+import { CertificateDetailsPanel, Certificate } from '@/components/CertificateDetailsPanel';
 import { FaCheckCircle, FaDownload, FaGlobe, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { FaQrcode } from 'react-icons/fa6';
 import { getGradeConfig, getStatusConfig } from '@/lib/constants';
 import { copyToClipboard } from '@/lib';
+import { isUrl } from '@/lib/utils';
 
 interface ContractorDetailsProps {
     contractor: {
@@ -27,6 +29,7 @@ interface ContractorDetailsProps {
         status: 'approved' | 'pending' | 'suspended';
         expiryDate: string;
         address: string;
+        issueDate: string;
         phone: string;
         email: string;
         website: string;
@@ -43,15 +46,32 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
             searchParams.get('scan') === 'true' ||
             searchParams.get('v') === '1';
     }, [searchParams]);
+    const [isQrOpen, setIsQrOpen] = useState(false);
+    const [showCertificatePanel, setShowCertificatePanel] = useState(false);
 
     const [showModal, setShowModal] = useState(isFromQR);
 
 
     const handleDownloadCertificate = () => {
-        toast.success('Certificate downloaded successfully', {
-            description: `Certificate for ${contractor.name}`,
-            duration: 3000,
-        });
+        setShowCertificatePanel(true);
+    };
+
+    const certificateData: Certificate = {
+        certificateId: contractor.id,
+        contractorName: contractor.name,
+        companyName: contractor.companyName,
+        rcBnNumber: contractor.rcbnNumber,
+        tin: contractor.tinNumber,
+        address: contractor.address,
+        phone: contractor.phone,
+        email: contractor.email,
+        website: contractor.website,
+        grade: contractor.grade,
+        lga: contractor.lga,
+        status: contractor.status as 'approved' | 'expired' | 'revoked',
+        validUntil: contractor.expiryDate,
+        issueDate: contractor.issueDate,
+        approvedSectors: [contractor.sector],
     };
 
     const handleOnClose = () => {
@@ -72,9 +92,15 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                 isOpen={showModal}
                 onClose={handleOnClose}
             />
-            <div className="container mx-auto px-4 py-8 space-y-6">
+            <CertificateDetailsPanel
+                certificate={certificateData}
+                open={showCertificatePanel}
+                onOpenChange={setShowCertificatePanel}
+                showWatermark={true}
+            />
+            <div className="container mx-auto px-4 py-8 space-y-6 relative z-10">
                 {/* Header Section */}
-                <Card>
+                <Card className='relative z-10' gradient='bg-linear-to-r from-white/95 to-white/75'>
                     <CardContent className="pt-0">
                         <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                             <div className="space-y-2">
@@ -103,11 +129,16 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-2">
+                                {isQrOpen && <div className='bg-black/25 h-screen w-screen fixed top-0 left-0 z-10 pointer-events-none' />}
+
                                 <QRCodePopover
                                     url={verificationUrl}
-                                    label="Show QR"
-                                    buttonVariant="outline"
+                                    label={isQrOpen ? "Hide QR" : "Show QR"}
+                                    buttonVariant={isQrOpen ? "destructive" :"outline"}
+                                    onToggle={(open: boolean) => setIsQrOpen(open)}
+                                    isOpen={isQrOpen}
                                 />
+
                                 <Button
                                     onClick={handleDownloadCertificate}
                                     className="bg-theme-green hover:bg-theme-green/90 cursor-pointer active:scale-95 transition-transform duration-300"
@@ -122,7 +153,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Company Information */}
-                    <Card className="hover:shadow-lg transition-shadow duration-300">
+                    <Card className="hover:shadow-lg transition-shadow duration-300" gradient="bg-linear-to-r from-white/95 to-white/75">
                         <CardContent className="pt-0">
                             <div className="flex items-center gap-2 mb-5">
                                 <h2 className="text-xl font-medium text-gray-900/50">Company Information</h2>
@@ -174,7 +205,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                     </Card>
 
                     {/* Contact Information */}
-                    <Card className="hover:shadow-lg transition-shadow duration-300">
+                    <Card className="hover:shadow-lg transition-shadow duration-300" gradient="bg-linear-to-r from-white/95 to-white/75">
                         <CardContent className="pt-0">
                             <div className="flex items-center gap-2 mb-5">
                                 <h2 className="text-xl font-medium text-gray-900/50">Contact Information</h2>
@@ -242,8 +273,8 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Website</p>
                                             <div className="inline-flex gap-2 items-center">
-                                                {contractor.website && <a
-                                                    href={`${contractor.website}`}
+                                                {isUrl(contractor.website) && <a
+                                                    href={`${(contractor.website.startsWith('http://') || contractor.website.startsWith('https://')) ? '' : 'https://'}${contractor.website}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-sm font-medium text-theme-green hover:underline break-all inline-flex items-center gap-1"
@@ -253,8 +284,8 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                     </svg>
                                                 </a>}
-                                                {!contractor.website && <p className="text-sm font-medium text-gray-900">Not Available</p>}
-                                                <button
+                                                {!isUrl(contractor.website) && <p className="text-sm font-medium text-gray-900">Not Available</p>}
+                                                {isUrl(contractor.website) && <button
                                                     onClick={() => copyToClipboard(contractor.website)}
                                                     className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded cursor-pointer"
                                                     title="Copy Company Website"
@@ -262,7 +293,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                                     <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                     </svg>
-                                                </button>
+                                                </button>}
                                             </div>
                                         </div>
                                     </div>
@@ -274,28 +305,19 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Sector & Classification */}
-                    <Card>
+                    <Card className="" gradient="bg-linear-to-r from-white/95 to-white/75">
                         <CardContent className="pt-0">
                             <h2 className="text-xl font-medium mb-4 opacity-50">Sector & Classification</h2>
                             <div className="space-y-4">
                                 <div>
                                     <p className="text-sm text-gray-600 mb-2">Associated <abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></p>
                                     <div className="flex flex-wrap gap-2 text-lg capitalize font-medium">
-                                        {/* <pre>{JSON.stringify(contractor, null, 2)}</pre> */}
-                                        {/* {contractor.approvedSectors.map((sector) => (
-                                        <Badge 
-                                            key={sector} 
-                                            className={getSectorConfig(sector).badgeClass}
-                                        >
-                                            {sector}
-                                        </Badge>
-                                    ))} */}
                                         {contractor.sector}
                                     </div>
                                 </div>
                                 <div className="h-px bg-gray-100"></div>
                                 <div>
-                                    <p className="text-sm text-gray-600 mb-2">Category</p>
+                                    <p className="text-sm text-gray-600 mb-2">Contractor Category</p>
                                     <p className="text-base font-medium">{contractor.category}</p>
                                 </div>
                                 <div className="h-px bg-gray-100"></div>
@@ -313,7 +335,7 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                     </Card>
 
                     {/* Registration Status */}
-                    <Card>
+                    <Card className="" gradient="bg-linear-to-r from-white/95 to-white/75">
                         <CardContent className="pt-0">
                             <h2 className="text-xl font-medium mb-4 opacity-50">Registration Status</h2>
                             <div className="space-y-4">
@@ -353,10 +375,10 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                 {/* Verification Notice */}
                 <Card className={
                     contractor.status === 'approved'
-                        ? 'bg-green-50 border-green-200'
+                        ? 'bg-linear-to-b from-transparent to-green-50 border-green-200'
                         : contractor.status === 'pending'
-                            ? 'bg-yellow-50 border-yellow-200'
-                            : 'bg-red-50 border-red-200'
+                            ? 'bg-linear-to-b from-transparent to-yellow-50 border-yellow-200'
+                            : 'bg-linear-to-b from-transparent to-red-50 border-red-200'
                 }>
                     <CardContent className="pt-0">
                         <div className="flex items-start gap-4">
@@ -392,13 +414,13 @@ export default function ContractorDetails({ contractor }: ContractorDetailsProps
                                             : 'text-red-800'
                                     }`}>
                                     {contractor.status === 'approved' &&
-                                        'This contractor is registered with the Imo State Bureau of Public Private Partnerships & Investments (BPPPI) and has met all compliance requirements. The information displayed is accurate as of the last verification date.'
+                                        'This contractor is registered with the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI) and has met all compliance requirements. The information displayed is accurate as of the last verification date.'
                                     }
                                     {contractor.status === 'pending' &&
-                                        'This contractor registration is currently pending approval by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please check back later for updated status.'
+                                        'This contractor registration is currently pending approval by the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI). Please check back later for updated status.'
                                     }
                                     {contractor.status === 'suspended' &&
-                                        'This contractor has been suspended by the Imo State Bureau of Public Private Partnerships & Investments (BPPPI). Please contact BPPPI for more information before engaging with this contractor.'
+                                        'This contractor has been suspended by the Imo State Bureau of Public Procurement  & Price Inteligence (BPPPI). Please contact BPPPI for more information before engaging with this contractor.'
                                     }
                                 </p>
                                 <div className="pt-2">

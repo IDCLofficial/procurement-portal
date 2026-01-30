@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectCategoriesData } from '@/store/slices/categoriesSlice';
 import { setSearchQuery, setSectorFilter, setGradeFilter, setStatusFilter, setCurrentPage, setMDAsFilter } from '@/store/slices/publicSlice';
 import { useGetMDAQuery } from '@/store/api/helper.api';
+import { Mda } from '@/app/admin/types/api';
 
 export interface SearchFilters {
     query: string;
@@ -24,8 +25,39 @@ export default function ContractorSearch() {
     const searchParams = useSearchParams();
     const dispatch = useAppDispatch();
     const categories = useAppSelector(selectCategoriesData);
+    const viewFromMDA = searchParams.get('mda_sqiik');
     
     const { data: mdas } = useGetMDAQuery();
+
+    const isValidMDAID: { valid: true; found: Mda } | { valid: false } = useMemo(() => {
+        const idMaps = JSON.parse(process.env.NEXT_PUBLIC_ID_MAPS || '{}');
+        if (!mdas) {
+            return { valid: false };
+        }
+        if (!mdas.mdas || !Array.isArray(mdas.mdas)) {
+            return { valid: false };
+        }
+        
+        if (!viewFromMDA || !idMaps || typeof idMaps !== 'object') {
+            return { valid: false };
+        }
+        
+
+        if (!idMaps.hasOwnProperty(viewFromMDA)) {
+            return { valid: false };
+        }
+
+        const mdaId = idMaps[viewFromMDA];
+        const foundMDA = mdas.mdas.find((m) => m._id.toLowerCase() === mdaId.toLowerCase());
+
+        if (!foundMDA) {
+            return { valid: false };
+        }
+
+
+        return { valid: true, found: foundMDA };
+    }, [viewFromMDA, mdas]);
+    
     
     // Get Redux state for currentPage
     const { currentPage } = useAppSelector((state) => state.public);
@@ -43,7 +75,7 @@ export default function ContractorSearch() {
         const query = searchParams.get('q') || '';
         const sector = searchParams.get('sector') || '';
         const grade = searchParams.get('grade') || '';
-        const mda = searchParams.get('mda') || '';
+        const mda = isValidMDAID.valid ? isValidMDAID.found.name : (searchParams.get('mda') || '');
         const status = searchParams.get('status') || '';
         const page = Number(searchParams.get('page')) || 1;
 
@@ -59,11 +91,11 @@ export default function ContractorSearch() {
             query: query,
             sector: sector || 'all',
             grade: grade || 'all',
-            mda: mda || 'all',
+            mda: isValidMDAID.valid ? isValidMDAID.found.name || 'all' : (mda || 'all'),
             status: status || 'all',
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isValidMDAID, isValidMDAID]);
 
     const handleFilterChange = (key: keyof SearchFilters, value: string) => {
         const newFilters = { ...filters, [key]: value };
@@ -104,7 +136,7 @@ export default function ContractorSearch() {
     };
 
     return (
-        <Card>
+        <Card className='bg-white/90'>
             <CardHeader className="max-sm:p-4">
                 <CardTitle className="sm:text-xl text-base">Search Contractors</CardTitle>
             </CardHeader>
@@ -162,7 +194,7 @@ export default function ContractorSearch() {
                     {/* LGA */}
                     {mdas && mdas.mdas && <div className="space-y-2 flex-1 sm:min-w-64">
                         <label className="text-sm font-medium text-gray-700 max-sm:text-xs"><abbr title="Ministries, Departments, and Agencies (government bodies)">MDA/MDAs</abbr></label>
-                        <Select value={filters.mda} onValueChange={(value) => handleFilterChange('mda', value)}>
+                        <Select value={filters.mda} defaultValue={isValidMDAID.valid ? isValidMDAID.found.name : ''} onValueChange={(value) => handleFilterChange('mda', value)}>
                             <SelectTrigger className="max-sm:h-10 h-10 w-full max-sm:text-sm">
                                 <SelectValue placeholder="All MDA/MDAs" />
                             </SelectTrigger>

@@ -136,6 +136,11 @@ export default function ContractorPage({ params }: { params: Promise<{ id: strin
                 }
             />
 
+            <div className="fixed top-0 right-0 w-full h-full pointer-events-none">
+                <div className="blob absolute -right-64 -bottom-64 pointer-events-none scale-x-[-1] opacity-25" />
+                <div className="blob absolute -left-96 -top-96 pointer-events-none scale-x-[-1] one" />
+            </div>
+
             <Suspense fallback={<Loader />}>
                 <ContractorDetails contractor={{
                     id: contractor.certificateId,
@@ -153,6 +158,7 @@ export default function ContractorPage({ params }: { params: Promise<{ id: strin
                         month: 'short',
                         year: 'numeric'
                     }),
+                    issueDate: contractor.createdAt,
                     address: contractor.address,
                     phone: contractor.phone,
                     email: contractor.email,
@@ -298,7 +304,7 @@ function ErrorUI({ id, idValidation }: { id: string; idValidation: ValidationRes
                                 {/* Contact Support */}
                                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <p className="text-sm text-gray-600">
-                                        <span className="font-semibold text-gray-900">Need help?</span> Contact the Imo State Bureau of Public Private Partnerships & Investments (BPPPI) for assistance with contractor verification.
+                                        <span className="font-semibold text-gray-900">Need help?</span> Contact the Imo State Bureau of Public Procurement & Price Inteligence (BPPPI) for assistance with contractor verification.
                                     </p>
                                 </div>
                             </div>

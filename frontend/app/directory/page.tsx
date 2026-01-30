@@ -10,7 +10,7 @@ import { defaultMetadata } from '../../lib/metadata';
 
 export const metadata: Metadata = {...defaultMetadata, ...{
     title: 'Public Contractor Directory - Imo State',
-    description: 'Search and verify approved contractors registered with the Imo State Bureau of Public Private Partnerships & Investments (BPPPI)',
+    description: 'Search and verify approved contractors registered with the Imo State Bureau of Public Procurement & Price Inteligence (BPPPI)',
     openGraph: {
         title: 'Public Contractor Directory',
         description: 'Search and verify approved contractors in Imo State',

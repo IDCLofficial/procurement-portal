@@ -17,6 +17,9 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
     useEffect(() => {
         if (!isLoading && !token) {
+            const returnTo = pathname;
+            localStorage.setItem('returnTo', returnTo);
+            
             clearToken();
             router.replace('/vendor-login')
             return;

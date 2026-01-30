@@ -126,7 +126,7 @@ export default function VerificationForm() {
 
     return (
         <div className="max-w-xl mx-auto">
-            <Card className="shadow-lg">
+            <Card className="shadow-lg" gradient="bg-linear-to-r from-white/95 to-white/75">
                 <CardHeader>
                     <CardTitle className="sm:text-xl text-base">Enter Registration Details</CardTitle>
                     <CardDescription className='sm:text-base text-xs'>
@@ -180,7 +180,7 @@ export default function VerificationForm() {
                         </Button>
 
                         {/* Info Alert */}
-                        <Alert className="bg-blue-50 border-blue-200">
+                        <Alert className="bg-linear-to-b from-transparent to-blue-50 border-blue-200">
                             <FaQrcode color='#1c398e' />
                             <AlertDescription className="text-sm text-blue-900">
                                 <span>

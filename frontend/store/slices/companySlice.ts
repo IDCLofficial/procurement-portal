@@ -28,68 +28,90 @@ const companySlice = createSlice({
         state.data = action.payload;
         state.isLoading = false;
       })
-      .addMatcher(vendorApi.endpoints.completeVendorRegistration.matchFulfilled, (state, action) => {
-        const result = action.payload.result;
-        if (result && typeof (result.directors) === "object") {
-          state.data!.directors = result.directors;
+      .addMatcher(
+        vendorApi.endpoints.completeVendorRegistration.matchFulfilled,
+        (state, action) => {
+          const result = action.payload?.result;
+
+          if (!result || typeof result !== 'object') {
+            // Optional: log for debugging
+            console.warn('completeVendorRegistration returned no result', action.payload);
+            return;
+          }
+
+          if (typeof result.directors === 'object') {
+            state.data!.directors = result.directors;
+          }
+
+          if (typeof result.categories === 'object') {
+            state.data!.category = result.categories;
+          }
+
+          if (typeof result.grade === 'string') {
+            state.data!.grade = result.grade;
+          }
+
+          if (typeof result.bankName === 'string') {
+            state.data!.bankName = result.bankName;
+          }
+
+          if (typeof result.accountNumber === 'number') {
+            state.data!.accountNumber = result.accountNumber;
+          }
+
+          if (typeof result.accountName === 'string') {
+            state.data!.accountName = result.accountName;
+          }
+
+          if (Array.isArray(result.documents)) {
+            state.data!.documents = result.documents.map(doc => ({
+              _id: doc.id,
+              vendor: '',
+              fileUrl: doc.fileUrl,
+              validFrom: doc.validFrom,
+              validTo: doc.validTo,
+              documentType: doc.documentType,
+              uploadedDate: doc.uploadedDate,
+              fileName: doc.fileName,
+              fileSize: doc.fileSize,
+              fileType: doc.fileType,
+              validFor: doc.validFor,
+              hasValidityPeriod: doc.hasValidityPeriod,
+              status: {
+                status: 'pending' as const,
+                message: undefined,
+              },
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              __v: 0,
+            }));
+          }
+
+          if (typeof result.companyName === 'string') {
+            state.data!.companyName = result.companyName;
+          }
+
+          if (typeof result.cacNumber === 'string') {
+            state.data!.cacNumber = result.cacNumber;
+          }
+
+          if (typeof result.tin === 'string') {
+            state.data!.tin = result.tin;
+          }
+
+          if (typeof result.address === 'string') {
+            state.data!.address = result.address;
+          }
+
+          if (typeof result.lga === 'string') {
+            state.data!.lga = result.lga;
+          }
+
+          if (typeof result.website === 'string') {
+            state.data!.website = result.website;
+          }
         }
-        if (result && typeof (result.categories) === "object") {
-          state.data!.category = result.categories;
-        }
-        if (result && typeof (result.grade) === "string") {
-          state.data!.grade = result.grade;
-        }
-        if (result && typeof (result.bankName) === "string") {
-          state.data!.bankName = result.bankName;
-        }
-        if (result && typeof (result.accountNumber) === "number") {
-          state.data!.accountNumber = result.accountNumber;
-        }
-        if (result && typeof (result.accountName) === "string") {
-          state.data!.accountName = result.accountName;
-        }
-        if (result && typeof result.documents === "object") {
-          state.data!.documents = result.documents.map(doc => ({
-            _id: doc.id,
-            vendor: '',
-            fileUrl: doc.fileUrl,
-            validFrom: doc.validFrom,
-            validTo: doc.validTo,
-            documentType: doc.documentType,
-            uploadedDate: doc.uploadedDate,
-            fileName: doc.fileName,
-            fileSize: doc.fileSize,
-            fileType: doc.fileType,
-            validFor: doc.validFor,
-            hasValidityPeriod: doc.hasValidityPeriod,
-            status: {
-              status: "pending" as const,
-              message: undefined
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            __v: 0
-          }));
-        }
-        if (result && typeof (result.companyName) === "string") {
-          state.data!.companyName = result.companyName;
-        }
-        if (result && typeof (result.cacNumber) === "string") {
-          state.data!.cacNumber = result.cacNumber;
-        }
-        if (result && typeof (result.tin) === "string") {
-          state.data!.tin = result.tin;
-        }
-        if (result && typeof (result.address) === "string") {
-          state.data!.address = result.address;
-        }
-        if (result && typeof (result.lga) === "string") {
-          state.data!.lga = result.lga;
-        }
-        if (result && typeof (result.website) === "string") {
-          state.data!.website = result.website;
-        }
-      })
+      )
       .addMatcher(vendorApi.endpoints.getCompanyDetails.matchPending, (state) => {
         state.isLoading = true;
       })

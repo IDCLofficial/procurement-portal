@@ -23,7 +23,7 @@
     "@reduxjs/toolkit": "^2.10.1",
     "@types/qrcode": "^1.5.6",
     "@useverse/usefiledownload": "^1.2.2",
-    "@useverse/useshortcuts": "^3.0.2",
+    "@useverse/useshortcuts": "^4.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

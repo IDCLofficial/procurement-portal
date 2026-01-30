@@ -55,7 +55,7 @@ export default function VerificationResult({
                         <p className="font-semibold text-gray-900">{id}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-600 mb-1">RC/BN Number</p>
+                        <p className="text-xs text-gray-600 mb-1">CAC Number</p>
                         <p className="font-semibold text-gray-900">{rcbnNumber}</p>
                     </div>
                     <div>
@@ -81,7 +81,7 @@ export default function VerificationResult({
                         )}>{new Date(validUntil).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-600 mb-1">Sector</p>
+                        <p className="text-xs text-gray-600 mb-1">Contractor Category</p>
                         <p className="font-semibold text-gray-900">{category}</p>
                     </div>
                 </div>

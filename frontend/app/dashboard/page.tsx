@@ -6,6 +6,7 @@ import QuickActionsCard from '@/components/dashboard/QuickActionsCard';
 import RenewalReminderCard from '@/components/dashboard/RenewalReminderCard';
 import ComplianceDocumentsCard from '@/components/dashboard/ComplianceDocumentsCard';
 import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
+import { CertificateDetailsPanel, Certificate } from '@/components/CertificateDetailsPanel';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/public-service/AuthProvider';
 import { format, differenceInDays } from 'date-fns';
@@ -13,15 +14,35 @@ import { Loader2 } from 'lucide-react';
 import PendingPaymentCard from '@/components/dashboard/PendingPaymentCard';
 import { return_url_key } from '@/lib/constants';
 import { toValidJSDate } from '@/lib';
+import { useState } from 'react';
 
 export default function DashboardPage() {
     const { user, company, application, isLoading, categories, certificate } = useAuth();
+    const [showCertificatePanel, setShowCertificatePanel] = useState(false);
 
     const router = useRouter();
 
     const handleDownloadCertificate = () => {
-        console.log('Download certificate');
+        setShowCertificatePanel(true);
     };
+
+    const certificateData: Certificate | null = certificate && company && user ? {
+        certificateId: certificate.certificateId || user.certificateId || 'N/A',
+        contractorName: user.fullname || 'N/A',
+        companyName: company.companyName || 'N/A',
+        rcBnNumber: company.cacNumber || 'N/A',
+        tin: company.tin || 'N/A',
+        address: company.address || 'N/A',
+        phone: user.phoneNo || 'N/A',
+        email: user.email || 'N/A',
+        website: company.website,
+        grade: company.grade || 'N/A',
+        lga: company.lga || 'N/A',
+        status: 'approved',
+        validUntil: certificate.validUntil,
+        createdAt: certificate.createdAt,
+        approvedSectors: company.category ? [company.category] : undefined,
+    } : null;
 
     const handleUpdateProfile = () => {
         console.log('Update profile');
@@ -31,15 +52,11 @@ export default function DashboardPage() {
         router.push('/dashboard/renewal');
     };
 
-    const handleReapply = () => {
-        console.log('Reapply for registration');
-        router.push('/dashboard/register');
-    };
-
     const handleContactSupport = () => {
         console.log('Contact support');
         // Add support contact logic
     };
+
 
     if (isLoading) {
         return (
@@ -97,6 +114,7 @@ export default function DashboardPage() {
     };
     
     const registrationStatus = getRegistrationStatus();
+    // const registrationStatus = "declined" as  ReturnType<typeof getRegistrationStatus>;
     
     // Get decline/suspension reason from application notes if available
     const statusReason = application?.notes || undefined;
@@ -112,6 +130,13 @@ export default function DashboardPage() {
                 companyName={company?.companyName || user?.fullname}
                 subtitle={"Vendor Portal"}
             />
+            {certificateData && (
+                <CertificateDetailsPanel
+                    certificate={certificateData}
+                    open={showCertificatePanel}
+                    onOpenChange={setShowCertificatePanel}
+                />
+            )}
 
             <div className="container mx-auto px-4 py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -133,7 +158,7 @@ export default function DashboardPage() {
                             suspensionReason={registrationStatus === 'suspended' ? statusReason : undefined}
                             onDownloadCertificate={registrationStatus === 'verified' ? handleDownloadCertificate : undefined}
                             onUpdateProfile={handleUpdateProfile}
-                            onReapply={registrationStatus === 'declined' || registrationStatus === 'expired' ? handleReapply : undefined}
+                            onStartRenewal={registrationStatus === 'declined' ? handleStartRenewal : undefined}
                             onContactSupport={registrationStatus === 'declined' || registrationStatus === 'suspended' ? handleContactSupport : undefined}
                         />}
 

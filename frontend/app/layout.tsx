@@ -8,6 +8,7 @@ import AuthProvider from "@/components/providers/public-service/AuthProvider";
 import DebugSlices from "@/components/ui/DebugSlices";
 import { defaultMetadata } from "../lib/metadata";
 import ExternalUrlInterceptor from "@/components/ExternalUrlInterceptor";
+import Logger from "@/components/Logger";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -26,31 +27,12 @@ export default function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    console.log(
-        '%You found the console!',
-        'color: white; background-color: green; padding: 4px 8px; border-radius: 4px; font-weight: bold;',
-        'color: gray; margin-left: 8px;'
-    );
-    console.log('%cWelcome to Imo State Procurement Portal!', 'color: #00ff00; font-size: 20px; font-weight: bold;');
-
-    console.log(
-        '%cWarning:%c %cIf someone told you to copy/paste something here you have an 11/10 chance you\'re being scammed.',
-        'color: red; font-weight: bold; font-size: 16px;',
-        '',
-        'color: orange;'
-    );
-
-    console.log(
-        '%cInfo:%c %cPasting anything in here could give attackers access to your account.',
-        'color: blue; font-weight: bold; font-size: 16px;',
-        '',
-        'color: white;'
-    );
     return (
         <html lang="en">
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased satoshi-font`}
             >
+                <Logger key={"logger"} />
                 <ExternalUrlInterceptor />
                 <NextTopLoader
                     color="#047857"

@@ -21,7 +21,7 @@ export default function LandingPage() {
     return (
         <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
             <Header
-                title="Imo State E-Procurement"
+                title="Imo State Bureau of Public Procurement and Price Intelligence"
                 description="Contractor Registration & Renewal Portal"
             />
 
@@ -44,7 +44,7 @@ export default function LandingPage() {
                 {/* Main Cards */}
                 <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
                     {/* Vendor Registration Card */}
-                    <Card className="text-left hover:shadow-lg transition-shadow">
+                    <Card className="text-left hover:shadow-lg shadow-black/5 transition-shadow">
                         <CardHeader>
                             <div className="w-12 h-12 bg-theme-green rounded-lg flex items-center justify-center mb-4">
                                 <FaBuilding className="text-white text-xl" />
@@ -94,7 +94,7 @@ export default function LandingPage() {
                     </Card>
 
                     {/* Public Directory Card */}
-                    <Card className="text-left hover:shadow-lg transition-shadow">
+                    <Card className="text-left hover:shadow-lg shadow-black/5 transition-shadow">
                         <CardHeader>
                             <div className="w-12 h-12 bg-theme-green rounded-lg flex items-center justify-center mb-4">
                                 <FaSearch className="text-white text-xl" />
@@ -146,7 +146,7 @@ export default function LandingPage() {
             </section>
 
             {/* Platform Features Section */}
-            <section className="bg-gray-50 py-16">
+            <section className="bg-linear-to-b from-transparent to-gray-50 py-16">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
                         <h3 className="sm:text-2xl text-lg font-bold text-gray-900 mb-2">Platform Features</h3>
@@ -155,7 +155,7 @@ export default function LandingPage() {
 
                     <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
                         {/* Digital Documents */}
-                        <Card className="text-center hover:shadow-lg transition-shadow">
+                        <Card className="bg-linear-to-b from-transparent to-gray-100 border border-gray-200 text-center hover:shadow-lg shadow-black/5 transition-shadow">
                             <CardHeader>
                                 <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <FaFileAlt className="text-theme-green text-xl" />
@@ -170,7 +170,7 @@ export default function LandingPage() {
                         </Card>
 
                         {/* Automated Workflow */}
-                        <Card className="text-center hover:shadow-lg transition-shadow">
+                        <Card className="bg-linear-to-b from-transparent to-gray-100 border border-gray-200 text-center hover:shadow-lg shadow-black/5 transition-shadow">
                             <CardHeader>
                                 <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <FaCog className="text-theme-green text-xl" />
@@ -185,7 +185,7 @@ export default function LandingPage() {
                         </Card>
 
                         {/* Secure Payments */}
-                        <Card className="text-center hover:shadow-lg transition-shadow">
+                        <Card className="bg-linear-to-b from-transparent to-gray-100 border border-gray-200 text-center hover:shadow-lg shadow-black/5 transition-shadow">
                             <CardHeader>
                                 <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <FaShieldAlt className="text-theme-green text-xl" />
@@ -200,7 +200,7 @@ export default function LandingPage() {
                         </Card>
 
                         {/* Public Transparency */}
-                        <Card className="text-center hover:shadow-lg transition-shadow">
+                        <Card className="bg-linear-to-b from-transparent to-gray-100 border border-gray-200 text-center hover:shadow-lg shadow-black/5 transition-shadow">
                             <CardHeader>
                                 <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <FaUsers className="text-theme-green text-xl" />

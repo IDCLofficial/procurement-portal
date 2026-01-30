@@ -195,7 +195,7 @@ export interface CreateGradeRequest {
   category: string;
   grade: string;
   registrationCost: number;
-  financialCapacity: number;
+  financialCapacity: string;
   renewalFee: number;
 }
 

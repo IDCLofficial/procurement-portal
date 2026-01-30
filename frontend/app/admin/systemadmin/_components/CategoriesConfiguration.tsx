@@ -276,16 +276,14 @@ export function CategoriesConfiguration({
     const registrationCost = Number(
       gradeForm.registrationCost.toString().replace(/,/g, ''),
     );
-    const financialCapacity = Number(
-      gradeForm.financialCapacity.toString().replace(/,/g, ''),
-    );
+    const financialCapacity = gradeForm.financialCapacity.toString().replace(/,/g, '');
     const renewalFee = Number(
       gradeForm.renewalFee.toString().replace(/,/g, ''),
     );
 
-    if (Number.isNaN(registrationCost) || Number.isNaN(financialCapacity) || Number.isNaN(renewalFee)) {
+    if (Number.isNaN(registrationCost) || Number.isNaN(renewalFee)) {
       setResultDialogTitle('Invalid values');
-      setResultDialogDescription('Registration cost, renewal fee, and financial capacity must be valid numbers.');
+      setResultDialogDescription('Registration cost and renewal fee must be valid numbers.');
       setResultDialogVariant('destructive');
       setResultDialogOpen(true);
       return;

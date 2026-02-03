@@ -90,8 +90,8 @@ export class CategoriesService {
   async createGrade(createGradeDto: CreateGradeDto): Promise<Grade> {
     try {
 
-      const category = createGradeDto.category.trim().toLowerCase();
-      const grade = createGradeDto.grade.trim().toUpperCase();
+      const category = createGradeDto.category.toLowerCase();
+      const grade = createGradeDto.grade.toUpperCase().trim();
 
       const existingGrade = await this.gradeModel.findOne({
         grade,

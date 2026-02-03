@@ -93,20 +93,21 @@ export class CategoriesService {
       const category = createGradeDto.category.trim().toLowerCase();
       const grade = createGradeDto.grade.trim().toUpperCase();
 
-      const existingGrade = await this.gradeModel.findOne({
-        grade,
-        category
-      });
+      // const existingGrade = await this.gradeModel.findOne({
+      //   grade,
+      //   category
+      // });
 
-      if (existingGrade) {
-        throw new BadRequestException(`Grade ${grade} already exists for category ${category}`);
-      }
+      // if (existingGrade) {
+      //   throw new BadRequestException(`Grade ${grade} already exists for category ${category}`);
+      // }
 
       const newGrade = new this.gradeModel({
         ...createGradeDto,
         category,
         grade
       });
+
       return await newGrade.save();
     } catch (err) {
       if (err instanceof BadRequestException) {

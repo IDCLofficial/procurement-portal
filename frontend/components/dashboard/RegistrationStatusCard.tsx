@@ -108,7 +108,7 @@ export default function RegistrationStatusCard({
 
                 <div className={cn("flex flex-wrap gap-4 mb-4 mt-10")}>
                     {/* Registration ID */}
-                    <div className={`flex-1 min-w-64 ${status === 'verified' ? 'bg-linear-to-b from-white to-green-50 border-green-200' :
+                    {status !== 'pending' && <div className={`flex-1 min-w-64 ${status === 'verified' ? 'bg-linear-to-b from-white to-green-50 border-green-200' :
                         status === 'declined' ? 'bg-linear-to-b from-white to-red-50 border-red-200' :
                             status === 'expired' ? 'bg-linear-to-b from-white to-orange-50 border-orange-200' :
                                 status === 'suspended' ? 'bg-linear-to-b from-white to-gray-50 border-gray-200' :
@@ -136,7 +136,7 @@ export default function RegistrationStatusCard({
                                     }`}>{registrationId}</p>
                             </div>
                         </div>
-                    </div>
+                    </div>}
 
                     {/* Valid Until - Only show for verified/expired/suspended */}
                     {(status === 'verified' || status === 'expired') && validUntil && (

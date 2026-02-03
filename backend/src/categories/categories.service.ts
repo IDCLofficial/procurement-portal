@@ -93,14 +93,14 @@ export class CategoriesService {
       const category = createGradeDto.category.trim().toLowerCase();
       const grade = createGradeDto.grade.trim().toUpperCase();
 
-      // const existingGrade = await this.gradeModel.findOne({
-      //   grade,
-      //   category
-      // });
+      const existingGrade = await this.gradeModel.findOne({
+        grade,
+        category
+      });
 
-      // if (existingGrade) {
-      //   throw new BadRequestException(`Grade ${grade} already exists for category ${category}`);
-      // }
+      if (existingGrade) {
+        throw new BadRequestException(`Grade ${grade} already exists for category ${category}`);
+      }
 
       const newGrade = new this.gradeModel({
         ...createGradeDto,
@@ -113,8 +113,15 @@ export class CategoriesService {
       if (err instanceof BadRequestException) {
         throw err;
       }
-      this.logger.error(`Failed to create grade: ${err.message}`);
-      throw new BadRequestException('Failed to create grade');
+      
+      // Handle MongoDB duplicate key error
+      if (err.code === 11000) {
+        const field = Object.keys(err.keyPattern || {})[0];
+        throw new BadRequestException(`Duplicate entry: Grade ${createGradeDto.grade} already exists for category ${createGradeDto.category}`);
+      }
+      
+      this.logger.error(`Failed to create grade: ${err.message}`, err.stack);
+      throw new BadRequestException(`Failed to create grade: ${err.message}`);
     }
   }
 

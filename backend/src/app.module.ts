@@ -22,6 +22,7 @@ import { SlaModule } from './sla/sla.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MdaModule } from './mda/mda.module';
+import { WalletModule } from './wallet/wallet.module';
 
 @Module({
   imports: [
@@ -59,7 +60,8 @@ import { MdaModule } from './mda/mda.module';
     CertificatesModule,
     SlaModule,
     NotificationsModule,
-    MdaModule
+    MdaModule,
+    WalletModule
   ],
   controllers: [AppController],
   providers: [

@@ -90,8 +90,10 @@ export class CategoriesService {
   async createGrade(createGradeDto: CreateGradeDto): Promise<Grade> {
     try {
 
-      const category = createGradeDto.category.toLowerCase();
+      const category = createGradeDto.category.trim().toLowerCase();
       const grade = createGradeDto.grade.toUpperCase().trim();
+
+      this.logger.log(`Attempting to create grade: "${grade}" for category: "${category}"`);
 
       const existingGrade = await this.gradeModel.findOne({
         grade,
@@ -99,8 +101,11 @@ export class CategoriesService {
       });
 
       if (existingGrade) {
+        this.logger.warn(`Found existing grade: ${JSON.stringify(existingGrade)}`);
         throw new BadRequestException(`Grade ${grade} already exists for category ${category}`);
       }
+
+      this.logger.log(`No existing grade found, proceeding with creation`);
 
       const newGrade = new this.gradeModel({
         ...createGradeDto,

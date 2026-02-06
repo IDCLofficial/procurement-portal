@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsString, IsUppercase } from "class-validator";
 
 export class CreateGradeDto {
     @ApiProperty({
@@ -15,6 +15,8 @@ export class CreateGradeDto {
         description: "Grade type (A, B, C, or D)"
     })
     @IsNotEmpty()
+    @IsString()
+    @IsUppercase()
     grade: string;
 
     @ApiProperty({ 

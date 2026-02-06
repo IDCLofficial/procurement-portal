@@ -1,0 +1,14 @@
+import { Module } from '@nestjs/common';
+import { WalletService } from './wallet.service';
+import { WalletController } from './wallet.controller';
+import { Payment, PaymentSchema } from 'src/payments/entities/payment.schema';
+import { MongooseModule } from '@nestjs/mongoose';
+
+@Module({
+  imports:[
+    MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }])
+  ],
+  controllers: [WalletController],
+  providers: [WalletService],
+})
+export class WalletModule {}

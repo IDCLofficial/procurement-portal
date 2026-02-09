@@ -117,7 +117,7 @@ export default function Step6CategoryGrade({
                     Select Grade <span className="text-red-500 text-lg">*</span>
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {grades.filter((grade) => grade.category === selectedSector).sort((a, b) => String(a.grade).localeCompare(String(b.grade))).map((grade) => {
+                    {grades.filter((grade) => grade.category.toLowerCase() === selectedSector.toLowerCase()).sort((a, b) => String(a.grade).localeCompare(String(b.grade))).map((grade) => {
                         const isSelected = selectedGrade === grade.grade;
                         return (
                             <button

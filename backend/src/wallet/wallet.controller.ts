@@ -12,14 +12,6 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
-  @Post()
-  create(@Req() req:any, @Body() createWalletDto: CreateWalletDto) {
-    if(!req.user || req.user.role !== 'Admin'){
-      throw new UnauthorizedException('Unauthorized, contact admin or get out of here')
-    }
-    return this.walletService.create(createWalletDto);
-  }
-
   @Get('recent-transactions')
   @ApiOperation({ summary: 'Get recent processing fee transactions' })
   @ApiQuery({ name: 'limit', required: false, description: 'Number of transactions to return (default: 20)', type: Number })

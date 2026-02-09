@@ -21,6 +21,7 @@
     "seed:certificates": "ts-node src/seeds/certificates.seed.ts",
     "seed:mdas": "ts-node src/seeds/mdas.seed.ts",
     "update:docStatus": "ts-node src/seeds/updateDocStatus.ts 694575503256a41d2f75d2e7 \"All documents approved\"",
+    "normalize:grades": "ts-node src/seeds/normalizeGrades.ts",
     "migrate:application-status": "ts-node scripts/migrate-application-status.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",

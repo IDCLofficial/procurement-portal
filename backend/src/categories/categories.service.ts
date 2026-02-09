@@ -91,13 +91,14 @@ export class CategoriesService {
     try {
 
       const category = createGradeDto.category.trim().toLowerCase();
-      const grade = createGradeDto.grade.toUpperCase().trim();
+      const grade = createGradeDto.grade.trim().toLowerCase();
 
       this.logger.log(`Attempting to create grade: "${grade}" for category: "${category}"`);
 
+      // Use case-insensitive regex to check for existing grade
       const existingGrade = await this.gradeModel.findOne({
-        grade,
-        category
+        grade: { $regex: new RegExp(`^${grade}$`, 'i') },
+        category: { $regex: new RegExp(`^${category}$`, 'i') }
       });
 
       if (existingGrade) {

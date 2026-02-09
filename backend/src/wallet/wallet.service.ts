@@ -101,45 +101,73 @@ export class WalletService {
     const lastCashout = lastCashoutRecord ? lastCashoutRecord.amount : 0;
 
     return {
-      totalAmountGenerated,
-      totalRemitted,
-      totalUnremitted,
-      iirsTransactions,
-      mdaTransactions,
-      bpppiTransactions,
-      totalNumberOfPayments,
-      lastCashout,
-      lastCashoutDate: lastCashoutRecord?.cashoutDate || null,
-      lastCashoutEntity: lastCashoutRecord?.entity || null,
-      entities: {
-        iirs: {
-          allocated: iirsAllocated,
-          remitted: iirsRemitted,
-          unremitted: iirsUnremitted,
-          percentage: `${iirsPercentage * 100}%`,
-          cashoutCount: remittedMap['IIRS']?.count || 0
+      remitted: {
+        totalAmountGenerated: totalRemitted,
+        iirsTransactions: remittedMap['IIRS']?.count || 0,
+        mdaTransactions: remittedMap['MDA']?.count || 0,
+        bpppiTransactions: remittedMap['BPPPI']?.count || 0,
+        totalPayments: cashoutsByEntity.reduce((sum, item) => sum + item.count, 0),
+        lastCashout: {
+          amount: lastCashout,
+          date: lastCashoutRecord?.cashoutDate || null
         },
-        mda: {
-          allocated: mdaAllocated,
-          remitted: mdaRemitted,
-          unremitted: mdaUnremitted,
-          percentage: `${mdaPercentage * 100}%`,
-          cashoutCount: remittedMap['MDA']?.count || 0
-        },
-        bpppi: {
-          allocated: bpppiAllocated,
-          remitted: bpppiRemitted,
-          unremitted: bpppiUnremitted,
-          percentage: `${bpppiPercentage * 100}%`,
-          cashoutCount: remittedMap['BPPPI']?.count || 0
-        },
-        idcl: {
-          allocated: idclAllocated,
-          remitted: idclRemitted,
-          unremitted: idclUnremitted,
-          percentage: `${idclPercentage * 100}%`,
-          cashoutCount: remittedMap['IDCL']?.count || 0
+        entities: {
+          iirs: {
+            amount: iirsRemitted,
+            percentage: `${iirsPercentage * 100}%`,
+            count: remittedMap['IIRS']?.count || 0
+          },
+          mda: {
+            amount: mdaRemitted,
+            percentage: `${mdaPercentage * 100}%`,
+            count: remittedMap['MDA']?.count || 0
+          },
+          bpppi: {
+            amount: bpppiRemitted,
+            percentage: `${bpppiPercentage * 100}%`,
+            count: remittedMap['BPPPI']?.count || 0
+          },
+          idcl: {
+            amount: idclRemitted,
+            percentage: `${idclPercentage * 100}%`,
+            count: remittedMap['IDCL']?.count || 0
+          }
         }
+      },
+      unremitted: {
+        totalAmountGenerated: totalUnremitted,
+        iirsTransactions: iirsTransactions,
+        mdaTransactions: mdaTransactions,
+        bpppiTransactions: bpppiTransactions,
+        totalPayments: totalNumberOfPayments,
+        entities: {
+          iirs: {
+            amount: iirsUnremitted,
+            percentage: `${iirsPercentage * 100}%`,
+            allocated: iirsAllocated
+          },
+          mda: {
+            amount: mdaUnremitted,
+            percentage: `${mdaPercentage * 100}%`,
+            allocated: mdaAllocated
+          },
+          bpppi: {
+            amount: bpppiUnremitted,
+            percentage: `${bpppiPercentage * 100}%`,
+            allocated: bpppiAllocated
+          },
+          idcl: {
+            amount: idclUnremitted,
+            percentage: `${idclPercentage * 100}%`,
+            allocated: idclAllocated
+          }
+        }
+      },
+      summary: {
+        totalAmountGenerated,
+        totalRemitted,
+        totalUnremitted,
+        totalNumberOfPayments
       }
     };
   }

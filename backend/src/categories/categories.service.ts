@@ -99,7 +99,7 @@ export class CategoriesService {
       const existingGrade = await this.gradeModel.findOne({
         grade: { $regex: new RegExp(`^${grade}$`, 'i') },
         category: { $regex: new RegExp(`^${category}$`, 'i') }
-      });
+      }).exec();
 
       if (existingGrade) {
         this.logger.warn(`Found existing grade: ${JSON.stringify(existingGrade)}`);

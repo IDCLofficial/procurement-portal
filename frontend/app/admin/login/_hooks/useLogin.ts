@@ -25,7 +25,12 @@ export interface UseLoginReturn {
   isRedirecting: boolean;
 }
 
-export function useLogin(): UseLoginReturn {
+export interface UseLoginOptions {
+  redirectPath?: 'admin' | 'wallet';
+}
+
+export function useLogin(options?: UseLoginOptions): UseLoginReturn {
+  const { redirectPath = 'admin' } = options || {};
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,10 +49,17 @@ export function useLogin(): UseLoginReturn {
 
     if (isAuthenticated && user) {
       setIsRedirecting(true);
-      const target = user.role === 'Admin' ? '/admin/systemadmin' : `/admin/${user.id}`;
+      let target: string;
+      
+      if (redirectPath === 'wallet') {
+        target = `/admin/wallet/${user.id}`;
+      } else {
+        target = user.role === 'Admin' ? '/admin/systemadmin' : `/admin/${user.id}`;
+      }
+      
       router.replace(target);
     }
-  }, [initialized, isAuthenticated, user, router]);
+  }, [initialized, isAuthenticated, user, router, redirectPath]);
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((prev) => !prev);
@@ -91,8 +103,10 @@ export function useLogin(): UseLoginReturn {
           })
         );
 
-        // Redirect based on role
-        if (apiUser.role === 'Admin') {
+        // Redirect based on role and path
+        if (redirectPath === 'wallet') {
+          router.push(`/admin/wallet/${userId}`);
+        } else if (apiUser.role === 'Admin') {
           router.push('/admin/systemadmin');
         } else {
           router.push(`/admin/${userId}`);

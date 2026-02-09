@@ -86,8 +86,14 @@ export class WalletController {
 
   @Get('my-mda-transactions')
   @ApiOperation({ summary: 'Get transactions for the authenticated MDA user' })
-  @ApiResponse({ status: 200, description: 'Returns MDA transactions and summary' })
-  getMyMdaTransactions(@Req() req:any) {
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (default: 1)', type: Number })
+  @ApiQuery({ name: 'limit', required: false, description: 'Number of records per page (default: 20)', type: Number })
+  @ApiResponse({ status: 200, description: 'Returns MDA transactions and summary with pagination' })
+  getMyMdaTransactions(
+    @Req() req:any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
     if(!req.user) {
       throw new UnauthorizedException('Unauthorized');
     }
@@ -99,6 +105,9 @@ export class WalletController {
       throw new UnauthorizedException('MDA name not found in user profile');
     }
 
-    return this.walletService.getMyMdaTransactions(mdaName);
+    const pageNum = page ? parseInt(page) : 1;
+    const limitNum = limit ? parseInt(limit) : 20;
+
+    return this.walletService.getMyMdaTransactions(mdaName, pageNum, limitNum);
   }
 }

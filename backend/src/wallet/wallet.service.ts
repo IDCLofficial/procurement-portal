@@ -381,10 +381,37 @@ export class WalletService {
     }
   }
 
-  async getMyMdaTransactions(mdaName: string) {
+  async getMyMdaTransactions(mdaName: string, page: number = 1, limit: number = 20) {
     const mdaPercentage = 0.25;
+    const skip = (page - 1) * limit;
 
-    // Get all processing fees for companies under this MDA
+    // Get total count for pagination
+    const totalCount = await this.PaymentModel.aggregate([
+      {
+        $match: { type: 'processing fee' }
+      },
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'companyId',
+          foreignField: '_id',
+          as: 'company'
+        }
+      },
+      {
+        $unwind: '$company'
+      },
+      {
+        $match: { 'company.mda': mdaName }
+      },
+      {
+        $count: 'total'
+      }
+    ]);
+
+    const total = totalCount.length > 0 ? totalCount[0].total : 0;
+
+    // Get paginated processing fees for companies under this MDA
     const mdaPayments = await this.PaymentModel.aggregate([
       {
         $match: { type: 'processing fee' }
@@ -419,6 +446,12 @@ export class WalletService {
       },
       {
         $sort: { createdAt: -1 }
+      },
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
       }
     ]);
 
@@ -441,8 +474,15 @@ export class WalletService {
     return {
       mdaName,
       transactions: mdaPayments,
+      pagination: {
+        currentPage: page,
+        limit: limit,
+        totalTransactions: total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total
+      },
       summary: {
-        totalTransactions: mdaPayments.length,
+        totalTransactions: total,
         totalProcessingFees,
         allocatedAmount,
         mdaPercentage: `${mdaPercentage * 100}%`,

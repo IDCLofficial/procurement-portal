@@ -313,6 +313,25 @@ export class WalletService {
         }
       ]);
 
+      // Get recent cashouts
+      const recentCashouts = await this.CashoutModel.find()
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .select({
+          cashoutId: 1,
+          entity: 1,
+          mdaName: 1,
+          amount: 1,
+          status: 1,
+          description: 1,
+          transactionReference: 1,
+          cashoutDate: 1,
+          approvedBy: 1,
+          createdAt: 1,
+          updatedAt: 1
+        })
+        .exec();
+
       return {
         transactions: recentTransactions,
         count: recentTransactions.length,
@@ -322,7 +341,9 @@ export class WalletService {
             totalAmount: stat.totalAmount
           };
           return acc;
-        }, {})
+        }, {}),
+        recentCashouts: recentCashouts,
+        cashoutCount: recentCashouts.length
       };
     } catch (err) {
       throw new BadRequestException(`Failed to fetch recent transactions: ${err.message}`);

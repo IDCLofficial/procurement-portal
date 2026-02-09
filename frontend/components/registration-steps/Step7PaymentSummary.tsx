@@ -13,7 +13,7 @@ export default function Step7PaymentSummary({
     selectedSector,
     selectedGrade,
 }: Step7PaymentSummaryProps) {
-    const processingFee = 30_000;
+    const processingFee = 50_000;
     const totalAmount = processingFee;
 
     const formatCurrency = (amount: number) => {
@@ -62,7 +62,7 @@ export default function Step7PaymentSummary({
                 </h3>
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-700">Processing Fee</span>
+                        <span className="text-sm text-gray-700">Non-Refundable Processing Fee</span>
                         <span className="text-sm font-semibold text-gray-900">
                             {formatCurrency(processingFee)}
                         </span>

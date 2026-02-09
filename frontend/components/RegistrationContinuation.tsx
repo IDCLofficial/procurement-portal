@@ -19,7 +19,7 @@ import { FaTag } from 'react-icons/fa6';
 import { useAuth } from './providers/public-service/AuthProvider';
 import sirvClient from '@/lib/sirv.class';
 import { PaymentType, VendorSteps } from '@/store/api/enum';
-import { useCompleteVendorRegistrationMutation, useGetProfileQuery, useGetApplicationQuery, useInitPaymentMutation } from '@/store/api/vendor.api';
+import { useCompleteVendorRegistrationMutation, useGetProfileQuery, useInitPaymentMutation } from '@/store/api/vendor.api';
 import { Loader2 } from 'lucide-react';
 import { CompleteVendorRegistrationRequest, ResponseError } from '@/store/api/types';
 import { deepEqual, formatCurrency } from '@/lib';

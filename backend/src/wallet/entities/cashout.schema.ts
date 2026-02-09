@@ -30,6 +30,9 @@ export class Cashout {
     @Prop({ required: true })
     amount: number;
 
+    @Prop({required:true, type: []})
+    cashedOutTransactions: Array<any>;
+
     @Prop({ required: true, enum: Object.values(CashoutStatus), default: CashoutStatus.PENDING })
     status: CashoutStatus;
 

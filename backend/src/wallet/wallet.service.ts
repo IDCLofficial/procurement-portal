@@ -4,7 +4,7 @@ import { UpdateWalletDto } from './dto/update-wallet.dto';
 import { CreateCashoutDto } from './dto/create-cashout.dto';
 import { Payment } from 'src/payments/entities/payment.schema';
 import { Company } from 'src/companies/entities/company.schema';
-import { Cashout, CashoutStatus } from './entities/cashout.schema';
+import { Cashout, CashoutStatus, CashoutEntity } from './entities/cashout.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -71,6 +71,29 @@ export class WalletService {
       };
       return acc;
     }, {});
+
+    // Get all cashed out transaction IDs
+    const completedCashouts = await this.CashoutModel.find({
+      status: CashoutStatus.COMPLETED
+    }).select('cashedOutTransactions entity').exec();
+
+    const cashedOutTransactionIds: string[] = completedCashouts.reduce((acc: string[], cashout) => {
+      return acc.concat(cashout.cashedOutTransactions || []);
+    }, []);
+
+    // Get count of cashed out vs uncashed transactions
+    const totalProcessingFeePayments = await this.PaymentModel.countDocuments({
+      type: 'processing fee',
+      status: 'completed'
+    });
+
+    const cashedOutPaymentsCount = await this.PaymentModel.countDocuments({
+      type: 'processing fee',
+      status: 'completed',
+      paymentId: { $in: cashedOutTransactionIds }
+    });
+
+    const uncashedPaymentsCount = totalProcessingFeePayments - cashedOutPaymentsCount;
 
     const iirsRemitted = remittedMap['IIRS']?.amount || 0;
     const mdaRemitted = remittedMap['MDA']?.amount || 0;
@@ -167,7 +190,15 @@ export class WalletService {
         totalAmountGenerated,
         totalRemitted,
         totalUnremitted,
-        totalNumberOfPayments
+        totalNumberOfPayments,
+        transactionTracking: {
+          totalCompletedPayments: totalProcessingFeePayments,
+          cashedOutPayments: cashedOutPaymentsCount,
+          uncashedPayments: uncashedPaymentsCount,
+          cashedOutPercentage: totalProcessingFeePayments > 0 
+            ? ((cashedOutPaymentsCount / totalProcessingFeePayments) * 100).toFixed(2) + '%'
+            : '0%'
+        }
       }
     };
   }
@@ -428,6 +459,57 @@ export class WalletService {
       const count = await this.CashoutModel.countDocuments();
       const cashoutId = `CASH-${new Date().getFullYear()}-${String(count + 1).padStart(3, '0')}`;
 
+      // Get all completed cashouts to determine which transactions have already been cashed out
+      const completedCashouts = await this.CashoutModel.find({
+        status: CashoutStatus.COMPLETED
+      }).select('cashedOutTransactions').exec();
+
+      const alreadyCashedOutTransactionIds: string[] = completedCashouts.reduce((acc: string[], cashout) => {
+        return acc.concat(cashout.cashedOutTransactions || []);
+      }, []);
+
+      // Build match query based on entity
+      let matchQuery: any = { 
+        type: 'processing fee',
+        status: 'completed'
+      };
+
+      // If entity is MDA, filter by specific MDA name
+      if (createCashoutDto.entity === CashoutEntity.MDA && createCashoutDto.mdaName) {
+        // Get companies for this MDA
+        const companies = await this.CompanyModel.find({
+          mda: createCashoutDto.mdaName
+        }).select('_id').exec();
+        
+        const companyIds = companies.map(c => c._id);
+        matchQuery.companyId = { $in: companyIds };
+      }
+
+      // Get uncashed transactions for this entity
+      const uncashedTransactions = await this.PaymentModel.find({
+        ...matchQuery,
+        paymentId: { $nin: alreadyCashedOutTransactionIds }
+      })
+      .sort({ createdAt: 1 }) // Oldest first
+      .select('paymentId amount createdAt description')
+      .exec();
+
+      // Select transactions that sum up to the cashout amount (or close to it)
+      let runningTotal = 0;
+      const selectedTransactions: string[] = [];
+      const entityPercentage = 0.25; // Each entity gets 25%
+
+      for (const transaction of uncashedTransactions) {
+        const entityShare = transaction.amount * entityPercentage;
+        if (runningTotal + entityShare <= createCashoutDto.amount) {
+          selectedTransactions.push(transaction.paymentId);
+          runningTotal += entityShare;
+        }
+        if (runningTotal >= createCashoutDto.amount) {
+          break;
+        }
+      }
+
       const newCashout = new this.CashoutModel({
         cashoutId,
         entity: createCashoutDto.entity,
@@ -436,6 +518,7 @@ export class WalletService {
         description: createCashoutDto.description,
         bankDetails: createCashoutDto.bankDetails,
         notes: createCashoutDto.notes,
+        cashedOutTransactions: selectedTransactions,
         approvedBy,
         status: CashoutStatus.PENDING
       });

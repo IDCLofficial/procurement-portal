@@ -38,7 +38,7 @@ export class Payment {
 
     @Prop({ required: true, enum: Object.values(paymentType) })
     type: paymentType;
-
+    
     @Prop({ required: true })
     description: string; // e.g., "Initial Registration - Works Grade A"
 

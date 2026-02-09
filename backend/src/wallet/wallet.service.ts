@@ -145,6 +145,78 @@ export class WalletService {
     };
   }
 
+  async getMyMdaTransactions(mdaName: string) {
+    const mdaPercentage = 0.25;
+
+    // Get all processing fees for companies under this MDA
+    const mdaPayments = await this.PaymentModel.aggregate([
+      {
+        $match: { type: 'processing fee' }
+      },
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'companyId',
+          foreignField: '_id',
+          as: 'company'
+        }
+      },
+      {
+        $unwind: '$company'
+      },
+      {
+        $match: { 'company.mda': mdaName }
+      },
+      {
+        $project: {
+          paymentId: 1,
+          amount: 1,
+          status: 1,
+          paymentDate: 1,
+          category: 1,
+          grade: 1,
+          description: 1,
+          companyName: '$company.companyName',
+          companyId: '$company._id',
+          createdAt: 1
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      }
+    ]);
+
+    // Calculate totals
+    const totalProcessingFees = mdaPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    const allocatedAmount = totalProcessingFees * mdaPercentage;
+
+    // Get cashout history for this MDA
+    const cashouts = await this.CashoutModel.find({
+      entity: 'MDA',
+      mdaName: mdaName
+    })
+    .sort({ createdAt: -1 })
+    .exec();
+
+    const totalCashedOut = cashouts
+      .filter(c => c.status === CashoutStatus.COMPLETED)
+      .reduce((sum, c) => sum + c.amount, 0);
+
+    return {
+      mdaName,
+      transactions: mdaPayments,
+      summary: {
+        totalTransactions: mdaPayments.length,
+        totalProcessingFees,
+        allocatedAmount,
+        mdaPercentage: `${mdaPercentage * 100}%`,
+        totalCashedOut,
+        availableBalance: allocatedAmount - totalCashedOut
+      },
+      cashoutHistory: cashouts
+    };
+  }
+
   async createCashout(createCashoutDto: CreateCashoutDto, approvedBy: string) {
     try {
       // Generate unique cashout ID

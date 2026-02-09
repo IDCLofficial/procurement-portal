@@ -74,4 +74,22 @@ export class WalletController {
     const limitNum = limit ? parseInt(limit) : 50;
     return this.walletService.getCashoutHistory(entity, limitNum);
   }
+
+  @Get('my-mda-transactions')
+  @ApiOperation({ summary: 'Get transactions for the authenticated MDA user' })
+  @ApiResponse({ status: 200, description: 'Returns MDA transactions and summary' })
+  getMyMdaTransactions(@Req() req:any) {
+    if(!req.user) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    // Get MDA name from user object (adjust based on your auth structure)
+    const mdaName = req.user.mda || req.user.mdaName;
+    
+    if(!mdaName) {
+      throw new UnauthorizedException('MDA name not found in user profile');
+    }
+
+    return this.walletService.getMyMdaTransactions(mdaName);
+  }
 }

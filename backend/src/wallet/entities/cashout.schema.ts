@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 
 export enum CashoutEntity {
     IIRS = 'IIRS',
@@ -45,7 +45,7 @@ export class Cashout {
     @Prop({ required: false })
     approvedBy?: string; // Admin user ID or name
 
-    @Prop({ required: false })
+    @Prop({ required: false, type: MongooseSchema.Types.Mixed })
     bankDetails?: {
         accountName: string;
         accountNumber: string;

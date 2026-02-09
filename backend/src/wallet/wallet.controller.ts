@@ -74,19 +74,4 @@ export class WalletController {
     const limitNum = limit ? parseInt(limit) : 50;
     return this.walletService.getCashoutHistory(entity, limitNum);
   }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.walletService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
-    return this.walletService.update(+id, updateWalletDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.walletService.remove(+id);
-  }
 }

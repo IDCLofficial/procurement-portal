@@ -24,7 +24,8 @@ export class WalletService {
   async getSummary() {
     const iirsPercentage = 0.25;
     const mdaPercentage = 0.25;
-    const bpppiPercentage = 0.25; // Procurement percentage
+    const bpppiPercentage = 0.25;
+    const idclPercentage = 0.25;
 
     // Get total amount from all processing fees
     const totalAmountResult = await this.PaymentModel.aggregate([
@@ -43,13 +44,51 @@ export class WalletService {
     const totalAmountGenerated = totalAmountResult.length > 0 ? totalAmountResult[0].totalAmount : 0;
     const totalNumberOfPayments = totalAmountResult.length > 0 ? totalAmountResult[0].totalPayments : 0;
 
-    // Calculate IIRS transactions (25% of total)
+    // Calculate allocated amounts for each entity
+    const iirsAllocated = totalAmountGenerated * iirsPercentage;
+    const mdaAllocated = totalAmountGenerated * mdaPercentage;
+    const bpppiAllocated = totalAmountGenerated * bpppiPercentage;
+    const idclAllocated = totalAmountGenerated * idclPercentage;
+
+    // Get remitted (cashed out) amounts for each entity
+    const cashoutsByEntity = await this.CashoutModel.aggregate([
+      {
+        $match: { status: CashoutStatus.COMPLETED }
+      },
+      {
+        $group: {
+          _id: '$entity',
+          totalRemitted: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const remittedMap = cashoutsByEntity.reduce((acc, item) => {
+      acc[item._id] = {
+        amount: item.totalRemitted,
+        count: item.count
+      };
+      return acc;
+    }, {});
+
+    const iirsRemitted = remittedMap['IIRS']?.amount || 0;
+    const mdaRemitted = remittedMap['MDA']?.amount || 0;
+    const bpppiRemitted = remittedMap['BPPPI']?.amount || 0;
+    const idclRemitted = remittedMap['IDCL']?.amount || 0;
+
+    // Calculate unremitted amounts
+    const iirsUnremitted = iirsAllocated - iirsRemitted;
+    const mdaUnremitted = mdaAllocated - mdaRemitted;
+    const bpppiUnremitted = bpppiAllocated - bpppiRemitted;
+    const idclUnremitted = idclAllocated - idclRemitted;
+
+    const totalRemitted = iirsRemitted + mdaRemitted + bpppiRemitted + idclRemitted;
+    const totalUnremitted = totalAmountGenerated - totalRemitted;
+
+    // Calculate transaction counts (25% of total for each)
     const iirsTransactions = Math.round(totalNumberOfPayments * iirsPercentage);
-
-    // Calculate MDA transactions (25% of total)
     const mdaTransactions = Math.round(totalNumberOfPayments * mdaPercentage);
-
-    // Calculate BPPPI transactions (25% of total)
     const bpppiTransactions = Math.round(totalNumberOfPayments * bpppiPercentage);
 
     // Get last cashout amount
@@ -63,17 +102,44 @@ export class WalletService {
 
     return {
       totalAmountGenerated,
+      totalRemitted,
+      totalUnremitted,
       iirsTransactions,
       mdaTransactions,
       bpppiTransactions,
       totalNumberOfPayments,
       lastCashout,
       lastCashoutDate: lastCashoutRecord?.cashoutDate || null,
-      breakdown: {
-        iirsAmount: totalAmountGenerated * iirsPercentage,
-        mdaAmount: totalAmountGenerated * mdaPercentage,
-        bpppiAmount: totalAmountGenerated * bpppiPercentage,
-        idclAmount: totalAmountGenerated * 0.25
+      lastCashoutEntity: lastCashoutRecord?.entity || null,
+      entities: {
+        iirs: {
+          allocated: iirsAllocated,
+          remitted: iirsRemitted,
+          unremitted: iirsUnremitted,
+          percentage: `${iirsPercentage * 100}%`,
+          cashoutCount: remittedMap['IIRS']?.count || 0
+        },
+        mda: {
+          allocated: mdaAllocated,
+          remitted: mdaRemitted,
+          unremitted: mdaUnremitted,
+          percentage: `${mdaPercentage * 100}%`,
+          cashoutCount: remittedMap['MDA']?.count || 0
+        },
+        bpppi: {
+          allocated: bpppiAllocated,
+          remitted: bpppiRemitted,
+          unremitted: bpppiUnremitted,
+          percentage: `${bpppiPercentage * 100}%`,
+          cashoutCount: remittedMap['BPPPI']?.count || 0
+        },
+        idcl: {
+          allocated: idclAllocated,
+          remitted: idclRemitted,
+          unremitted: idclUnremitted,
+          percentage: `${idclPercentage * 100}%`,
+          cashoutCount: remittedMap['IDCL']?.count || 0
+        }
       }
     };
   }
@@ -143,6 +209,96 @@ export class WalletService {
         mdaPercentage: `${mdaPercentage * 100}%`
       }
     };
+  }
+
+  async getRecentProcessingFeeTransactions(limit: number = 20, status?: string) {
+    try {
+      const matchQuery: any = { type: 'processing fee' };
+      
+      if (status) {
+        matchQuery.status = status;
+      }
+
+      const recentTransactions = await this.PaymentModel.aggregate([
+        {
+          $match: matchQuery
+        },
+        {
+          $lookup: {
+            from: 'companies',
+            localField: 'companyId',
+            foreignField: '_id',
+            as: 'company'
+          }
+        },
+        {
+          $unwind: '$company'
+        },
+        {
+          $lookup: {
+            from: 'vendors',
+            localField: 'vendorId',
+            foreignField: '_id',
+            as: 'vendor'
+          }
+        },
+        {
+          $unwind: '$vendor'
+        },
+        {
+          $project: {
+            paymentId: 1,
+            amount: 1,
+            status: 1,
+            paymentDate: 1,
+            category: 1,
+            grade: 1,
+            description: 1,
+            transactionReference: 1,
+            companyName: '$company.companyName',
+            companyMda: '$company.mda',
+            vendorEmail: '$vendor.email',
+            vendorPhone: '$vendor.phoneNumber',
+            createdAt: 1,
+            updatedAt: 1
+          }
+        },
+        {
+          $sort: { createdAt: -1 }
+        },
+        {
+          $limit: limit
+        }
+      ]);
+
+      // Get summary stats
+      const stats = await this.PaymentModel.aggregate([
+        {
+          $match: { type: 'processing fee' }
+        },
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+            totalAmount: { $sum: '$amount' }
+          }
+        }
+      ]);
+
+      return {
+        transactions: recentTransactions,
+        count: recentTransactions.length,
+        stats: stats.reduce((acc, stat) => {
+          acc[stat._id] = {
+            count: stat.count,
+            totalAmount: stat.totalAmount
+          };
+          return acc;
+        }, {})
+      };
+    } catch (err) {
+      throw new BadRequestException(`Failed to fetch recent transactions: ${err.message}`);
+    }
   }
 
   async getMyMdaTransactions(mdaName: string) {

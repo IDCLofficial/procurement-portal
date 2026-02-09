@@ -20,6 +20,23 @@ export class WalletController {
     return this.walletService.create(createWalletDto);
   }
 
+  @Get('recent-transactions')
+  @ApiOperation({ summary: 'Get recent processing fee transactions' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Number of transactions to return (default: 20)', type: Number })
+  @ApiQuery({ name: 'status', required: false, description: 'Filter by payment status (pending, verified, completed, failed)' })
+  @ApiResponse({ status: 200, description: 'Returns recent processing fee transactions with stats' })
+  getRecentTransactions(
+    @Req() req:any,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string
+  ) {
+    if(!req.user || req.user.role !== 'Admin'){
+      throw new UnauthorizedException('Unauthorized, contact admin or get out of here')
+    }
+    const limitNum = limit ? parseInt(limit) : 20;
+    return this.walletService.getRecentProcessingFeeTransactions(limitNum, status);
+  }
+
   @Get('summary')
   summary(@Req() req:any) {
     if(!req.user || req.user.role !== 'Admin'){

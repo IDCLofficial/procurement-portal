@@ -75,14 +75,13 @@ export class WalletController {
   @ApiQuery({ name: 'mdaName', required: false, description: 'Filter by specific MDA name' })
   completeCashout(
     @Req() req:any,
-    @Body('transactionReference') transactionReference: string,
     @Query('entity') entity?: string,
     @Query('mdaName') mdaName?: string
   ) {
     if(!req.user || req.user.role !== 'Admin'){
       throw new UnauthorizedException('Unauthorized, contact admin or get out of here')
     }
-    return this.walletService.completeCashout(transactionReference, entity, mdaName);
+    return this.walletService.completeCashout(entity, mdaName);
   }
 
   @Get('cashout/history')

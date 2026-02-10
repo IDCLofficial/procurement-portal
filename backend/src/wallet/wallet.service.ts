@@ -27,22 +27,11 @@ export class WalletService {
     const bpppiPercentage = 0.6;
     const ministryOfJusticePercentage = 0.1;
 
-    // Get total amount from all processing fees
-    const totalAmountResult = await this.PaymentModel.aggregate([
-      {
-        $match: { type: 'processing fee', status: 'verified' }
-      },
-      {
-        $group: {
-          _id: null,
-          totalAmount: { $sum: '$amount' },
-          totalPayments: { $sum: 1 }
-        }
-      }
-    ]);
-
-    const totalAmountGenerated = totalAmountResult.length > 0 ? totalAmountResult[0].totalAmount : 0;
-    const totalNumberOfPayments = totalAmountResult.length > 0 ? totalAmountResult[0].totalPayments : 0;
+    // Get total number of verified processing fee payments
+    const totalNumberOfPayments = await this.PaymentModel.countDocuments({
+      type: 'processing fee',
+      status: 'verified'
+    });
 
 
     // Get remitted (completed) cashouts by entity
@@ -111,20 +100,53 @@ export class WalletService {
 
     const totalRemitted = iirsRemitted + mdaRemitted + bpppiRemitted + idclRemitted;
     const totalUnremitted = iirsUnremitted + mdaUnremitted + bpppiUnremitted + idclUnremitted;
+    
+    // Calculate total amount generated from all cashouts (remitted + unremitted)
+    const totalAmountGenerated = totalRemitted + totalUnremitted;
+
+    // Get last cashout operation (total amount from most recent transaction reference)
+    const lastCashoutOperation = await this.CashoutModel.aggregate([
+      {
+        $match: { 
+          status: CashoutStatus.COMPLETED,
+          transactionReference: { $exists: true, $ne: null }
+        }
+      },
+      {
+        $sort: { cashoutDate: -1 }
+      },
+      {
+        $group: {
+          _id: '$transactionReference',
+          totalAmount: { $sum: '$amount' },
+          cashoutDate: { $first: '$cashoutDate' },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { cashoutDate: -1 }
+      },
+      {
+        $limit: 1
+      }
+    ]);
+
+    const lastCashout = lastCashoutOperation.length > 0 ? {
+      amount: lastCashoutOperation[0].totalAmount,
+      date: lastCashoutOperation[0].cashoutDate,
+      transactionReference: lastCashoutOperation[0]._id,
+      count: lastCashoutOperation[0].count
+    } : {
+      amount: 0,
+      date: null,
+      transactionReference: null,
+      count: 0
+    };
 
     // Calculate transaction counts (25% of total for each)
     const iirsTransactions = Math.round(totalNumberOfPayments * iirsPercentage);
     const mdaTransactions = Math.round(totalNumberOfPayments * mdaPercentage);
     const bpppiTransactions = Math.round(totalNumberOfPayments * bpppiPercentage);
-
-    // Get last cashout amount
-    const lastCashoutRecord = await this.CashoutModel.findOne({
-      status: CashoutStatus.COMPLETED
-    })
-    .sort({ cashoutDate: -1 })
-    .exec();
-
-    const lastCashout = lastCashoutRecord ? lastCashoutRecord.amount : 0;
 
     return {
       remitted: {
@@ -133,10 +155,7 @@ export class WalletService {
         mdaTransactions: remittedMap['MDA']?.count || 0,
         bpppiTransactions: remittedMap['BPPPI']?.count || 0,
         totalPayments: cashoutsByEntity.reduce((sum, item) => sum + item.count, 0),
-        lastCashout: {
-          amount: lastCashout,
-          date: lastCashoutRecord?.cashoutDate || null
-        },
+        lastCashout: lastCashout,
         entities: {
           iirs: {
             amount: iirsRemitted,
@@ -709,8 +728,13 @@ export class WalletService {
     }
   }
 
-  async completeCashout(transactionReference: string, entity?: string, mdaName?: string) {
+  async completeCashout(entity?: string, mdaName?: string) {
     try {
+      // Generate unique transaction reference
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const transactionReference = `TXN-${timestamp}-${randomSuffix}`;
+
       // Build query to get unremitted cashouts
       const query: any = { status: CashoutStatus.UNREMITTED };
       

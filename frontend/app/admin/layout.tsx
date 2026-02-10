@@ -17,7 +17,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
     if (!pathname || !pathname.startsWith("/admin")) return;
 
-    if (pathname === "/admin" || pathname === "/admin/login") return;
+    if (pathname === "/admin" || pathname === "/admin/login" || pathname.startsWith("/admin/wallet")) return;
 
     if (!isAuthenticated) {
       router.replace("/admin/login");

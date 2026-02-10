@@ -132,7 +132,7 @@ export default function Step6CategoryGrade({
                             >
                                 {/* Grade Circle */}
                                 <div
-                                    className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                                    className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold transition-all uppercase border border-black/25 ${
                                         isSelected
                                             ? 'bg-theme-green text-white'
                                             : 'bg-gray-100 text-gray-600'

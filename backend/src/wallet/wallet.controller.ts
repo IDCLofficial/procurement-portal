@@ -45,6 +45,24 @@ export class WalletController {
     return this.walletService.getMdaTransactions();
   }
 
+  @Get('iirs-transactions')
+  @ApiOperation({ summary: 'Get IIRS transactions with allocation and cashout history' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (default: 1)', type: Number })
+  @ApiQuery({ name: 'limit', required: false, description: 'Number of records per page (default: 20)', type: Number })
+  @ApiResponse({ status: 200, description: 'Returns IIRS transactions and summary with pagination' })
+  getIirsTransactions(
+    @Req() req:any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    if(!req.user || req.user.role !== 'Admin'){
+      throw new UnauthorizedException('Unauthorized, contact admin or get out of here')
+    }
+    const pageNum = page ? parseInt(page) : 1;
+    const limitNum = limit ? parseInt(limit) : 20;
+    return this.walletService.getIirsTransactions(pageNum, limitNum);
+  }
+
   @Post('cashout')
   @ApiOperation({ summary: 'Create a new cashout request' })
   createCashout(@Req() req:any, @Body() createCashoutDto: CreateCashoutDto) {

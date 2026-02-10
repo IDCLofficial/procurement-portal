@@ -22,10 +22,10 @@ export class WalletService {
   }
 
   async getSummary() {
-    const iirsPercentage = 0.25;
-    const mdaPercentage = 0.25;
-    const bpppiPercentage = 0.25;
-    const idclPercentage = 0.25;
+    const iirsPercentage = 0.1;
+    const mdaPercentage = 0.2;
+    const bpppiPercentage = 0.6;
+    const ministryOfJusticePercentage = 0.1;
 
     // Get total amount from all processing fees
     const totalAmountResult = await this.PaymentModel.aggregate([
@@ -48,7 +48,7 @@ export class WalletService {
     const iirsAllocated = totalAmountGenerated * iirsPercentage;
     const mdaAllocated = totalAmountGenerated * mdaPercentage;
     const bpppiAllocated = totalAmountGenerated * bpppiPercentage;
-    const idclAllocated = totalAmountGenerated * idclPercentage;
+    const idclAllocated = totalAmountGenerated * ministryOfJusticePercentage;
 
     // Get remitted (cashed out) amounts for each entity
     const cashoutsByEntity = await this.CashoutModel.aggregate([
@@ -72,16 +72,7 @@ export class WalletService {
       return acc;
     }, {});
 
-    // Get all cashed out transaction IDs
-    const completedCashouts = await this.CashoutModel.find({
-      status: CashoutStatus.COMPLETED
-    }).select('cashedOutTransactions entity').exec();
-
-    const cashedOutTransactionIds: string[] = completedCashouts.reduce((acc: string[], cashout) => {
-      return acc.concat(cashout.cashedOutTransactions || []);
-    }, []);
-
-    // Get count of cashed out vs uncashed transactions
+    // Get count of cashed out vs uncashed transactions using isCashout field
     const totalProcessingFeePayments = await this.PaymentModel.countDocuments({
       type: 'processing fee',
       status: 'completed'
@@ -90,10 +81,14 @@ export class WalletService {
     const cashedOutPaymentsCount = await this.PaymentModel.countDocuments({
       type: 'processing fee',
       status: 'completed',
-      paymentId: { $in: cashedOutTransactionIds }
+      isCashout: true
     });
 
-    const uncashedPaymentsCount = totalProcessingFeePayments - cashedOutPaymentsCount;
+    const uncashedPaymentsCount = await this.PaymentModel.countDocuments({
+      type: 'processing fee',
+      status: 'completed',
+      isCashout: { $ne: true }
+    });
 
     const iirsRemitted = remittedMap['IIRS']?.amount || 0;
     const mdaRemitted = remittedMap['MDA']?.amount || 0;
@@ -152,7 +147,7 @@ export class WalletService {
           },
           idcl: {
             amount: idclRemitted,
-            percentage: `${idclPercentage * 100}%`,
+            percentage: `${ministryOfJusticePercentage * 100}%`,
             count: remittedMap['IDCL']?.count || 0
           }
         }
@@ -181,7 +176,7 @@ export class WalletService {
           },
           idcl: {
             amount: idclUnremitted,
-            percentage: `${idclPercentage * 100}%`,
+            percentage: `${ministryOfJusticePercentage * 100}%`,
             allocated: idclAllocated
           }
         }
@@ -381,8 +376,116 @@ export class WalletService {
     }
   }
 
+  async getIirsTransactions(page: number = 1, limit: number = 20) {
+    const iirsPercentage = 0.1; // 10%
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const total = await this.PaymentModel.countDocuments({
+      type: 'processing fee',
+      status: 'completed'
+    });
+
+    // Get paginated processing fee transactions
+    const processingFeePayments = await this.PaymentModel.aggregate([
+      {
+        $match: { 
+          type: 'processing fee',
+          status: 'completed'
+        }
+      },
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'companyId',
+          foreignField: '_id',
+          as: 'company'
+        }
+      },
+      {
+        $unwind: '$company'
+      },
+      {
+        $project: {
+          paymentId: 1,
+          amount: 1,
+          status: 1,
+          paymentDate: 1,
+          category: 1,
+          grade: 1,
+          description: 1,
+          isCashout: 1,
+          companyName: '$company.companyName',
+          companyMda: '$company.mda',
+          companyId: '$company._id',
+          createdAt: 1
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
+      }
+    ]);
+
+    // Calculate totals
+    const totalProcessingFeesResult = await this.PaymentModel.aggregate([
+      {
+        $match: { 
+          type: 'processing fee',
+          status: 'completed'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    const totalProcessingFees = totalProcessingFeesResult.length > 0 ? totalProcessingFeesResult[0].totalAmount : 0;
+    const allocatedAmount = totalProcessingFees * iirsPercentage;
+
+    // Get cashout history for IIRS
+    const cashouts = await this.CashoutModel.find({
+      entity: 'IIRS'
+    })
+    .sort({ createdAt: -1 })
+    .exec();
+
+    const totalCashedOut = cashouts
+      .filter(c => c.status === CashoutStatus.COMPLETED)
+      .reduce((sum, c) => sum + c.amount, 0);
+
+    return {
+      entity: 'IIRS',
+      transactions: processingFeePayments,
+      pagination: {
+        currentPage: page,
+        limit: limit,
+        totalTransactions: total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total
+      },
+      summary: {
+        totalTransactions: total,
+        totalProcessingFees,
+        allocatedAmount,
+        iirsPercentage: `${iirsPercentage * 100}%`,
+        totalCashedOut,
+        availableBalance: allocatedAmount - totalCashedOut
+      },
+      cashoutHistory: cashouts
+    };
+  }
+
   async getMyMdaTransactions(mdaName: string, page: number = 1, limit: number = 20) {
-    const mdaPercentage = 0.25;
+    const mdaPercentage = 0.2; // 20%
     const skip = (page - 1) * limit;
 
     // Get total count for pagination
@@ -499,19 +602,11 @@ export class WalletService {
       const count = await this.CashoutModel.countDocuments();
       const cashoutId = `CASH-${new Date().getFullYear()}-${String(count + 1).padStart(3, '0')}`;
 
-      // Get all completed cashouts to determine which transactions have already been cashed out
-      const completedCashouts = await this.CashoutModel.find({
-        status: CashoutStatus.COMPLETED
-      }).select('cashedOutTransactions').exec();
-
-      const alreadyCashedOutTransactionIds: string[] = completedCashouts.reduce((acc: string[], cashout) => {
-        return acc.concat(cashout.cashedOutTransactions || []);
-      }, []);
-
       // Build match query based on entity
       let matchQuery: any = { 
         type: 'processing fee',
-        status: 'completed'
+        status: 'completed',
+        isCashout: { $ne: true } // Only uncashed transactions
       };
 
       // If entity is MDA, filter by specific MDA name
@@ -525,36 +620,58 @@ export class WalletService {
         matchQuery.companyId = { $in: companyIds };
       }
 
-      // Get uncashed transactions for this entity
-      const uncashedTransactions = await this.PaymentModel.find({
-        ...matchQuery,
-        paymentId: { $nin: alreadyCashedOutTransactionIds }
-      })
-      .sort({ createdAt: 1 }) // Oldest first
-      .select('paymentId amount createdAt description')
-      .exec();
+      // Get all uncashed transactions for this entity
+      const uncashedTransactions = await this.PaymentModel.find(matchQuery)
+        .sort({ createdAt: 1 }) // Oldest first
+        .select('_id paymentId amount createdAt description')
+        .exec();
 
-      // Select transactions that sum up to the cashout amount (or close to it)
-      let runningTotal = 0;
+      if (uncashedTransactions.length === 0) {
+        throw new BadRequestException('No unremitted transactions available for cashout');
+      }
+
+      // Determine entity-specific percentage
+      let entityPercentage: number;
+      switch (createCashoutDto.entity) {
+        case CashoutEntity.IIRS:
+          entityPercentage = 0.1; // 10%
+          break;
+        case CashoutEntity.MDA:
+          entityPercentage = 0.2; // 20%
+          break;
+        case CashoutEntity.BPPPI:
+          entityPercentage = 0.6; // 60%
+          break;
+        case CashoutEntity.IDCL:
+          entityPercentage = 0.1; // 10% (Ministry of Justice)
+          break;
+        default:
+          throw new BadRequestException('Invalid entity');
+      }
+
+      // Calculate total unremitted amount for this entity
+      let totalUnremittedAmount = 0;
       const selectedTransactions: string[] = [];
-      const entityPercentage = 0.25; // Each entity gets 25%
+      const selectedTransactionIds: any[] = [];
 
       for (const transaction of uncashedTransactions) {
         const entityShare = transaction.amount * entityPercentage;
-        if (runningTotal + entityShare <= createCashoutDto.amount) {
-          selectedTransactions.push(transaction.paymentId);
-          runningTotal += entityShare;
-        }
-        if (runningTotal >= createCashoutDto.amount) {
-          break;
-        }
+        totalUnremittedAmount += entityShare;
+        selectedTransactions.push(transaction.paymentId);
+        selectedTransactionIds.push(transaction._id);
       }
+
+      // Mark all selected transactions as cashed out
+      await this.PaymentModel.updateMany(
+        { _id: { $in: selectedTransactionIds } },
+        { $set: { isCashout: true } }
+      );
 
       const newCashout = new this.CashoutModel({
         cashoutId,
         entity: createCashoutDto.entity,
         mdaName: createCashoutDto.mdaName,
-        amount: createCashoutDto.amount,
+        amount: totalUnremittedAmount, // Use calculated amount instead of user input
         description: createCashoutDto.description,
         bankDetails: createCashoutDto.bankDetails,
         notes: createCashoutDto.notes,
@@ -623,17 +740,5 @@ export class WalletService {
     } catch (err) {
       throw new BadRequestException(`Failed to fetch cashout history: ${err.message}`);
     }
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} wallet`;
-  }
-
-  update(id: number, updateWalletDto: UpdateWalletDto) {
-    return `This action updates a #${id} wallet`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} wallet`;
   }
 }

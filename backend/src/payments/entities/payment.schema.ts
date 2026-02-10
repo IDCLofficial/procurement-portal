@@ -38,7 +38,10 @@ export class Payment {
 
     @Prop({ required: true, enum: Object.values(paymentType) })
     type: paymentType;
-    
+
+    @Prop({ required: false, type:Boolean, default:false})
+    isCashout: boolean;
+
     @Prop({ required: true })
     description: string; // e.g., "Initial Registration - Works Grade A"
 

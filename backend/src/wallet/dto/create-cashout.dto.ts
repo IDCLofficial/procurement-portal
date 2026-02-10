@@ -40,14 +40,6 @@ export class CreateCashoutDto {
   mdaName?: string;
 
   @ApiProperty({ 
-    example: 125000,
-    description: 'Amount to cash out'
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  amount: number;
-
-  @ApiProperty({ 
     example: 'Quarterly cashout for IIRS - Q1 2024',
     description: 'Description of the cashout'
   })

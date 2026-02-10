@@ -533,7 +533,7 @@ export class WalletService {
     // Get paginated processing fees for companies under this MDA
     const mdaPayments = await this.PaymentModel.aggregate([
       {
-        $match: { type: 'processing fee' }
+        $match: { type: 'processing fee'}
       },
       {
         $lookup: {

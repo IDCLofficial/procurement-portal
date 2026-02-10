@@ -52,7 +52,7 @@ export class WalletController {
     @Query('page') page?: string,
     @Query('limit') limit?: string
   ) {
-    if(!req.user || req.user.role !== 'Admin'){
+    if(!req.user || req.user.role !== 'iirs'){
       throw new UnauthorizedException('Unauthorized, contact admin or get out of here')
     }
     const pageNum = page ? parseInt(page) : 1;

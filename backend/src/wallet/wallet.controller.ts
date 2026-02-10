@@ -114,7 +114,7 @@ export class WalletController {
     if(!req.user) {
       throw new UnauthorizedException('Unauthorized');
     }
-
+    console.log(req.user)
     // Get MDA name from user object (adjust based on your auth structure)
     const mdaName = req.user.mda;
     

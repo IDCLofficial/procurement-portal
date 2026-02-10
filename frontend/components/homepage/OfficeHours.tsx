@@ -52,7 +52,7 @@ export default function OfficeHours() {
     }, []);
 
     return (
-        <div className="bg-green-600 text-white py-3 overflow-hidden">
+        <div className="bg-green-600 text-white py-3 overflow-hidden sticky top-20 z-40">
             <div className="relative flex">
                 <div className="animate-scroll flex items-center whitespace-nowrap">
                     <div className="flex items-center space-x-2 mx-8 bg-white/20 px-4 py-1 rounded-full">

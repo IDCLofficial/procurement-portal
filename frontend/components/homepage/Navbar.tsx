@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const pathname = usePathname();
 
     const navLinks = [
         { name: 'HOME', href: '/' },
@@ -35,16 +37,22 @@ export default function Navbar() {
                     </div>
 
                     <div className="hidden md:flex items-center space-x-8">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                href={link.href}
-                                className="text-sm font-semibold text-gray-700 hover:text-green-600 transition-colors duration-200 relative group"
-                            >
-                                {link.name}
-                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 transition-all duration-200 group-hover:w-full"></span>
-                            </Link>
-                        ))}
+                        {navLinks.map((link) => {
+                            const isActive = pathname === link.href;
+                            return (
+                                <Link
+                                    key={link.name}
+                                    href={link.href}
+                                    className={`text-sm font-semibold transition-colors duration-200 relative group ${
+                                        isActive ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+                                    }`}
+                                >
+                                    {link.name}
+                                    <span className={`absolute bottom-0 left-0 h-0.5 bg-green-600 transition-all duration-200 group-hover:w-full`}>
+                                    </span>
+                                </Link>
+                            );
+                        })}
                         <Link
                             href="/vendor-login"
                             className="px-6 py-2 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors duration-200"
@@ -72,16 +80,21 @@ export default function Navbar() {
             {isMenuOpen && (
                 <div className="md:hidden bg-white border-t border-gray-200">
                     <div className="px-4 pt-2 pb-4 space-y-3">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                href={link.href}
-                                onClick={() => setIsMenuOpen(false)}
-                                className="block px-3 py-2 text-base font-semibold text-gray-700 hover:text-green-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
-                            >
-                                {link.name}
-                            </Link>
-                        ))}
+                        {navLinks.map((link) => {
+                            const isActive = pathname === link.href;
+                            return (
+                                <Link
+                                    key={link.name}
+                                    href={link.href}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className={`block px-3 py-2 text-base font-semibold rounded-md transition-colors duration-200 ${
+                                        isActive ? 'text-green-600 bg-green-50' : 'text-gray-700 hover:text-green-600 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {link.name}
+                                </Link>
+                            );
+                        })}
                         <Link
                             href="/vendor-login"
                             onClick={() => setIsMenuOpen(false)}

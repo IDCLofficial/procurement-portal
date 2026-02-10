@@ -2,9 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { Wallet } from 'lucide-react';
 import { useAppSelector } from '@/app/admin/redux/hooks';
+import { useGetWalletSummaryQuery, useGetRecentTransactionsQuery, useCompleteCashoutMutation } from '@/app/admin/redux/services/walletApi';
 import { useLogout } from '@/app/admin/hooks/useLogout';
-import { Wallet, DollarSign, ArrowUpRight, ArrowDownRight, Clock, CreditCard } from 'lucide-react';
+import WalletHeader from '@/components/admin/wallet/WalletHeader';
+import WalletStatsSection from '@/components/admin/wallet/WalletStatsSection';
+import RecentTransactions from '@/components/admin/wallet/RecentTransactions';
+import QuickActions from '@/components/admin/wallet/QuickActions';
+import CashOutDialog from '@/components/admin/wallet/CashOutDialog';
+import DeskOfficerWallet from './desk-officer-page';
+import IirsOfficerWallet from './iirs-officer-page';
 
 export default function WalletDashboard() {
   const params = useParams();
@@ -12,6 +20,24 @@ export default function WalletDashboard() {
   const logout = useLogout();
   const { user, isAuthenticated, initialized } = useAppSelector((state) => state.auth);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCashOutDialog, setShowCashOutDialog] = useState(false);
+  const [confirmationText, setConfirmationText] = useState('');
+  const [cashoutDescription, setCashoutDescription] = useState('');
+
+  // Skip System Admin API calls if user is desk officer or IIRS officer
+  const shouldSkipAdminCalls = !user?.id || user?.role === 'Desk officer' || user?.role === 'iirs';
+
+  const { data: walletData, isLoading: isWalletLoading, error: walletError } = useGetWalletSummaryQuery(
+    user?.id || '',
+    { skip: shouldSkipAdminCalls }
+  );
+
+  const { data: recentTransactions, isLoading: isTransactionsLoading } = useGetRecentTransactionsQuery(
+    user?.id || '',
+    { skip: shouldSkipAdminCalls }
+  );
+
+  const [completeCashout, { isLoading: isCreatingCashout }] = useCompleteCashoutMutation();
 
   useEffect(() => {
     if (!initialized) return;
@@ -29,7 +55,73 @@ export default function WalletDashboard() {
     setIsLoading(false);
   }, [initialized, isAuthenticated, user, params.id, router]);
 
-  if (isLoading || !user) {
+  // Check user role and render appropriate dashboard (after all hooks)
+  if (user?.role === 'Desk officer') {
+    return <DeskOfficerWallet />;
+  }
+
+  if (user?.role === 'iirs') {
+    return <IirsOfficerWallet />;
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'No cashout yet';
+    return new Date(dateString).toLocaleDateString('en-NG', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const handleCashOutClick = () => {
+    setShowCashOutDialog(true);
+    setConfirmationText('');
+    setCashoutDescription('');
+  };
+
+  const handleCashOutConfirm = async () => {
+    if (confirmationText === 'yes, i am sure' && user?.id && summary) {
+      try {
+        const entities: Array<'IIRS' | 'MDA' | 'BPPPI' | 'IDCL'> = ['IIRS', 'MDA', 'BPPPI', 'IDCL'];
+        
+        for (const entity of entities) {
+          const entityKey = entity.toLowerCase() as 'iirs' | 'mda' | 'bpppi' | 'idcl';
+          const amount = summary.unremitted.entities[entityKey].amount;
+          
+          if (amount > 0) {
+            await completeCashout({
+              userId: user.id,
+              entity: entity,
+              amount: amount,
+              description: cashoutDescription || `Cashout to ${entity}`,
+            }).unwrap();
+          }
+        }
+        
+        setShowCashOutDialog(false);
+        setConfirmationText('');
+        setCashoutDescription('');
+      } catch (error) {
+        console.error('Failed to complete cashout:', error);
+      }
+    }
+  };
+
+  const handleCashOutCancel = () => {
+    setShowCashOutDialog(false);
+    setConfirmationText('');
+    setCashoutDescription('');
+  };
+
+  if (isLoading || !user || isWalletLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -40,253 +132,57 @@ export default function WalletDashboard() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="bg-green-100 rounded-full p-3">
-                <Wallet className="h-8 w-8 text-green-600" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Wallet Dashboard</h1>
-                <p className="text-sm text-gray-600">Welcome back, {user.name}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                logout();
-                router.push('/admin/wallet');
-              }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Logout
-            </button>
+  if (walletError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="bg-red-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <Wallet className="h-8 w-8 text-red-600" />
           </div>
+          <p className="text-red-600 font-semibold">Failed to load wallet data</p>
+          <p className="text-sm text-gray-600 mt-2">Please try again later</p>
         </div>
       </div>
+    );
+  }
+
+  const summary = walletData;
+
+  const handleLogout = () => {
+    logout();
+    router.push('/admin/wallet');
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <WalletHeader userName={user.name} onLogout={handleLogout} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Total Remitted</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Amount Generated</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">₦0.00</p>
-                </div>
-                <div className="bg-green-100 rounded-full p-3">
-                  <DollarSign className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </div>
+        <WalletStatsSection
+          title="Total Remitted"
+          summary={summary}
+          type="remitted"
+          formatCurrency={formatCurrency}
+          formatDate={formatDate}
+        />
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">IIRS Total Transactions</p>
-                  <p className="text-3xl font-bold text-blue-600 mt-2">0</p>
-                </div>
-                <div className="bg-blue-100 rounded-full p-3">
-                  <ArrowDownRight className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">MDA Total Transactions</p>
-                  <p className="text-3xl font-bold text-purple-600 mt-2">0</p>
-                </div>
-                <div className="bg-purple-100 rounded-full p-3">
-                  <ArrowDownRight className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">BPPPI Transactions</p>
-                  <p className="text-3xl font-bold text-orange-600 mt-2">0</p>
-                </div>
-                <div className="bg-orange-100 rounded-full p-3">
-                  <ArrowDownRight className="h-6 w-6 text-orange-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Number of Payments</p>
-                  <p className="text-3xl font-bold text-indigo-600 mt-2">0</p>
-                </div>
-                <div className="bg-indigo-100 rounded-full p-3">
-                  <CreditCard className="h-6 w-6 text-indigo-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Last Cashout</p>
-                  <p className="text-3xl font-bold text-teal-600 mt-2">₦0.00</p>
-                  <p className="text-xs text-gray-500 mt-1">No cashout yet</p>
-                </div>
-                <div className="bg-teal-100 rounded-full p-3">
-                  <ArrowUpRight className="h-6 w-6 text-teal-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Unremitted Payment</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Amount Generated</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">₦0.00</p>
-                </div>
-                <div className="bg-green-100 rounded-full p-3">
-                  <DollarSign className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">IIRS Total Transactions</p>
-                  <p className="text-3xl font-bold text-blue-600 mt-2">0</p>
-                </div>
-                <div className="bg-blue-100 rounded-full p-3">
-                  <ArrowDownRight className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">MDA Total Transactions</p>
-                  <p className="text-3xl font-bold text-purple-600 mt-2">0</p>
-                </div>
-                <div className="bg-purple-100 rounded-full p-3">
-                  <ArrowDownRight className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">BPPPI Transactions</p>
-                  <p className="text-3xl font-bold text-orange-600 mt-2">0</p>
-                </div>
-                <div className="bg-orange-100 rounded-full p-3">
-                  <ArrowDownRight className="h-6 w-6 text-orange-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Number of Payments</p>
-                  <p className="text-3xl font-bold text-indigo-600 mt-2">0</p>
-                </div>
-                <div className="bg-indigo-100 rounded-full p-3">
-                  <CreditCard className="h-6 w-6 text-indigo-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Last Cashout</p>
-                  <p className="text-3xl font-bold text-teal-600 mt-2">₦0.00</p>
-                  <p className="text-xs text-gray-500 mt-1">No cashout yet</p>
-                </div>
-                <div className="bg-teal-100 rounded-full p-3">
-                  <ArrowUpRight className="h-6 w-6 text-teal-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <WalletStatsSection
+          title="Unremitted Payment"
+          summary={summary}
+          type="unremitted"
+          formatCurrency={formatCurrency}
+          formatDate={formatDate}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
-            </div>
-            <div className="p-6">
-              <div className="text-center py-12">
-                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No transactions yet</p>
-                <p className="text-sm text-gray-400 mt-2">Your transaction history will appear here</p>
-              </div>
-            </div>
-          </div>
+          <RecentTransactions
+            transactions={recentTransactions?.transactions}
+            isLoading={isTransactionsLoading}
+            formatCurrency={formatCurrency}
+            formatDate={formatDate}
+          />
 
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-            </div>
-            <div className="p-6 space-y-4">
-              <button className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-green-100 rounded-full p-2">
-                    <CreditCard className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-medium text-gray-900">Add Funds</p>
-                    <p className="text-sm text-gray-500">Deposit money to your wallet</p>
-                  </div>
-                </div>
-                <ArrowUpRight className="h-5 w-5 text-gray-400" />
-              </button>
-
-              <button className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-blue-100 rounded-full p-2">
-                    <ArrowUpRight className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-medium text-gray-900">Send Money</p>
-                    <p className="text-sm text-gray-500">Transfer funds to another wallet</p>
-                  </div>
-                </div>
-                <ArrowUpRight className="h-5 w-5 text-gray-400" />
-              </button>
-
-              <button className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-purple-100 rounded-full p-2">
-                    <Clock className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-medium text-gray-900">Transaction History</p>
-                    <p className="text-sm text-gray-500">View all your transactions</p>
-                  </div>
-                </div>
-                <ArrowUpRight className="h-5 w-5 text-gray-400" />
-              </button>
-            </div>
-          </div>
+          <QuickActions onCashOutClick={handleCashOutClick} />
         </div>
 
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -304,6 +200,20 @@ export default function WalletDashboard() {
           </div>
         </div>
       </div>
+
+      <CashOutDialog
+        open={showCashOutDialog}
+        onOpenChange={setShowCashOutDialog}
+        summary={summary}
+        confirmationText={confirmationText}
+        setConfirmationText={setConfirmationText}
+        description={cashoutDescription}
+        setDescription={setCashoutDescription}
+        isCreating={isCreatingCashout}
+        onConfirm={handleCashOutConfirm}
+        onCancel={handleCashOutCancel}
+        formatCurrency={formatCurrency}
+      />
     </div>
   );
 }

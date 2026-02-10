@@ -47,7 +47,8 @@ export const baseApi = createApi({
         "Documents",
         "Settings",
         "Categories",
-        "Grades"
+        "Grades",
+        "Wallet"
     ],
     endpoints: () => ({}),
 });

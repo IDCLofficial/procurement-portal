@@ -389,111 +389,115 @@ export class WalletService {
   }
 
   async getIirsTransactions(page: number = 1, limit: number = 20) {
-    const iirsPercentage = 0.1; // 10%
-    const skip = (page - 1) * limit;
+    try {
+      const iirsPercentage = 0.1; // 10%
+      const skip = (page - 1) * limit;
 
-    // Get total count for pagination
-    const total = await this.PaymentModel.countDocuments({
-      type: 'processing fee',
-      status: 'verified'
-    });
+      // Get total count for pagination
+      const total = await this.PaymentModel.countDocuments({
+        type: 'processing fee',
+        status: 'verified'
+      });
 
-    // Get paginated processing fee transactions
-    const processingFeePayments = await this.PaymentModel.aggregate([
-      {
-        $match: { 
-          type: 'processing fee',
-          status: 'verified'
+      // Get paginated processing fee transactions
+      const processingFeePayments = await this.PaymentModel.aggregate([
+        {
+          $match: { 
+            type: 'processing fee',
+            status: 'verified'
+          }
+        },
+        {
+          $lookup: {
+            from: 'companies',
+            localField: 'companyId',
+            foreignField: '_id',
+            as: 'company'
+          }
+        },
+        {
+          $unwind: '$company'
+        },
+        {
+          $project: {
+            paymentId: 1,
+            amount: 1,
+            status: 1,
+            paymentDate: 1,
+            category: 1,
+            grade: 1,
+            description: 1,
+            isCashout: 1,
+            companyName: '$company.companyName',
+            companyMda: '$company.mda',
+            companyId: '$company._id',
+            createdAt: 1
+          }
+        },
+        {
+          $sort: { createdAt: -1 }
+        },
+        {
+          $skip: skip
+        },
+        {
+          $limit: limit
         }
-      },
-      {
-        $lookup: {
-          from: 'companies',
-          localField: 'companyId',
-          foreignField: '_id',
-          as: 'company'
+      ]);
+
+      // Calculate totals
+      const totalProcessingFeesResult = await this.PaymentModel.aggregate([
+        {
+          $match: { 
+            type: 'processing fee',
+            status: 'verified'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: '$amount' }
+          }
         }
-      },
-      {
-        $unwind: '$company'
-      },
-      {
-        $project: {
-          paymentId: 1,
-          amount: 1,
-          status: 1,
-          paymentDate: 1,
-          category: 1,
-          grade: 1,
-          description: 1,
-          isCashout: 1,
-          companyName: '$company.companyName',
-          companyMda: '$company.mda',
-          companyId: '$company._id',
-          createdAt: 1
-        }
-      },
-      {
-        $sort: { createdAt: -1 }
-      },
-      {
-        $skip: skip
-      },
-      {
-        $limit: limit
-      }
-    ]);
+      ]);
 
-    // Calculate totals
-    const totalProcessingFeesResult = await this.PaymentModel.aggregate([
-      {
-        $match: { 
-          type: 'processing fee',
-          status: 'verified'
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalAmount: { $sum: '$amount' }
-        }
-      }
-    ]);
+      const totalProcessingFees = totalProcessingFeesResult.length > 0 ? totalProcessingFeesResult[0].totalAmount : 0;
+      const allocatedAmount = totalProcessingFees * iirsPercentage;
 
-    const totalProcessingFees = totalProcessingFeesResult.length > 0 ? totalProcessingFeesResult[0].totalAmount : 0;
-    const allocatedAmount = totalProcessingFees * iirsPercentage;
+      // Get cashout history for IIRS
+      const cashouts = await this.CashoutModel.find({
+        entity: 'IIRS'
+      })
+      .sort({ createdAt: -1 })
+      .exec();
 
-    // Get cashout history for IIRS
-    const cashouts = await this.CashoutModel.find({
-      entity: 'IIRS'
-    })
-    .sort({ createdAt: -1 })
-    .exec();
+      const totalCashedOut = cashouts
+        .filter(c => c.status === CashoutStatus.COMPLETED)
+        .reduce((sum, c) => sum + c.amount, 0);
 
-    const totalCashedOut = cashouts
-      .filter(c => c.status === CashoutStatus.COMPLETED)
-      .reduce((sum, c) => sum + c.amount, 0);
-
-    return {
-      entity: 'IIRS',
-      transactions: processingFeePayments,
-      pagination: {
-        currentPage: page,
-        limit: limit,
-        totalTransactions: total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: page * limit < total
-      },
-      summary: {
-        totalTransactions: total,
-        totalProcessingFees,
-        allocatedAmount,
-        iirsPercentage: `${iirsPercentage * 100}%`,
-        totalCashedOut,
-        availableBalance: allocatedAmount - totalCashedOut
-      },
-      cashoutHistory: cashouts
-    };
+      return {
+        entity: 'IIRS',
+        transactions: processingFeePayments,
+        pagination: {
+          currentPage: page,
+          limit: limit,
+          totalTransactions: total,
+          totalPages: Math.ceil(total / limit),
+          hasMore: page * limit < total
+        },
+        summary: {
+          totalTransactions: total,
+          totalProcessingFees,
+          allocatedAmount,
+          iirsPercentage: `${iirsPercentage * 100}%`,
+          totalCashedOut,
+          availableBalance: allocatedAmount - totalCashedOut
+        },
+        cashoutHistory: cashouts
+      };
+    } catch (error) {
+      throw new BadRequestException(`Failed to fetch IIRS transactions: ${error.message}`);
+    }
   }
 
   async getMyMdaTransactions(mdaName: string, page: number = 1, limit: number = 20) {

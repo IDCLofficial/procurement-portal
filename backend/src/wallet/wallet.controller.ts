@@ -116,7 +116,7 @@ export class WalletController {
     }
 
     // Get MDA name from user object (adjust based on your auth structure)
-    const mdaName = req.user.mda || req.user.mdaName;
+    const mdaName = req.user.mda;
     
     if(!mdaName) {
       throw new UnauthorizedException('MDA name not found in user profile');

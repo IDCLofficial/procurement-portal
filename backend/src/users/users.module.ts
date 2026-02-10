@@ -14,6 +14,6 @@ import { EmailModule } from '../email/email.module';
   ],
   controllers: [UsersController],
   providers: [UsersService, TokenHandlers, AdminGuard],
-  exports: [UsersService],
+  exports: [UsersService, MongooseModule],
 })
 export class UsersModule {}

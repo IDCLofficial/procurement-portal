@@ -605,8 +605,12 @@ export class WalletService {
       // Build match query based on entity
       let matchQuery: any = { 
         type: 'processing fee',
-        status: 'completed',
-        isCashout: { $ne: true } // Only uncashed transactions
+        status: 'verified', // Accept both completed and verified payments
+        $or: [
+          { isCashout: { $exists: false } }, // Field doesn't exist
+          { isCashout: false },               // Field is false
+          { isCashout: null }                 // Field is null
+        ]
       };
 
       // If entity is MDA, filter by specific MDA name
@@ -620,14 +624,49 @@ export class WalletService {
         matchQuery.companyId = { $in: companyIds };
       }
 
+      // Debug: Log the match query and check what payments exist
+      console.log('Cashout Match Query:', JSON.stringify(matchQuery, null, 2));
+      
+      // Check what processing fee payments exist in the database
+      const allProcessingFees = await this.PaymentModel.countDocuments({ type: 'processing fee' });
+      const completedProcessingFees = await this.PaymentModel.countDocuments({ 
+        type: 'processing fee', 
+        status: 'completed' 
+      });
+      const verifiedProcessingFees = await this.PaymentModel.countDocuments({ 
+        type: 'processing fee', 
+        status: 'verified' 
+      });
+      
+      console.log(`Database stats - Total processing fees: ${allProcessingFees}, Completed: ${completedProcessingFees}, Verified: ${verifiedProcessingFees}`);
+
       // Get all uncashed transactions for this entity
       const uncashedTransactions = await this.PaymentModel.find(matchQuery)
         .sort({ createdAt: 1 }) // Oldest first
         .select('_id paymentId amount createdAt description')
         .exec();
 
+      console.log(`Found ${uncashedTransactions.length} uncashed transactions`);
+
       if (uncashedTransactions.length === 0) {
-        throw new BadRequestException('No unremitted transactions available for cashout');
+        // Check total processing fees to help debug
+        const totalProcessingFees = await this.PaymentModel.countDocuments({
+          type: 'processing fee',
+          status: 'completed'
+        });
+        const alreadyCashedOut = await this.PaymentModel.countDocuments({
+          type: 'processing fee',
+          status: 'completed',
+          isCashout: true
+        });
+        
+        throw new BadRequestException(
+          `No unremitted transactions available for cashout. ` +
+          `Total processing fees: ${totalProcessingFees}, ` +
+          `Already cashed out: ${alreadyCashedOut}, ` +
+          `Available: ${totalProcessingFees - alreadyCashedOut}. ` +
+          `Entity: ${createCashoutDto.entity}${createCashoutDto.mdaName ? ', MDA: ' + createCashoutDto.mdaName : ''}`
+        );
       }
 
       // Determine entity-specific percentage
@@ -673,11 +712,10 @@ export class WalletService {
         mdaName: createCashoutDto.mdaName,
         amount: totalUnremittedAmount, // Use calculated amount instead of user input
         description: createCashoutDto.description,
-        bankDetails: createCashoutDto.bankDetails,
         notes: createCashoutDto.notes,
         cashedOutTransactions: selectedTransactions,
         approvedBy,
-        status: CashoutStatus.PENDING
+        status: CashoutStatus.COMPLETED
       });
 
       return await newCashout.save();

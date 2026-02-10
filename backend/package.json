@@ -23,6 +23,7 @@
     "update:docStatus": "ts-node src/seeds/updateDocStatus.ts 694575503256a41d2f75d2e7 \"All documents approved\"",
     "normalize:grades": "ts-node src/seeds/normalizeGrades.ts",
     "fix:grade-indexes": "ts-node src/seeds/fixGradeIndexes.ts",
+    "reset:cashout-flags": "ts-node src/seeds/resetCashoutFlags.ts",
     "migrate:application-status": "ts-node scripts/migrate-application-status.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",

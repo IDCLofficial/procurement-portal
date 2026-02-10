@@ -48,16 +48,6 @@ export class CreateCashoutDto {
   description: string;
 
   @ApiProperty({ 
-    type: BankDetailsDto,
-    required: false,
-    description: 'Bank account details for the cashout'
-  })
-  @ValidateNested()
-  @Type(() => BankDetailsDto)
-  @IsOptional()
-  bankDetails?: BankDetailsDto;
-
-  @ApiProperty({ 
     example: 'Additional notes about this cashout',
     required: false
   })

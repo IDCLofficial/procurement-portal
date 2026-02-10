@@ -12,15 +12,15 @@ export default function ContactCTA() {
             title: 'Call Us',
             detail: '+234 803 456 7890',
             subtext: 'Mon - Fri, 8AM - 5PM',
-            href: 'tel:+2348034567890',
+            href: 'tel:+23480xx xxxxx',
             color: 'from-green-400 to-emerald-500'
         },
         {
             icon: Mail,
             title: 'Email Us',
-            detail: 'info@bpppi.imo.gov.ng',
+            detail: 'bpppiimostatedueprocess@gmail.com',
             subtext: 'We reply within 24 hours',
-            href: 'mailto:info@bpppi.imo.gov.ng',
+            href: 'mailto:bpppiimostatedueprocess@gmail.com',
             color: 'from-emerald-400 to-teal-500'
         },
         {

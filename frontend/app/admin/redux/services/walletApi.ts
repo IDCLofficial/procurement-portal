@@ -1,5 +1,5 @@
 import { baseApi } from "./baseApi";
-import type { WalletSummary, RecentTransactionsResponse, MdaTransactionsResponse, IirsTransactionsResponse, CreateCashoutRequest } from "@/app/admin/types/wallet";
+import type { WalletSummary, RecentTransactionsResponse, MdaTransactionsResponse, IirsTransactionsResponse, CreateCashoutRequest, AllMdaTransactionsResponse } from "@/app/admin/types/wallet";
 
 export const walletApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -19,11 +19,14 @@ export const walletApi = baseApi.injectEndpoints({
       query: (userId) => `/wallet/iirs-transactions?userId=${userId}`,
       providesTags: ["Wallet"],
     }),
-    completeCashout: builder.mutation<any, CreateCashoutRequest>({
-      query: (body) => ({
+    getAllMdaTransactions: builder.query<AllMdaTransactionsResponse, void>({
+      query: () => `/wallet/mda-transactions`,
+      providesTags: ["Wallet"],
+    }),
+    completeCashout: builder.mutation<any, void>({
+      query: () => ({
         url: `/wallet/cashout/complete`,
         method: "PATCH",
-        body,
       }),
       invalidatesTags: ["Wallet"],
     }),
@@ -35,5 +38,6 @@ export const {
   useGetRecentTransactionsQuery,
   useGetMdaTransactionsQuery,
   useGetIirsTransactionsQuery,
+  useGetAllMdaTransactionsQuery,
   useCompleteCashoutMutation,
 } = walletApi;

@@ -67,7 +67,7 @@ export default function OfficeHours() {
                     <span className="mx-8">|</span>
                     <div className="flex items-center space-x-2 mx-8">
                         <span className="font-semibold">Contact:</span>
-                        <span>info@bpppi.imostate.gov.ng</span>
+                        <span>bpppiimostatedueprocess@gmail.com</span>
                     </div>
                     <span className="mx-8">|</span>
                     <div className="flex items-center space-x-2 mx-8">
@@ -83,7 +83,7 @@ export default function OfficeHours() {
                     <span className="mx-8">|</span>
                     <div className="flex items-center space-x-2 mx-8">
                         <span className="font-semibold">Contact:</span>
-                        <span>info@bpppi.imostate.gov.ng</span>
+                        <span>bpppiimostatedueprocess@gmail.com</span>
                     </div>
                     <span className="mx-8">|</span>
                     <div className="flex items-center space-x-2 mx-8">

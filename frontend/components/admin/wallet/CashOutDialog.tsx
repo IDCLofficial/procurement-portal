@@ -44,7 +44,7 @@ export default function CashOutDialog({
               <li>• IIRS: {formatCurrency(summary?.unremitted?.entities?.iirs?.amount || 0)}</li>
               <li>• MDA: {formatCurrency(summary?.unremitted?.entities?.mda?.amount || 0)}</li>
               <li>• BPPPI: {formatCurrency(summary?.unremitted?.entities?.bpppi?.amount || 0)}</li>
-              <li>• IDCL: {formatCurrency(summary?.unremitted?.entities?.idcl?.amount || 0)}</li>
+              <li>• MOJ: {formatCurrency(summary?.unremitted?.entities?.moj?.amount || 0)}</li>
             </ul>
           </div>
 

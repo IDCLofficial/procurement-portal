@@ -219,10 +219,10 @@ export default function ServicesSection() {
                     <div className="relative group">
                         <div className="absolute inset-0 bg-linear-to-r from-green-400 to-green-600 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
                         <a 
-                            href="/services" 
+                            href="/about" 
                             className="relative inline-flex items-center px-8 py-4 bg-linear-to-r from-green-600 to-green-700 text-white font-bold text-lg rounded-2xl hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-xl group-hover:shadow-2xl group-hover:scale-105"
                         >
-                            <span>View Full List of Services</span>
+                            <span>View Full List of Departments</span>
                             <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
                         </a>
                     </div>

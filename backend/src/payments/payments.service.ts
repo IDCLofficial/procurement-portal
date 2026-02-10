@@ -17,6 +17,7 @@ import { ActivityType } from 'src/vendors/entities/vendor-activity-log.schema';
 import { Notification, NotificationDocument, NotificationRecipient, NotificationType, priority } from 'src/notifications/entities/notification.entity';
 import { User, UserDocument } from 'src/users/entities/user.schema';
 import { ApplicationsService } from 'src/applications/applications.service';
+import { WalletService } from 'src/wallet/wallet.service';
 
 @Injectable()
 export class SplitPaymentService {
@@ -26,6 +27,7 @@ export class SplitPaymentService {
     private readonly paystackSplitService: PaystackSplitService,
     private vendorService:VendorsService,
     private applicationService: ApplicationsService,
+    private walletService: WalletService,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
@@ -211,6 +213,8 @@ export class SplitPaymentService {
           throw new NotFoundException("Payment record not found");
         } 
 
+        //
+
         // Log payment completion activity
         await this.vendorService.createActivityLog(
           userId,
@@ -226,6 +230,19 @@ export class SplitPaymentService {
         );
 
         if(payment.type === paymentType.PROCESSINGFEE){
+          // Create unremitted cashout records for all entities
+          try {
+            await this.walletService.createUnremittedCashouts(
+              payment.paymentId,
+              payment.amount,
+              payment.companyId.toString()
+            );
+            this.logger.log(`Created unremitted cashout records for payment ${payment.paymentId}`);
+          } catch (error) {
+            this.logger.error(`Failed to create unremitted cashouts: ${error.message}`);
+            // Don't fail the payment verification if cashout creation fails
+          }
+
           vendor.reg_payment_ref = reference  
           await vendor.save();        
           vendor.companyForm = companyForm.COMPLETE

@@ -9,6 +9,7 @@ export enum CashoutEntity {
 }
 
 export enum CashoutStatus {
+    UNREMITTED = 'unremitted',
     PENDING = 'pending',
     COMPLETED = 'completed',
     FAILED = 'failed'

@@ -16,5 +16,6 @@ import { MongooseModule } from '@nestjs/mongoose';
   ],
   controllers: [WalletController],
   providers: [WalletService],
+  exports: [WalletService]
 })
 export class WalletModule {}

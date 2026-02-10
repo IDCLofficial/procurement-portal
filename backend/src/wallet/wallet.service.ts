@@ -30,7 +30,7 @@ export class WalletService {
     // Get total amount from all processing fees
     const totalAmountResult = await this.PaymentModel.aggregate([
       {
-        $match: { type: 'processing fee' }
+        $match: { type: 'processing fee', status: 'verified' }
       },
       {
         $group: {
@@ -44,13 +44,8 @@ export class WalletService {
     const totalAmountGenerated = totalAmountResult.length > 0 ? totalAmountResult[0].totalAmount : 0;
     const totalNumberOfPayments = totalAmountResult.length > 0 ? totalAmountResult[0].totalPayments : 0;
 
-    // Calculate allocated amounts for each entity
-    const iirsAllocated = totalAmountGenerated * iirsPercentage;
-    const mdaAllocated = totalAmountGenerated * mdaPercentage;
-    const bpppiAllocated = totalAmountGenerated * bpppiPercentage;
-    const idclAllocated = totalAmountGenerated * ministryOfJusticePercentage;
 
-    // Get remitted (cashed out) amounts for each entity
+    // Get remitted (completed) cashouts by entity
     const cashoutsByEntity = await this.CashoutModel.aggregate([
       {
         $match: { status: CashoutStatus.COMPLETED }
@@ -72,22 +67,35 @@ export class WalletService {
       return acc;
     }, {});
 
-    // Get count of cashed out vs uncashed transactions using isCashout field
-    const totalProcessingFeePayments = await this.PaymentModel.countDocuments({
-      type: 'processing fee',
-      status: 'completed'
+    // Get unremitted cashouts by entity
+    const unremittedCashoutsByEntity = await this.CashoutModel.aggregate([
+      {
+        $match: { status: CashoutStatus.UNREMITTED }
+      },
+      {
+        $group: {
+          _id: '$entity',
+          totalUnremitted: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const unremittedMap = unremittedCashoutsByEntity.reduce((acc, item) => {
+      acc[item._id] = {
+        amount: item.totalUnremitted,
+        count: item.count
+      };
+      return acc;
+    }, {});
+
+    // Count total cashouts
+    const totalCompletedCashouts = await this.CashoutModel.countDocuments({
+      status: CashoutStatus.COMPLETED
     });
 
-    const cashedOutPaymentsCount = await this.PaymentModel.countDocuments({
-      type: 'processing fee',
-      status: 'completed',
-      isCashout: true
-    });
-
-    const uncashedPaymentsCount = await this.PaymentModel.countDocuments({
-      type: 'processing fee',
-      status: 'completed',
-      isCashout: { $ne: true }
+    const totalUnremittedCashouts = await this.CashoutModel.countDocuments({
+      status: CashoutStatus.UNREMITTED
     });
 
     const iirsRemitted = remittedMap['IIRS']?.amount || 0;
@@ -95,14 +103,14 @@ export class WalletService {
     const bpppiRemitted = remittedMap['BPPPI']?.amount || 0;
     const idclRemitted = remittedMap['IDCL']?.amount || 0;
 
-    // Calculate unremitted amounts
-    const iirsUnremitted = iirsAllocated - iirsRemitted;
-    const mdaUnremitted = mdaAllocated - mdaRemitted;
-    const bpppiUnremitted = bpppiAllocated - bpppiRemitted;
-    const idclUnremitted = idclAllocated - idclRemitted;
+    // Get unremitted amounts from unremitted cashouts
+    const iirsUnremitted = unremittedMap['IIRS']?.amount || 0;
+    const mdaUnremitted = unremittedMap['MDA']?.amount || 0;
+    const bpppiUnremitted = unremittedMap['BPPPI']?.amount || 0;
+    const idclUnremitted = unremittedMap['IDCL']?.amount || 0;
 
     const totalRemitted = iirsRemitted + mdaRemitted + bpppiRemitted + idclRemitted;
-    const totalUnremitted = totalAmountGenerated - totalRemitted;
+    const totalUnremitted = iirsUnremitted + mdaUnremitted + bpppiUnremitted + idclUnremitted;
 
     // Calculate transaction counts (25% of total for each)
     const iirsTransactions = Math.round(totalNumberOfPayments * iirsPercentage);
@@ -145,7 +153,7 @@ export class WalletService {
             percentage: `${bpppiPercentage * 100}%`,
             count: remittedMap['BPPPI']?.count || 0
           },
-          idcl: {
+          moj: {
             amount: idclRemitted,
             percentage: `${ministryOfJusticePercentage * 100}%`,
             count: remittedMap['IDCL']?.count || 0
@@ -154,30 +162,34 @@ export class WalletService {
       },
       unremitted: {
         totalAmountGenerated: totalUnremitted,
-        iirsTransactions: iirsTransactions,
-        mdaTransactions: mdaTransactions,
-        bpppiTransactions: bpppiTransactions,
-        totalPayments: totalNumberOfPayments,
+        iirsTransactions: unremittedMap['IIRS']?.count || 0,
+        mdaTransactions: unremittedMap['MDA']?.count || 0,
+        bpppiTransactions: unremittedMap['BPPPI']?.count || 0,
+        totalPayments: unremittedCashoutsByEntity.reduce((sum, item) => sum + item.count, 0),
         entities: {
           iirs: {
             amount: iirsUnremitted,
             percentage: `${iirsPercentage * 100}%`,
-            allocated: iirsAllocated
+            allocated: totalUnremitted * iirsPercentage,
+            count: unremittedMap['IIRS']?.count || 0
           },
           mda: {
             amount: mdaUnremitted,
             percentage: `${mdaPercentage * 100}%`,
-            allocated: mdaAllocated
+            allocated: totalUnremitted * mdaPercentage,
+            count: unremittedMap['MDA']?.count || 0
           },
           bpppi: {
             amount: bpppiUnremitted,
             percentage: `${bpppiPercentage * 100}%`,
-            allocated: bpppiAllocated
+            allocated: totalUnremitted * bpppiPercentage,
+            count: unremittedMap['BPPPI']?.count || 0
           },
-          idcl: {
+          moj: {
             amount: idclUnremitted,
             percentage: `${ministryOfJusticePercentage * 100}%`,
-            allocated: idclAllocated
+            allocated: totalUnremitted * ministryOfJusticePercentage,
+            count: unremittedMap['IDCL']?.count || 0
           }
         }
       },
@@ -187,11 +199,11 @@ export class WalletService {
         totalUnremitted,
         totalNumberOfPayments,
         transactionTracking: {
-          totalCompletedPayments: totalProcessingFeePayments,
-          cashedOutPayments: cashedOutPaymentsCount,
-          uncashedPayments: uncashedPaymentsCount,
-          cashedOutPercentage: totalProcessingFeePayments > 0 
-            ? ((cashedOutPaymentsCount / totalProcessingFeePayments) * 100).toFixed(2) + '%'
+          totalCashouts: totalCompletedCashouts + totalUnremittedCashouts,
+          completedCashouts: totalCompletedCashouts,
+          unremittedCashouts: totalUnremittedCashouts,
+          completedPercentage: (totalCompletedCashouts + totalUnremittedCashouts) > 0 
+            ? ((totalCompletedCashouts / (totalCompletedCashouts + totalUnremittedCashouts)) * 100).toFixed(2) + '%'
             : '0%'
         }
       }
@@ -204,7 +216,7 @@ export class WalletService {
     // Aggregate processing fees by MDA
     const mdaTransactions = await this.PaymentModel.aggregate([
       {
-        $match: { type: 'processing fee' }
+        $match: { type: 'processing fee', status: 'verified' }
       },
       {
         $lookup: {
@@ -267,7 +279,7 @@ export class WalletService {
 
   async getRecentProcessingFeeTransactions(limit: number = 20, status?: string) {
     try {
-      const matchQuery: any = { type: 'processing fee' };
+      const matchQuery: any = { type: 'processing fee', status: 'verified' };
       
       if (status) {
         matchQuery.status = status;
@@ -383,7 +395,7 @@ export class WalletService {
     // Get total count for pagination
     const total = await this.PaymentModel.countDocuments({
       type: 'processing fee',
-      status: 'completed'
+      status: 'verified'
     });
 
     // Get paginated processing fee transactions
@@ -391,7 +403,7 @@ export class WalletService {
       {
         $match: { 
           type: 'processing fee',
-          status: 'completed'
+          status: 'verified'
         }
       },
       {
@@ -437,7 +449,7 @@ export class WalletService {
       {
         $match: { 
           type: 'processing fee',
-          status: 'completed'
+          status: 'verified'
         }
       },
       {
@@ -596,151 +608,147 @@ export class WalletService {
     };
   }
 
-  async createCashout(createCashoutDto: CreateCashoutDto, approvedBy: string) {
+  async createUnremittedCashouts(paymentId: string, amount: number, companyId: string) {
     try {
-      // Generate unique cashout ID
-      const count = await this.CashoutModel.countDocuments();
-      const cashoutId = `CASH-${new Date().getFullYear()}-${String(count + 1).padStart(3, '0')}`;
+      // Get company to determine MDA
+      const company = await this.CompanyModel.findById(companyId).exec();
+      const mdaName = company?.mda || 'Unknown';
 
-      // Build match query based on entity
-      let matchQuery: any = { 
-        type: 'processing fee',
-        status: 'verified', // Accept both completed and verified payments
-        $or: [
-          { isCashout: { $exists: false } }, // Field doesn't exist
-          { isCashout: false },               // Field is false
-          { isCashout: null }                 // Field is null
-        ]
-      };
+      // Define entity percentages
+      const entities = [
+        { entity: CashoutEntity.IIRS, percentage: 0.1, mdaName: null },
+        { entity: CashoutEntity.MDA, percentage: 0.2, mdaName: mdaName },
+        { entity: CashoutEntity.BPPPI, percentage: 0.6, mdaName: null },
+        { entity: CashoutEntity.IDCL, percentage: 0.1, mdaName: null }
+      ];
 
-      // If entity is MDA, filter by specific MDA name
-      if (createCashoutDto.entity === CashoutEntity.MDA && createCashoutDto.mdaName) {
-        // Get companies for this MDA
-        const companies = await this.CompanyModel.find({
-          mda: createCashoutDto.mdaName
-        }).select('_id').exec();
-        
-        const companyIds = companies.map(c => c._id);
-        matchQuery.companyId = { $in: companyIds };
-      }
+      const cashouts: any[] = [];
 
-      // Debug: Log the match query and check what payments exist
-      console.log('Cashout Match Query:', JSON.stringify(matchQuery, null, 2));
-      
-      // Check what processing fee payments exist in the database
-      const allProcessingFees = await this.PaymentModel.countDocuments({ type: 'processing fee' });
-      const completedProcessingFees = await this.PaymentModel.countDocuments({ 
-        type: 'processing fee', 
-        status: 'completed' 
-      });
-      const verifiedProcessingFees = await this.PaymentModel.countDocuments({ 
-        type: 'processing fee', 
-        status: 'verified' 
-      });
-      
-      console.log(`Database stats - Total processing fees: ${allProcessingFees}, Completed: ${completedProcessingFees}, Verified: ${verifiedProcessingFees}`);
+      for (const entityConfig of entities) {
+        const entityAmount = amount * entityConfig.percentage;
+        const count = await this.CashoutModel.countDocuments();
+        const cashoutId = `CASH-${new Date().getFullYear()}-${String(count + 1).padStart(3, '0')}`;
 
-      // Get all uncashed transactions for this entity
-      const uncashedTransactions = await this.PaymentModel.find(matchQuery)
-        .sort({ createdAt: 1 }) // Oldest first
-        .select('_id paymentId amount createdAt description')
-        .exec();
-
-      console.log(`Found ${uncashedTransactions.length} uncashed transactions`);
-
-      if (uncashedTransactions.length === 0) {
-        // Check total processing fees to help debug
-        const totalProcessingFees = await this.PaymentModel.countDocuments({
-          type: 'processing fee',
-          status: 'completed'
+        const cashout = new this.CashoutModel({
+          cashoutId,
+          entity: entityConfig.entity,
+          mdaName: entityConfig.mdaName,
+          amount: entityAmount,
+          cashedOutTransactions: [paymentId],
+          status: CashoutStatus.UNREMITTED,
+          description: `Unremitted ${entityConfig.entity} share from payment ${paymentId}`,
+          notes: `Auto-generated from processing fee payment. ${entityConfig.percentage * 100}% allocation.`
         });
-        const alreadyCashedOut = await this.PaymentModel.countDocuments({
-          type: 'processing fee',
-          status: 'completed',
-          isCashout: true
-        });
-        
-        throw new BadRequestException(
-          `No unremitted transactions available for cashout. ` +
-          `Total processing fees: ${totalProcessingFees}, ` +
-          `Already cashed out: ${alreadyCashedOut}, ` +
-          `Available: ${totalProcessingFees - alreadyCashedOut}. ` +
-          `Entity: ${createCashoutDto.entity}${createCashoutDto.mdaName ? ', MDA: ' + createCashoutDto.mdaName : ''}`
-        );
+
+        const savedCashout = await cashout.save();
+        cashouts.push(savedCashout);
       }
 
-      // Determine entity-specific percentage
-      let entityPercentage: number;
-      switch (createCashoutDto.entity) {
-        case CashoutEntity.IIRS:
-          entityPercentage = 0.1; // 10%
-          break;
-        case CashoutEntity.MDA:
-          entityPercentage = 0.2; // 20%
-          break;
-        case CashoutEntity.BPPPI:
-          entityPercentage = 0.6; // 60%
-          break;
-        case CashoutEntity.IDCL:
-          entityPercentage = 0.1; // 10% (Ministry of Justice)
-          break;
-        default:
-          throw new BadRequestException('Invalid entity');
-      }
-
-      // Calculate total unremitted amount for this entity
-      let totalUnremittedAmount = 0;
-      const selectedTransactions: string[] = [];
-      const selectedTransactionIds: any[] = [];
-
-      for (const transaction of uncashedTransactions) {
-        const entityShare = transaction.amount * entityPercentage;
-        totalUnremittedAmount += entityShare;
-        selectedTransactions.push(transaction.paymentId);
-        selectedTransactionIds.push(transaction._id);
-      }
-
-      // Mark all selected transactions as cashed out
-      await this.PaymentModel.updateMany(
-        { _id: { $in: selectedTransactionIds } },
-        { $set: { isCashout: true } }
-      );
-
-      const newCashout = new this.CashoutModel({
-        cashoutId,
-        entity: createCashoutDto.entity,
-        mdaName: createCashoutDto.mdaName,
-        amount: totalUnremittedAmount, // Use calculated amount instead of user input
-        description: createCashoutDto.description,
-        notes: createCashoutDto.notes,
-        cashedOutTransactions: selectedTransactions,
-        approvedBy,
-        status: CashoutStatus.COMPLETED
-      });
-
-      return await newCashout.save();
+      return cashouts;
     } catch (err) {
-      throw new BadRequestException(`Failed to create cashout: ${err.message}`);
+      console.error(`Failed to create unremitted cashouts: ${err.message}`);
+      throw err;
     }
   }
 
-  async completeCashout(cashoutId: string, transactionReference: string) {
+  async generateCashoutsForVerifiedPayments() {
     try {
-      const cashout = await this.CashoutModel.findOne({ cashoutId });
+      // Find all verified processing fee payments that haven't been cashed out
+      const uncashedPayments = await this.PaymentModel.find({
+        type: 'processing fee',
+        status: 'verified',
+      }).exec();
+
+      if (uncashedPayments.length === 0) {
+        return {
+          message: 'No verified payments found that need cashout documents',
+          count: 0,
+          payments: []
+        };
+      }
+
+      let totalCashoutsCreated = 0;
+      const processedPayments: any[] = [];
+
+      for (const payment of uncashedPayments) {
+        try {
+          const cashouts = await this.createUnremittedCashouts(
+            payment.paymentId,
+            payment.amount,
+            payment.companyId.toString()
+          );
+          
+          // Mark payment as cashed out
+          await this.PaymentModel.findByIdAndUpdate(payment._id, {
+            $set: { isCashout: true }
+          });
+
+          totalCashoutsCreated += cashouts.length;
+          processedPayments.push({
+            paymentId: payment.paymentId,
+            amount: payment.amount,
+            cashoutsCreated: cashouts.length
+          });
+        } catch (error) {
+          console.error(`Failed to create cashouts for payment ${payment.paymentId}: ${error.message}`);
+        }
+      }
+
+      return {
+        message: `Successfully generated cashout documents for ${uncashedPayments.length} payment(s)`,
+        paymentsProcessed: uncashedPayments.length,
+        totalCashoutsCreated: totalCashoutsCreated,
+        payments: processedPayments
+      };
+    } catch (err) {
+      throw new BadRequestException(`Failed to generate cashouts: ${err.message}`);
+    }
+  }
+
+  async completeCashout(transactionReference: string, entity?: string, mdaName?: string) {
+    try {
+      // Build query to get unremitted cashouts
+      const query: any = { status: CashoutStatus.UNREMITTED };
       
-      if (!cashout) {
-        throw new BadRequestException('Cashout not found');
+      if (entity) {
+        query.entity = entity;
+      }
+      
+      if (mdaName) {
+        query.mdaName = mdaName;
       }
 
-      if (cashout.status === CashoutStatus.COMPLETED) {
-        throw new BadRequestException('Cashout already completed');
+      // Get all unremitted cashouts matching the criteria
+      const unremittedCashouts = await this.CashoutModel.find(query).exec();
+
+      if (unremittedCashouts.length === 0) {
+        throw new BadRequestException(
+          `No unremitted cashouts found${entity ? ` for entity: ${entity}` : ''}${mdaName ? ` and MDA: ${mdaName}` : ''}`
+        );
       }
 
-      cashout.status = CashoutStatus.COMPLETED;
-      cashout.transactionReference = transactionReference;
-      cashout.cashoutDate = new Date();
+      // Update all matching cashouts to completed status
+      const cashoutIds = unremittedCashouts.map(c => c._id);
+      const updateResult = await this.CashoutModel.updateMany(
+        { _id: { $in: cashoutIds } },
+        {
+          $set: {
+            status: CashoutStatus.COMPLETED,
+            transactionReference: transactionReference,
+            cashoutDate: new Date()
+          }
+        }
+      );
 
-      return await cashout.save();
+      // Get the updated cashouts to return
+      const completedCashouts = await this.CashoutModel.find({ _id: { $in: cashoutIds } }).exec();
+
+      return {
+        message: `Successfully completed ${updateResult.modifiedCount} cashout(s)`,
+        count: updateResult.modifiedCount,
+        cashouts: completedCashouts,
+        totalAmount: completedCashouts.reduce((sum, c) => sum + c.amount, 0)
+      };
     } catch (err) {
       throw new BadRequestException(`Failed to complete cashout: ${err.message}`);
     }

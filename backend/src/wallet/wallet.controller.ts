@@ -1,8 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UnauthorizedException, Query } from '@nestjs/common';
 import { WalletService } from './wallet.service';
-import { CreateWalletDto } from './dto/create-wallet.dto';
-import { UpdateWalletDto } from './dto/update-wallet.dto';
-import { CreateCashoutDto } from './dto/create-cashout.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
@@ -63,27 +60,29 @@ export class WalletController {
     return this.walletService.getIirsTransactions(pageNum, limitNum);
   }
 
-  @Post('cashout')
-  @ApiOperation({ summary: 'Create a new cashout request' })
-  createCashout(@Req() req:any, @Body() createCashoutDto: CreateCashoutDto) {
-    if(!req.user || req.user.role !== 'Admin'){
-      throw new UnauthorizedException('Unauthorized, contact admin or get out of here')
+  @Post('cashout/generate')
+  @ApiOperation({ summary: 'Generate cashout documents for all verified payments that have not been cashed out' })
+  generateCashouts(@Req() req: any) {
+    if (!req.user || req.user.role !== 'Admin') {
+      throw new UnauthorizedException('Unauthorized, contact admin or get out of here');
     }
-    const approvedBy = req.user.email || req.user._id;
-    return this.walletService.createCashout(createCashoutDto, approvedBy);
+    return this.walletService.generateCashoutsForVerifiedPayments();
   }
 
-  @Patch('cashout/:cashoutId/complete')
-  @ApiOperation({ summary: 'Mark a cashout as completed' })
+  @Patch('cashout/complete')
+  @ApiOperation({ summary: 'Complete all unremitted cashouts (optionally filter by entity/MDA)' })
+  @ApiQuery({ name: 'entity', required: false, description: 'Filter by entity (IIRS, MDA, BPPPI, IDCL)' })
+  @ApiQuery({ name: 'mdaName', required: false, description: 'Filter by specific MDA name' })
   completeCashout(
     @Req() req:any,
-    @Param('cashoutId') cashoutId: string,
-    @Body('transactionReference') transactionReference: string
+    @Body('transactionReference') transactionReference: string,
+    @Query('entity') entity?: string,
+    @Query('mdaName') mdaName?: string
   ) {
     if(!req.user || req.user.role !== 'Admin'){
       throw new UnauthorizedException('Unauthorized, contact admin or get out of here')
     }
-    return this.walletService.completeCashout(cashoutId, transactionReference);
+    return this.walletService.completeCashout(transactionReference, entity, mdaName);
   }
 
   @Get('cashout/history')

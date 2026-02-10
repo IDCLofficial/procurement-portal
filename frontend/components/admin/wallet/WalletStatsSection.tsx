@@ -115,13 +115,13 @@ export default function WalletStatsSection({
               valueColor="text-indigo-600"
             />
             <StatCard
-              title="IDCL Amount"
-              value={formatCurrency(summary?.unremitted?.entities?.idcl?.amount || 0)}
+              title="MOJ Amount"
+              value={formatCurrency(summary?.unremitted?.entities?.moj?.amount || 0)}
               icon={ArrowDownRight}
               iconColor="text-pink-600"
               iconBgColor="bg-pink-100"
               valueColor="text-pink-600"
-              subtitle={`${formatCurrency(summary?.unremitted?.entities?.idcl?.allocated || 0)} allocated • ${summary?.unremitted?.entities?.idcl?.percentage || '0%'}`}
+              subtitle={`${formatCurrency(summary?.unremitted?.entities?.moj?.allocated || 0)} allocated • ${summary?.unremitted?.entities?.moj?.percentage || '0%'}`}
             />
           </>
         )}

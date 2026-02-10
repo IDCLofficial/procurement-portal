@@ -37,7 +37,7 @@ export default function Footer() {
                             <div className="flex items-start space-x-3">
                                 <Mail className="w-5 h-5 text-green-400 shrink-0 mt-1" />
                                 <div>
-                                    <p className="text-gray-300">info@bpppi.imo.gov.ng</p>
+                                    <p className="text-gray-300">bpppiimostatedueprocess@gmail.com</p>
                                     <p className="text-gray-500 text-sm">We reply within 24 hours</p>
                                 </div>
                             </div>

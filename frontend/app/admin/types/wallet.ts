@@ -25,7 +25,7 @@ export interface WalletSummary {
       iirs: RemittedEntity;
       mda: RemittedEntity;
       bpppi: RemittedEntity;
-      idcl: RemittedEntity;
+      moj: RemittedEntity;
     };
   };
   unremitted: {
@@ -38,7 +38,7 @@ export interface WalletSummary {
       iirs: UnremittedEntity;
       mda: UnremittedEntity;
       bpppi: UnremittedEntity;
-      idcl: UnremittedEntity;
+      moj: UnremittedEntity;
     };
   };
   summary: {
@@ -87,7 +87,7 @@ export interface RecentTransactionsResponse {
 
 export interface CreateCashoutRequest {
   userId: string;
-  entity: 'IIRS' | 'MDA' | 'BPPPI' | 'IDCL';
+  entity: 'IIRS' | 'MDA' | 'BPPPI' | 'MOJ';
   amount: number;
   description: string;
 }
@@ -208,4 +208,21 @@ export interface IirsTransactionsResponse {
     availableBalance: number;
   };
   cashoutHistory: CashoutHistory[];
+}
+
+export interface Mda {
+  _id: string;
+  name: string;
+  code: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+export interface AllMdaTransactionsResponse {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  mdas: Mda[];
 }

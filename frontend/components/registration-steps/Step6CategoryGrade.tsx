@@ -117,7 +117,7 @@ export default function Step6CategoryGrade({
                     Select Grade <span className="text-red-500 text-lg">*</span>
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {grades.filter((grade) => grade.category === selectedSector).sort((a, b) => String(a.grade).localeCompare(String(b.grade))).map((grade) => {
+                    {grades.filter((grade) => grade.category.toLowerCase() === selectedSector.toLowerCase()).sort((a, b) => String(a.grade).localeCompare(String(b.grade))).map((grade) => {
                         const isSelected = selectedGrade === grade.grade;
                         return (
                             <button
@@ -132,7 +132,7 @@ export default function Step6CategoryGrade({
                             >
                                 {/* Grade Circle */}
                                 <div
-                                    className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                                    className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold transition-all uppercase border border-black/25 ${
                                         isSelected
                                             ? 'bg-theme-green text-white'
                                             : 'bg-gray-100 text-gray-600'

@@ -115,23 +115,7 @@ export default function DirectorSection() {
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-4">
-                            <a 
-                                href="/about/director" 
-                                className="inline-flex items-center px-6 py-3 bg-white text-green-700 font-semibold rounded-xl hover:bg-green-50 transition-colors duration-200 shadow-lg"
-                            >
-                                Full Biography
-                                <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
-                            <a 
-                                href="/contact" 
-                                className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/20 transition-colors duration-200 border border-white/30"
-                            >
-                                Contact Office
-                            </a>
-                        </div>
+                      
                     </div>
                 </div>
             </div>

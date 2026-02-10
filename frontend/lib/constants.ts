@@ -172,7 +172,7 @@ export const STATUS_MESSAGES = {
     },
 } as const;
 
-export const processingFee = 50_000;
+export const processingFee = 100_000;
 export const session_key = "auth_session_token";
 export const return_url_key = "return_url";
 

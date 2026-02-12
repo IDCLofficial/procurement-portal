@@ -61,7 +61,7 @@ export default function DirectorCard({
                         name={`director${directorNumber}Phone`}
                         type="tel"
                         value={phone}
-                        placeholder="+234 xxx xxx xxxx"
+                        placeholder="+234 803 321 8142 | +234 706 302 8377"
                         onChange={() => {}}
                     />
                 </FormRow>

@@ -30,7 +30,8 @@ export default function Footer() {
                             <div className="flex items-start space-x-3">
                                 <Phone className="w-5 h-5 text-green-400 shrink-0 mt-1" />
                                 <div>
-                                    <p className="text-gray-300">+234 803 456 7890</p>
+                                    <p className="text-gray-300">+234 803 321 8142, +234 706 302 8377
+                                    </p>
                                     <p className="text-gray-500 text-sm">Mon - Fri, 8AM - 5PM</p>
                                 </div>
                             </div>

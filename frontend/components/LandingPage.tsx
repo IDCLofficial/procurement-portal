@@ -16,15 +16,14 @@ import {
 } from 'react-icons/fa';
 import { IoCheckmarkCircle } from 'react-icons/io5';
 import Link from 'next/link';
+import Navbar from './homepage/Navbar';
+import OfficeHours from './homepage/OfficeHours';
 
 export default function LandingPage() {
     return (
         <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
-            <Header
-                title="Imo State Bureau of Public Procurement and Price Intelligence"
-                description="Contractor Registration & Renewal Portal"
-            />
-
+           <Navbar />
+           <OfficeHours/>
             {/* Hero Section */}
             <section className="container mx-auto px-4 py-16 text-center">
                 <Badge variant="outline" className="mb-6 border-emerald-600 text-emerald-700">

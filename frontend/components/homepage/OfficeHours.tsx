@@ -72,7 +72,7 @@ export default function OfficeHours() {
                     <span className="mx-8">|</span>
                     <div className="flex items-center space-x-2 mx-8">
                         <span className="font-semibold">Phone:</span>
-                        <span>+234 (0) 803 XXX XXXX</span>
+                        <span>+234 803 321 8142 | +234 706 302 8377</span>
                     </div>
                     <span className="mx-8">|</span>
                     <div className="flex items-center space-x-2 mx-8">
@@ -88,7 +88,7 @@ export default function OfficeHours() {
                     <span className="mx-8">|</span>
                     <div className="flex items-center space-x-2 mx-8">
                         <span className="font-semibold">Phone:</span>
-                        <span>+234 (0) 803 XXX XXXX</span>
+                        <span>+234 803 321 8142 | +234 706 302 8377</span>
                     </div>
                      <span className="mx-8">|</span>
                      <div className="flex items-center space-x-2 mx-8 bg-white/20 px-4 py-1 rounded-full">

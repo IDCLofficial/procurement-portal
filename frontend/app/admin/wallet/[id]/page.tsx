@@ -11,6 +11,7 @@ import WalletStatsSection from '@/components/admin/wallet/WalletStatsSection';
 import RecentTransactions from '@/components/admin/wallet/RecentTransactions';
 import QuickActions from '@/components/admin/wallet/QuickActions';
 import CashOutDialog from '@/components/admin/wallet/CashOutDialog';
+import RemittedPaymentSection from '@/components/admin/wallet/RemittedPaymentSection';
 import DeskOfficerWallet from './desk-officer-page';
 import IirsOfficerWallet from './iirs-officer-page';
 
@@ -165,7 +166,7 @@ export default function WalletDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <WalletStatsSection
-          title="Total Remitted"
+          title="Total Transactions"
           summary={summary}
           type="remitted"
           formatCurrency={formatCurrency}
@@ -176,6 +177,12 @@ export default function WalletDashboard() {
           title="Unremitted Payment"
           summary={summary}
           type="unremitted"
+          formatCurrency={formatCurrency}
+          formatDate={formatDate}
+        />
+
+        <RemittedPaymentSection
+          summary={summary}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
         />

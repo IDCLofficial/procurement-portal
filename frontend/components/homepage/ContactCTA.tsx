@@ -10,9 +10,9 @@ export default function ContactCTA() {
         {
             icon: Phone,
             title: 'Call Us',
-            detail: '+234 803 456 7890',
+            detail: '+234 7063 028 377',
             subtext: 'Mon - Fri, 8AM - 5PM',
-            href: 'tel:+23480xx xxxxx',
+            href: 'tel:+2347063028377',
             color: 'from-green-400 to-emerald-500'
         },
         {
@@ -118,7 +118,7 @@ export default function ContactCTA() {
 
                             <div className="flex flex-col space-y-4">
                                 <a 
-                                    href="tel:+2348034567890"
+                                    href="tel:+2347063028377"
                                     className="group relative bg-white text-green-700 px-10 py-6 rounded-2xl font-bold text-xl shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-3xl flex items-center justify-between overflow-hidden"
                                 >
                                     <div className="absolute inset-0 bg-linear-to-r from-green-50 to-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -129,7 +129,7 @@ export default function ContactCTA() {
                                         </div>
                                         <div className="text-left">
                                             <p className="text-sm text-gray-600 font-semibold">Call Us Now</p>
-                                            <p className="text-2xl font-black text-green-700">+234 803 456 7890</p>
+                                            <p className="text-2xl font-black text-green-700">+234 706 302 8377, +234 803 321 8142</p>
                                         </div>
                                     </div>
                                     

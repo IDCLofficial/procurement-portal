@@ -7,6 +7,13 @@ import { useState, useEffect } from 'react';
 export default function AboutSection() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [isVisible, setIsVisible] = useState(false);
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    const images = [
+        { src: '/images/bpppi.png', alt: 'Bureau of Public Procurement and Price Intelligence' },
+        { src: '/images/bpppi1.png', alt: 'BPPPI Office Building' },
+        { src: '/images/bpppi2.png', alt: 'BPPPI Team' }
+    ];
 
     useEffect(() => {
         setIsVisible(true);
@@ -16,6 +23,13 @@ export default function AboutSection() {
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % images.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [images.length]);
 
     return (
         <section className="relative py-32 bg-linear-to-br from-slate-950 via-slate-900 to-green-950 overflow-hidden">
@@ -40,12 +54,25 @@ export default function AboutSection() {
                             <div className="rounded-3xl  group-hover:opacity-50 transition-opacity duration-700 animate-pulse"></div>
                             
                             <div className="relative h-[550px] rounded-3xl overflow-hidden border border-white/10 backdrop-blur-xl bg-white/5">
-                                <Image 
-                                    src="/images/ministry-logo.png" 
-                                    alt="Bureau of Public Procurement and Price Intelligence" 
-                                    fill
-                                    className="object-cover transition-all duration-700 group-hover:scale-110 opacity-80"
-                                />
+                                {images.map((image, index) => (
+                                    <div
+                                        key={index}
+                                        className={`absolute inset-0 transition-all duration-1000 ${
+                                            index === currentSlide
+                                                ? 'translate-x-0'
+                                                : index < currentSlide
+                                                ? 'opacity-0 -translate-x-full'
+                                                : 'opacity-0 translate-x-full'
+                                        }`}
+                                    >
+                                        <Image
+                                            src={image.src}
+                                            alt={image.alt}
+                                            fill
+                                            className="object-cover transition-all duration-700 group-hover:scale-110"
+                                        />
+                                    </div>
+                                ))}
                                 <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
                                 
                                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -64,9 +91,18 @@ export default function AboutSection() {
                                 </div>
 
                                 <div className="absolute top-6 right-6 flex gap-2">
-                                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                                    <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
-                                    <div className="w-3 h-3 bg-teal-400 rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
+                                    {images.map((_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentSlide(index)}
+                                            className={`w-3 h-3 rounded-full transition-all duration-500 ${
+                                                index === currentSlide
+                                                    ? 'bg-green-400 scale-125 ring-2 ring-green-400/50'
+                                                    : 'bg-white/30 hover:bg-white/50'
+                                            }`}
+                                            aria-label={`Go to slide ${index + 1}`}
+                                        />
+                                    ))}
                                 </div>
                                 
                                 <div className="absolute bottom-6 left-6 right-6 grid grid-cols-3 gap-4">

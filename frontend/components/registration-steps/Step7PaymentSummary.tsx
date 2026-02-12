@@ -13,7 +13,7 @@ export default function Step7PaymentSummary({
     selectedSector,
     selectedGrade,
 }: Step7PaymentSummaryProps) {
-    const processingFee = 50_000;
+    const processingFee = 100_000;
     const totalAmount = processingFee;
 
     const formatCurrency = (amount: number) => {
